@@ -170,6 +170,36 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+              <artifactId>maven-jar-plugin</artifactId>
+              <configuration>
+                <archive>  
+                  <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                </archive> 
+              </configuration>
+            </plugin>  
+            <plugin>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <extensions>true</extensions>
+              <executions>
+                <execution>
+                  <id>bundle-manifest</id>
+                  <phase>process-classes</phase>
+                  <goals>    
+                    <goal>manifest</goal>
+                  </goals>   
+                </execution>
+              </executions>
+              <configuration>
+                <instructions>
+                  <!--  packages to export -->
+                  <Export-Package>com.github.neilprosser.logstash</Export-Package>
+                  <!-- attach to Logback bundle as fragment -->
+                  <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
+                </instructions>
+              </configuration>
+            </plugin>
         </plugins>
     </build>
     
