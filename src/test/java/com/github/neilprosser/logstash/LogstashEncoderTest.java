@@ -13,17 +13,21 @@
  */
 package com.github.neilprosser.logstash;
 
-import static org.apache.commons.io.IOUtils.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.time.DateFormatUtils;
 import org.hamcrest.Matchers;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -52,18 +56,21 @@ public class LogstashEncoderTest {
     
     @Test
     public void basicsAreIncluded() throws Exception {
+    	final long timestamp = System.currentTimeMillis();    	
+    	
         ILoggingEvent event = mock(ILoggingEvent.class);
         when(event.getLoggerName()).thenReturn("LoggerName");
         when(event.getThreadName()).thenReturn("ThreadName");
         when(event.getFormattedMessage()).thenReturn("My message");
         when(event.getLevel()).thenReturn(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
         
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
-        assertThat(new DateTime(node.get("@timestamp").textValue()), Matchers.isA(DateTime.class));
+        assertThat(node.get("@timestamp").textValue(), is(DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(timestamp)));
         assertThat(node.get("@source_host"), is(not(nullValue())));
         assertThat(node.has("@source"), is(false));
         assertThat(node.get("@fields").get("logger_name").textValue(), is("LoggerName"));
