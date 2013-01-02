@@ -13,8 +13,10 @@
  */
 package com.github.neilprosser.logstash;
 
-import static org.apache.commons.io.IOUtils.*;
-import static org.apache.commons.lang.StringUtils.*;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.lang.StringUtils.isNotEmpty;
+import static org.apache.commons.lang.StringUtils.lowerCase;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -22,7 +24,7 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.joda.time.DateTime;
+import org.apache.commons.lang.time.DateFormatUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
@@ -56,7 +58,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public void doEncode(ILoggingEvent event) throws IOException {
         
         ObjectNode eventNode = MAPPER.createObjectNode();
-        eventNode.put("@timestamp", new DateTime(event.getTimeStamp()).toString());
+        eventNode.put("@timestamp", DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(event.getTimeStamp()));
         eventNode.put("@source_host", HOSTNAME);
         
         if (isNotEmpty(source)) {
