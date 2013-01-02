@@ -170,7 +170,66 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+              <artifactId>maven-jar-plugin</artifactId>
+              <configuration>
+                <archive>  
+                  <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                </archive> 
+              </configuration>
+            </plugin>  
+            <plugin>
+              <groupId>org.apache.felix</groupId>
+              <artifactId>maven-bundle-plugin</artifactId>
+              <extensions>true</extensions>
+              <executions>
+                <execution>
+                  <id>bundle-manifest</id>
+                  <phase>process-classes</phase>
+                  <goals>    
+                    <goal>manifest</goal>
+                  </goals>   
+                </execution>
+              </executions>
+              <configuration>
+                <instructions>
+                  <!--  packages to export -->
+                  <Export-Package>com.github.neilprosser.logstash</Export-Package>
+                  <!-- attach to Logback bundle as fragment -->
+                  <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
+                </instructions>
+              </configuration>
+            </plugin>
         </plugins>
+        <pluginManagement>
+          <plugins>
+            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+            <plugin>
+              <groupId>org.eclipse.m2e</groupId>
+              <artifactId>lifecycle-mapping</artifactId>
+              <version>1.0.0</version>
+              <configuration>
+                <lifecycleMappingMetadata>
+                  <pluginExecutions>
+                    <pluginExecution>
+                      <pluginExecutionFilter>
+                        <groupId>com.mycila.maven-license-plugin</groupId>
+                        <artifactId>maven-license-plugin</artifactId>
+                        <versionRange>[1.9.0,)</versionRange>
+                        <goals>
+                          <goal>format</goal>
+                        </goals>
+                      </pluginExecutionFilter>
+                      <action>
+                        <ignore></ignore>
+                      </action>
+                    </pluginExecution>
+                  </pluginExecutions>
+                </lifecycleMappingMetadata>
+              </configuration>
+            </plugin>
+          </plugins>
+        </pluginManagement>
     </build>
     
 </project>
