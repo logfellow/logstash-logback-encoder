@@ -1,30 +1,30 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    
+
     <groupId>com.github.neilprosser</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    
+
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
     <url>https://github.com/neilprosser/logstash-logback-encoder</url>
-    
+
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
     </parent>
-    
+
     <scm>
         <connection>scm:git:git@github.com:neilprosser/logstash-logback-encoder.git</connection>
         <developerConnection>scm:git:git@github.com:neilprosser/logstash-logback-encoder.git</developerConnection>
     </scm>
-    
+
     <prerequisites>
         <maven>2.2.1</maven>
     </prerequisites>
-    
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <ch.qos.logback.version>1.0.9</ch.qos.logback.version>
@@ -36,14 +36,14 @@
         <org.mockito.version>1.9.5</org.mockito.version>
         <org.slf4j.version>1.7.2</org.slf4j.version>
     </properties>
-    
+
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
     </licenses>
-    
+
     <developers>
         <developer>
             <name>Neil Prosser</name>
@@ -52,7 +52,7 @@
             <organizationUrl>http://music.nokia.com</organizationUrl>
         </developer>
     </developers>
-    
+
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -109,7 +109,7 @@
             <version>${org.slf4j.version}</version>
         </dependency>
     </dependencies>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -165,65 +165,67 @@
                 </executions>
             </plugin>
             <plugin>
-              <artifactId>maven-jar-plugin</artifactId>
-              <configuration>
-                <archive>  
-                  <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
-                </archive> 
-              </configuration>
-            </plugin>  
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
             <plugin>
-              <groupId>org.apache.felix</groupId>
-              <artifactId>maven-bundle-plugin</artifactId>
-              <extensions>true</extensions>
-              <executions>
-                <execution>
-                  <id>bundle-manifest</id>
-                  <phase>process-classes</phase>
-                  <goals>    
-                    <goal>manifest</goal>
-                  </goals>   
-                </execution>
-              </executions>
-              <configuration>
-                <instructions>
-                  <!--  packages to export -->
-                  <Export-Package>com.github.neilprosser.logstash</Export-Package>
-                  <!-- attach to Logback bundle as fragment -->
-                  <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
-                </instructions>
-              </configuration>
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.7</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <id>bundle-manifest</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <instructions>
+                        <!-- packages to export -->
+                        <Export-Package>com.github.neilprosser.logstash</Export-Package>
+                        <!-- attach to Logback bundle as fragment -->
+                        <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
+                    </instructions>
+                </configuration>
             </plugin>
         </plugins>
         <pluginManagement>
-          <plugins>
-            <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-            <plugin>
-              <groupId>org.eclipse.m2e</groupId>
-              <artifactId>lifecycle-mapping</artifactId>
-              <version>1.0.0</version>
-              <configuration>
-                <lifecycleMappingMetadata>
-                  <pluginExecutions>
-                    <pluginExecution>
-                      <pluginExecutionFilter>
-                        <groupId>com.mycila.maven-license-plugin</groupId>
-                        <artifactId>maven-license-plugin</artifactId>
-                        <versionRange>[1.9.0,)</versionRange>
-                        <goals>
-                          <goal>format</goal>
-                        </goals>
-                      </pluginExecutionFilter>
-                      <action>
-                        <ignore></ignore>
-                      </action>
-                    </pluginExecution>
-                  </pluginExecutions>
-                </lifecycleMappingMetadata>
-              </configuration>
-            </plugin>
-          </plugins>
+            <plugins>
+                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>com.mycila.maven-license-plugin</groupId>
+                                        <artifactId>maven-license-plugin</artifactId>
+                                        <versionRange>[1.9.0,)</versionRange>
+                                        <goals>
+                                            <goal>format</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
         </pluginManagement>
     </build>
-    
+
 </project>
