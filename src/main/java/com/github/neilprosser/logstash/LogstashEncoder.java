@@ -13,10 +13,8 @@
  */
 package com.github.neilprosser.logstash;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.write;
-import static org.apache.commons.lang.StringUtils.isNotEmpty;
-import static org.apache.commons.lang.StringUtils.lowerCase;
+import static org.apache.commons.io.IOUtils.*;
+import static org.apache.commons.lang.StringUtils.*;
 
 import java.io.IOException;
 import java.net.InetAddress;

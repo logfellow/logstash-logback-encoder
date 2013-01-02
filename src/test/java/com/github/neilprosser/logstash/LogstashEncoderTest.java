@@ -13,14 +13,10 @@
  */
 package com.github.neilprosser.logstash;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.closeQuietly;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.apache.commons.io.IOUtils.*;
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.*;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
@@ -56,8 +52,8 @@ public class LogstashEncoderTest {
     
     @Test
     public void basicsAreIncluded() throws Exception {
-    	final long timestamp = System.currentTimeMillis();    	
-    	
+        final long timestamp = System.currentTimeMillis();
+        
         ILoggingEvent event = mock(ILoggingEvent.class);
         when(event.getLoggerName()).thenReturn("LoggerName");
         when(event.getThreadName()).thenReturn("ThreadName");
