@@ -14,11 +14,8 @@
 package com.github.neilprosser.logstash;
 
 import static org.apache.commons.io.IOUtils.*;
-import static org.apache.commons.lang.StringUtils.*;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -37,32 +34,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     private static final ObjectMapper MAPPER = new ObjectMapper().configure(Feature.ESCAPE_NON_ASCII, true);
-    private static final String HOSTNAME;
     
     private boolean immediateFlush = true;
-    private String source;
-    
-    static {
-        String hostName;
-        try {
-            hostName = lowerCase(InetAddress.getLocalHost().getCanonicalHostName());
-        } catch (UnknownHostException e) {
-            hostName = "unknown";
-        }
-        HOSTNAME = hostName;
-    }
     
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
         
         ObjectNode eventNode = MAPPER.createObjectNode();
         eventNode.put("@timestamp", DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(event.getTimeStamp()));
-        eventNode.put("@source_host", HOSTNAME);
-        
-        if (isNotEmpty(source)) {
-            eventNode.put("@source", source);
-        }
-        
         eventNode.put("@message", event.getFormattedMessage());
         eventNode.put("@fields", createFields(event));
         
@@ -111,14 +90,6 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     public void setImmediateFlush(boolean immediateFlush) {
         this.immediateFlush = immediateFlush;
-    }
-    
-    public String getSource() {
-        return source;
-    }
-    
-    public void setSource(String source) {
-        this.source = source;
     }
     
 }

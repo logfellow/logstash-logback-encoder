@@ -67,8 +67,6 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
         assertThat(node.get("@timestamp").textValue(), is(DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(timestamp)));
-        assertThat(node.get("@source_host"), is(not(nullValue())));
-        assertThat(node.has("@source"), is(false));
         assertThat(node.get("@fields").get("logger_name").textValue(), is("LoggerName"));
         assertThat(node.get("@fields").get("thread_name").textValue(), is("ThreadName"));
         assertThat(node.get("@message").textValue(), is("My message"));
@@ -89,24 +87,6 @@ public class LogstashEncoderTest {
         closeQuietly(outputStream);
         
         assertThat(outputStream.toString(), Matchers.endsWith(LINE_SEPARATOR));
-    }
-    
-    @Test
-    public void settingSourceIncludesIt() throws Exception {
-        ILoggingEvent event = mock(ILoggingEvent.class);
-        when(event.getLoggerName()).thenReturn("LoggerName");
-        when(event.getThreadName()).thenReturn("ThreadName");
-        when(event.getFormattedMessage()).thenReturn("My message");
-        when(event.getLevel()).thenReturn(Level.ERROR);
-        
-        encoder.setSource("TheSource");
-        encoder.doEncode(event);
-        closeQuietly(outputStream);
-        
-        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-        
-        assertThat(encoder.getSource(), is("TheSource"));
-        assertThat(node.get("@source").textValue(), is("TheSource"));
     }
     
     @Test
