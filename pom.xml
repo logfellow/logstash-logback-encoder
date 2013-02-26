@@ -2,7 +2,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.neilprosser</groupId>
+    <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
@@ -50,6 +50,16 @@
             <email>neil.prosser@gmail.com</email>
             <organization>Nokia</organization>
             <organizationUrl>http://music.nokia.com</organizationUrl>
+        </developer>
+        <developer>
+            <id>lusis</id>
+            <name>John E. Vincent</name>
+            <email>lusis.org+github.com@gmail.com</email>
+        </developer>
+        <developer>
+            <id>pyr</id>
+            <name>Pierre-Yves Ritschard</name>
+            <email>pyr@spootnik.org</email>
         </developer>
     </developers>
 
@@ -190,7 +200,7 @@
                 <configuration>
                     <instructions>
                         <!-- packages to export -->
-                        <Export-Package>com.github.neilprosser.logstash</Export-Package>
+                        <Export-Package>net.logstash.logback.encoder</Export-Package>
                         <!-- attach to Logback bundle as fragment -->
                         <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
                     </instructions>

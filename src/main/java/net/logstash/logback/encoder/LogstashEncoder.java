@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.neilprosser.logstash;
+package net.logstash.logback.encoder;
 
 import static org.apache.commons.io.IOUtils.*;
 
