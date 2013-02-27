@@ -12,7 +12,7 @@ Use it in your `logback.xml` like this:
             <level>info</level>
         </filter>
         <file>/some/path/to/your/file.log</file>
-        <encoder class="com.github.neilprosser.logstash.LogstashEncoder" />
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
     </appender>
     <root level="all">
         <appender-ref ref="stash" />
