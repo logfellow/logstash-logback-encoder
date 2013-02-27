@@ -45,7 +45,8 @@
     </licenses>
 
     <developers>
-        <developer>
+      <developer>
+            <id>neilprosser</id>
             <name>Neil Prosser</name>
             <email>neil.prosser@gmail.com</email>
             <organization>Nokia</organization>
