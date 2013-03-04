@@ -1,6 +1,16 @@
 # Logback JSON encoder for Logstash
 
-Coming soon, a better README!
+First, add it to your project as a dependency.
+
+Maven style:
+
+```xml
+<dependency>
+  <groupId>net.logstash.logback</groupId>
+  <artifactId>logstash-logback-encoder</artifactId>
+  <version>1.0</version>
+</dependency>
+```
 
 Use it in your `logback.xml` like this:
 
