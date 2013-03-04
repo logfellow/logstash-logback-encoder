@@ -4,11 +4,11 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.1-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
-    <url>https://github.com/neilprosser/logstash-logback-encoder</url>
+    <url>https://github.com/logstash/logstash-logback-encoder</url>
 
     <parent>
         <groupId>org.sonatype.oss</groupId>
@@ -17,8 +17,8 @@
     </parent>
 
     <scm>
-        <connection>scm:git:git@github.com:neilprosser/logstash-logback-encoder.git</connection>
-        <developerConnection>scm:git:git@github.com:neilprosser/logstash-logback-encoder.git</developerConnection>
+        <connection>scm:git:git@github.com:logstash/logstash-logback-encoder.git</connection>
+        <developerConnection>scm:git:git@github.com:logstash/logstash-logback-encoder.git</developerConnection>
     </scm>
 
     <prerequisites>
@@ -56,11 +56,6 @@
             <id>lusis</id>
             <name>John E. Vincent</name>
             <email>lusis.org+github.com@gmail.com</email>
-        </developer>
-        <developer>
-            <id>pyr</id>
-            <name>Pierre-Yves Ritschard</name>
-            <email>pyr@spootnik.org</email>
         </developer>
     </developers>
 
@@ -228,7 +223,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore />
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
