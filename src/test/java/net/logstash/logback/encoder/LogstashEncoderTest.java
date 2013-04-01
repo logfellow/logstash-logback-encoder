@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -66,7 +67,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
-        assertThat(node.get("@timestamp").textValue(), is(DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(timestamp)));
+        assertThat(node.get("@timestamp").textValue(), is(LogstashEncoder.ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(timestamp)));
         assertThat(node.get("@fields").get("logger_name").textValue(), is("LoggerName"));
         assertThat(node.get("@fields").get("thread_name").textValue(), is("ThreadName"));
         assertThat(node.get("@message").textValue(), is("My message"));
@@ -129,5 +130,10 @@ public class LogstashEncoderTest {
         assertThat(node.get("@fields").get("thing_one").textValue(), is("One"));
         assertThat(node.get("@fields").get("thing_two").textValue(), is("Three"));
     }
-    
+
+    @Test
+    public void testDateFormat() {
+        long timestamp = 1364844991207L;
+        Assert.assertEquals("format does not produce expected output", "2013-04-01T21:36:31.207+02:00", LogstashEncoder.ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(timestamp));
+    }
 }
