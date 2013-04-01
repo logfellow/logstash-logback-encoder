@@ -67,7 +67,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
-        assertThat(node.get("@timestamp").textValue(), is(DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(timestamp)));
+        assertThat(node.get("@timestamp").textValue(), is(LogstashEncoder.ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(timestamp)));
         assertThat(node.get("@fields").get("logger_name").textValue(), is("LoggerName"));
         assertThat(node.get("@fields").get("thread_name").textValue(), is("ThreadName"));
         assertThat(node.get("@message").textValue(), is("My message"));
