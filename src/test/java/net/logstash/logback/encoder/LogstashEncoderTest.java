@@ -24,6 +24,7 @@ import java.util.Map;
 
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.hamcrest.Matchers;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -129,5 +130,10 @@ public class LogstashEncoderTest {
         assertThat(node.get("@fields").get("thing_one").textValue(), is("One"));
         assertThat(node.get("@fields").get("thing_two").textValue(), is("Three"));
     }
-    
+
+    @Test
+    public void testDateFormat() {
+        long timestamp = 1364844991207L;
+        Assert.assertEquals("format does not produce expected output", "2013-04-01T21:36:31.207+02:00", LogstashEncoder.ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(timestamp));
+    }
 }

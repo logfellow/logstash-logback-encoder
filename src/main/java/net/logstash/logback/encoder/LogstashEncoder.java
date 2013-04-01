@@ -30,10 +30,12 @@ import ch.qos.logback.core.encoder.EncoderBase;
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang.time.FastDateFormat;
 
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     private static final ObjectMapper MAPPER = new ObjectMapper().configure(Feature.ESCAPE_NON_ASCII, true);
+    public static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     
     private boolean immediateFlush = true;
     
@@ -41,7 +43,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public void doEncode(ILoggingEvent event) throws IOException {
         
         ObjectNode eventNode = MAPPER.createObjectNode();
-        eventNode.put("@timestamp", DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(event.getTimeStamp()));
+        eventNode.put("@timestamp", ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
         eventNode.put("@message", event.getFormattedMessage());
         eventNode.put("@fields", createFields(event));
         
