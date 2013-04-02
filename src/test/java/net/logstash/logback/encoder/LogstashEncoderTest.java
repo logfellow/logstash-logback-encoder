@@ -129,5 +129,18 @@ public class LogstashEncoderTest {
         assertThat(node.get("@fields").get("thing_one").textValue(), is("One"));
         assertThat(node.get("@fields").get("thing_two").textValue(), is("Three"));
     }
+    
+    @Test
+    public void nullMDCDoesNotCauseEverythingToBlowUp() throws Exception {
+        ILoggingEvent event = mock(ILoggingEvent.class);
+        when(event.getLoggerName()).thenReturn("LoggerName");
+        when(event.getThreadName()).thenReturn("ThreadName");
+        when(event.getFormattedMessage()).thenReturn("My message");
+        when(event.getLevel()).thenReturn(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(null);
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+    }
 
 }

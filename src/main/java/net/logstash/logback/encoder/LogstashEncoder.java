@@ -70,10 +70,12 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         
         Map<String, String> mdc = event.getMDCPropertyMap();
         
-        for (Entry<String, String> entry : mdc.entrySet()) {
-            String key = entry.getKey();
-            String value = entry.getValue();
-            fieldsNode.put(key, value);
+        if (mdc != null) {
+            for (Entry<String, String> entry : mdc.entrySet()) {
+                String key = entry.getKey();
+                String value = entry.getValue();
+                fieldsNode.put(key, value);
+            }
         }
         
         return fieldsNode;
