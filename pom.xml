@@ -27,8 +27,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <ch.qos.logback.version>1.0.9</ch.qos.logback.version>
         <com.fasterxml.jackson.version>2.1.2</com.fasterxml.jackson.version>
+        <ch.qos.logback.version>1.0.11</ch.qos.logback.version>
         <commons.io.version>2.4</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.11</junit.version>
