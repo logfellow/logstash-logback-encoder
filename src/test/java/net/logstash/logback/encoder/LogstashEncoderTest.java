@@ -1,4 +1,27 @@
 /**
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+/**
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
  *
@@ -18,10 +41,10 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayOutputStream;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
 import static org.apache.commons.io.IOUtils.*;
-import org.apache.commons.lang.time.FastDateFormat;
 import static org.hamcrest.MatcherAssert.*;
 import org.hamcrest.Matchers;
 import static org.hamcrest.Matchers.*;
@@ -35,6 +58,7 @@ import static org.mockito.Mockito.*;
 public class LogstashEncoderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     public static final int LEVEL_VALUE = 40000;
     private LogstashEncoder encoder;
     private ByteArrayOutputStream outputStream;
@@ -72,7 +96,7 @@ public class LogstashEncoderTest {
 
         assertThat(
                 node.get("@timestamp").textValue(),
-                is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp)));
+                is(DATE_FORMAT.format(timestamp)));
         assertThat(node.get("@fields").get("logger_name").textValue(), is("LoggerName"));
         assertThat(node.get("@fields").get("thread_name").textValue(), is("ThreadName"));
         assertThat(node.get("@message").textValue(), is("My message"));
