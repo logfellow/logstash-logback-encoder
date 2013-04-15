@@ -35,6 +35,7 @@ import static org.mockito.Mockito.*;
 public class LogstashEncoderTest {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    public static final int LEVEL_VALUE = 40000;
     private LogstashEncoder encoder;
     private ByteArrayOutputStream outputStream;
 
@@ -69,12 +70,14 @@ public class LogstashEncoderTest {
 
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
 
-        assertThat(node.get("@timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp)));
+        assertThat(
+                node.get("@timestamp").textValue(),
+                is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp)));
         assertThat(node.get("@fields").get("logger_name").textValue(), is("LoggerName"));
         assertThat(node.get("@fields").get("thread_name").textValue(), is("ThreadName"));
         assertThat(node.get("@message").textValue(), is("My message"));
         assertThat(node.get("@fields").get("level").textValue(), is("ERROR"));
-        assertThat(node.get("@fields").get("level_value").intValue(), is(40000));
+        assertThat(node.get("@fields").get("level_value").intValue(), is(LEVEL_VALUE));
     }
 
     /**
@@ -116,7 +119,9 @@ public class LogstashEncoderTest {
 
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
 
-        assertThat(node.get("@fields").get("stack_trace").textValue(), is(ThrowableProxyUtil.asString(throwableProxy)));
+        assertThat(
+                node.get("@fields").get("stack_trace").textValue(),
+                is(ThrowableProxyUtil.asString(throwableProxy)));
     }
 
     /**
