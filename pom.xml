@@ -57,6 +57,11 @@
             <name>John E. Vincent</name>
             <email>lusis.org+github.com@gmail.com</email>
         </developer>
+        <developer>
+            <id>datenbrille</id>
+            <name>Karl Spies</name>
+            <email>Karl.Spies@synaxon.de</email>
+        </developer>
     </developers>
 
     <dependencies>
@@ -71,19 +76,14 @@
             <version>${ch.qos.logback.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${com.fasterxml.jackson.version}</version>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+            <version>1.0-b06</version>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons.io.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons.lang.version}</version>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>1.0-b06</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
