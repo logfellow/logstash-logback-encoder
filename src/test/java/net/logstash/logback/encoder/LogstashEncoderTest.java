@@ -51,6 +51,26 @@
  * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
+/**
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
+/**
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
 package net.logstash.logback.encoder;
 
 import ch.qos.logback.classic.Level;
@@ -63,6 +83,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,6 +106,15 @@ public class LogstashEncoderTest {
     public static final int LEVEL_VALUE = 40000;
     private LogstashEncoder encoder;
     private ByteArrayOutputStream outputStream;
+    private static String hostname;
+
+    static {
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            hostname = "unknown-host";
+        }
+    }
 
     /**
      *
@@ -120,6 +151,7 @@ public class LogstashEncoderTest {
                 node.getString("@timestamp"),
                 is(DATE_FORMAT.format(timestamp)));
         assertThat(node.getString("@message"), is("My message"));
+        assertThat(node.getString("@source_host"), is(hostname));
         assertThat(node.getJsonObject("@fields").getString("logger_name"), is("LoggerName"));
         assertThat(node.getJsonObject("@fields").getString("thread_name"), is("ThreadName"));
         assertThat(node.getJsonObject("@fields").getString("level"), is("ERROR"));

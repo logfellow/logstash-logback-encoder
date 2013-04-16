@@ -21,6 +21,16 @@
  * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and limitations under the License.
  */
+/**
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and limitations under the License.
+ */
 package net.logstash.logback.encoder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -29,6 +39,8 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,6 +56,15 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     private static final JsonBuilderFactory BUILDER = Json.createBuilderFactory(null);
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     private boolean immediateFlush = true;
+    private static String hostname;
+
+    static {
+        try {
+            hostname = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            hostname = "unknown-host";
+        }
+    }
 
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
@@ -51,6 +72,8 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         JsonObjectBuilder builder = BUILDER.createObjectBuilder();
         builder.add("@timestamp", DATE_FORMAT.format(event.getTimeStamp()));
         builder.add("@message", event.getFormattedMessage());
+        builder.add("@source", event.getLoggerName());
+        builder.add("@source_host", hostname);
         builder.add("@fields", createFields(event));
 
         outputStream.write(builder.build().toString().getBytes());
