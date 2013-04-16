@@ -1,4 +1,17 @@
 /**
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/**
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in
  * compliance with the License. You may obtain a copy of the License at
  *
@@ -15,34 +28,33 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
-import com.fasterxml.jackson.core.JsonGenerator.Feature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Map.Entry;
-import static org.apache.commons.io.IOUtils.*;
+import javax.json.Json;
+import javax.json.JsonBuilderFactory;
+import javax.json.JsonObjectBuilder;
 
 /**
  * Log encoder for logstash to produce json log event via layouter.
  */
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper().configure(Feature.ESCAPE_NON_ASCII, true);
-    private boolean immediateFlush = true;
+    private static final JsonBuilderFactory BUILDER = Json.createBuilderFactory(null);
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+    private boolean immediateFlush = true;
 
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
 
-        ObjectNode eventNode = MAPPER.createObjectNode();
-        eventNode.put("@timestamp", DATE_FORMAT.format(event.getTimeStamp()));
-        eventNode.put("@message", event.getFormattedMessage());
-        eventNode.put("@fields", createFields(event));
+        JsonObjectBuilder builder = BUILDER.createObjectBuilder();
+        builder.add("@timestamp", DATE_FORMAT.format(event.getTimeStamp()));
+        builder.add("@message", event.getFormattedMessage());
+        builder.add("@fields", createFields(event));
 
-        write(MAPPER.writeValueAsBytes(eventNode), outputStream);
-        write(CoreConstants.LINE_SEPARATOR, outputStream);
+        outputStream.write(builder.build().toString().getBytes());
+        outputStream.write(CoreConstants.LINE_SEPARATOR.getBytes());
 
         if (immediateFlush) {
             outputStream.flush();
@@ -50,17 +62,17 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
 
     }
 
-    private ObjectNode createFields(ILoggingEvent event) {
+    private JsonObjectBuilder createFields(ILoggingEvent event) {
 
-        ObjectNode fieldsNode = MAPPER.createObjectNode();
-        fieldsNode.put("logger_name", event.getLoggerName());
-        fieldsNode.put("thread_name", event.getThreadName());
-        fieldsNode.put("level", event.getLevel().toString());
-        fieldsNode.put("level_value", event.getLevel().toInt());
+        JsonObjectBuilder builder = BUILDER.createObjectBuilder();
+        builder.add("logger_name", event.getLoggerName());
+        builder.add("thread_name", event.getThreadName());
+        builder.add("level", event.getLevel().toString());
+        builder.add("level_value", event.getLevel().toInt());
 
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
-            fieldsNode.put("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
+            builder.add("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
         }
 
         Map<String, String> mdc = event.getMDCPropertyMap();
@@ -69,17 +81,17 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
             for (Entry<String, String> entry : mdc.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
-                fieldsNode.put(key, value);
+                builder.add(key, value);
             }
         }
 
-        return fieldsNode;
+        return builder;
 
     }
 
     @Override
     public void close() throws IOException {
-        write(LINE_SEPARATOR, outputStream);
+        outputStream.write(CoreConstants.LINE_SEPARATOR.getBytes());
     }
 
     /**
