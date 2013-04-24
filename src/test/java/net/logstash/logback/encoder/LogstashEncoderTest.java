@@ -13,28 +13,29 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.commons.lang.time.FastDateFormat;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.time.FastDateFormat;
+import org.hamcrest.Matchers;
+import org.junit.Before;
+import org.junit.Test;
 
 public class LogstashEncoderTest {
     
@@ -143,4 +144,25 @@ public class LogstashEncoderTest {
         closeQuietly(outputStream);
     }
 
+	@Test
+	public void callerDataIsIncluded() throws Exception {
+		ILoggingEvent event = mock(ILoggingEvent.class);
+		when(event.getLoggerName()).thenReturn("LoggerName");
+		when(event.getThreadName()).thenReturn("ThreadName");
+		when(event.getFormattedMessage()).thenReturn("My message");
+		when(event.getLevel()).thenReturn(Level.ERROR);
+		when(event.getMDCPropertyMap()).thenReturn(Collections.<String, String>emptyMap());
+		final StackTraceElement[] stackTraceElements = {new StackTraceElement("caller_class", "method_name", "file_name", 12345)};
+		when(event.getCallerData()).thenReturn(stackTraceElements);
+
+		encoder.doEncode(event);
+		closeQuietly(outputStream);
+
+		JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+
+		assertThat(node.get("@fields").get("caller_class_name").textValue(), is(stackTraceElements[0].getClassName()));
+		assertThat(node.get("@fields").get("caller_method_name").textValue(), is(stackTraceElements[0].getMethodName()));
+		assertThat(node.get("@fields").get("caller_file_name").textValue(), is(stackTraceElements[0].getFileName()));
+		assertThat(node.get("@fields").get("caller_line_number").intValue(), is(stackTraceElements[0].getLineNumber()));
+	}
 }

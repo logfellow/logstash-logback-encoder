@@ -32,11 +32,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
-    
-    private static final ObjectMapper MAPPER = new ObjectMapper().configure(Feature.ESCAPE_NON_ASCII, true);
+
+	private static final ObjectMapper MAPPER = new ObjectMapper().configure(Feature.ESCAPE_NON_ASCII, true);
     private static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-    
-    private boolean immediateFlush = true;
+	private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
+
+	private boolean immediateFlush = true;
     
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
@@ -54,7 +55,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         }
         
     }
-    
+
     private ObjectNode createFields(ILoggingEvent event) {
         
         ObjectNode fieldsNode = MAPPER.createObjectNode();
@@ -62,8 +63,14 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         fieldsNode.put("thread_name", event.getThreadName());
         fieldsNode.put("level", event.getLevel().toString());
         fieldsNode.put("level_value", event.getLevel().toInt());
-        
-        IThrowableProxy throwableProxy = event.getThrowableProxy();
+
+		StackTraceElement callerData = extractCallerData(event);
+		fieldsNode.put("caller_class_name", callerData.getClassName());
+		fieldsNode.put("caller_method_name", callerData.getMethodName());
+		fieldsNode.put("caller_file_name", callerData.getFileName());
+		fieldsNode.put("caller_line_number", callerData.getLineNumber());
+
+		IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
             fieldsNode.put("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
         }
@@ -81,8 +88,16 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         return fieldsNode;
         
     }
-    
-    @Override
+
+	private StackTraceElement extractCallerData(final ILoggingEvent event) {
+		final StackTraceElement[] ste = event.getCallerData();
+		if (ste == null || ste.length == 0) {
+			return DEFAULT_CALLER_DATA;
+		}
+		return ste[0];
+	}
+
+	@Override
     public void close() throws IOException {
         write(LINE_SEPARATOR, outputStream);
     }
