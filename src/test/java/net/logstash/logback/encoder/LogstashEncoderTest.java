@@ -13,28 +13,29 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.commons.lang.time.FastDateFormat;
-import org.hamcrest.Matchers;
-import org.junit.Before;
-import org.junit.Test;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
-
+import ch.qos.logback.core.Context;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang.time.FastDateFormat;
+import org.hamcrest.Matchers;
+import org.junit.Before;
+import org.junit.Test;
 
 public class LogstashEncoderTest {
     
@@ -142,5 +143,30 @@ public class LogstashEncoderTest {
         encoder.doEncode(event);
         closeQuietly(outputStream);
     }
+
+	@Test
+	public void propertiesInContextAreIncluded() throws Exception {
+		Map<String, String> propertyMap = new HashMap<String, String>();
+		propertyMap.put("thing_one", "One");
+		propertyMap.put("thing_two", "Three");
+
+		final Context context = mock(Context.class);
+		when(context.getCopyOfPropertyMap()).thenReturn(propertyMap);
+
+		ILoggingEvent event = mock(ILoggingEvent.class);
+		when(event.getLoggerName()).thenReturn("LoggerName");
+		when(event.getThreadName()).thenReturn("ThreadName");
+		when(event.getFormattedMessage()).thenReturn("My message");
+		when(event.getLevel()).thenReturn(Level.ERROR);
+
+		encoder.setContext(context);
+		encoder.doEncode(event);
+		closeQuietly(outputStream);
+
+		JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+
+		assertThat(node.get("@fields").get("thing_one").textValue(), is("One"));
+		assertThat(node.get("@fields").get("thing_two").textValue(), is("Three"));
+	}
 
 }

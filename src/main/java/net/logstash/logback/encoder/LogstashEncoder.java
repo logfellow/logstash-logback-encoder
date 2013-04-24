@@ -67,22 +67,25 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         if (throwableProxy != null) {
             fieldsNode.put("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
         }
-        
-        Map<String, String> mdc = event.getMDCPropertyMap();
-        
-        if (mdc != null) {
-            for (Entry<String, String> entry : mdc.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                fieldsNode.put(key, value);
-            }
-        }
-        
-        return fieldsNode;
+
+		addPropertiesAsFields(fieldsNode, getContext().getCopyOfPropertyMap());
+		addPropertiesAsFields(fieldsNode, event.getMDCPropertyMap());
+
+		return fieldsNode;
         
     }
-    
-    @Override
+
+	private void addPropertiesAsFields(final ObjectNode fieldsNode, final Map<String, String> properties) {
+		if (properties != null) {
+			for (Entry<String, String> entry : properties.entrySet()) {
+				String key = entry.getKey();
+				String value = entry.getValue();
+				fieldsNode.put(key, value);
+			}
+		}
+	}
+
+	@Override
     public void close() throws IOException {
         write(LINE_SEPARATOR, outputStream);
     }
