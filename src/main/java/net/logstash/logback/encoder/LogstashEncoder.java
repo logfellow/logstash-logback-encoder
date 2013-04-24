@@ -13,23 +13,23 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.*;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.encoder.EncoderBase;
+import com.fasterxml.jackson.core.JsonGenerator.Feature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.commons.lang.time.FastDateFormat;
 
 import java.io.IOException;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.lang.time.FastDateFormat;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxyUtil;
-import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.encoder.EncoderBase;
-
-import com.fasterxml.jackson.core.JsonGenerator.Feature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.write;
 
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
@@ -68,8 +68,11 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
             fieldsNode.put("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
         }
 
-		addPropertiesAsFields(fieldsNode, getContext().getCopyOfPropertyMap());
-		addPropertiesAsFields(fieldsNode, event.getMDCPropertyMap());
+        Context context = getContext();
+        if (context != null) {
+            addPropertiesAsFields(fieldsNode, context.getCopyOfPropertyMap());
+        }
+        addPropertiesAsFields(fieldsNode, event.getMDCPropertyMap());
 
 		return fieldsNode;
         
