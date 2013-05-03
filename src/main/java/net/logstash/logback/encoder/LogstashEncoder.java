@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
+import ch.qos.logback.core.Context;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
@@ -34,6 +35,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     private static final ObjectMapper MAPPER = new ObjectMapper().configure(Feature.ESCAPE_NON_ASCII, true);
     private static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
+    
     private boolean immediateFlush = true;
 
     @Override
@@ -72,18 +74,24 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
             fieldsNode.put("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
         }
 
-        Map<String, String> mdc = event.getMDCPropertyMap();
+        Context context = getContext();
+        if (context != null) {
+            addPropertiesAsFields(fieldsNode, context.getCopyOfPropertyMap());
+        }
+        addPropertiesAsFields(fieldsNode, event.getMDCPropertyMap());
 
-        if (mdc != null) {
-            for (Entry<String, String> entry : mdc.entrySet()) {
+        return fieldsNode;
+
+    }
+
+    private void addPropertiesAsFields(final ObjectNode fieldsNode, final Map<String, String> properties) {
+        if (properties != null) {
+            for (Entry<String, String> entry : properties.entrySet()) {
                 String key = entry.getKey();
                 String value = entry.getValue();
                 fieldsNode.put(key, value);
             }
         }
-
-        return fieldsNode;
-
     }
 
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
