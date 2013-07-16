@@ -201,6 +201,10 @@
                     </instructions>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -232,6 +236,42 @@
                                 </pluginExecution>
                             </pluginExecutions>
                         </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>2.0</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+                        <artifactSet>
+                            <excludes>
+                                <exclude>ch.qos.logback:*</exclude>
+                                <exclude>org.slf4j:*</exclude>
+                            </excludes>
+                        </artifactSet>
+                        <relocations>
+                            <relocation>
+                                <pattern>org.apache.commons.lang</pattern>
+                                <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang</shadedPattern>
+                            </relocation>
+                            <relocation>
+                                <pattern>org.apache.commons.io</pattern>
+                                <shadedPattern>${project.groupId}.encoder.org.apache.commons.io</shadedPattern>
+                            </relocation>
+                            <relocation>
+                                <pattern>com.fasterxml.jackson</pattern>
+                                <shadedPattern>${project.groupId}.encoder.com.fasterxml.jackson</shadedPattern>
+                            </relocation>
+                        </relocations>
+                        <shadedArtifactAttached>true</shadedArtifactAttached>
                     </configuration>
                 </plugin>
             </plugins>
