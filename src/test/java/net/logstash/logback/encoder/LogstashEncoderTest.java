@@ -155,6 +155,8 @@ public class LogstashEncoderTest {
         final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         when(event.getCallerData()).thenReturn(stackTraceElements);
         
+        encoder.setIncludeCallerInfo(true);
+        
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -164,6 +166,30 @@ public class LogstashEncoderTest {
         assertThat(node.get("@fields").get("caller_method_name").textValue(), is(stackTraceElements[0].getMethodName()));
         assertThat(node.get("@fields").get("caller_file_name").textValue(), is(stackTraceElements[0].getFileName()));
         assertThat(node.get("@fields").get("caller_line_number").intValue(), is(stackTraceElements[0].getLineNumber()));
+    }
+    
+    
+    @Test
+    public void callerDataIsNotIncludedIfSwitchedOff() throws Exception {
+        ILoggingEvent event = mock(ILoggingEvent.class);
+        when(event.getLoggerName()).thenReturn("LoggerName");
+        when(event.getThreadName()).thenReturn("ThreadName");
+        when(event.getFormattedMessage()).thenReturn("My message");
+        when(event.getLevel()).thenReturn(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(Collections.<String, String> emptyMap());
+        final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
+        when(event.getCallerData()).thenReturn(stackTraceElements);
+        
+        encoder.setIncludeCallerInfo(false);
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        assertThat(node.get("@fields").get("caller_class_name"), is(nullValue()));
+        assertThat(node.get("@fields").get("caller_method_name"), is(nullValue()));
+        assertThat(node.get("@fields").get("caller_file_name"), is(nullValue()));
+        assertThat(node.get("@fields").get("caller_line_number"), is(nullValue()));
     }
     
     @Test

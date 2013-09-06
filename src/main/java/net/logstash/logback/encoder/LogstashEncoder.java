@@ -40,6 +40,12 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     private boolean immediateFlush = true;
     
+    /**
+     * If true, the caller information is included in the logged data.
+     * Note: calculating the caller data is an expensive operation.
+     */
+    private boolean includeCallerInfo = true;
+    
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
         
@@ -65,11 +71,13 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         fieldsNode.put("level", event.getLevel().toString());
         fieldsNode.put("level_value", event.getLevel().toInt());
         
-        StackTraceElement callerData = extractCallerData(event);
-        fieldsNode.put("caller_class_name", callerData.getClassName());
-        fieldsNode.put("caller_method_name", callerData.getMethodName());
-        fieldsNode.put("caller_file_name", callerData.getFileName());
-        fieldsNode.put("caller_line_number", callerData.getLineNumber());
+        if (includeCallerInfo) {
+            StackTraceElement callerData = extractCallerData(event);
+            fieldsNode.put("caller_class_name", callerData.getClassName());
+            fieldsNode.put("caller_method_name", callerData.getMethodName());
+            fieldsNode.put("caller_file_name", callerData.getFileName());
+            fieldsNode.put("caller_line_number", callerData.getLineNumber());
+        }
         
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
@@ -116,5 +124,15 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public void setImmediateFlush(boolean immediateFlush) {
         this.immediateFlush = immediateFlush;
     }
+
+    public boolean isIncludeCallerInfo() {
+        return includeCallerInfo;
+    }
+
+    public void setIncludeCallerInfo(boolean includeCallerInfo) {
+        this.includeCallerInfo = includeCallerInfo;
+    }
+    
+    
     
 }

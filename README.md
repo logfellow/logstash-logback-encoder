@@ -30,6 +30,28 @@ Use it in your `logback.xml` like this:
 </configuration>
 ```
 
+The resulting information contains the caller info by default. 
+This can be costly to calculate and should be switched off for busy production environments.
+
+To switch if off add the includeCallerInfo property to the configuration.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <file>/some/path/to/your/file.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeCallerInfo>false</includeCallerInfo>
+        </encoder>
+    </appender>
+    <root level="all">
+        <appender-ref ref="stash" />
+    </root>
+</configuration>
+```
+
 Use it in your logstash configuration like this:
 
 ```
