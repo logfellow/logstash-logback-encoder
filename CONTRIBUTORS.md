@@ -1,3 +1,4 @@
+* Mirko Friedenhagen (mfriedenhagen)
 * Christophe Furmaniak (looztra)
 * Tim Meighen (tmeighen)
 * Neil Prosser (neilprosser)
