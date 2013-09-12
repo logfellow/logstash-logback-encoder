@@ -20,8 +20,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.slf4j.Marker;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
@@ -32,8 +32,8 @@ import ch.qos.logback.core.encoder.EncoderBase;
 
 import com.fasterxml.jackson.core.JsonGenerator.Feature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.slf4j.Marker;
 
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
@@ -57,7 +57,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         eventNode.put("@message", event.getFormattedMessage());
         eventNode.put("@fields", createFields(event));
         eventNode.put("@tags", createTags(event));
-
+        
         write(MAPPER.writeValueAsBytes(eventNode), outputStream);
         write(CoreConstants.LINE_SEPARATOR, outputStream);
         
@@ -66,7 +66,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         }
         
     }
-
+    
     private ObjectNode createFields(ILoggingEvent event) {
         
         ObjectNode fieldsNode = MAPPER.createObjectNode();
@@ -97,27 +97,27 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         return fieldsNode;
         
     }
-
+    
     private ArrayNode createTags(ILoggingEvent event) {
         ArrayNode node = null;
         final Marker marker = event.getMarker();
-
+        
         if (marker != null) {
             node = MAPPER.createArrayNode();
             node.add(marker.getName());
-
+            
             if (marker.hasReferences()) {
-                final Iterator i = event.getMarker().iterator();
-
+                final Iterator<?> i = event.getMarker().iterator();
+                
                 while (i.hasNext()) {
                     Marker next = (Marker) i.next();
-
+                    
                     // attached markers will never be null as provided by the MarkerFactory.
                     node.add(next.getName());
                 }
             }
         }
-
+        
         return node;
     }
     
@@ -151,15 +151,13 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public void setImmediateFlush(boolean immediateFlush) {
         this.immediateFlush = immediateFlush;
     }
-
+    
     public boolean isIncludeCallerInfo() {
         return includeCallerInfo;
     }
-
+    
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
-    
-    
     
 }

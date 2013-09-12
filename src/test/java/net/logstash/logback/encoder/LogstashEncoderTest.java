@@ -21,15 +21,15 @@ import static org.mockito.Mockito.*;
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -40,8 +40,6 @@ import ch.qos.logback.core.Context;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
 
 public class LogstashEncoderTest {
     
@@ -59,7 +57,7 @@ public class LogstashEncoderTest {
     @Test
     public void basicsAreIncluded() throws Exception {
         final long timestamp = System.currentTimeMillis();
-
+        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getTimeStamp()).thenReturn(timestamp);
         
@@ -90,7 +88,7 @@ public class LogstashEncoderTest {
     @Test
     public void includingThrowableProxyIncludesStackTrace() throws Exception {
         IThrowableProxy throwableProxy = new ThrowableProxy(new Exception("My goodness"));
-
+        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getThrowableProxy()).thenReturn(throwableProxy);
         
@@ -107,7 +105,7 @@ public class LogstashEncoderTest {
         Map<String, String> mdcMap = new HashMap<String, String>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
-
+        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(mdcMap);
         
@@ -149,7 +147,6 @@ public class LogstashEncoderTest {
         assertThat(node.get("@fields").get("caller_line_number").intValue(), is(stackTraceElements[0].getLineNumber()));
     }
     
-    
     @Test
     public void callerDataIsNotIncludedIfSwitchedOff() throws Exception {
         ILoggingEvent event = mock(ILoggingEvent.class);
@@ -181,7 +178,7 @@ public class LogstashEncoderTest {
         
         final Context context = mock(Context.class);
         when(context.getCopyOfPropertyMap()).thenReturn(propertyMap);
-
+        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         
         encoder.setContext(context);
@@ -193,67 +190,67 @@ public class LogstashEncoderTest {
         assertThat(node.get("@fields").get("thing_one").textValue(), is("One"));
         assertThat(node.get("@fields").get("thing_two").textValue(), is("Three"));
     }
-
+    
     @Test
     public void markerIncludesItselfAsTag() throws Exception {
         Marker marker = MarkerFactory.getMarker("hoosh");
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
-
+        
         encoder.doEncode(event);
         closeQuietly(outputStream);
-
+        
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-
+        
         assertJsonArray(node.findValue("@tags"), "hoosh");
     }
-
+    
     @Test
     public void markerReferencesAreIncludedAsTags() throws Exception {
         Marker marker = MarkerFactory.getMarker("bees");
         marker.add(MarkerFactory.getMarker("knees"));
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
-
+        
         encoder.doEncode(event);
         closeQuietly(outputStream);
-
+        
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-
+        
         assertJsonArray(node.findValue("@tags"), "bees", "knees");
     }
-
+    
     @Test
     public void nullMarkerIsIgnored() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(null);
-
+        
         encoder.doEncode(event);
         closeQuietly(outputStream);
-
+        
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-
+        
         assertJsonArray(node.findValue("@tags"));
     }
-
+    
     @Test
     public void immediateFlushIsSane() {
         encoder.setImmediateFlush(true);
         assertThat(encoder.isImmediateFlush(), is(true));
-
+        
         encoder.setImmediateFlush(false);
         assertThat(encoder.isImmediateFlush(), is(false));
     }
-
+    
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         String[] values = new String[jsonNode.size()];
         for (int i = 0; i < values.length; i++) {
             values[i] = jsonNode.get(i).asText();
         }
-
+        
         Assert.assertArrayEquals(expected, values);
     }
-
+    
     private ILoggingEvent mockBasicILoggingEvent(Level level) {
         ILoggingEvent event = mock(ILoggingEvent.class);
         when(event.getLoggerName()).thenReturn("LoggerName");
