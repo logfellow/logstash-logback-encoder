@@ -1,5 +1,6 @@
 * Mirko Friedenhagen (mfriedenhagen)
 * Christophe Furmaniak (looztra)
+* Ben Kirwin (bkirwi)
 * Tim Meighen (tmeighen)
 * Neil Prosser (neilprosser)
 * Gunnar Wagenknecht (guw)
