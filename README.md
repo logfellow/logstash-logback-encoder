@@ -59,7 +59,7 @@ input {
   file {
     type => "your-log-type"
     path => "/some/path/to/your/file.log"
-    format => "json_event"
+    codec => "json"
   }
 }
 ```
