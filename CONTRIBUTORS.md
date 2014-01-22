@@ -1,5 +1,6 @@
 * Mirko Friedenhagen (mfriedenhagen)
 * Christophe Furmaniak (looztra)
+* Jorg Heymans (heymjo)
 * Ben Kirwin (bkirwi)
 * Tim Meighen (tmeighen)
 * Neil Prosser (neilprosser)
