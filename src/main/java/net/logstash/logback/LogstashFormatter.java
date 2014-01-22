@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.slf4j.Marker;
 
@@ -128,7 +129,7 @@ public class LogstashFormatter {
         }
     }
 
-    private getJsonNode(ILoggingEvent event) {
+    private JsonNode getJsonNode(ILoggingEvent event) {
         final Object[] args = event.getArgumentArray();
 
         return MAPPER.convertValue(args, JsonNode.class);
