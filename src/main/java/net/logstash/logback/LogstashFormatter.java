@@ -89,7 +89,7 @@ public class LogstashFormatter {
         if (context != null) {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
         }
-        if (marker != null && marker.contains('JSON')) {
+        if (marker != null && marker.contains("JSON")) {
           eventNode.put("json_message", getJsonNode(event));
         }
         addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
