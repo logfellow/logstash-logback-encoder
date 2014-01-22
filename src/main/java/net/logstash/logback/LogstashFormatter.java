@@ -66,7 +66,7 @@ public class LogstashFormatter {
     }
 
     private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) {
-        final Marker marker - event.getMarker();
+        final Marker marker = event.getMarker();
 
         eventNode.put("logger_name", event.getLoggerName());
         eventNode.put("thread_name", event.getThreadName());
