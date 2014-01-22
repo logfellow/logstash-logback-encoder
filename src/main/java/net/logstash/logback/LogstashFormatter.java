@@ -66,6 +66,7 @@ public class LogstashFormatter {
     }
 
     private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) {
+        final Marker marker - event.getMarker();
 
         eventNode.put("logger_name", event.getLoggerName());
         eventNode.put("thread_name", event.getThreadName());
@@ -87,6 +88,9 @@ public class LogstashFormatter {
 
         if (context != null) {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
+        }
+        if (marker != null && marker.contains('JSON')) {
+          eventNode.put("json_message", getJsonNode(event));
         }
         addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
     }
@@ -124,6 +128,13 @@ public class LogstashFormatter {
         }
     }
 
+    private getJsonNode(ILoggingEvent event) {
+        final Object[] args = event.getArgumentArray();
+
+        return MAPPER.convertValue(args, JsonNode.class);
+    }
+        
+
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
         final StackTraceElement[] ste = event.getCallerData();
         if (ste == null || ste.length == 0) {
@@ -139,4 +150,5 @@ public class LogstashFormatter {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
+
 }
