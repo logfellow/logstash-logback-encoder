@@ -58,40 +58,37 @@ public class LogstashFormatter {
     private ObjectNode eventToNode(ILoggingEvent event, Context context) {
         ObjectNode eventNode = MAPPER.createObjectNode();
         eventNode.put("@timestamp", ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
-        eventNode.put("@message", event.getFormattedMessage());
-        eventNode.put("@fields", createFields(event, context));
-        eventNode.put("@tags", createTags(event));
+        eventNode.put("@version", 1);
+        eventNode.put("message", event.getFormattedMessage());
+        createFields(event, context, eventNode);
+        eventNode.put("tags", createTags(event));
         return eventNode;
     }
 
-    private ObjectNode createFields(ILoggingEvent event, Context context) {
+    private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) {
 
-        ObjectNode fieldsNode = MAPPER.createObjectNode();
-        fieldsNode.put("logger_name", event.getLoggerName());
-        fieldsNode.put("thread_name", event.getThreadName());
-        fieldsNode.put("level", event.getLevel().toString());
-        fieldsNode.put("level_value", event.getLevel().toInt());
+        eventNode.put("logger_name", event.getLoggerName());
+        eventNode.put("thread_name", event.getThreadName());
+        eventNode.put("level", event.getLevel().toString());
+        eventNode.put("level_value", event.getLevel().toInt());
 
         if (includeCallerInfo) {
             StackTraceElement callerData = extractCallerData(event);
-            fieldsNode.put("caller_class_name", callerData.getClassName());
-            fieldsNode.put("caller_method_name", callerData.getMethodName());
-            fieldsNode.put("caller_file_name", callerData.getFileName());
-            fieldsNode.put("caller_line_number", callerData.getLineNumber());
+            eventNode.put("caller_class_name", callerData.getClassName());
+            eventNode.put("caller_method_name", callerData.getMethodName());
+            eventNode.put("caller_file_name", callerData.getFileName());
+            eventNode.put("caller_line_number", callerData.getLineNumber());
         }
 
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
-            fieldsNode.put("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
+            eventNode.put("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
         }
 
         if (context != null) {
-            addPropertiesAsFields(fieldsNode, context.getCopyOfPropertyMap());
+            addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
         }
-        addPropertiesAsFields(fieldsNode, event.getMDCPropertyMap());
-
-        return fieldsNode;
-
+        addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
     }
 
     private ArrayNode createTags(ILoggingEvent event) {

@@ -8,7 +8,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>1.2</version>
+  <version>1.9</version>
 </dependency>
 ```
 
@@ -59,7 +59,7 @@ input {
   file {
     type => "your-log-type"
     path => "/some/path/to/your/file.log"
-    format => "json_event"
+    codec => "json"
   }
 }
 ```
