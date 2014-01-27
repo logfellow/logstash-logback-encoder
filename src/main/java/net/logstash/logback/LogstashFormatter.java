@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.slf4j.Marker;
+import java.util.Map;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -44,7 +45,7 @@ public class LogstashFormatter {
     }
 
     public LogstashFormatter() {
-        this(true);
+        this(false);
     }
 
     public byte[] writeValueAsBytes(ILoggingEvent event, Context context) throws IOException {
@@ -139,4 +140,6 @@ public class LogstashFormatter {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
+
+
 }
