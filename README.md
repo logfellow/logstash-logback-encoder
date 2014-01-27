@@ -30,7 +30,7 @@ Use it in your `logback.xml` like this:
 </configuration>
 ```
 
-The resulting information contains the caller info by default. 
+The resulting information contains the caller info by default.
 This can be costly to calculate and should be switched off for busy production environments.
 
 To switch if off add the includeCallerInfo property to the configuration.
@@ -62,4 +62,15 @@ input {
     codec => "json"
   }
 }
+```
+
+For logback access logs, use it in your `logback-access.xml` like this:
+
+```xml
+<appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/some/path/to/your/file.log</file>
+    <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+</appender>
+
+<appender-ref ref="stash" />
 ```

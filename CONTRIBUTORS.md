@@ -7,3 +7,4 @@
 * Gunnar Wagenknecht (guw)
 * Brandon Zeeb (phasebash)
 * (schup)
+* James Pennell (jpennell)
