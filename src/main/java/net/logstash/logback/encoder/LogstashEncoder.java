@@ -13,15 +13,14 @@
  */
 package net.logstash.logback.encoder;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.encoder.EncoderBase;
-import net.logstash.logback.LogstashFormatter;
+import static org.apache.commons.io.IOUtils.*;
 
 import java.io.IOException;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.write;
+import net.logstash.logback.LogstashFormatter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.encoder.EncoderBase;
 
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     

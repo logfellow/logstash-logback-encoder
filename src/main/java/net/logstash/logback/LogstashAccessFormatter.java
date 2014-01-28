@@ -13,6 +13,11 @@
  */
 package net.logstash.logback;
 
+import java.io.IOException;
+import java.util.Map;
+
+import org.apache.commons.lang.time.FastDateFormat;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
 
@@ -20,26 +25,22 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import org.apache.commons.lang.time.FastDateFormat;
-import java.io.IOException;
-import java.util.Map;
-
 /**
  *
  */
 public class LogstashAccessFormatter {
-
+    
     private static final ObjectMapper MAPPER = new ObjectMapper().configure(JsonGenerator.Feature.ESCAPE_NON_ASCII, true);
     private static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-
+    
     public byte[] writeValueAsBytes(IAccessEvent event, Context context) throws IOException {
         return MAPPER.writeValueAsBytes(eventToNode(event, context));
     }
-
+    
     public String writeValueAsString(IAccessEvent event, Context context) throws IOException {
         return MAPPER.writeValueAsString(eventToNode(event, context));
     }
-
+    
     private ObjectNode eventToNode(IAccessEvent event, Context context) {
         ObjectNode eventNode = MAPPER.createObjectNode();
         eventNode.put("@timestamp", ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
@@ -52,9 +53,9 @@ public class LogstashAccessFormatter {
         createFields(event, context, eventNode);
         return eventNode;
     }
-
+    
     private void createFields(IAccessEvent event, Context context, ObjectNode eventNode) {
-
+        
         eventNode.put("@fields.method", event.getMethod());
         eventNode.put("@fields.protocol", event.getProtocol());
         eventNode.put("@fields.status_code", event.getStatusCode());
@@ -64,12 +65,12 @@ public class LogstashAccessFormatter {
         eventNode.put("@fields.HOSTNAME", event.getRemoteHost());
         eventNode.put("@fields.remote_user", event.getRemoteUser());
         eventNode.put("@fields.content_length", event.getContentLength());
-
+        
         if (context != null) {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
         }
     }
-
+    
     private void addPropertiesAsFields(final ObjectNode fieldsNode, final Map<String, String> properties) {
         if (properties != null) {
             for (Map.Entry<String, String> entry : properties.entrySet()) {

@@ -13,27 +13,25 @@
  */
 package net.logstash.logback.encoder;
 
-import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.Context;
+import static org.apache.commons.io.IOUtils.*;
+import static org.hamcrest.MatcherAssert.*;
+import static org.hamcrest.Matchers.*;
+import static org.mockito.Mockito.*;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.ByteArrayOutputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang.time.FastDateFormat;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
-import java.util.Map;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.Context;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.closeQuietly;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LogstashAccessEncoderTest {
     
@@ -59,13 +57,13 @@ public class LogstashAccessEncoderTest {
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-
+        
         assertThat(node.get("@timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                 (timestamp)));
         assertThat(node.get("@version").intValue(), is(1));
         assertThat(node.get("@message").textValue(), is(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
                 FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                (event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
+                        (event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
                 event.getContentLength())));
         
         assertThat(node.get("@fields.method").textValue(), is(event.getMethod()));

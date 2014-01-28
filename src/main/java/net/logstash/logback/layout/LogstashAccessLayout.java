@@ -13,15 +13,16 @@
  */
 package net.logstash.logback.layout;
 
-import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.LayoutBase;
-import net.logstash.logback.LogstashAccessFormatter;
 import java.io.IOException;
 
+import net.logstash.logback.LogstashAccessFormatter;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.LayoutBase;
+
 public class LogstashAccessLayout extends LayoutBase<IAccessEvent> {
-
+    
     private final LogstashAccessFormatter formatter = new LogstashAccessFormatter();
-
+    
     public String doLayout(IAccessEvent event) {
         try {
             return formatter.writeValueAsString(event, getContext());

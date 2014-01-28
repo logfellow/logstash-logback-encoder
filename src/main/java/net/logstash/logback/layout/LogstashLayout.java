@@ -13,16 +13,16 @@
  */
 package net.logstash.logback.layout;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.LayoutBase;
-import net.logstash.logback.LogstashFormatter;
-
 import java.io.IOException;
 
+import net.logstash.logback.LogstashFormatter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.LayoutBase;
+
 public class LogstashLayout extends LayoutBase<ILoggingEvent> {
-
+    
     private final LogstashFormatter formatter = new LogstashFormatter();
-
+    
     public String doLayout(ILoggingEvent event) {
         try {
             return formatter.writeValueAsString(event, getContext());
