@@ -20,6 +20,11 @@ import net.logstash.logback.LogstashFormatter;
 
 import java.io.IOException;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
 import static org.apache.commons.io.IOUtils.write;
 
@@ -50,6 +55,20 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         write(LINE_SEPARATOR, outputStream);
     }
     
+    private JsonNode parseCustomFields(String customFields) {
+        JsonNode tree = null;
+        try {
+            tree = new ObjectMapper().getFactory().createParser(customFields).readValueAsTree();
+        } catch (JsonParseException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        } catch (JsonProcessingException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        } catch (IOException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        }
+        return tree;
+    }
+    
     public boolean isImmediateFlush() {
         return immediateFlush;
     }
@@ -64,6 +83,10 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         formatter.setIncludeCallerInfo(includeCallerInfo);
+    }
+    
+    public void setCustomFields(String customFields) {
+        formatter.setCustomFields(parseCustomFields(customFields));
     }
     
 }

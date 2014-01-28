@@ -18,12 +18,12 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.slf4j.Marker;
-import java.util.Map;
 
 import java.io.IOException;
 import java.util.Iterator;
@@ -39,6 +39,7 @@ public class LogstashFormatter {
     private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
 
     private boolean includeCallerInfo;
+    private JsonNode customFields;
 
     public LogstashFormatter(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
@@ -90,6 +91,9 @@ public class LogstashFormatter {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
         }
         addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
+
+        addCustomFields(eventNode);
+
     }
 
     private ArrayNode createTags(ILoggingEvent event) {
@@ -133,6 +137,17 @@ public class LogstashFormatter {
         return ste[0];
     }
 
+    private void addCustomFields(ObjectNode eventNode) {
+        if (customFields != null) {
+            Iterator<String> i = customFields.fieldNames();
+            while (i.hasNext()) {
+                String k = i.next();
+                JsonNode v = customFields.get(k);
+                eventNode.put(k, v);
+            }
+        }
+    }
+
     public boolean isIncludeCallerInfo() {
         return includeCallerInfo;
     }
@@ -141,5 +156,7 @@ public class LogstashFormatter {
         this.includeCallerInfo = includeCallerInfo;
     }
 
-
+    public void setCustomFields(JsonNode customFields) {
+        this.customFields = customFields;
+    }
 }
