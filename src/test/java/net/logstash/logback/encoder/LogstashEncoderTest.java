@@ -245,6 +245,26 @@ public class LogstashEncoderTest {
         assertThat(encoder.isImmediateFlush(), is(false));
     }
     
+    @Test
+    public void includeJsonChunk() throws Exception {
+        String customFields = "{\"appname\":\"damnGodWebservice\",\"roles\":[\"customerorder\", \"auth\"], \"buildinfo\": { \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"} }";
+        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
+
+        encoder.setCustomFields(customFields);
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        System.out.println(outputStream);
+        assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
+        System.out.println(node.get("roles"));
+        System.out.println(node.get("roles").equals(LogstashEncoder.parseCustomFields("[\"customerorder\", \"auth\"]")));
+        Assert.assertTrue(node.get("roles").equals(LogstashEncoder.parseCustomFields("[\"customerorder\", \"auth\"]")));
+        Assert.assertTrue(node.get("buildinfo").equals(LogstashEncoder.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+    }
+
+
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         String[] values = new String[jsonNode.size()];
         for (int i = 0; i < values.length; i++) {
