@@ -30,7 +30,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- *
+ * 
  */
 public class LogstashFormatter {
 
@@ -43,6 +43,11 @@ public class LogstashFormatter {
 
     public LogstashFormatter(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
+    }
+
+    public LogstashFormatter(boolean includeCallerInfo, JsonNode customFields) {
+        this.includeCallerInfo = includeCallerInfo;
+        this.customFields = customFields;
     }
 
     public LogstashFormatter() {
@@ -158,5 +163,8 @@ public class LogstashFormatter {
 
     public void setCustomFields(JsonNode customFields) {
         this.customFields = customFields;
+    }
+    public JsonNode getCustomFields() {
+        return this.customFields;
     }
 }

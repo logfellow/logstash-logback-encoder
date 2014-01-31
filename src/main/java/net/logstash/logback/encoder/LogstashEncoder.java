@@ -55,20 +55,10 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         write(LINE_SEPARATOR, outputStream);
     }
     
-    private JsonNode parseCustomFields(String customFields) {
-        JsonNode tree = null;
-        try {
-            tree = new ObjectMapper().getFactory().createParser(customFields).readValueAsTree();
-        } catch (JsonParseException e) {
-            addError("Failed to parse custom fields [" + customFields + "]", e);
-        } catch (JsonProcessingException e) {
-            addError("Failed to parse custom fields [" + customFields + "]", e);
-        } catch (IOException e) {
-            addError("Failed to parse custom fields [" + customFields + "]", e);
-        }
-        return tree;
+    public static JsonNode parseCustomFields(String customFields) throws JsonParseException,JsonProcessingException,IOException {
+        return new ObjectMapper().getFactory().createParser(customFields).readValueAsTree();
     }
-    
+  
     public boolean isImmediateFlush() {
         return immediateFlush;
     }
@@ -86,7 +76,19 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     }
     
     public void setCustomFields(String customFields) {
-        formatter.setCustomFields(parseCustomFields(customFields));
+        try {
+            formatter.setCustomFields(parseCustomFields(customFields));
+        } catch (JsonParseException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        } catch (JsonProcessingException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        } catch (IOException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        }    
+    }
+
+    public JsonNode getCustomFields() {
+        return formatter.getCustomFields();
     }
     
 }
