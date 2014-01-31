@@ -30,10 +30,10 @@ Use it in your `logback.xml` like this:
 </configuration>
 ```
 
-The resulting information contains the caller info by default. 
+The resulting information does not contains the caller info by default. 
 This can be costly to calculate and should be switched off for busy production environments.
 
-To switch if off add the includeCallerInfo property to the configuration.
+To switch if on add the includeCallerInfo property to the configuration.
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -43,7 +43,7 @@ To switch if off add the includeCallerInfo property to the configuration.
         </filter>
         <file>/some/path/to/your/file.log</file>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeCallerInfo>false</includeCallerInfo>
+            <includeCallerInfo>true</includeCallerInfo>
         </encoder>
     </appender>
     <root level="all">
@@ -52,7 +52,41 @@ To switch if off add the includeCallerInfo property to the configuration.
 </configuration>
 ```
 
+Add custom json fields to your json events like this : 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <file>/some/path/to/your/file.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+        </encoder>
+    </appender>
+    <root level="all">
+        <appender-ref ref="stash" />
+    </root>
+</configuration>
+```
+
+You can send your json events by syslog channel like this : 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+        <syslogHost>MyAwsomeSyslogServer</syslogHost>
+    </appender>
+    <root level="all">
+        <appender-ref ref="stash" />
+    </root>
+</configuration>
+```
+
 Use it in your logstash configuration like this:
+
+
 
 ```
 input {
