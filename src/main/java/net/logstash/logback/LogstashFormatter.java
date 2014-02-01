@@ -26,12 +26,13 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- *
+ * 
  */
 public class LogstashFormatter {
     
@@ -40,13 +41,19 @@ public class LogstashFormatter {
     private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
     
     private boolean includeCallerInfo;
+    private JsonNode customFields;
+    
+    public LogstashFormatter() {
+        this(false);
+    }
     
     public LogstashFormatter(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
     
-    public LogstashFormatter() {
-        this(true);
+    public LogstashFormatter(boolean includeCallerInfo, JsonNode customFields) {
+        this.includeCallerInfo = includeCallerInfo;
+        this.customFields = customFields;
     }
     
     public byte[] writeValueAsBytes(ILoggingEvent event, Context context) throws IOException {
@@ -91,6 +98,9 @@ public class LogstashFormatter {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
         }
         addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
+        
+        addCustomFields(eventNode);
+        
     }
     
     private ArrayNode createTags(ILoggingEvent event) {
@@ -134,11 +144,30 @@ public class LogstashFormatter {
         return ste[0];
     }
     
+    private void addCustomFields(ObjectNode eventNode) {
+        if (customFields != null) {
+            Iterator<String> i = customFields.fieldNames();
+            while (i.hasNext()) {
+                String k = i.next();
+                JsonNode v = customFields.get(k);
+                eventNode.put(k, v);
+            }
+        }
+    }
+    
     public boolean isIncludeCallerInfo() {
         return includeCallerInfo;
     }
     
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
+    }
+    
+    public void setCustomFields(JsonNode customFields) {
+        this.customFields = customFields;
+    }
+    
+    public JsonNode getCustomFields() {
+        return this.customFields;
     }
 }
