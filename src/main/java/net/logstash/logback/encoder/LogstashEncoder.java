@@ -86,8 +86,8 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         }
     }
     
-    public JsonNode getCustomFields() {
-        return formatter.getCustomFields();
+    public String getCustomFields() {
+        return formatter.getCustomFields().toString();
     }
     
 }
