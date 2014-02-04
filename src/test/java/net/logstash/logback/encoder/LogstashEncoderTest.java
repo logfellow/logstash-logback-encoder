@@ -18,14 +18,15 @@ import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ch.qos.logback.access.joran.JoranConfigurator;
-import ch.qos.logback.classic.LoggerContext;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.hamcrest.Matchers;
@@ -48,8 +49,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LogstashEncoderTest {
-
-	private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
+    
+    private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private LogstashEncoder encoder;
     private ByteArrayOutputStream outputStream;
@@ -261,30 +262,28 @@ public class LogstashEncoderTest {
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-
+        
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
         Assert.assertTrue(node.get("roles").equals(LogstashEncoder.parseCustomFields("[\"customerorder\", \"auth\"]")));
         Assert.assertTrue(node.get("buildinfo").equals(LogstashEncoder.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
-
-	@Test
-	public void testEncoderConfiguration() throws  Exception{
-		// Empty the log file
-		PrintWriter writer = new PrintWriter(System.getProperty("java.io.tmpdir")+"/test.log");
-		writer.print("");
-		writer.close();
-		LOG.info("Testing info logging.");
-		InputStream is = new FileInputStream(System.getProperty("java.io.tmpdir")+"/test.log");
-
-		List<String> lines = IOUtils.readLines(is);
-		JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
-
-		assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
-		Assert.assertTrue(node.get("roles").equals(LogstashEncoder.parseCustomFields("[\"customerorder\", \"auth\"]")));
-		Assert.assertTrue(node.get("buildinfo").equals(LogstashEncoder.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
-	}
-
-
+    
+    @Test
+    public void testEncoderConfiguration() throws Exception {
+        // Empty the log file
+        PrintWriter writer = new PrintWriter(System.getProperty("java.io.tmpdir") + "/test.log");
+        writer.print("");
+        writer.close();
+        LOG.info("Testing info logging.");
+        InputStream is = new FileInputStream(System.getProperty("java.io.tmpdir") + "/test.log");
+        
+        List<String> lines = IOUtils.readLines(is);
+        JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
+        
+        assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
+        Assert.assertTrue(node.get("roles").equals(LogstashEncoder.parseCustomFields("[\"customerorder\", \"auth\"]")));
+        Assert.assertTrue(node.get("buildinfo").equals(LogstashEncoder.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+    }
     
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         String[] values = new String[jsonNode.size()];
