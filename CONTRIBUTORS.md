@@ -8,6 +8,7 @@
 * James Pennell (jpennell)
 * Neil Prosser (neilprosser)
 * Gunnar Wagenknecht (guw)
+* Ivan Yatskevich (yatskevich)
 * Brandon Zeeb (phasebash)
 * Matjaž (mpecan)
 * (schup)
