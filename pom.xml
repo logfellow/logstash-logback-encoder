@@ -65,16 +65,19 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>${ch.qos.logback.version}</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${ch.qos.logback.version}</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-access</artifactId>
             <version>${ch.qos.logback.version}</version>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
