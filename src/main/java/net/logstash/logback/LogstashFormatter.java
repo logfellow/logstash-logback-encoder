@@ -102,7 +102,9 @@ public class LogstashFormatter {
 
         if (marker != null) {
             node = MAPPER.createArrayNode();
-            node.add(marker.getName());
+            if (marker.getName() != "JSON") {
+                node.add(marker.getName());
+            }
 
             if (marker.hasReferences()) {
                 final Iterator<?> i = event.getMarker().iterator();
@@ -111,7 +113,9 @@ public class LogstashFormatter {
                     Marker next = (Marker) i.next();
 
                     // attached markers will never be null as provided by the MarkerFactory.
-                    node.add(next.getName());
+                    if (marker.getName() != "JSON") {
+                        node.add(next.getName());
+                    }
                 }
             }
         }

@@ -235,7 +235,23 @@ public class LogstashEncoderTest {
         
         assertJsonArray(node.findValue("tags"));
     }
-    
+   
+    @Test
+    public void markerIsJSON() throws Exception {
+        String[] argArray = {"{\"field1\":\"value1\",\"field2\":\"value2\",\"field3\":{\"subfield1\":\"subvalue1\"}}"};
+        Marker marker = MarkerFactory.getMarker("JSON");
+        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
+        when(event.getMarker()).thenReturn(marker);
+        when(event.getArgumentArray()).thenReturn(argArray);
+
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(MAPPER.convertValue(argArray, JsonNode.class).equals(node.get("json_message")), is(true));
+    } 
+
     @Test
     public void immediateFlushIsSane() {
         encoder.setImmediateFlush(true);
@@ -262,5 +278,5 @@ public class LogstashEncoderTest {
         when(event.getLevel()).thenReturn(level);
         return event;
     }
-    
+
 }
