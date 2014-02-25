@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true">
+    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <file>${java.io.tmpdir}/test.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${java.io.tmpdir}/test.log.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>1</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"appname":"damnGodWebservice","roles":["customerorder", "auth"], "buildinfo": { "version" : "Version 0.1.0-SNAPSHOT", "lastcommit" : "75473700d5befa953c45f630c6d9105413c16fe1"} }</customFields>
+        </encoder>
+    </appender>
+    <logger name="net.logstash.logback.encoder.LogstashEncoderTest" level="DEBUG">
+        <appender-ref ref="stash" />
+    </logger>
+</configuration>

@@ -13,33 +13,34 @@
  */
 package net.logstash.logback.appender;
 
+import net.logstash.logback.layout.LogstashLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
-import net.logstash.logback.layout.LogstashLayout;
 
 public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
-
+    
     @Override
     public Layout<ILoggingEvent> buildLayout() {
         return new LogstashLayout();
     }
-
+    
     public LogstashSocketAppender() {
         setFacility("NEWS"); // NOTE: this value is never used
     }
-
+    
     @Override
     public int getSeverityForEvent(Object eventObject) {
         return 0; // NOTE: this value is never used
     }
-
+    
     public String getHost() {
         return getSyslogHost();
     }
-
+    
     /**
      * Just an alias for syslogHost (since that name doesn't make much sense here)
+     * 
      * @param host
      */
     public void setHost(String host) {

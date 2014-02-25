@@ -8,7 +8,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>2.0</version>
+  <version>2.4</version>
 </dependency>
 ```
 
@@ -22,6 +22,10 @@ Use it in your `logback.xml` like this:
             <level>info</level>
         </filter>
         <file>/some/path/to/your/file.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
     </appender>
     <root level="all">
@@ -30,10 +34,10 @@ Use it in your `logback.xml` like this:
 </configuration>
 ```
 
-The resulting information contains the caller info by default. 
+The resulting information does not contains the caller info by default. 
 This can be costly to calculate and should be switched off for busy production environments.
 
-To switch if off add the includeCallerInfo property to the configuration.
+To switch it on add the includeCallerInfo property to the configuration.
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -42,9 +46,49 @@ To switch if off add the includeCallerInfo property to the configuration.
             <level>info</level>
         </filter>
         <file>/some/path/to/your/file.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>        
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeCallerInfo>false</includeCallerInfo>
+            <includeCallerInfo>true</includeCallerInfo>
         </encoder>
+    </appender>
+    <root level="all">
+        <appender-ref ref="stash" />
+    </root>
+</configuration>
+```
+
+Add custom json fields to your json events like this : 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <file>/some/path/to/your/file.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+        </encoder>
+    </appender>
+    <root level="all">
+        <appender-ref ref="stash" />
+    </root>
+</configuration>
+```
+
+You can send your json events by syslog channel like this : 
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+        <syslogHost>MyAwsomeSyslogServer</syslogHost>
     </appender>
     <root level="all">
         <appender-ref ref="stash" />
@@ -54,6 +98,8 @@ To switch if off add the includeCallerInfo property to the configuration.
 
 Use it in your logstash configuration like this:
 
+
+
 ```
 input {
   file {
@@ -62,4 +108,15 @@ input {
     codec => "json"
   }
 }
+```
+
+For logback access logs, use it in your `logback-access.xml` like this:
+
+```xml
+<appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/some/path/to/your/file.log</file>
+    <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+</appender>
+
+<appender-ref ref="stash" />
 ```

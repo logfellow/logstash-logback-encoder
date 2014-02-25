@@ -13,15 +13,19 @@
  */
 package net.logstash.logback.encoder;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.encoder.EncoderBase;
-import net.logstash.logback.LogstashFormatter;
+import static org.apache.commons.io.IOUtils.*;
 
 import java.io.IOException;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.write;
+import net.logstash.logback.LogstashFormatter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.encoder.EncoderBase;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
@@ -50,6 +54,10 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         write(LINE_SEPARATOR, outputStream);
     }
     
+    public static JsonNode parseCustomFields(String customFields) throws JsonParseException, JsonProcessingException, IOException {
+        return new ObjectMapper().getFactory().createParser(customFields).readValueAsTree();
+    }
+    
     public boolean isImmediateFlush() {
         return immediateFlush;
     }
@@ -64,6 +72,22 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         formatter.setIncludeCallerInfo(includeCallerInfo);
+    }
+    
+    public void setCustomFields(String customFields) {
+        try {
+            formatter.setCustomFields(parseCustomFields(customFields));
+        } catch (JsonParseException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        } catch (JsonProcessingException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        } catch (IOException e) {
+            addError("Failed to parse custom fields [" + customFields + "]", e);
+        }
+    }
+    
+    public String getCustomFields() {
+        return formatter.getCustomFields().toString();
     }
     
 }

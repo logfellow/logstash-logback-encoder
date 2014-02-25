@@ -15,15 +15,15 @@ package net.logstash.logback.layout;
 
 import java.io.IOException;
 
-import net.logstash.logback.LogstashFormatter;
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import net.logstash.logback.LogstashAccessFormatter;
+import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.LayoutBase;
 
-public class LogstashLayout extends LayoutBase<ILoggingEvent> {
+public class LogstashAccessLayout extends LayoutBase<IAccessEvent> {
     
-    private final LogstashFormatter formatter = new LogstashFormatter();
+    private final LogstashAccessFormatter formatter = new LogstashAccessFormatter();
     
-    public String doLayout(ILoggingEvent event) {
+    public String doLayout(IAccessEvent event) {
         try {
             return formatter.writeValueAsString(event, getContext());
         } catch (IOException e) {
