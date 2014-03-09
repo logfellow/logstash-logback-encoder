@@ -12,3 +12,4 @@
 * Brandon Zeeb (phasebash)
 * Matjaž (mpecan)
 * (schup)
+* Ryan O'Keeffe (danielredoak)

@@ -30,6 +30,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.commons.lang.time.FastDateFormat;
+import org.slf4j.Marker;
+
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * 
@@ -75,7 +82,8 @@ public class LogstashFormatter {
     }
     
     private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) {
-        
+        final Marker marker = event.getMarker();
+
         eventNode.put("logger_name", event.getLoggerName());
         eventNode.put("thread_name", event.getThreadName());
         eventNode.put("level", event.getLevel().toString());
@@ -97,6 +105,9 @@ public class LogstashFormatter {
         if (context != null) {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
         }
+        if (marker != null && marker.contains("JSON")) {
+          eventNode.put("json_message", getJsonNode(event));
+        }
         addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
         
         addCustomFields(eventNode);
@@ -109,8 +120,10 @@ public class LogstashFormatter {
         
         if (marker != null) {
             node = MAPPER.createArrayNode();
-            node.add(marker.getName());
-            
+            if (!marker.getName().equals("JSON")) {
+                node.add(marker.getName());
+            }
+
             if (marker.hasReferences()) {
                 final Iterator<?> i = event.getMarker().iterator();
                 
@@ -118,7 +131,9 @@ public class LogstashFormatter {
                     Marker next = (Marker) i.next();
                     
                     // attached markers will never be null as provided by the MarkerFactory.
-                    node.add(next.getName());
+                    if (!marker.getName().equals("JSON")) {
+                        node.add(next.getName());
+                    }
                 }
             }
         }
@@ -135,7 +150,13 @@ public class LogstashFormatter {
             }
         }
     }
-    
+
+    private JsonNode getJsonNode(ILoggingEvent event) {
+        final Object[] args = event.getArgumentArray();
+
+        return MAPPER.convertValue(args, JsonNode.class);
+    }
+        
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
         final StackTraceElement[] ste = event.getCallerData();
         if (ste == null || ste.length == 0) {
@@ -162,7 +183,7 @@ public class LogstashFormatter {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
-    
+
     public void setCustomFields(JsonNode customFields) {
         this.customFields = customFields;
     }

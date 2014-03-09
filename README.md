@@ -96,6 +96,24 @@ You can send your json events by syslog channel like this :
 </configuration>
 ```
 
+You can also send raw JSON in the arguments field if you include the marker "JSON" like this and it will be output under the 'json_message' field in the resulting JSON:
+```
+logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "<yourJSONhere>");
+```
+Example:
+```
+logger.info(MarkerFacroty.getMarker("JSON"), "Message {}", "{"field1":"value1","field2": "value2","field3": {"subfield1": "subvalue1"}}");
+```
+Results in the following in the Logstash JSON
+```
+"json_message": {
+        "field1": "value1",
+        "field2": "value2",
+        "field3": {
+            "subfield1": "subvalue1"
+        }
+    }
+```
 Use it in your logstash configuration like this:
 
 
