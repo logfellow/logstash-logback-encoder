@@ -8,7 +8,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>2.4</version>
+  <version>2.5</version>
 </dependency>
 ```
 
@@ -102,7 +102,7 @@ logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "<yourJSONhere>");
 ```
 Example:
 ```
-logger.info(MarkerFacroty.getMarker("JSON"), "Message {}", "{"field1":"value1","field2": "value2","field3": {"subfield1": "subvalue1"}}");
+logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "{"field1":"value1","field2": "value2","field3": {"subfield1": "subvalue1"}}");
 ```
 Results in the following in the Logstash JSON
 ```
