@@ -24,19 +24,15 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
+import ch.qos.logback.core.spi.ContextAware;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang.time.FastDateFormat;
-import org.slf4j.Marker;
-
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
 
 /**
  * 
@@ -47,6 +43,10 @@ public class LogstashFormatter {
     private static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
     
+    /**
+     * If true, the caller information is included in the logged data.
+     * Note: calculating the caller data is an expensive operation.
+     */
     private boolean includeCallerInfo;
     private JsonNode customFields;
     
@@ -184,6 +184,18 @@ public class LogstashFormatter {
         this.includeCallerInfo = includeCallerInfo;
     }
 
+    public static JsonNode parseCustomFields(String customFields) throws JsonParseException, JsonProcessingException, IOException {
+        return new ObjectMapper().getFactory().createParser(customFields).readValueAsTree();
+    }
+    
+    public void setCustomFieldsFromString(String customFields, ContextAware contextAware) {
+	try {
+	    setCustomFields(parseCustomFields(customFields));
+        } catch (IOException e) {
+            contextAware.addError("Failed to parse custom fields [" + customFields + "]", e);
+        }
+    }
+    
     public void setCustomFields(JsonNode customFields) {
         this.customFields = customFields;
     }

@@ -13,7 +13,8 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.*;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.write;
 
 import java.io.IOException;
 
@@ -22,19 +23,10 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
 
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     private boolean immediateFlush = true;
     
-    /**
-     * If true, the caller information is included in the logged data.
-     * Note: calculating the caller data is an expensive operation.
-     */
     private final LogstashFormatter formatter = new LogstashFormatter();
     
     @Override
@@ -54,10 +46,6 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         write(LINE_SEPARATOR, outputStream);
     }
     
-    public static JsonNode parseCustomFields(String customFields) throws JsonParseException, JsonProcessingException, IOException {
-        return new ObjectMapper().getFactory().createParser(customFields).readValueAsTree();
-    }
-    
     public boolean isImmediateFlush() {
         return immediateFlush;
     }
@@ -75,15 +63,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     }
     
     public void setCustomFields(String customFields) {
-        try {
-            formatter.setCustomFields(parseCustomFields(customFields));
-        } catch (JsonParseException e) {
-            addError("Failed to parse custom fields [" + customFields + "]", e);
-        } catch (JsonProcessingException e) {
-            addError("Failed to parse custom fields [" + customFields + "]", e);
-        } catch (IOException e) {
-            addError("Failed to parse custom fields [" + customFields + "]", e);
-        }
+        formatter.setCustomFieldsFromString(customFields, this);
     }
     
     public String getCustomFields() {

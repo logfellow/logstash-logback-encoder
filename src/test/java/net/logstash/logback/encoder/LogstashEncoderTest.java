@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import net.logstash.logback.LogstashFormatter;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.hamcrest.Matchers;
@@ -280,8 +282,8 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
-        Assert.assertTrue(node.get("roles").equals(LogstashEncoder.parseCustomFields("[\"customerorder\", \"auth\"]")));
-        Assert.assertTrue(node.get("buildinfo").equals(LogstashEncoder.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        Assert.assertTrue(node.get("roles").equals(LogstashFormatter.parseCustomFields("[\"customerorder\", \"auth\"]")));
+        Assert.assertTrue(node.get("buildinfo").equals(LogstashFormatter.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
     
     @Test
@@ -297,8 +299,8 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
-        Assert.assertTrue(node.get("roles").equals(LogstashEncoder.parseCustomFields("[\"customerorder\", \"auth\"]")));
-        Assert.assertTrue(node.get("buildinfo").equals(LogstashEncoder.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        Assert.assertTrue(node.get("roles").equals(LogstashFormatter.parseCustomFields("[\"customerorder\", \"auth\"]")));
+        Assert.assertTrue(node.get("buildinfo").equals(LogstashFormatter.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
     
     private void assertJsonArray(JsonNode jsonNode, String... expected) {

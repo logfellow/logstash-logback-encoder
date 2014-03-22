@@ -12,7 +12,8 @@ Maven style:
 </dependency>
 ```
 
-Use it in your `logback.xml` like this:
+### File Output
+To output logstash compatible JSON to a file, use the `LogstashEncoder` in your `logback.xml` like this:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -34,56 +35,22 @@ Use it in your `logback.xml` like this:
 </configuration>
 ```
 
-The resulting information does not contains the caller info by default. 
-This can be costly to calculate and should be switched off for busy production environments.
+Then use the `file` input in logstash like this:
 
-To switch it on add the includeCallerInfo property to the configuration.
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>info</level>
-        </filter>
-        <file>/some/path/to/your/file.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>        
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeCallerInfo>true</includeCallerInfo>
-        </encoder>
-    </appender>
-    <root level="all">
-        <appender-ref ref="stash" />
-    </root>
-</configuration>
+```
+input {
+  file {
+    type => "your-log-type"
+    path => "/some/path/to/your/file.log"
+    codec => "json"
+  }
+}
 ```
 
-Add custom json fields to your json events like this : 
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>info</level>
-        </filter>
-        <file>/some/path/to/your/file.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
-        </encoder>
-    </appender>
-    <root level="all">
-        <appender-ref ref="stash" />
-    </root>
-</configuration>
-```
 
-You can send your json events by syslog channel like this : 
+### Socket Output (via syslog channel)
+
+To output logstash compatible JSON to a syslog channel, use the `LogstashSocketAppender` in your `logback.xml` like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -96,6 +63,57 @@ You can send your json events by syslog channel like this :
 </configuration>
 ```
 
+Then use the `syslog` input in logstash like this:
+
+```
+input {
+  syslog {
+    type => "your-log-type"
+    codec => "json"
+  }
+}
+```
+
+
+### Caller Info
+The `LogstashEncoder` and `LogstashSocketAppender` do not contain caller info by default. 
+This can be costly to calculate and should be switched off for busy production environments.
+
+To switch it on, add the `includeCallerInfo` property to the configuration.
+```xml
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeCallerInfo>true</includeCallerInfo>
+        </encoder>
+```
+
+OR
+
+```xml
+    <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+        <includeCallerInfo>true</includeCallerInfo>
+    </appender>
+```
+
+
+### Custom JSON fields
+
+Add custom json fields to your json events like this : 
+```xml
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+        </encoder>
+```
+
+OR
+
+```xml
+    <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+        <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+    </appender>
+```
+
+
+### JSON arguments
 You can also send raw JSON in the arguments field if you include the marker "JSON" like this and it will be output under the 'json_message' field in the resulting JSON:
 ```
 logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "<yourJSONhere>");
@@ -114,20 +132,8 @@ Results in the following in the Logstash JSON
         }
     }
 ```
-Use it in your logstash configuration like this:
 
-
-
-```
-input {
-  file {
-    type => "your-log-type"
-    path => "/some/path/to/your/file.log"
-    codec => "json"
-  }
-}
-```
-
+### Logback access logs
 For logback access logs, use it in your `logback-access.xml` like this:
 
 ```xml

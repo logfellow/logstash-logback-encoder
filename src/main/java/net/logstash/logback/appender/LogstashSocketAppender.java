@@ -19,10 +19,17 @@ import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
 
 public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
+	
+    private String customFields;
+    private boolean includeCallerInfo;
     
     @Override
     public Layout<ILoggingEvent> buildLayout() {
-        return new LogstashLayout();
+        LogstashLayout layout = new LogstashLayout();
+        layout.setContext(getContext());
+        layout.setCustomFields(customFields);
+        layout.setIncludeCallerInfo(includeCallerInfo);
+        return layout;
     }
     
     public LogstashSocketAppender() {
@@ -45,5 +52,21 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
      */
     public void setHost(String host) {
         setSyslogHost(host);
+    }
+    
+    public void setCustomFields(String customFields) {
+        this.customFields = customFields;
+    }
+    
+    public String getCustomFields() {
+        return this.customFields;
+    }
+    
+    public boolean isIncludeCallerInfo() {
+        return this.includeCallerInfo;
+    }
+    
+    public void setIncludeCallerInfo(boolean includeCallerInfo) {
+        this.includeCallerInfo = includeCallerInfo;
     }
 }
