@@ -124,11 +124,6 @@
             <version>${org.mockito.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${org.slf4j.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -194,6 +189,10 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
                 <version>2.3.7</version>
@@ -210,15 +209,13 @@
                 <configuration>
                     <instructions>
                         <!-- packages to export -->
-                        <Export-Package>net.logstash.logback.encoder</Export-Package>
+                        <Export-Package>net.logstash.logback.encoder,net.logstash.logback.appender</Export-Package>
                         <!-- attach to Logback bundle as fragment -->
                         <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
+                        <!-- exclude following imports as required classes are relocated by shade plugin and ignore ch.qos.logback.[core,classic] because this is a fragment and gets them from parent. -->
+                        <Import-Package>!org.apache.commons.*,!com.fasterxml.jackson.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
                     </instructions>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -272,6 +269,8 @@
                         </execution>
                     </executions>
                     <configuration>
+                        <shadedArtifactAttached>false</shadedArtifactAttached>
+                        <createDependencyReducedPom>true</createDependencyReducedPom>
                         <artifactSet>
                             <excludes>
                                 <exclude>ch.qos.logback:*</exclude>
@@ -297,5 +296,4 @@
             </plugins>
         </pluginManagement>
     </build>
-
 </project>
