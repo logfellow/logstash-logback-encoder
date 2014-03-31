@@ -65,6 +65,7 @@ public class LogstashAccessFormatter {
         eventNode.put("@fields.HOSTNAME", event.getRemoteHost());
         eventNode.put("@fields.remote_user", event.getRemoteUser());
         eventNode.put("@fields.content_length", event.getContentLength());
+        eventNode.put("@fields.elapsed_time", event.getElapsedTime());
         
         if (context != null) {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
