@@ -131,7 +131,7 @@ public class LogstashFormatter {
                     Marker next = (Marker) i.next();
                     
                     // attached markers will never be null as provided by the MarkerFactory.
-                    if (!marker.getName().equals("JSON")) {
+                    if (!next.getName().equals("JSON")) {
                         node.add(next.getName());
                     }
                 }
