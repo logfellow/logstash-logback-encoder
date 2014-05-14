@@ -20,7 +20,7 @@ import ch.qos.logback.core.net.SyslogAppenderBase;
 
 public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
 	
-    private String customFields;
+    private String customFields = "{}";
     private boolean includeCallerInfo;
     
     @Override
