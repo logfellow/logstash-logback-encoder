@@ -133,6 +133,37 @@ Results in the following in the Logstash JSON
     }
 ```
 
+### Custom Context Fields
+For some situations you might want to directly pass fields to the JSON message so it doesn't need to be parsed from the message.
+If this feature is enabled and the last argument in the argument list is a `Map` then it will be added to the JSON.
+
+Configuration:
+```xml
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+        <enableContextMap>true</enableContextMap>
+    </encoder>
+```
+
+Example:
+```java
+    log.info("Service started in {} seconds", duration/1000, Collections.singletonMap("duration", duration));
+```
+
+Result:
+```json
+{
+  "@timestamp": "2014-06-04T15:26:14.464+02:00",
+  "@version": 1,
+  "message": "Service started in 12 seconds",
+  "logger_name": "com.acme.Tester",
+  "thread_name": "main",
+  "level": "INFO",
+  "level_value": 20000,
+  "duration": 12368,
+  "tags": []
+}
+```
+
 ### Logback access logs
 For logback access logs, use it in your `logback-access.xml` like this:
 
