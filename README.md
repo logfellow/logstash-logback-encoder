@@ -121,7 +121,12 @@ logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "<yourJSONhere>");
 Example:
 
 ```java
-logger.info(MarkerFactory.getMarker("JSON"), "Message {}", 12, "{"field1":"value1", "field2": "value2", "field3": {"subfield1": "subvalue1"}}");
+Map<String, Object> map = new HashMap<String, Object>();
+map.put("field1", "value1");
+map.put("field2", "value2");
+map.put("field3", Collections.singletonMap("subfield1", "subvalue1"));
+
+logger.info(MarkerFactory.getMarker("JSON"), "Message {}", 12, map);
 ```
 
 Results in the following in the Logstash JSON:
