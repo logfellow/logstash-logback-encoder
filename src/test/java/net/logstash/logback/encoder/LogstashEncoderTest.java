@@ -247,7 +247,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void markerIsJSON() throws Exception {
-        Object[] argArray = new Object[] { 1, "hello", new HashMap<String, Object>() };
+        Object[] argArray = new Object[] { 1, Collections.singletonMap("hello", Collections.singletonMap("hello", "world")) };
         Marker marker = MarkerFactory.getMarker("JSON");
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
