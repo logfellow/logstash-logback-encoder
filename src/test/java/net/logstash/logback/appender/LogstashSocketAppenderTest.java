@@ -16,15 +16,15 @@ package net.logstash.logback.appender;
 import org.junit.Test;
 
 public class LogstashSocketAppenderTest {
-
+    
     @Test
     public void testNoNullPointerWithNoCustomFields() throws Exception {
-        //The JSON Parser has been throwing a NPE if no custom field value is specified
+        // The JSON Parser has been throwing a NPE if no custom field value is specified
         LogstashSocketAppender appender = new LogstashSocketAppender();
         appender.setHost("foo.com");
         appender.buildLayout();
     }
-
+    
     @Test
     public void testNoNullPointerWithCustomFields() throws Exception {
         LogstashSocketAppender appender = new LogstashSocketAppender();

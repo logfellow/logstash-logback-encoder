@@ -35,7 +35,7 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     public void setCustomFields(String customFields) {
         formatter.setCustomFieldsFromString(customFields, this);
     }
-
+    
     public String getCustomFields() {
         return formatter.getCustomFields().toString();
     }
@@ -43,7 +43,7 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     public boolean isIncludeCallerInfo() {
         return formatter.isIncludeCallerInfo();
     }
-
+    
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         formatter.setIncludeCallerInfo(includeCallerInfo);
     }

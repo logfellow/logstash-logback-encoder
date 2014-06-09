@@ -244,7 +244,7 @@ public class LogstashEncoderTest {
         
         assertJsonArray(node.findValue("tags"));
     }
-   
+    
     @Test
     public void markerIsJSON() throws Exception {
         Object[] argArray = new Object[] { 1, "hello", new HashMap<String, Object>() };
@@ -252,15 +252,15 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
         when(event.getArgumentArray()).thenReturn(argArray);
-
+        
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
         assertThat(MAPPER.convertValue(argArray, JsonNode.class).equals(node.get("json_message")), is(true));
-    } 
-
+    }
+    
     @Test
     public void immediateFlushIsSane() {
         encoder.setImmediateFlush(true);
@@ -285,41 +285,41 @@ public class LogstashEncoderTest {
         Assert.assertTrue(node.get("roles").equals(LogstashFormatter.parseCustomFields("[\"customerorder\", \"auth\"]")));
         Assert.assertTrue(node.get("buildinfo").equals(LogstashFormatter.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
-
+    
     @Test
     public void testContextMapWithNoArguments() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getArgumentArray()).thenReturn(null);
-
+        
         encoder.setEnableContextMap(true);
         encoder.doEncode(event);
         closeQuietly(outputStream);
-
+        
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         assertThat(node.get("message").textValue(), is("My message"));
     }
-
+    
     @Test
     public void testContextMap() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
-
+        
         Map<String, Object> contextMap = new HashMap<String, Object>();
         contextMap.put("duration", 1200);
         contextMap.put("remoteResponse", "OK");
         contextMap.put("extra", Collections.singletonMap("extraEntry", "extraValue"));
-
+        
         Object[] argList = new Object[] {
                 "firstParamThatShouldBeIgnored",
                 Collections.singletonMap("ignoredMapEntry", "whatever"),
                 contextMap
         };
-
+        
         when(event.getArgumentArray()).thenReturn(argList);
-
+        
         encoder.setEnableContextMap(true);
         encoder.doEncode(event);
         closeQuietly(outputStream);
-
+        
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         assertThat(node.get("duration"), notNullValue());
         assertThat(node.get("duration").intValue(), is(1200));
@@ -328,10 +328,9 @@ public class LogstashEncoderTest {
         assertThat(node.get("extra"), notNullValue());
         assertThat(node.get("extra").get("extraEntry"), notNullValue());
         assertThat(node.get("extra").get("extraEntry").textValue(), is("extraValue"));
-
+        
         assertThat("The second map from the end should be ignored", node.get("ignoredMapEntry"), nullValue());
     }
-
     
     @Test
     public void testEncoderConfiguration() throws Exception {
@@ -367,5 +366,5 @@ public class LogstashEncoderTest {
         when(event.getLevel()).thenReturn(level);
         return event;
     }
-
+    
 }

@@ -13,8 +13,7 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.io.IOUtils.*;
 
 import java.io.IOException;
 
@@ -69,17 +68,20 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public String getCustomFields() {
         return formatter.getCustomFields().toString();
     }
-
+    
     /**
-     * <p>If set to true the encoder will search logging event array and if the last item is a Map, entries will
-     * be included in the message.
+     * <p>
+     * If set to true the encoder will search logging event array and if the last item is a Map, entries will be included in the message.
      * </p>
      * <p>
      * Example:
+     * 
      * <pre>
-     *     log.info("Service started in {} seconds", duration/1000, Collections.singletonMap("duration", duration))
+     * log.info(&quot;Service started in {} seconds&quot;, duration / 1000, Collections.singletonMap(&quot;duration&quot;, duration))
      * </pre>
+     * 
      * Will produce:
+     * 
      * <pre>
      * {
      *     "@timestamp": "2014-06-04T15:26:14.464+02:00",
@@ -88,10 +90,16 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
      *     "duration": 8496
      *     ...
      * </pre>
+     * 
      * </p>
+     * 
      * @param enableContextMap <code>true</code> to enable context map
      */
-    public void setEnableContextMap(boolean enableContextMap) { formatter.setEnableContextMap(enableContextMap); }
-
-    public boolean isEnableContextMap() { return formatter.isEnableContextMap(); }
+    public void setEnableContextMap(boolean enableContextMap) {
+        formatter.setEnableContextMap(enableContextMap);
+    }
+    
+    public boolean isEnableContextMap() {
+        return formatter.isEnableContextMap();
+    }
 }

@@ -23,7 +23,7 @@ import ch.qos.logback.core.net.SyslogAppenderBase;
 import ch.qos.logback.core.net.SyslogOutputStream;
 
 public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
-	
+    
     private String customFields = "{}";
     private boolean includeCallerInfo;
     
@@ -73,9 +73,9 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
-
-	@Override
-	public SyslogOutputStream createOutputStream() throws UnknownHostException, SocketException {
-		return new SyslogOutputStream(this.getHost(), this.getPort());
-	}
+    
+    @Override
+    public SyslogOutputStream createOutputStream() throws UnknownHostException, SocketException {
+        return new SyslogOutputStream(this.getHost(), this.getPort());
+    }
 }

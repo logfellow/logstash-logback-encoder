@@ -81,10 +81,10 @@ public class LogstashFormatter {
         eventNode.put("tags", createTags(event));
         return eventNode;
     }
-
+    
     private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) {
         final Marker marker = event.getMarker();
-
+        
         eventNode.put("logger_name", event.getLoggerName());
         eventNode.put("thread_name", event.getThreadName());
         eventNode.put("level", event.getLevel().toString());
@@ -107,10 +107,10 @@ public class LogstashFormatter {
             addPropertiesAsFields(eventNode, context.getCopyOfPropertyMap());
         }
         if (marker != null && marker.contains("JSON")) {
-          eventNode.put("json_message", getJsonNode(event));
+            eventNode.put("json_message", getJsonNode(event));
         }
         addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
-
+        
         if (enableContextMap) {
             addContextMapFields(event, eventNode);
         }
@@ -118,11 +118,11 @@ public class LogstashFormatter {
         addCustomFields(eventNode);
         
     }
-
+    
     private void addContextMapFields(ILoggingEvent event, ObjectNode eventNode) {
         Object[] args = event.getArgumentArray();
         if (args != null && args.length > 0 && args[args.length - 1] instanceof Map) {
-            Map<?,?> contextMap = (Map<?,?>) args[args.length - 1];
+            Map<?, ?> contextMap = (Map<?, ?>) args[args.length - 1];
             ObjectNode context = MAPPER.convertValue(contextMap, ObjectNode.class);
             eventNode.putAll(context);
         }
@@ -137,7 +137,7 @@ public class LogstashFormatter {
             if (!marker.getName().equals("JSON")) {
                 node.add(marker.getName());
             }
-
+            
             if (marker.hasReferences()) {
                 final Iterator<?> i = event.getMarker().iterator();
                 
@@ -164,13 +164,13 @@ public class LogstashFormatter {
             }
         }
     }
-
+    
     private JsonNode getJsonNode(ILoggingEvent event) {
         final Object[] args = event.getArgumentArray();
-
+        
         return MAPPER.convertValue(args, JsonNode.class);
     }
-        
+    
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
         final StackTraceElement[] ste = event.getCallerData();
         if (ste == null || ste.length == 0) {
@@ -197,14 +197,14 @@ public class LogstashFormatter {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
-
+    
     public static JsonNode parseCustomFields(String customFields) throws JsonParseException, JsonProcessingException, IOException {
         return new ObjectMapper().getFactory().createParser(customFields).readValueAsTree();
     }
     
     public void setCustomFieldsFromString(String customFields, ContextAware contextAware) {
-	try {
-	    setCustomFields(parseCustomFields(customFields));
+        try {
+            setCustomFields(parseCustomFields(customFields));
         } catch (IOException e) {
             contextAware.addError("Failed to parse custom fields [" + customFields + "]", e);
         }
@@ -217,8 +217,12 @@ public class LogstashFormatter {
     public JsonNode getCustomFields() {
         return this.customFields;
     }
-
-    public boolean isEnableContextMap() { return enableContextMap; }
-
-    public void setEnableContextMap(boolean enableContextMap) { this.enableContextMap = enableContextMap; }
+    
+    public boolean isEnableContextMap() {
+        return enableContextMap;
+    }
+    
+    public void setEnableContextMap(boolean enableContextMap) {
+        this.enableContextMap = enableContextMap;
+    }
 }
