@@ -71,7 +71,7 @@ public class LogstashFormatter {
         return MAPPER.writeValueAsString(eventToNode(event, context));
     }
     
-    private ObjectNode eventToNode(ILoggingEvent event, Context context) {
+    private ObjectNode eventToNode(ILoggingEvent event, Context context) throws IOException {
         ObjectNode eventNode = MAPPER.createObjectNode();
         eventNode.put("@timestamp", ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
         eventNode.put("@version", 1);
@@ -81,7 +81,7 @@ public class LogstashFormatter {
         return eventNode;
     }
     
-    private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) {
+    private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) throws IOException {
         final Marker marker = event.getMarker();
 
         eventNode.put("logger_name", event.getLoggerName());
@@ -151,10 +151,10 @@ public class LogstashFormatter {
         }
     }
 
-    private JsonNode getJsonNode(ILoggingEvent event) {
+    private JsonNode getJsonNode(ILoggingEvent event) throws IOException {
         final Object[] args = event.getArgumentArray();
 
-        return MAPPER.convertValue(args, JsonNode.class);
+		return MAPPER.readTree((String)args[0]);
     }
         
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
