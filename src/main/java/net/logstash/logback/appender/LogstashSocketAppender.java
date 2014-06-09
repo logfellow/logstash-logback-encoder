@@ -13,10 +13,14 @@
  */
 package net.logstash.logback.appender;
 
+import java.net.SocketException;
+import java.net.UnknownHostException;
+
 import net.logstash.logback.layout.LogstashLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
+import ch.qos.logback.core.net.SyslogOutputStream;
 
 public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
 	
@@ -69,4 +73,9 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
     }
+
+	@Override
+	public SyslogOutputStream createOutputStream() throws UnknownHostException, SocketException {
+		return new SyslogOutputStream(this.getHost(), this.getPort());
+	}
 }
