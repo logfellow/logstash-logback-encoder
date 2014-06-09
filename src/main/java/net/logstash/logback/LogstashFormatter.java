@@ -122,7 +122,7 @@ public class LogstashFormatter {
     private void addContextMapFields(ILoggingEvent event, ObjectNode eventNode) {
         Object[] args = event.getArgumentArray();
         if (args != null && args.length > 0 && args[args.length - 1] instanceof Map) {
-            Map contextMap = (Map) args[args.length - 1];
+            Map<?,?> contextMap = (Map<?,?>) args[args.length - 1];
             ObjectNode context = MAPPER.convertValue(contextMap, ObjectNode.class);
             eventNode.putAll(context);
         }
