@@ -18,20 +18,20 @@ To output logstash compatible JSON to a file, use the `LogstashEncoder` in your 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>info</level>
-        </filter>
-        <file>/some/path/to/your/file.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
-            <maxHistory>30</maxHistory>
-        </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-    </appender>
-    <root level="all">
-        <appender-ref ref="stash" />
-    </root>
+  <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>info</level>
+    </filter>
+    <file>/some/path/to/your/file.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+  <root level="all">
+    <appender-ref ref="stash" />
+  </root>
 </configuration>
 ```
 
@@ -53,12 +53,12 @@ To output logstash compatible JSON to a syslog channel, use the `LogstashSocketA
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-        <syslogHost>MyAwsomeSyslogServer</syslogHost>
-    </appender>
-    <root level="all">
-        <appender-ref ref="stash" />
-    </root>
+  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+    <syslogHost>MyAwsomeSyslogServer</syslogHost>
+  </appender>
+  <root level="all">
+    <appender-ref ref="stash" />
+  </root>
 </configuration>
 ```
 
@@ -80,17 +80,17 @@ This can be costly to calculate and should be switched off for busy production e
 
 To switch it on, add the `includeCallerInfo` property to the configuration.
 ```xml
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeCallerInfo>true</includeCallerInfo>
-        </encoder>
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <includeCallerInfo>true</includeCallerInfo>
+</encoder>
 ```
 
 OR
 
 ```xml
-    <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-        <includeCallerInfo>true</includeCallerInfo>
-    </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+  <includeCallerInfo>true</includeCallerInfo>
+</appender>
 ```
 
 
@@ -98,17 +98,17 @@ OR
 
 Add custom json fields to your json events like this : 
 ```xml
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
-        </encoder>
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+</encoder>
 ```
 
 OR
 
 ```xml
-    <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-        <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
-    </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+  <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+</appender>
 ```
 
 ### JSON arguments
@@ -121,21 +121,27 @@ logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "<yourJSONhere>");
 Example:
 
 ```java
-logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "{"field1":"value1", "field2": "value2", "field3": {"subfield1": "subvalue1"}}");
+logger.info(MarkerFactory.getMarker("JSON"), "Message {}", 12, "{"field1":"value1", "field2": "value2", "field3": {"subfield1": "subvalue1"}}");
 ```
 
 Results in the following in the Logstash JSON:
 
 ```json
-"json_message": [
+{
+  "@timestamp": "2014-06-04T15:26:14.464+02:00",
+  "@version": 1,
+  "message": "Message 12",
+  "json_message": [
+    12,
     {
-        "field1": "value1",
-        "field2": "value2",
-        "field3": {
-            "subfield1": "subvalue1"
-        }
+      "field1": "value1",
+      "field2": "value2",
+      "field3": {
+        "subfield1": "subvalue1"
+      }
     }
-]
+  ]
+}
 ```
 
 ### Custom Context Fields
@@ -144,9 +150,9 @@ If this feature is enabled and the last argument in the argument list is a `Map`
 
 Configuration:
 ```xml
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-        <enableContextMap>true</enableContextMap>
-    </encoder>
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <enableContextMap>true</enableContextMap>
+</encoder>
 ```
 
 Example:
@@ -174,8 +180,8 @@ For logback access logs, use it in your `logback-access.xml` like this:
 
 ```xml
 <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>/some/path/to/your/file.log</file>
-    <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+  <file>/some/path/to/your/file.log</file>
+  <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
 </appender>
 
 <appender-ref ref="stash" />
