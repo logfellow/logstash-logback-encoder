@@ -69,5 +69,29 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public String getCustomFields() {
         return formatter.getCustomFields().toString();
     }
-    
+
+    /**
+     * <p>If set to true the encoder will search logging event array and if the last item is a Map, entries will
+     * be included in the message.
+     * </p>
+     * <p>
+     * Example:
+     * <pre>
+     *     log.info("Service started in {} seconds", duration/1000, Collections.singletonMap("duration", duration))
+     * </pre>
+     * Will produce:
+     * <pre>
+     * {
+     *     "@timestamp": "2014-06-04T15:26:14.464+02:00",
+     *     "message": "Service started in 8 seconds",
+     *     "level": "INFO",
+     *     "duration": 8496
+     *     ...
+     * </pre>
+     * </p>
+     * @param enableContextMap <code>true</code> to enable context map
+     */
+    public void setEnableContextMap(boolean enableContextMap) { formatter.setEnableContextMap(enableContextMap); }
+
+    public boolean isEnableContextMap() { return formatter.isEnableContextMap(); }
 }

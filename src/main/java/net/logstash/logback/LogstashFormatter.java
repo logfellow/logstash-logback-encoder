@@ -48,6 +48,7 @@ public class LogstashFormatter {
      * Note: calculating the caller data is an expensive operation.
      */
     private boolean includeCallerInfo;
+    private boolean enableContextMap;
     private JsonNode customFields;
     
     public LogstashFormatter() {
@@ -80,7 +81,7 @@ public class LogstashFormatter {
         eventNode.put("tags", createTags(event));
         return eventNode;
     }
-    
+
     private void createFields(ILoggingEvent event, Context context, ObjectNode eventNode) {
         final Marker marker = event.getMarker();
 
@@ -109,9 +110,22 @@ public class LogstashFormatter {
           eventNode.put("json_message", getJsonNode(event));
         }
         addPropertiesAsFields(eventNode, event.getMDCPropertyMap());
+
+        if (enableContextMap) {
+            addContextMapFields(event, eventNode);
+        }
         
         addCustomFields(eventNode);
         
+    }
+
+    private void addContextMapFields(ILoggingEvent event, ObjectNode eventNode) {
+        Object[] args = event.getArgumentArray();
+        if (args != null && args.length > 0 && args[args.length - 1] instanceof Map) {
+            Map contextMap = (Map) args[args.length - 1];
+            ObjectNode context = MAPPER.convertValue(contextMap, ObjectNode.class);
+            eventNode.putAll(context);
+        }
     }
     
     private ArrayNode createTags(ILoggingEvent event) {
@@ -203,4 +217,8 @@ public class LogstashFormatter {
     public JsonNode getCustomFields() {
         return this.customFields;
     }
+
+    public boolean isEnableContextMap() { return enableContextMap; }
+
+    public void setEnableContextMap(boolean enableContextMap) { this.enableContextMap = enableContextMap; }
 }
