@@ -47,7 +47,6 @@ input {
 }
 ```
 
-
 ### Socket Output (via syslog channel)
 
 To output logstash compatible JSON to a syslog channel, use the `LogstashSocketAppender` in your `logback.xml` like this:
@@ -112,25 +111,31 @@ OR
     </appender>
 ```
 
-
 ### JSON arguments
 You can also send raw JSON in the arguments field if you include the marker "JSON" like this and it will be output under the 'json_message' field in the resulting JSON:
-```
+
+```java
 logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "<yourJSONhere>");
 ```
+
 Example:
+
+```java
+logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "{"field1":"value1", "field2": "value2", "field3": {"subfield1": "subvalue1"}}");
 ```
-logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "{"field1":"value1","field2": "value2","field3": {"subfield1": "subvalue1"}}");
-```
-Results in the following in the Logstash JSON
-```
-"json_message": {
+
+Results in the following in the Logstash JSON:
+
+```json
+"json_message": [
+    {
         "field1": "value1",
         "field2": "value2",
         "field3": {
             "subfield1": "subvalue1"
         }
     }
+]
 ```
 
 ### Custom Context Fields
