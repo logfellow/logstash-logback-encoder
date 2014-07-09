@@ -242,7 +242,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
-        assertJsonArray(node.findValue("tags"));
+        assertThat(node.findValue("tags"), nullValue());
     }
     
     @Test

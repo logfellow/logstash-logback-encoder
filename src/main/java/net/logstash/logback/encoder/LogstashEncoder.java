@@ -31,7 +31,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
         
-        write(formatter.writeValueAsBytes(event, getContext()), outputStream);
+        formatter.writeValueToOutputStream(event, context, outputStream);
         write(CoreConstants.LINE_SEPARATOR, outputStream);
         
         if (immediateFlush) {
