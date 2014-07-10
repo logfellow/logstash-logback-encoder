@@ -184,14 +184,15 @@ myMap.put("name2", "value2");
 logger.info(embed(myMap), "log message");
 
 /*
- * Add "name1":"value1","name2":"value2" to the json event by using raw json
- */
-logger.info(embedRaw("\"name1\":\"value1\",\"name2\":\"value2\""), "log message");
-
-/*
  * Add "array":[1,2,3] to the json event
  */
 logger.info(appendArray("array", 1, 2, 3), "log message");
+
+/*
+ * Add "array":[1,2,3] to the json event by using raw json.
+ * This allows you to use your own json seralization routine to construct the json output
+ */
+logger.info(appendRaw("array", "[1,2,3]"), "log message");
 
 /*
  * Add any object that can be serialized by Jackson's ObjectMapper
