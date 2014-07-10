@@ -11,6 +11,11 @@ Maven style:
   <version>2.8</version>
 </dependency>
 ```
+## Output Destinations
+
+Two types of output destinations are supported
+* File
+* Socket (via syslog)
 
 ### File Output
 To output logstash compatible JSON to a file, use the `LogstashEncoder` in your `logback.xml` like this:
@@ -73,8 +78,31 @@ input {
 }
 ```
 
+## Fields
 
-### Caller Info
+The fields included in the logstash event are described in the sections below.
+
+### Standard Fields
+
+These fields will appear in every log event unless otherwise noted.
+
+| Field         | Description
+|---------------|------------
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)
+| `@version`    | Logstash format version (e.g. 1)
+| `message`     | Formatted log message of the event 
+| `logger_name` | Name of the logger that logged the event
+| `thread_name` | Name of the thread that logged the event
+| `level`       | String name of the level of the event
+| `level_value` | Integer value of the level of the event
+| `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.
+| `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.)
+
+
+Additionally, every field in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`) and properties of Logback's Context (`ch.qos.logback.core.Context`) will appear as a field in the log event.
+
+
+### Caller Info Fields
 The `LogstashEncoder` and `LogstashSocketAppender` do not contain caller info by default. 
 This can be costly to calculate and should be switched off for busy production environments.
 
@@ -93,13 +121,26 @@ OR
 </appender>
 ```
 
+When switched on, the following fields will be included in the log event:
 
-### Custom JSON fields
+| Field                | Description
+|----------------------|------------
+| `caller_class_name`  | Fully qualified class name of the class that logged the event
+| `caller_method_name` | Name of the method that logged the event
+| `caller_file_name`   | Name of the file that logged the event
+| `caller_line_number` | Line number of the file where the event was logged
 
-Add custom json fields to your json events like this : 
+
+### Custom Fields
+
+In addition to the fields above, you can add other fields to the log event either globally, or on an event-by-event basis.
+
+#### Global Custom Fields
+
+Add custom fields that will appear in every json event like this : 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+  <customFields>{"appname":"damnGoodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
 </encoder>
 ```
 
@@ -107,18 +148,64 @@ OR
 
 ```xml
 <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-  <customFields>{"appname":"damnGodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+  <customFields>{"appname":"damnGoodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
 </appender>
 ```
 
-### JSON arguments
-You can also send raw JSON in the arguments field if you include the marker "JSON" like this and it will be output under the 'json_message' field in the resulting JSON:
+#### Event-specific Custom Fields
+
+When logging a message, you can specify additional fields to add to the json event by using the markers provided by 
+[`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java).
+
+For example:
 
 ```java
-logger.info(MarkerFactory.getMarker("JSON"), "Message {}", "<yourJSONhere>");
+import static net.logstash.logback.marker.Markers.*
+
+/*
+ * Add "name":"value" to the json event.
+ */
+logger.info(append("name", "value"), "log message");
+
+/*
+ * Add "name1":"value1","name2":"value2" to the json event by using multiple markers.
+ */
+logger.info(append("name1", "value1").with(append("name2", "value2")), "log message");
+
+/*
+ * Add "name1":"value1","name2":"value2" to the json event by using a map.
+ *
+ * Note the values can be any object that can be serialized by Jackson's ObjectMapper
+ * (e.g. other Maps, JsonNodes, numbers, arrays, etc)
+ */
+Map myMap = new HashMap();
+myMap.put("name1", "value1");
+myMap.put("name2", "value2");
+logger.info(embed(myMap), "log message");
+
+/*
+ * Add "name1":"value1","name2":"value2" to the json event by using raw json
+ */
+logger.info(embedRaw("\"name1\":\"value1\",\"name2\":\"value2\""), "log message");
+
+/*
+ * Add "array":[1,2,3] to the json event
+ */
+logger.info(appendArray("array", 1, 2, 3), "log message");
+
+/*
+ * Add any object that can be serialized by Jackson's ObjectMapper
+ * (e.g. Maps, JsonNodes, numbers, arrays, etc)
+ */
+logger.info(append("object", myobject), "log message");
+
 ```
 
-Example:
+#### Old *deprecated* way of adding an event-specific `json_message` field
+
+The old deprecated way of adding an event-specific `json_message` field to the json event involved using a marker named `"JSON"`.
+
+For example:
 
 ```java
 Map<String, Object> map = new HashMap<String, Object>();
@@ -149,9 +236,23 @@ Results in the following in the Logstash JSON:
 }
 ```
 
-### Custom Context Fields
-For some situations you might want to directly pass fields to the JSON message so it doesn't need to be parsed from the message.
-If this feature is enabled and the last argument in the argument list is a `Map` then it will be added to the JSON.
+
+The *new* preferred way of doing this is by using the **Event-specific Custom Fields**.
+
+For example:
+
+```java
+import static net.logstash.logback.marker.Markers.*
+
+logger.info(appendArray("json_message", 12, map), "Message {}", 12);
+```
+
+#### Old *deprecated* way of adding event-specific custom fields
+
+The old deprecated way of embedding custom fields in the json event was to configure `enableContextMap` to true,
+and then add a `Map` as the last argument on the log line. 
+
+For example:
 
 Configuration:
 ```xml
@@ -160,7 +261,7 @@ Configuration:
 </encoder>
 ```
 
-Example:
+Log line:
 ```java
     log.info("Service started in {} seconds", duration/1000, Collections.singletonMap("duration", duration));
 ```
@@ -176,11 +277,20 @@ Result:
   "level": "INFO",
   "level_value": 20000,
   "duration": 12368,
-  "tags": []
 }
 ```
 
-### Logback access logs
+The *new* preferred way of doing this is by using the **Custom Dynamic JSON fields**.
+
+For example:
+
+```java
+import static net.logstash.logback.marker.Markers.*
+
+logger.info(embed("duration", duration), "Service started in {} seconds", duration/1000);
+```
+
+## Logback access logs
 For logback access logs, use it in your `logback-access.xml` like this:
 
 ```xml

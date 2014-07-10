@@ -20,6 +20,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.logstash.logback.marker.LogstashMarker;
+import net.logstash.logback.marker.Markers;
+
 import org.apache.commons.lang.time.FastDateFormat;
 import org.slf4j.Marker;
 
@@ -30,21 +33,32 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.io.SegmentedStringWriter;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * 
  */
 public class LogstashFormatter {
+    
+    /**
+     * Name of the {@link Marker} that indicates that the log event arguments should be appended to the
+     * logstash json as an array with field value "json_message".
+     * 
+     * @deprecated When logging, prefer using a {@link Markers#appendArray(String, Object...)} marker
+     *             with fieldName = "json_message" and objects = an array of arguments instead.
+     */
+    @Deprecated
+    private static final String JSON_MARKER_NAME = "JSON";
     
     private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
     private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
@@ -56,7 +70,18 @@ public class LogstashFormatter {
      * Note: calculating the caller data is an expensive operation.
      */
     private boolean includeCallerInfo;
+    
+    /**
+     * When true, if the last argument to the log line is a map, then it will be embedded in the logstash json.
+     * 
+     * @deprecated When logging, prefer using a {@link Markers#embed(Map)} marker instead.
+     */
+    @Deprecated
     private boolean enableContextMap;
+    
+    /**
+     * When non-null, the fields in this JsonNode will be embedded in the logstash json.
+     */
     private JsonNode customFields;
     
     /**
@@ -119,8 +144,9 @@ public class LogstashFormatter {
         writeJsonMessageFieldIfNecessary(generator, event);
         writeMdcPropertiesIfNecessary(generator, event);
         writeContextMapFieldsIfNecessary(generator, event);
-        writeCustomFields(generator);
+        writeGlobalCustomFields(generator);
         writeTagsIfNecessary(generator, event);
+        writeLogstashMarkerIfNecessary(generator, event.getMarker());
         generator.writeEndObject();
         generator.flush();
     }
@@ -157,36 +183,56 @@ public class LogstashFormatter {
 
     private void writeContextPropertiesIfNecessary(JsonGenerator generator, Context context) throws IOException {
         if (context != null) {
-            writePropertiesAsFields(generator, context.getCopyOfPropertyMap());
+            writeMapEntries(generator, context.getCopyOfPropertyMap());
         }
     }
 
+    /**
+     * Writes the event arguments as a json array to the field named "json_message"
+     * 
+     * @deprecated When logging, prefer using a {@link Markers#appendArray(String, Object...)} marker
+     *             with fieldName = "json_message" and objects = an array of arguments instead.
+     */
+    @Deprecated
     private void writeJsonMessageFieldIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         final Marker marker = event.getMarker();
-        if (marker != null && marker.contains("JSON")) {
+        if (marker != null && marker.contains(JSON_MARKER_NAME)) {
             generator.writeFieldName("json_message");
-            generator.writeTree(getJsonNode(event));
+            MAPPER.writeValue(generator, event.getArgumentArray());
         }
     }
 
     private void writeMdcPropertiesIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        writePropertiesAsFields(generator, event.getMDCPropertyMap());
+        writeMapEntries(generator, event.getMDCPropertyMap());
     }
 
+    /**
+     * If {@link #enableContextMap} is true, and the last event argument is a map, then
+     * embeds the map entries in the logstash json
+     *  
+     * @deprecated When logging, prefer using a {@link Markers#embed(Map)} marker instead.
+     */
+    @Deprecated
     private void writeContextMapFieldsIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         if (enableContextMap) {
             Object[] args = event.getArgumentArray();
             if (args != null && args.length > 0 && args[args.length - 1] instanceof Map) {
                 Map<?, ?> contextMap = (Map<?, ?>) args[args.length - 1];
-                
-                ObjectNode context = MAPPER.convertValue(contextMap, ObjectNode.class);
-                
-                writeFieldsOfNode(generator, context);
+                writeMapEntries(generator, contextMap);
             }
         }
     }
 
-    private void writeCustomFields(JsonGenerator generator) throws IOException {
+    private void writeMapEntries(JsonGenerator generator, Map<?, ?> map) throws IOException, JsonGenerationException, JsonMappingException {
+        if (map != null) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                generator.writeFieldName(entry.getKey().toString());
+                MAPPER.writeValue(generator, entry.getValue());
+            }
+        }
+    }
+
+    private void writeGlobalCustomFields(JsonGenerator generator) throws IOException {
         writeFieldsOfNode(generator, customFields);
     }
 
@@ -208,7 +254,7 @@ public class LogstashFormatter {
     }
 
     private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) throws IOException {
-        if (!marker.getName().equals("JSON")) {
+        if (!marker.getName().equals(JSON_MARKER_NAME) && !isLogstashMarker(marker)) {
             if (!hasWrittenStart) {
                 generator.writeArrayFieldStart("tags");
                 hasWrittenStart = true;
@@ -226,22 +272,25 @@ public class LogstashFormatter {
         return hasWrittenStart;
     }
     
-    private void writePropertiesAsFields(JsonGenerator generator, Map<String, String> properties) throws IOException {
-        if (properties != null) {
-            for (Map.Entry<String, String> entry : properties.entrySet()) {
-                String key = entry.getKey();
-                String value = entry.getValue();
-                generator.writeStringField(key, value);
+    private boolean isLogstashMarker(Marker marker) {
+        return marker instanceof LogstashMarker;
+    }
+
+    private void writeLogstashMarkerIfNecessary(JsonGenerator generator, Marker marker) throws IOException {
+        if (marker != null) {
+            if (isLogstashMarker(marker)) {
+                ((LogstashMarker) marker).writeTo(generator, MAPPER);
+            }
+            
+            if (marker.hasReferences()) {
+                for (Iterator<?> i = marker.iterator(); i.hasNext(); ) {
+                    Marker next = (Marker) i.next();
+                    writeLogstashMarkerIfNecessary(generator, next);
+                }
             }
         }
     }
-    
-    private JsonNode getJsonNode(ILoggingEvent event) {
-        final Object[] args = event.getArgumentArray();
-        
-        return MAPPER.convertValue(args, JsonNode.class);
-    }
-    
+
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
         final StackTraceElement[] ste = event.getCallerData();
         if (ste == null || ste.length == 0) {
