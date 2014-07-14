@@ -340,10 +340,18 @@ public class LogstashFormatter {
         return this.customFields;
     }
     
+    /**
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
+     */
+    @Deprecated
     public boolean isEnableContextMap() {
         return enableContextMap;
     }
-    
+
+    /**
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
+     */
+    @Deprecated
     public void setEnableContextMap(boolean enableContextMap) {
         this.enableContextMap = enableContextMap;
     }

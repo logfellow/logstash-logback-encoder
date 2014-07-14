@@ -16,8 +16,10 @@ package net.logstash.logback.encoder;
 import static org.apache.commons.io.IOUtils.*;
 
 import java.io.IOException;
+import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.marker.Markers;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -94,11 +96,17 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
      * </p>
      * 
      * @param enableContextMap <code>true</code> to enable context map
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
+    @Deprecated
     public void setEnableContextMap(boolean enableContextMap) {
         formatter.setEnableContextMap(enableContextMap);
     }
     
+    /**
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
+     */
+    @Deprecated
     public boolean isEnableContextMap() {
         return formatter.isEnableContextMap();
     }
