@@ -29,7 +29,7 @@ import java.util.Map;
  *     
  *     logger.info(append("name1", "value1"), "log message");
  *     logger.info(append("name1", "value1").with(append("name2", "value2")), "log message");
- *     logger.info(embed(myMap), "log message");
+ *     logger.info(appendEntries(myMap), "log message");
  * }
  * </pre>
  */
@@ -39,17 +39,17 @@ public class Markers {
     }
     
     /**
-     * @see MapEmbeddingMarker
+     * @see MapEntriesAppendingMarker
      */
-    public static MapEmbeddingMarker embed(Map<?, ?> map) {
-        return new MapEmbeddingMarker(map);
+    public static MapEntriesAppendingMarker appendEntries(Map<?, ?> map) {
+        return new MapEntriesAppendingMarker(map);
     }
     
     /**
-     * @see ObjectEmbeddingMarker
+     * @see ObjectFieldsAppendingMarker
      */
-    public static ObjectEmbeddingMarker embed(Object object) {
-        return new ObjectEmbeddingMarker(object);
+    public static ObjectFieldsAppendingMarker appendFields(Object object) {
+        return new ObjectFieldsAppendingMarker(object);
     }
     
     /**

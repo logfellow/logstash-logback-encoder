@@ -18,6 +18,8 @@ import static org.hamcrest.Matchers.*;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -26,36 +28,21 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class ObjectEmbeddingMarkerTest {
+public class MapEntriesAppendingMarkerTest {
     
     private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
     private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
     
-    public static class MyClass {
-        private String myField;
-        
-        public MyClass(String myField) {
-            this.myField = myField;
-        }
-
-        public String getMyField() {
-            return myField;
-        }
-        
-        public void setMyField(String myField) {
-            this.myField = myField;
-        }
-    }
-    
     @Test
     public void testWriteTo() throws IOException {
         
-        MyClass myObject = new MyClass("value");
+        Map<String, String> map = new HashMap<String, String>();
+        map.put("myField", "value");
         
         StringWriter writer = new StringWriter();
         JsonGenerator generator = FACTORY.createGenerator(writer);
         
-        ObjectEmbeddingMarker marker = Markers.embed(myObject);
+        MapEntriesAppendingMarker marker = Markers.appendEntries(map);
         generator.writeStartObject();
         marker.writeTo(generator, MAPPER);
         generator.writeEndObject();
@@ -66,21 +53,25 @@ public class ObjectEmbeddingMarkerTest {
     
     @Test
     public void testEquals() {
-        MyClass myObject = new MyClass("value");
+        Map<String, String> map = new HashMap<String, String>();
         
-        assertThat(Markers.embed(myObject), is(Markers.embed(myObject)));
+        assertThat(Markers.appendEntries(map), is(Markers.appendEntries(map)));
         
-        assertThat(Markers.embed(myObject), not(is(Markers.embed(new MyClass("value1")))));
+        Map<String, String> map2 = new HashMap<String, String>();
+        map2.put("foo", "bar");
+        assertThat(Markers.appendEntries(map), not(is(Markers.appendEntries(map2))));
     }
     
 
     @Test
     public void testHashCode() {
-        MyClass myObject = new MyClass("value");
+        Map<String, String> map = new HashMap<String, String>();
         
-        assertThat(Markers.embed(myObject).hashCode(), is(Markers.embed(myObject).hashCode()));
+        assertThat(Markers.appendEntries(map).hashCode(), is(Markers.appendEntries(map).hashCode()));
         
-        assertThat(Markers.embed(myObject).hashCode(), not(is(Markers.embed(new MyClass("value1")).hashCode())));
+        Map<String, String> map2 = new HashMap<String, String>();
+        map2.put("foo", "bar");
+        assertThat(Markers.appendEntries(map).hashCode(), not(is(Markers.appendEntries(map2).hashCode())));
     }
     
 

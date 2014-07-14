@@ -378,7 +378,7 @@ public class LogstashEncoderTest {
         
         when(event.getArgumentArray()).thenReturn(argList);
         
-        Marker marker = embed(contextMap);
+        Marker marker = appendEntries(contextMap);
         when(event.getMarker()).thenReturn(marker);
         
         encoder.doEncode(event);

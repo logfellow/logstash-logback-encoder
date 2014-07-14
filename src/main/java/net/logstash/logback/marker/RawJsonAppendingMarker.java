@@ -29,9 +29,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * boolean, null, Array or List)
  */
 @SuppressWarnings("serial")
-public class RawJsonAppendingMarker extends AppendingMarker {
+public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
     
-    public static final String MARKER_NAME = AppendingMarker.MARKER_NAME_PREFIX + "RAW";
+    public static final String MARKER_NAME = SingleFieldAppendingMarker.MARKER_NAME_PREFIX + "RAW";
 
     /**
      * The raw json value to write as the field value.

@@ -36,9 +36,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *  
  */
 @SuppressWarnings("serial")
-public class ObjectAppendingMarker extends AppendingMarker {
+public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
     
-    public static final String MARKER_NAME = AppendingMarker.MARKER_NAME_PREFIX + "OBJECT";
+    public static final String MARKER_NAME = SingleFieldAppendingMarker.MARKER_NAME_PREFIX + "OBJECT";
 
     /**
      * The object to write as the field's value.

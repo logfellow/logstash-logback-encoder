@@ -20,11 +20,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 /**
- * A marker that appends data into the logstash json event
- * in a given field name.
+ * A marker that appends a single field into the logstash json event.
  */
 @SuppressWarnings("serial")
-public abstract class AppendingMarker extends LogstashMarker {
+public abstract class SingleFieldAppendingMarker extends LogstashMarker {
     
     public static final String MARKER_NAME_PREFIX = LogstashMarker.MARKER_NAME_PREFIX + "APPEND_";
     
@@ -35,7 +34,7 @@ public abstract class AppendingMarker extends LogstashMarker {
      */
     private final String fieldName;
 
-    public AppendingMarker(String markerName, String fieldName) {
+    public SingleFieldAppendingMarker(String markerName, String fieldName) {
         super(markerName);
         if (fieldName == null) {
             throw new IllegalArgumentException("fieldName must not be null");
@@ -69,11 +68,11 @@ public abstract class AppendingMarker extends LogstashMarker {
         if (!super.equals(obj)) {
             return false;
         }
-        if (!(obj instanceof AppendingMarker)) {
+        if (!(obj instanceof SingleFieldAppendingMarker)) {
             return false;
         }
 
-        AppendingMarker other = (AppendingMarker) obj;
+        SingleFieldAppendingMarker other = (SingleFieldAppendingMarker) obj;
         return this.fieldName.equals(other.fieldName);
     }
     

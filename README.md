@@ -181,7 +181,7 @@ logger.info(append("name1", "value1").with(append("name2", "value2")), "log mess
 Map myMap = new HashMap();
 myMap.put("name1", "value1");
 myMap.put("name2", "value2");
-logger.info(embed(myMap), "log message");
+logger.info(appendEntries(myMap), "log message");
 
 /*
  * Add "array":[1,2,3] to the json event
@@ -250,7 +250,7 @@ logger.info(appendArray("json_message", 12, map), "Message {}", 12);
 
 #### Old *deprecated* way of adding event-specific custom fields
 
-The old deprecated way of embedding custom fields in the json event was to configure `enableContextMap` to true,
+The old deprecated way of adding custom fields in the json event was to configure `enableContextMap` to true,
 and then add a `Map` as the last argument on the log line. 
 
 For example:
@@ -288,7 +288,7 @@ For example:
 ```java
 import static net.logstash.logback.marker.Markers.*
 
-logger.info(embed("duration", duration), "Service started in {} seconds", duration/1000);
+logger.info(append("duration", duration), "Service started in {} seconds", duration/1000);
 ```
 
 ## Logback access logs

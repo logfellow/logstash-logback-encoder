@@ -74,7 +74,7 @@ public class LogstashFormatter {
     /**
      * When true, if the last argument to the log line is a map, then it will be embedded in the logstash json.
      * 
-     * @deprecated When logging, prefer using a {@link Markers#embed(Map)} marker instead.
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
     @Deprecated
     private boolean enableContextMap;
@@ -210,7 +210,7 @@ public class LogstashFormatter {
      * If {@link #enableContextMap} is true, and the last event argument is a map, then
      * embeds the map entries in the logstash json
      *  
-     * @deprecated When logging, prefer using a {@link Markers#embed(Map)} marker instead.
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
     @Deprecated
     private void writeContextMapFieldsIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
