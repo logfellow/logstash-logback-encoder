@@ -1,6 +1,7 @@
 * Sajan Alexander (sajanalexander)
 * Simon Barbey (spydesk)
 * Vincent Behar (vbehar)
+* Mirko Bernardoni (mirko1978)
 * Phil Clay (philsttr)
 * Mirko Friedenhagen (mfriedenhagen)
 * Christophe Furmaniak (looztra)
