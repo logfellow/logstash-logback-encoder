@@ -17,8 +17,10 @@ import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
 import static org.apache.commons.io.IOUtils.write;
 
 import java.io.IOException;
+import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.marker.Markers;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -32,7 +34,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
         
-        write(formatter.writeValueAsBytes(event, getContext()), outputStream);
+        formatter.writeValueToOutputStream(event, context, outputStream);
         write(CoreConstants.LINE_SEPARATOR, outputStream);
         
         if (immediateFlush) {
@@ -95,11 +97,17 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
      * </p>
      * 
      * @param enableContextMap <code>true</code> to enable context map
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
+    @Deprecated
     public void setEnableContextMap(boolean enableContextMap) {
         formatter.setEnableContextMap(enableContextMap);
     }
     
+    /**
+     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
+     */
+    @Deprecated
     public boolean isEnableContextMap() {
         return formatter.isEnableContextMap();
     }

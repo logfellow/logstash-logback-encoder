@@ -17,6 +17,7 @@ import static org.apache.commons.io.IOUtils.*;
 import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
+import static net.logstash.logback.marker.Markers.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -242,13 +243,35 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
-        assertJsonArray(node.findValue("tags"));
+        assertThat(node.findValue("tags"), nullValue());
     }
     
+    /**
+     * Tests the old way of appending a json_message to the event.
+     * 
+     * @deprecated See {@link #testAppendJsonMessage()} for the new way of doing this.
+     */
     @Test
+    @Deprecated
     public void markerIsJSON() throws Exception {
         Object[] argArray = new Object[] { 1, Collections.singletonMap("hello", Collections.singletonMap("hello", "world")) };
         Marker marker = MarkerFactory.getMarker("JSON");
+        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
+        when(event.getMarker()).thenReturn(marker);
+        when(event.getArgumentArray()).thenReturn(argArray);
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(MAPPER.convertValue(argArray, JsonNode.class).equals(node.get("json_message")), is(true));
+    }
+    
+    @Test
+    public void testAppendJsonMessage() throws Exception {
+        Object[] argArray = new Object[] { 1, Collections.singletonMap("hello", Collections.singletonMap("hello", "world")) };
+        Marker marker = append("json_message", argArray);
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
         when(event.getArgumentArray()).thenReturn(argArray);
@@ -287,6 +310,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
+    @Deprecated
     public void testContextMapWithNoArguments() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getArgumentArray()).thenReturn(null);
@@ -299,7 +323,13 @@ public class LogstashEncoderTest {
         assertThat(node.get("message").textValue(), is("My message"));
     }
     
+    /**
+     * Tests the old way of embedding a map in the json event.
+     * 
+     * @deprecated See {@link #testEmbedMap()} for the new way of doing this.
+     */
     @Test
+    @Deprecated
     public void testContextMap() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         
@@ -333,18 +363,53 @@ public class LogstashEncoderTest {
     }
     
     @Test
+    public void testEmbedMap() throws Exception {
+        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
+        
+        Map<String, Object> contextMap = new HashMap<String, Object>();
+        contextMap.put("duration", 1200);
+        contextMap.put("remoteResponse", "OK");
+        contextMap.put("extra", Collections.singletonMap("extraEntry", "extraValue"));
+        
+        Object[] argList = new Object[] {
+                "firstParamThatShouldBeIgnored",
+                Collections.singletonMap("ignoredMapEntry", "whatever"),
+        };
+        
+        when(event.getArgumentArray()).thenReturn(argList);
+        
+        Marker marker = appendEntries(contextMap);
+        when(event.getMarker()).thenReturn(marker);
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        assertThat(node.get("duration"), notNullValue());
+        assertThat(node.get("duration").intValue(), is(1200));
+        assertThat(node.get("remoteResponse"), notNullValue());
+        assertThat(node.get("remoteResponse").textValue(), is("OK"));
+        assertThat(node.get("extra"), notNullValue());
+        assertThat(node.get("extra").get("extraEntry"), notNullValue());
+        assertThat(node.get("extra").get("extraEntry").textValue(), is("extraValue"));
+        
+        assertThat("The second map from the end should be ignored", node.get("ignoredMapEntry"), nullValue());
+    }
+    
+    @Test
     public void testEncoderConfiguration() throws Exception {
         // Empty the log file
         PrintWriter writer = new PrintWriter(System.getProperty("java.io.tmpdir") + "/test.log");
         writer.print("");
         writer.close();
-        LOG.info("Testing info logging.");
+        LOG.info(append("appendedName", "appendedValue").with(append("n1", 2)), "Testing info logging.");
         InputStream is = new FileInputStream(System.getProperty("java.io.tmpdir") + "/test.log");
         
         List<String> lines = IOUtils.readLines(is);
         JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
+        assertThat(node.get("appendedName").textValue(), is("appendedValue"));
         Assert.assertTrue(node.get("roles").equals(LogstashFormatter.parseCustomFields("[\"customerorder\", \"auth\"]")));
         Assert.assertTrue(node.get("buildinfo").equals(LogstashFormatter.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
