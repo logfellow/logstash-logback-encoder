@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * The values are converted using an {@link ObjectMapper}.
  * <p>
  * For example, if the map contains is
+ * 
  * <pre>
  * {@code
  *     name1= a String "value1",
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Then the name1, name2, name3, name4 fields will be added to the json for the logstash event.
  * <p>
  * For example:
+ * 
  * <pre>
  * {@code
  * {
@@ -59,7 +61,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class MapEntriesAppendingMarker extends LogstashMarker {
     
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "MAP_FIELDS";
-
+    
     /**
      * The map from which entries will be appended to the logstash json event.
      */
@@ -69,17 +71,17 @@ public class MapEntriesAppendingMarker extends LogstashMarker {
         super(MARKER_NAME);
         this.map = map;
     }
-
+    
     @Override
     public void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException {
         if (map != null) {
-            for (Map.Entry<?, ?> entry :  map.entrySet()) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
                 generator.writeFieldName(entry.getKey().toString());
                 mapper.writeValue(generator, entry.getValue());
             }
         }
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
@@ -88,7 +90,7 @@ public class MapEntriesAppendingMarker extends LogstashMarker {
         if (!(obj instanceof MapEntriesAppendingMarker)) {
             return false;
         }
-
+        
         MapEntriesAppendingMarker other = (MapEntriesAppendingMarker) obj;
         return ObjectUtils.equals(this.map, other.map);
     }

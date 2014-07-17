@@ -43,8 +43,7 @@ public class LogstashAccessFormatter {
     private static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     
     /**
-     * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference}
-     * to a {@link BufferRecycler} used to provide a low-cost
+     * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference} to a {@link BufferRecycler} used to provide a low-cost
      * buffer recycling between writer instances.
      */
     private final ThreadLocal<SoftReference<BufferRecycler>> recycler = new ThreadLocal<SoftReference<BufferRecycler>>() {
@@ -53,7 +52,7 @@ public class LogstashAccessFormatter {
             return new SoftReference<BufferRecycler>(bufferRecycler);
         };
     };
-
+    
     public byte[] writeValueAsBytes(IAccessEvent event, Context context) throws IOException {
         ByteArrayBuilder outputStream = new ByteArrayBuilder(getBufferRecycler());
         
@@ -69,7 +68,7 @@ public class LogstashAccessFormatter {
         JsonGenerator generator = FACTORY.createGenerator(outputStream);
         writeValueToGenerator(generator, event, context);
     }
-
+    
     public String writeValueAsString(IAccessEvent event, Context context) throws IOException {
         SegmentedStringWriter writer = new SegmentedStringWriter(getBufferRecycler());
         
@@ -88,7 +87,6 @@ public class LogstashAccessFormatter {
                 String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser() == null ? "-" : event.getRemoteUser(),
                         ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
                         event.getContentLength()));
-        
         
         writeFields(generator, event, context);
         generator.writeEndObject();
@@ -116,7 +114,7 @@ public class LogstashAccessFormatter {
             writeMapEntries(generator, context.getCopyOfPropertyMap());
         }
     }
-
+    
     private void writeMapEntries(JsonGenerator generator, Map<?, ?> map) throws IOException, JsonGenerationException, JsonMappingException {
         if (map != null) {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -125,7 +123,7 @@ public class LogstashAccessFormatter {
             }
         }
     }
-
+    
     private BufferRecycler getBufferRecycler() {
         SoftReference<BufferRecycler> bufferRecyclerReference = recycler.get();
         BufferRecycler bufferRecycler = bufferRecyclerReference.get();

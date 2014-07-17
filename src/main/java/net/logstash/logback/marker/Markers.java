@@ -22,6 +22,7 @@ import java.util.Map;
  * This creates a somewhat fluent interface that can be used to create markers.
  * <p>
  * For example:
+ * 
  * <pre>
  * {@code
  * {
@@ -72,5 +73,5 @@ public class Markers {
     public static RawJsonAppendingMarker appendRaw(String fieldName, String rawJsonValue) {
         return new RawJsonAppendingMarker(fieldName, rawJsonValue);
     }
-
+    
 }

@@ -13,11 +13,10 @@
  */
 package org.slf4j.helpers;
 
-
 /**
  * A hack to make {@link BasicMarker} extendable since {@link BasicMarker}'s constructor is package-private.
  * 
- * The alternative is to re-implement the logic in {@link BasicMarker}. 
+ * The alternative is to re-implement the logic in {@link BasicMarker}.
  */
 @SuppressWarnings("serial")
 public class LogstashBasicMarker extends BasicMarker {

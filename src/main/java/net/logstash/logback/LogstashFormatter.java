@@ -85,8 +85,7 @@ public class LogstashFormatter {
     private JsonNode customFields;
     
     /**
-     * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference}
-     * to a {@link BufferRecycler} used to provide a low-cost
+     * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference} to a {@link BufferRecycler} used to provide a low-cost
      * buffer recycling between writer instances.
      */
     private final ThreadLocal<SoftReference<BufferRecycler>> recycler = new ThreadLocal<SoftReference<BufferRecycler>>() {
@@ -95,7 +94,7 @@ public class LogstashFormatter {
             return new SoftReference<BufferRecycler>(bufferRecycler);
         };
     };
-
+    
     public LogstashFormatter() {
         this(false);
     }
@@ -124,7 +123,7 @@ public class LogstashFormatter {
         JsonGenerator generator = FACTORY.createGenerator(outputStream);
         writeValueToGenerator(generator, event, context);
     }
-
+    
     public String writeValueAsString(ILoggingEvent event, Context context) throws IOException {
         SegmentedStringWriter writer = new SegmentedStringWriter(getBufferRecycler());
         
@@ -150,7 +149,7 @@ public class LogstashFormatter {
         generator.writeEndObject();
         generator.flush();
     }
-
+    
     private void writeLogstashFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
         generator.writeStringField("@timestamp", ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
         generator.writeNumberField("@version", 1);
@@ -163,7 +162,7 @@ public class LogstashFormatter {
         generator.writeStringField("level", event.getLevel().toString());
         generator.writeNumberField("level_value", event.getLevel().toInt());
     }
-
+    
     private void writeCallerDataFieldsIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         if (includeCallerInfo) {
             StackTraceElement callerData = extractCallerData(event);
@@ -173,20 +172,20 @@ public class LogstashFormatter {
             generator.writeNumberField("caller_line_number", callerData.getLineNumber());
         }
     }
-
+    
     private void writeStackTraceFieldIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
             generator.writeStringField("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
         }
     }
-
+    
     private void writeContextPropertiesIfNecessary(JsonGenerator generator, Context context) throws IOException {
         if (context != null) {
             writeMapEntries(generator, context.getCopyOfPropertyMap());
         }
     }
-
+    
     /**
      * Writes the event arguments as a json array to the field named "json_message"
      * 
@@ -201,15 +200,15 @@ public class LogstashFormatter {
             MAPPER.writeValue(generator, event.getArgumentArray());
         }
     }
-
+    
     private void writeMdcPropertiesIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         writeMapEntries(generator, event.getMDCPropertyMap());
     }
-
+    
     /**
      * If {@link #enableContextMap} is true, and the last event argument is a map, then
      * embeds the map entries in the logstash json
-     *  
+     * 
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
     @Deprecated
@@ -222,7 +221,7 @@ public class LogstashFormatter {
             }
         }
     }
-
+    
     private void writeMapEntries(JsonGenerator generator, Map<?, ?> map) throws IOException, JsonGenerationException, JsonMappingException {
         if (map != null) {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -231,11 +230,11 @@ public class LogstashFormatter {
             }
         }
     }
-
+    
     private void writeGlobalCustomFields(JsonGenerator generator) throws IOException {
         writeFieldsOfNode(generator, customFields);
     }
-
+    
     private void writeTagsIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         /*
          * Don't write the tags field unless we actually have a tag to write.
@@ -252,7 +251,7 @@ public class LogstashFormatter {
             generator.writeEndArray();
         }
     }
-
+    
     private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) throws IOException {
         if (!marker.getName().equals(JSON_MARKER_NAME) && !isLogstashMarker(marker)) {
             if (!hasWrittenStart) {
@@ -263,7 +262,7 @@ public class LogstashFormatter {
         }
         if (marker.hasReferences()) {
             
-            for (Iterator<?> i = marker.iterator(); i.hasNext(); ) {
+            for (Iterator<?> i = marker.iterator(); i.hasNext();) {
                 Marker next = (Marker) i.next();
                 
                 hasWrittenStart |= writeTagIfNecessary(generator, hasWrittenStart, next);
@@ -275,7 +274,7 @@ public class LogstashFormatter {
     private boolean isLogstashMarker(Marker marker) {
         return marker instanceof LogstashMarker;
     }
-
+    
     private void writeLogstashMarkerIfNecessary(JsonGenerator generator, Marker marker) throws IOException {
         if (marker != null) {
             if (isLogstashMarker(marker)) {
@@ -283,14 +282,14 @@ public class LogstashFormatter {
             }
             
             if (marker.hasReferences()) {
-                for (Iterator<?> i = marker.iterator(); i.hasNext(); ) {
+                for (Iterator<?> i = marker.iterator(); i.hasNext();) {
                     Marker next = (Marker) i.next();
                     writeLogstashMarkerIfNecessary(generator, next);
                 }
             }
         }
     }
-
+    
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
         final StackTraceElement[] ste = event.getCallerData();
         if (ste == null || ste.length == 0) {
@@ -304,7 +303,7 @@ public class LogstashFormatter {
      */
     private void writeFieldsOfNode(JsonGenerator generator, JsonNode node) throws IOException {
         if (node != null) {
-            for (Iterator<Entry<String, JsonNode>> fields = node.fields(); fields.hasNext(); ) {
+            for (Iterator<Entry<String, JsonNode>> fields = node.fields(); fields.hasNext();) {
                 Entry<String, JsonNode> field = fields.next();
                 generator.writeFieldName(field.getKey());
                 generator.writeTree(field.getValue());
@@ -347,7 +346,7 @@ public class LogstashFormatter {
     public boolean isEnableContextMap() {
         return enableContextMap;
     }
-
+    
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */

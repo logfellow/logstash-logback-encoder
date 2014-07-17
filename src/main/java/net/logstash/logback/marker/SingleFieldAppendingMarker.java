@@ -18,7 +18,6 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-
 /**
  * A marker that appends a single field into the logstash json event.
  */
@@ -33,7 +32,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
      * Note that the value of the field is provided by subclasses via {@link #writeFieldValue(JsonGenerator, ObjectMapper)}.
      */
     private final String fieldName;
-
+    
     public SingleFieldAppendingMarker(String markerName, String fieldName) {
         super(markerName);
         if (fieldName == null) {
@@ -45,19 +44,19 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
     public String getFieldName() {
         return fieldName;
     }
-
+    
     public void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException {
         writeFieldName(generator);
         writeFieldValue(generator, mapper);
     }
-
+    
     /**
      * Writes the field name to the generator.
      */
     protected void writeFieldName(JsonGenerator generator) throws IOException {
         generator.writeFieldName(getFieldName());
     }
-
+    
     /**
      * Writes the field value to the generator.
      */
@@ -71,7 +70,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
         if (!(obj instanceof SingleFieldAppendingMarker)) {
             return false;
         }
-
+        
         SingleFieldAppendingMarker other = (SingleFieldAppendingMarker) obj;
         return this.fieldName.equals(other.fieldName);
     }

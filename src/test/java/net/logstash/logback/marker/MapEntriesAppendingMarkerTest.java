@@ -62,7 +62,6 @@ public class MapEntriesAppendingMarkerTest {
         assertThat(Markers.appendEntries(map), not(is(Markers.appendEntries(map2))));
     }
     
-
     @Test
     public void testHashCode() {
         Map<String, String> map = new HashMap<String, String>();
@@ -74,5 +73,4 @@ public class MapEntriesAppendingMarkerTest {
         assertThat(Markers.appendEntries(map).hashCode(), not(is(Markers.appendEntries(map2).hashCode())));
     }
     
-
 }

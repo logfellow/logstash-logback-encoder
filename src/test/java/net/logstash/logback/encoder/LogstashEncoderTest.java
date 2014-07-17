@@ -13,11 +13,11 @@
  */
 package net.logstash.logback.encoder;
 
+import static net.logstash.logback.marker.Markers.*;
 import static org.apache.commons.io.IOUtils.*;
 import static org.hamcrest.MatcherAssert.*;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.*;
-import static net.logstash.logback.marker.Markers.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;

@@ -37,7 +37,7 @@ public class ObjectFieldsAppendingMarkerTest {
         public MyClass(String myField) {
             this.myField = myField;
         }
-
+        
         public String getMyField() {
             return myField;
         }
@@ -73,7 +73,6 @@ public class ObjectFieldsAppendingMarkerTest {
         assertThat(Markers.appendFields(myObject), not(is(Markers.appendFields(new MyClass("value1")))));
     }
     
-
     @Test
     public void testHashCode() {
         MyClass myObject = new MyClass("value");
@@ -83,5 +82,4 @@ public class ObjectFieldsAppendingMarkerTest {
         assertThat(Markers.appendFields(myObject).hashCode(), not(is(Markers.appendFields(new MyClass("value1")).hashCode())));
     }
     
-
 }

@@ -51,7 +51,7 @@ public class RawJsonAppendingMarkerTest {
     @Test
     public void testEquals() {
         String rawJson = "{\"myField\":\"value\"}";
-
+        
         assertThat(Markers.appendRaw("rawJson", rawJson), is(Markers.appendRaw("rawJson", rawJson)));
         
         assertThat(Markers.appendRaw("rawJson", rawJson), not(is(Markers.appendRaw("rawJson", ""))));
@@ -59,7 +59,6 @@ public class RawJsonAppendingMarkerTest {
         assertThat(Markers.appendRaw("rawJson", rawJson), not(is(Markers.appendRaw("myDifferentObject", rawJson))));
     }
     
-
     @Test
     public void testHashCode() {
         String rawJson = "{\"myField\":\"value\"}";
@@ -71,5 +70,4 @@ public class RawJsonAppendingMarkerTest {
         assertThat(Markers.appendRaw("rawJson", rawJson).hashCode(), not(is(Markers.appendRaw("myDifferentObject", rawJson)).hashCode()));
     }
     
-
 }

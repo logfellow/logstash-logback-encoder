@@ -24,15 +24,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * A marker that writes a raw json value to the logstash json event
  * under a given field name.
  * <p>
- * The raw string is written verbatim without any modifications, but assuming
- * it must constitute a single legal JSON value (number, string,
- * boolean, null, Array or List)
+ * The raw string is written verbatim without any modifications, but assuming it must constitute a single legal JSON value (number, string, boolean, null, Array or List)
  */
 @SuppressWarnings("serial")
 public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
     
     public static final String MARKER_NAME = SingleFieldAppendingMarker.MARKER_NAME_PREFIX + "RAW";
-
+    
     /**
      * The raw json value to write as the field value.
      */
@@ -45,12 +43,12 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
         }
         this.rawJson = rawJson;
     }
-
+    
     @Override
     protected void writeFieldValue(JsonGenerator generator, ObjectMapper mapper) throws IOException {
         generator.writeRawValue(rawJson);
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
@@ -59,7 +57,7 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
         if (!(obj instanceof RawJsonAppendingMarker)) {
             return false;
         }
-
+        
         RawJsonAppendingMarker other = (RawJsonAppendingMarker) obj;
         return ObjectUtils.equals(this.rawJson, other.rawJson);
     }

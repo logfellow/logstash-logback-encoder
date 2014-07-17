@@ -13,8 +13,7 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.write;
+import static org.apache.commons.io.IOUtils.*;
 
 import java.io.IOException;
 import java.util.Map;
@@ -113,6 +112,6 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     }
     
     protected LogstashFormatter getFormatter() {
-		return formatter;
-	}
+        return formatter;
+    }
 }

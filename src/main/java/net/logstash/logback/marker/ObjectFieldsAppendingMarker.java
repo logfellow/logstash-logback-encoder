@@ -27,12 +27,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * A marker that first converts an object to a {@link JsonNode}, and then
  * appends the fields of the {@link JsonNode} into the logstash event.
  * <p>
- * Unless the object is already a {@link JsonNode), this may not be very efficient, so prefer using one of the other {@link LogstashMarker}s.
- * It is included here for convenience where performance is not a concern.
+ * Unless the object is already a {@link JsonNode), this may not be very efficient, so prefer using one of the other {@link LogstashMarker}s. It is included here for convenience where performance is
+ * not a concern.
  * <p>
  * The object will be converted to a {@link JsonNode} via {@link ObjectMapper#convertValue(Object, Class)};
  * <p>
  * For example, if the converted JsonNode is
+ * 
  * <pre>
  * {@code
  * {
@@ -48,6 +49,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Then the name1, name2, name3, name4 fields will be added to the json for the logstash event.
  * <p>
  * For example:
+ * 
  * <pre>
  * {@code
  * {
@@ -66,26 +68,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class ObjectFieldsAppendingMarker extends LogstashMarker {
     
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "OBJECT_FIELDS";
-
+    
     private final Object object;
     
     public ObjectFieldsAppendingMarker(Object object) {
         super(MARKER_NAME);
         this.object = object;
     }
-
+    
     @Override
     public void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException {
         if (object != null) {
             JsonNode jsonNode = mapper.convertValue(object, JsonNode.class);
-            for (Iterator<Entry<String, JsonNode>> fields = jsonNode.fields(); fields.hasNext(); ) {
+            for (Iterator<Entry<String, JsonNode>> fields = jsonNode.fields(); fields.hasNext();) {
                 Entry<String, JsonNode> field = fields.next();
                 generator.writeFieldName(field.getKey());
                 generator.writeTree(field.getValue());
             }
         }
     }
-
+    
     @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
@@ -94,7 +96,7 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker {
         if (!(obj instanceof ObjectFieldsAppendingMarker)) {
             return false;
         }
-
+        
         ObjectFieldsAppendingMarker other = (ObjectFieldsAppendingMarker) obj;
         return ObjectUtils.equals(this.object, other.object);
     }

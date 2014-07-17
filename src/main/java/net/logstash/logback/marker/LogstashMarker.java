@@ -24,8 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * A {@link Marker} that is known and understood by the logstash logback encoder.
  * <p>
- * In particular these markers are used to write data into the logstash json event
- * via {@link #writeTo(JsonGenerator, ObjectMapper)}.   
+ * In particular these markers are used to write data into the logstash json event via {@link #writeTo(JsonGenerator, ObjectMapper)}.
  */
 @SuppressWarnings("serial")
 public abstract class LogstashMarker extends LogstashBasicMarker {
@@ -39,8 +38,8 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
     /**
      * Adds the given marker as a reference, and returns this marker.
      * <p>
-     * This can be used to chain markers together fluently on a log line.
-     * For example:
+     * This can be used to chain markers together fluently on a log line. For example:
+     * 
      * <pre>
      * {@code
      * {
@@ -59,12 +58,10 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
     /**
      * Writes the data associated with this marker to the given {@link JsonGenerator}.
      * <p>
-     * The {@link ObjectMapper} can be used to write objects if necessary.
-     * In particular {@link ObjectMapper#writeValue(JsonGenerator, Object)}, 
-     * {@link ObjectMapper#writeTree(JsonGenerator, com.fasterxml.jackson.databind.JsonNode)}, and
-     * {@link ObjectMapper#writeTree(JsonGenerator, com.fasterxml.jackson.core.TreeNode)} can be useful.
+     * The {@link ObjectMapper} can be used to write objects if necessary. In particular {@link ObjectMapper#writeValue(JsonGenerator, Object)},
+     * {@link ObjectMapper#writeTree(JsonGenerator, com.fasterxml.jackson.databind.JsonNode)}, and {@link ObjectMapper#writeTree(JsonGenerator, com.fasterxml.jackson.core.TreeNode)} can be useful.
      * 
      */
     public abstract void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException;
-
+    
 }

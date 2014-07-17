@@ -25,13 +25,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * The new parameter name are:<br/>
  * 
  * <p>
- * <b>&lt;ENCODING/&gt;</b> Define the used encoding as defined in
- * {@link Charset}. The default value is UTF-8
+ * <b>&lt;ENCODING/&gt;</b> Define the used encoding as defined in {@link Charset}. The default value is UTF-8
  * <p/>
  * 
  * <p>
- * <b>&lt;NEWLINE/&gt;</b> Define the new line. Any defined character is used as
- * new line terminator.<br/>
+ * <b>&lt;NEWLINE/&gt;</b> Define the new line. Any defined character is used as new line terminator.<br/>
  * The set of pre-defined values are: <br/>
  * 
  * <i>UNIX</i> \n character (default). <br/>
@@ -47,79 +45,79 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * @since 11 Jun 2014 (creation date)
  */
 public class LogstashTcpEncoder extends LogstashEncoder {
-
-	private String encoding = "UTF-8";
-
-	private String newLine = System.getProperty("line.separator");
-
-	@Override
-	public void doEncode(ILoggingEvent event) throws IOException {
-
-		String log = getFormatter().writeValueAsString(event, context);
-		outputStream.write(log.getBytes(encoding));
-		if (newLine != null) {
-			outputStream.write(newLine.getBytes(Charset.forName(encoding)));
-		}
-
-		if (isImmediateFlush()) {
-			outputStream.flush();
-		}
-
-	}
-
-	@Override
-	public void close() throws IOException {
-		if (newLine != null) {
-			outputStream.write(newLine.getBytes(Charset.forName(encoding)));
-		}
-	}
-
-	/**
-	 * Define the encoding used for sending the logs
-	 * 
-	 * @param encoding
-	 *            the encoding to set
-	 */
-	public void setEncoding(String encoding) {
-		this.encoding = encoding;
-	}
-
-	/**
-	 * @return the encoding
-	 */
-	public String getEncoding() {
-		return encoding;
-	}
-
-	/**
-	 * Define the new line. <br/>
-	 * NULL no new line. <br/>
-	 * SYSTEM operating system new line. <br/>
-	 * UNIX is the \n combination (default). <br/>
-	 * WINDOWS is \n\r combination
-	 * 
-	 * @param newLine
-	 *            the newLine to set
-	 */
-	public void setNewLine(String newLine) {
-		if (newLine == null || newLine.isEmpty()) {
-			this.newLine = null;
-		} else if (newLine.equalsIgnoreCase("SYSTEM")) {
-			this.newLine = System.getProperty("line.separator");
-		} else if (newLine.equalsIgnoreCase("UNIX")) {
-			this.newLine = "\n";
-		} else if (newLine.equalsIgnoreCase("UNIX")) {
-			this.newLine = "\r\n";
-		} else {
-			this.newLine = newLine;
-		}
-	}
-
-	/**
-	 * @return the newLine
-	 */
-	public String getNewLine() {
-		return newLine;
-	}
-
+    
+    private String encoding = "UTF-8";
+    
+    private String newLine = System.getProperty("line.separator");
+    
+    @Override
+    public void doEncode(ILoggingEvent event) throws IOException {
+        
+        String log = getFormatter().writeValueAsString(event, context);
+        outputStream.write(log.getBytes(encoding));
+        if (newLine != null) {
+            outputStream.write(newLine.getBytes(Charset.forName(encoding)));
+        }
+        
+        if (isImmediateFlush()) {
+            outputStream.flush();
+        }
+        
+    }
+    
+    @Override
+    public void close() throws IOException {
+        if (newLine != null) {
+            outputStream.write(newLine.getBytes(Charset.forName(encoding)));
+        }
+    }
+    
+    /**
+     * Define the encoding used for sending the logs
+     * 
+     * @param encoding
+     *            the encoding to set
+     */
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+    
+    /**
+     * @return the encoding
+     */
+    public String getEncoding() {
+        return encoding;
+    }
+    
+    /**
+     * Define the new line. <br/>
+     * NULL no new line. <br/>
+     * SYSTEM operating system new line. <br/>
+     * UNIX is the \n combination (default). <br/>
+     * WINDOWS is \n\r combination
+     * 
+     * @param newLine
+     *            the newLine to set
+     */
+    public void setNewLine(String newLine) {
+        if (newLine == null || newLine.isEmpty()) {
+            this.newLine = null;
+        } else if (newLine.equalsIgnoreCase("SYSTEM")) {
+            this.newLine = System.getProperty("line.separator");
+        } else if (newLine.equalsIgnoreCase("UNIX")) {
+            this.newLine = "\n";
+        } else if (newLine.equalsIgnoreCase("UNIX")) {
+            this.newLine = "\r\n";
+        } else {
+            this.newLine = newLine;
+        }
+    }
+    
+    /**
+     * @return the newLine
+     */
+    public String getNewLine() {
+        return newLine;
+    }
+    
 }
