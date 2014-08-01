@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.FastDateFormat;
@@ -38,6 +39,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
@@ -88,6 +90,29 @@ public class LogstashEncoderTest {
     }
     
     @Test
+    public void basicsAreIncludedWithShortenedNames() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        encoder.setFieldNames(new ShortenedFieldNames());
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("@timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
+                (timestamp)));
+        assertThat(node.get("@version").intValue(), is(1));
+        assertThat(node.get("logger").textValue(), is("LoggerName"));
+        assertThat(node.get("thread").textValue(), is("ThreadName"));
+        assertThat(node.get("message").textValue(), is("My message"));
+        assertThat(node.get("level").textValue(), is("ERROR"));
+        assertThat(node.get("levelVal").intValue(), is(40000));
+    }
+    
+    @Test
     public void closePutsSeparatorAtTheEnd() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         
@@ -132,6 +157,44 @@ public class LogstashEncoderTest {
     }
     
     @Test
+    public void propertiesInMDCAreNotIncludedIfSwitchedOff() throws Exception {
+        Map<String, String> mdcMap = new HashMap<String, String>();
+        mdcMap.put("thing_one", "One");
+        mdcMap.put("thing_two", "Three");
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
+        
+        encoder.setIncludeMdc(false);
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("thing_one"), is(nullValue()));
+        assertThat(node.get("thing_two"), is(nullValue()));
+    }
+    
+    @Test
+    public void propertiesInMDCAreIncludedInSubObject() throws Exception {
+        Map<String, String> mdcMap = new HashMap<String, String>();
+        mdcMap.put("thing_one", "One");
+        mdcMap.put("thing_two", "Three");
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
+        
+        encoder.getFieldNames().setMdc("mdc");
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("mdc").get("thing_one").textValue(), is("One"));
+        assertThat(node.get("mdc").get("thing_two").textValue(), is("Three"));
+    }
+    
+    @Test
     public void nullMDCDoesNotCauseEverythingToBlowUp() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(null);
@@ -158,6 +221,27 @@ public class LogstashEncoderTest {
         assertThat(node.get("caller_method_name").textValue(), is(stackTraceElements[0].getMethodName()));
         assertThat(node.get("caller_file_name").textValue(), is(stackTraceElements[0].getFileName()));
         assertThat(node.get("caller_line_number").intValue(), is(stackTraceElements[0].getLineNumber()));
+    }
+    
+    @Test
+    public void callerDataIsIncludedInSubObject() throws Exception {
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(Collections.<String, String> emptyMap());
+        final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
+        when(event.getCallerData()).thenReturn(stackTraceElements);
+        
+        encoder.setIncludeCallerInfo(true);
+        encoder.getFieldNames().setCaller("caller");
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("caller").get("caller_class_name").textValue(), is(stackTraceElements[0].getClassName()));
+        assertThat(node.get("caller").get("caller_method_name").textValue(), is(stackTraceElements[0].getMethodName()));
+        assertThat(node.get("caller").get("caller_file_name").textValue(), is(stackTraceElements[0].getFileName()));
+        assertThat(node.get("caller").get("caller_line_number").intValue(), is(stackTraceElements[0].getLineNumber()));
     }
     
     @Test
@@ -202,6 +286,49 @@ public class LogstashEncoderTest {
         
         assertThat(node.get("thing_one").textValue(), is("One"));
         assertThat(node.get("thing_two").textValue(), is("Three"));
+    }
+    
+    @Test
+    public void propertiesInContextAreNotIncludedIfSwitchedOFf() throws Exception {
+        Map<String, String> propertyMap = new HashMap<String, String>();
+        propertyMap.put("thing_one", "One");
+        propertyMap.put("thing_two", "Three");
+        
+        final Context context = mock(Context.class);
+        when(context.getCopyOfPropertyMap()).thenReturn(propertyMap);
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        encoder.setIncludeContext(false);
+        encoder.setContext(context);
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("thing_one"), is(nullValue()));
+        assertThat(node.get("thing_two"), is(nullValue()));
+    }
+    
+    @Test
+    public void propertiesInContextAreIncludedInSubObject() throws Exception {
+        Map<String, String> propertyMap = new HashMap<String, String>();
+        propertyMap.put("thing_one", "One");
+        propertyMap.put("thing_two", "Three");
+        
+        final Context context = mock(Context.class);
+        when(context.getCopyOfPropertyMap()).thenReturn(propertyMap);
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        
+        encoder.getFieldNames().setContext("context");
+        encoder.setContext(context);
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("context").get("thing_one").textValue(), is("One"));
+        assertThat(node.get("context").get("thing_two").textValue(), is("Three"));
     }
     
     @Test
@@ -326,7 +453,7 @@ public class LogstashEncoderTest {
     /**
      * Tests the old way of embedding a map in the json event.
      * 
-     * @deprecated See {@link #testEmbedMap()} for the new way of doing this.
+     * @deprecated See {@link #testAppendEntries()} for the new way of doing this.
      */
     @Test
     @Deprecated
@@ -363,7 +490,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void testEmbedMap() throws Exception {
+    public void testAppendEntries() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         
         Map<String, Object> contextMap = new HashMap<String, Object>();
@@ -402,7 +529,9 @@ public class LogstashEncoderTest {
         PrintWriter writer = new PrintWriter(System.getProperty("java.io.tmpdir") + "/test.log");
         writer.print("");
         writer.close();
+        MDC.put("myMdcKey", "myMdcValue");
         LOG.info(append("appendedName", "appendedValue").with(append("n1", 2)), "Testing info logging.");
+        MDC.remove("myMdcKey");
         InputStream is = new FileInputStream(System.getProperty("java.io.tmpdir") + "/test.log");
         
         List<String> lines = IOUtils.readLines(is);
@@ -410,6 +539,8 @@ public class LogstashEncoderTest {
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
         assertThat(node.get("appendedName").textValue(), is("appendedValue"));
+        assertThat(node.get("myMdcKey"), is(nullValue()));
+        assertThat(node.get("logger").textValue(), is(LogstashEncoderTest.class.getName()));
         Assert.assertTrue(node.get("roles").equals(LogstashFormatter.parseCustomFields("[\"customerorder\", \"auth\"]")));
         Assert.assertTrue(node.get("buildinfo").equals(LogstashFormatter.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
