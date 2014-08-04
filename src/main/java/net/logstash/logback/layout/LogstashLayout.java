@@ -47,4 +47,8 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         formatter.setIncludeCallerInfo(includeCallerInfo);
     }
+    
+    public void setEnableContextMap(boolean enableContextMap) {
+        formatter.setEnableContextMap(enableContextMap);
+    }
 }
