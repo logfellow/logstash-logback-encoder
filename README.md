@@ -302,3 +302,6 @@ For logback access logs, use it in your `logback-access.xml` like this:
 
 <appender-ref ref="stash" />
 ```
+
+## Build status
+[![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
