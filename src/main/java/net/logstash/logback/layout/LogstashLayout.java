@@ -73,4 +73,8 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
         formatter.setIncludeContext(includeContext);
     }
     
+    @Deprecated
+    public void setEnableContextMap(boolean enableContextMap) {
+        formatter.setEnableContextMap(enableContextMap);
+    }
 }
