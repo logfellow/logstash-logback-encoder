@@ -20,10 +20,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
 
 import org.apache.commons.lang.time.FastDateFormat;
+import org.slf4j.MDC;
 import org.slf4j.Marker;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -83,6 +85,21 @@ public class LogstashFormatter {
      * When non-null, the fields in this JsonNode will be embedded in the logstash json.
      */
     private JsonNode customFields;
+    
+    /**
+     * The field names to use when writing the standard event fields
+     */
+    private LogstashFieldNames fieldNames = new LogstashFieldNames();
+    
+    /**
+     * When true, logback's {@link Context} properties will be included.
+     */
+    private boolean includeContext = true;
+    
+    /**
+     * When true, {@link MDC} properties will be included.
+     */
+    private boolean includeMdc = true;
     
     /**
      * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference} to a {@link BufferRecycler} used to provide a low-cost
@@ -151,38 +168,52 @@ public class LogstashFormatter {
     }
     
     private void writeLogstashFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        generator.writeStringField("@timestamp", ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
-        generator.writeNumberField("@version", 1);
-        generator.writeStringField("message", event.getFormattedMessage());
+        generator.writeStringField(fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
+        generator.writeNumberField(fieldNames.getVersion(), 1);
+        generator.writeStringField(fieldNames.getMessage(), event.getFormattedMessage());
     }
     
     private void writeLoggerFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        generator.writeStringField("logger_name", event.getLoggerName());
-        generator.writeStringField("thread_name", event.getThreadName());
-        generator.writeStringField("level", event.getLevel().toString());
-        generator.writeNumberField("level_value", event.getLevel().toInt());
+        generator.writeStringField(fieldNames.getLogger(), event.getLoggerName());
+        generator.writeStringField(fieldNames.getThread(), event.getThreadName());
+        generator.writeStringField(fieldNames.getLevel(), event.getLevel().toString());
+        generator.writeNumberField(fieldNames.getLevelValue(), event.getLevel().toInt());
     }
     
     private void writeCallerDataFieldsIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         if (includeCallerInfo) {
             StackTraceElement callerData = extractCallerData(event);
-            generator.writeStringField("caller_class_name", callerData.getClassName());
-            generator.writeStringField("caller_method_name", callerData.getMethodName());
-            generator.writeStringField("caller_file_name", callerData.getFileName());
-            generator.writeNumberField("caller_line_number", callerData.getLineNumber());
+            if (fieldNames.getCaller() != null) {
+                generator.writeObjectFieldStart(fieldNames.getCaller());
+            }
+            generator.writeStringField(fieldNames.getCallerClass(), callerData.getClassName());
+            generator.writeStringField(fieldNames.getCallerMethod(), callerData.getMethodName());
+            generator.writeStringField(fieldNames.getCallerFile(), callerData.getFileName());
+            generator.writeNumberField(fieldNames.getCallerLine(), callerData.getLineNumber());
+            if (fieldNames.getCaller() != null) {
+                generator.writeEndObject();
+            }
         }
     }
     
     private void writeStackTraceFieldIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
-            generator.writeStringField("stack_trace", ThrowableProxyUtil.asString(throwableProxy));
+            generator.writeStringField(fieldNames.getStackTrace(), ThrowableProxyUtil.asString(throwableProxy));
         }
     }
     
     private void writeContextPropertiesIfNecessary(JsonGenerator generator, Context context) throws IOException {
-        if (context != null) {
+        if (context != null && includeContext) {
+            if (fieldNames.getContext() != null) {
+                generator.writeObjectFieldStart(fieldNames.getContext());
+            }
             writeMapEntries(generator, context.getCopyOfPropertyMap());
+            
+            if (fieldNames.getContext() != null) {
+                generator.writeEndObject();
+            }
+            
         }
     }
     
@@ -202,7 +233,18 @@ public class LogstashFormatter {
     }
     
     private void writeMdcPropertiesIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        writeMapEntries(generator, event.getMDCPropertyMap());
+        if (includeMdc) {
+            Map<String, String> mdcProperties = event.getMDCPropertyMap();
+            if (mdcProperties != null && !mdcProperties.isEmpty()) {
+                if (fieldNames.getMdc() != null) {
+                    generator.writeObjectFieldStart(fieldNames.getMdc());
+                }
+                writeMapEntries(generator, mdcProperties);
+                if (fieldNames.getMdc() != null) {
+                    generator.writeEndObject();
+                }
+            }
+        }
     }
     
     /**
@@ -255,7 +297,7 @@ public class LogstashFormatter {
     private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) throws IOException {
         if (!marker.getName().equals(JSON_MARKER_NAME) && !isLogstashMarker(marker)) {
             if (!hasWrittenStart) {
-                generator.writeArrayFieldStart("tags");
+                generator.writeArrayFieldStart(fieldNames.getTags());
                 hasWrittenStart = true;
             }
             generator.writeString(marker.getName());
@@ -337,6 +379,28 @@ public class LogstashFormatter {
     
     public JsonNode getCustomFields() {
         return this.customFields;
+    }
+    
+    public LogstashFieldNames getFieldNames() {
+        return fieldNames;
+    }
+    
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        this.fieldNames = fieldNames;
+    }
+    
+    public boolean isIncludeMdc() {
+        return includeMdc;
+    }
+    public void setIncludeMdc(boolean includeMdc) {
+        this.includeMdc = includeMdc;
+    }
+    
+    public boolean isIncludeContext() {
+        return includeContext;
+    }
+    public void setIncludeContext(boolean includeContext) {
+        this.includeContext = includeContext;
     }
     
     /**

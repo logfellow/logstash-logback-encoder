@@ -1,7 +1,10 @@
 # Logback JSON encoder for Logstash
 
-First, add it to your project as a dependency.
+Provides a logback encoder, logback layout, and several logback appenders
+for outputting log messages in logstash's JSON format.
 
+
+## Including it in your project
 Maven style:
 
 ```xml
@@ -11,14 +14,56 @@ Maven style:
   <version>3.0</version>
 </dependency>
 ```
-## Output Destinations
+## Usage
 
-Two types of output destinations are supported
-* File
-* Socket (via syslog)
+Two output appenders are provided:
+* Syslog UDP Socket ([`LogstashSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashSocketAppender.java))
+* TCP Socket ([`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java))
 
-### File Output
-To output logstash compatible JSON to a file, use the `LogstashEncoder` in your `logback.xml` like this:
+Other logback appenders (such as `RollingFileAppender`) can use the
+[`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) or
+[`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java)
+to format log messages.
+
+### Syslog UDP Socket Appender
+
+To output logstash compatible JSON to a syslog channel, use the `LogstashSocketAppender` in your `logback.xml` like this:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+    <syslogHost>MyAwsomeSyslogServer</syslogHost>
+  </appender>
+  <root level="all">
+    <appender-ref ref="stash" />
+  </root>
+</configuration>
+```
+
+Then use the `syslog` input in logstash like this:
+
+```
+input {
+  syslog {
+    type => "your-log-type"
+    codec => "json"
+  }
+}
+```
+
+You can also use the `udp` input, which provides threading.
+ 
+### TCP Socket Appender
+
+Use the `LogstashEncoder` along with the `LogstashTcpSocketAppender` to log over TCP.
+See the next section for an example of how to use the encoder.
+
+### Encoder / Layout
+
+You can use the [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) or
+[`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) with other logback appenders.
+
+For example, to output logstash compatible JSON to a file, use the `LogstashEncoder` with the `RollingFileAppender` in your `logback.xml` like this:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -52,31 +97,6 @@ input {
 }
 ```
 
-### Socket Output (via syslog channel)
-
-To output logstash compatible JSON to a syslog channel, use the `LogstashSocketAppender` in your `logback.xml` like this:
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-    <syslogHost>MyAwsomeSyslogServer</syslogHost>
-  </appender>
-  <root level="all">
-    <appender-ref ref="stash" />
-  </root>
-</configuration>
-```
-
-Then use the `syslog` input in logstash like this:
-
-```
-input {
-  syslog {
-    type => "your-log-type"
-    codec => "json"
-  }
-}
-```
 
 ## Fields
 
@@ -85,6 +105,8 @@ The fields included in the logstash event are described in the sections below.
 ### Standard Fields
 
 These fields will appear in every log event unless otherwise noted.
+The field names listed here are the default field names.
+The field names can be customized (see below).
 
 | Field         | Description
 |---------------|------------
@@ -99,11 +121,14 @@ These fields will appear in every log event unless otherwise noted.
 | `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.)
 
 
-Additionally, every field in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`) and properties of Logback's Context (`ch.qos.logback.core.Context`) will appear as a field in the log event.
+Additionally, every field in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)
+and properties of Logback's Context (`ch.qos.logback.core.Context`) will appear as a field in the log event.
+These can be disabled by specifying `<includeMdc>false</includeMdc>` or `<includeContext>false</includeContext>`,
+respectively, in the encoder/layout/appender configuration.
 
 
-### Caller Info Fields
-The `LogstashEncoder` and `LogstashSocketAppender` do not contain caller info by default. 
+#### Caller Info Fields
+The encoder/layout/appender do not contain caller info by default. 
 This can be costly to calculate and should be switched off for busy production environments.
 
 To switch it on, add the `includeCallerInfo` property to the configuration.
@@ -130,6 +155,37 @@ When switched on, the following fields will be included in the log event:
 | `caller_file_name`   | Name of the file that logged the event
 | `caller_line_number` | Line number of the file where the event was logged
 
+### Customizing Standard Field Names
+
+The standard field names above can be customized by using the `fieldNames`
+configuration element in the encoder or appender configuration
+
+A shortened version of the field names can be configured like this:
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
+</encoder>
+```
+See [`ShortenedFieldNames`](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java)
+for complete list of shortened names. 
+
+If you want to customize individual field names, you can do so like this:
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <fieldNames>
+    <logger>logger</logger>
+    <thread>thread</logger>
+    ...
+  </fieldNames>
+</encoder>
+```
+
+See [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
+for all the field names that can be customized.
+
+Also, you can log the caller info, MDC properties, and context properties
+in sub-objects within the JSON event by specifying field
+names for `caller`, `mdc`, and `context`, respectively. 
 
 ### Custom Fields
 
@@ -202,94 +258,7 @@ logger.info(append("object", myobject), "log message");
 
 ```
 
-#### Old *deprecated* way of adding an event-specific `json_message` field
-
-The old deprecated way of adding an event-specific `json_message` field to the json event involved using a marker named `"JSON"`.
-
-For example:
-
-```java
-Map<String, Object> map = new HashMap<String, Object>();
-map.put("field1", "value1");
-map.put("field2", "value2");
-map.put("field3", Collections.singletonMap("subfield1", "subvalue1"));
-
-logger.info(MarkerFactory.getMarker("JSON"), "Message {}", 12, map);
-```
-
-Results in the following in the Logstash JSON:
-
-```json
-{
-  "@timestamp": "2014-06-04T15:26:14.464+02:00",
-  "@version": 1,
-  "message": "Message 12",
-  "json_message": [
-    12,
-    {
-      "field1": "value1",
-      "field2": "value2",
-      "field3": {
-        "subfield1": "subvalue1"
-      }
-    }
-  ]
-}
-```
-
-
-The *new* preferred way of doing this is by using the **Event-specific Custom Fields**.
-
-For example:
-
-```java
-import static net.logstash.logback.marker.Markers.*
-
-logger.info(appendArray("json_message", 12, map), "Message {}", 12);
-```
-
-#### Old *deprecated* way of adding event-specific custom fields
-
-The old deprecated way of adding custom fields in the json event was to configure `enableContextMap` to true,
-and then add a `Map` as the last argument on the log line. 
-
-For example:
-
-Configuration:
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <enableContextMap>true</enableContextMap>
-</encoder>
-```
-
-Log line:
-```java
-    log.info("Service started in {} seconds", duration/1000, Collections.singletonMap("duration", duration));
-```
-
-Result:
-```json
-{
-  "@timestamp": "2014-06-04T15:26:14.464+02:00",
-  "@version": 1,
-  "message": "Service started in 12 seconds",
-  "logger_name": "com.acme.Tester",
-  "thread_name": "main",
-  "level": "INFO",
-  "level_value": 20000,
-  "duration": 12368,
-}
-```
-
-The *new* preferred way of doing this is by using the **Custom Dynamic JSON fields**.
-
-For example:
-
-```java
-import static net.logstash.logback.marker.Markers.*
-
-logger.info(append("duration", duration), "Service started in {} seconds", duration/1000);
-```
+See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.
 
 ## Logback access logs
 For logback access logs, use it in your `logback-access.xml` like this:
