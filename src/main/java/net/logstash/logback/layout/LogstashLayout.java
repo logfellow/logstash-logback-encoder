@@ -60,13 +60,15 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     public boolean isIncludeMdc() {
         return formatter.isIncludeMdc();
     }
+    
     public void setIncludeMdc(boolean includeMdc) {
         formatter.setIncludeMdc(includeMdc);
     }
-
+    
     public boolean isIncludeContext() {
         return formatter.isIncludeContext();
     }
+    
     public void setIncludeContext(boolean includeContext) {
         formatter.setIncludeContext(includeContext);
     }

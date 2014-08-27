@@ -14,7 +14,7 @@
 package net.logstash.logback.fieldnames;
 
 /**
- * Names of standard fields that appear in the JSON output.  
+ * Names of standard fields that appear in the JSON output.
  */
 public class LogstashFieldNames {
     
@@ -38,6 +38,7 @@ public class LogstashFieldNames {
     public String getTimestamp() {
         return timestamp;
     }
+    
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
@@ -45,6 +46,7 @@ public class LogstashFieldNames {
     public String getVersion() {
         return version;
     }
+    
     public void setVersion(String version) {
         this.version = version;
     }
@@ -52,6 +54,7 @@ public class LogstashFieldNames {
     public String getMessage() {
         return message;
     }
+    
     public void setMessage(String message) {
         this.message = message;
     }
@@ -59,6 +62,7 @@ public class LogstashFieldNames {
     public String getLogger() {
         return logger;
     }
+    
     public void setLogger(String logger) {
         this.logger = logger;
     }
@@ -66,6 +70,7 @@ public class LogstashFieldNames {
     public String getThread() {
         return thread;
     }
+    
     public void setThread(String thread) {
         this.thread = thread;
     }
@@ -73,6 +78,7 @@ public class LogstashFieldNames {
     public String getLevel() {
         return level;
     }
+    
     public void setLevel(String level) {
         this.level = level;
     }
@@ -80,6 +86,7 @@ public class LogstashFieldNames {
     public String getLevelValue() {
         return levelValue;
     }
+    
     public void setLevelValue(String levelValue) {
         this.levelValue = levelValue;
     }
@@ -87,16 +94,14 @@ public class LogstashFieldNames {
     /**
      * The name of the caller object field.
      * <p>
-     * If this returns null, then the caller data fields will be written inline
-     * at the root level of the JSON event output
-     * (e.g. as a sibling to all the other fields in this class).
+     * If this returns null, then the caller data fields will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
      * <p>
-     * If this returns non-null, then the caller data fields will be written
-     * inside an object with field name returned by this method 
+     * If this returns non-null, then the caller data fields will be written inside an object with field name returned by this method
      */
     public String getCaller() {
         return caller;
     }
+    
     public void setCaller(String caller) {
         this.caller = caller;
     }
@@ -104,6 +109,7 @@ public class LogstashFieldNames {
     public String getCallerClass() {
         return callerClass;
     }
+    
     public void setCallerClass(String callerClass) {
         this.callerClass = callerClass;
     }
@@ -111,6 +117,7 @@ public class LogstashFieldNames {
     public String getCallerMethod() {
         return callerMethod;
     }
+    
     public void setCallerMethod(String callerMethod) {
         this.callerMethod = callerMethod;
     }
@@ -118,6 +125,7 @@ public class LogstashFieldNames {
     public String getCallerFile() {
         return callerFile;
     }
+    
     public void setCallerFile(String callerFile) {
         this.callerFile = callerFile;
     }
@@ -125,6 +133,7 @@ public class LogstashFieldNames {
     public String getCallerLine() {
         return callerLine;
     }
+    
     public void setCallerLine(String callerLine) {
         this.callerLine = callerLine;
     }
@@ -132,6 +141,7 @@ public class LogstashFieldNames {
     public String getStackTrace() {
         return stackTrace;
     }
+    
     public void setStackTrace(String stackTrace) {
         this.stackTrace = stackTrace;
     }
@@ -139,6 +149,7 @@ public class LogstashFieldNames {
     public String getTags() {
         return tags;
     }
+    
     public void setTags(String tags) {
         this.tags = tags;
     }
@@ -146,16 +157,14 @@ public class LogstashFieldNames {
     /**
      * The name of the mdc object field.
      * <p>
-     * If this returns null, then the mdc fields will be written inline
-     * at the root level of the JSON event output
-     * (e.g. as a sibling to all the other fields in this class).
+     * If this returns null, then the mdc fields will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
      * <p>
-     * If this returns non-null, then the mdc fields will be written
-     * inside an object with field name returned by this method 
+     * If this returns non-null, then the mdc fields will be written inside an object with field name returned by this method
      */
     public String getMdc() {
         return mdc;
     }
+    
     public void setMdc(String mdc) {
         this.mdc = mdc;
     }
@@ -163,16 +172,14 @@ public class LogstashFieldNames {
     /**
      * The name of the context object field.
      * <p>
-     * If this returns null, then the context fields will be written inline
-     * at the root level of the JSON event output
-     * (e.g. as a sibling to all the other fields in this class).
+     * If this returns null, then the context fields will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
      * <p>
-     * If this returns non-null, then the context fields will be written
-     * inside an object with field name returned by this method 
+     * If this returns non-null, then the context fields will be written inside an object with field name returned by this method
      */
     public String getContext() {
         return context;
     }
+    
     public void setContext(String context) {
         this.context = context;
     }

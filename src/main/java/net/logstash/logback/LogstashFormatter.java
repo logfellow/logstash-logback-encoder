@@ -392,6 +392,7 @@ public class LogstashFormatter {
     public boolean isIncludeMdc() {
         return includeMdc;
     }
+    
     public void setIncludeMdc(boolean includeMdc) {
         this.includeMdc = includeMdc;
     }
@@ -399,6 +400,7 @@ public class LogstashFormatter {
     public boolean isIncludeContext() {
         return includeContext;
     }
+    
     public void setIncludeContext(boolean includeContext) {
         this.includeContext = includeContext;
     }

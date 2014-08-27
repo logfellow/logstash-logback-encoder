@@ -94,6 +94,7 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     public boolean isIncludeMdc() {
         return includeMdc;
     }
+    
     public void setIncludeMdc(boolean includeMdc) {
         this.includeMdc = includeMdc;
     }
@@ -101,6 +102,7 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     public boolean isIncludeContext() {
         return includeContext;
     }
+    
     public void setIncludeContext(boolean includeContext) {
         this.includeContext = includeContext;
     }

@@ -16,8 +16,8 @@ package net.logstash.logback.fieldnames;
 /**
  * Slightly shortened versions of the {@link LogstashFieldNames}.
  * Specifically, no underscores are used,
- * the "_name" and "_number" suffixes have been removed, and 
- * caller data is wrapped in a "caller" object. 
+ * the "_name" and "_number" suffixes have been removed, and
+ * caller data is wrapped in a "caller" object.
  */
 public class ShortenedFieldNames extends LogstashFieldNames {
     
@@ -32,5 +32,5 @@ public class ShortenedFieldNames extends LogstashFieldNames {
         setCallerLine("line");
         setStackTrace("stacktrace");
     }
-        
+    
 }
