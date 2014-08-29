@@ -175,18 +175,22 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
         if (isStarted())
             return;
         int errorCount = 0;
+        if (encoder == null) {
+            errorCount++;
+            addError("No encoder was configured for appender " + name + ".");
+        }
         if (port <= 0) {
             errorCount++;
-            addError("No port was configured for appender"
+            addError("No port was configured for appender "
                     + name
-                    + " For more information, please visit http://logback.qos.ch/codes.html#socket_no_port");
+                    + ". For more information, please visit http://logback.qos.ch/codes.html#socket_no_port");
         }
         
         if (remoteHost == null) {
             errorCount++;
-            addError("No remote host was configured for appender"
+            addError("No remote host was configured for appender "
                     + name
-                    + " For more information, please visit http://logback.qos.ch/codes.html#socket_no_host");
+                    + ". For more information, please visit http://logback.qos.ch/codes.html#socket_no_host");
         }
         
         if (errorCount == 0) {
