@@ -13,13 +13,15 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.*;
-
 import java.io.IOException;
 import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.Markers;
+
+import org.apache.commons.io.IOUtils;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -34,7 +36,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public void doEncode(ILoggingEvent event) throws IOException {
         
         formatter.writeValueToOutputStream(event, context, outputStream);
-        write(CoreConstants.LINE_SEPARATOR, outputStream);
+        IOUtils.write(CoreConstants.LINE_SEPARATOR, outputStream);
         
         if (immediateFlush) {
             outputStream.flush();
@@ -44,7 +46,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     @Override
     public void close() throws IOException {
-        write(LINE_SEPARATOR, outputStream);
+        IOUtils.write(CoreConstants.LINE_SEPARATOR, outputStream);
     }
     
     public boolean isImmediateFlush() {
@@ -69,6 +71,30 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     public String getCustomFields() {
         return formatter.getCustomFields().toString();
+    }
+    
+    public LogstashFieldNames getFieldNames() {
+        return formatter.getFieldNames();
+    }
+    
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        formatter.setFieldNames(fieldNames);
+    }
+    
+    public boolean isIncludeMdc() {
+        return formatter.isIncludeMdc();
+    }
+    
+    public void setIncludeMdc(boolean includeMdc) {
+        formatter.setIncludeMdc(includeMdc);
+    }
+    
+    public boolean isIncludeContext() {
+        return formatter.isIncludeContext();
+    }
+    
+    public void setIncludeContext(boolean includeContext) {
+        formatter.setIncludeContext(includeContext);
     }
     
     /**

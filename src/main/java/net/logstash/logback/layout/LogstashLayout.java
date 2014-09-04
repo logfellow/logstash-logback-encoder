@@ -16,6 +16,7 @@ package net.logstash.logback.layout;
 import java.io.IOException;
 
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.LayoutBase;
 
@@ -47,4 +48,29 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         formatter.setIncludeCallerInfo(includeCallerInfo);
     }
+    
+    public LogstashFieldNames getFieldNames() {
+        return formatter.getFieldNames();
+    }
+    
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        formatter.setFieldNames(fieldNames);
+    }
+    
+    public boolean isIncludeMdc() {
+        return formatter.isIncludeMdc();
+    }
+    
+    public void setIncludeMdc(boolean includeMdc) {
+        formatter.setIncludeMdc(includeMdc);
+    }
+    
+    public boolean isIncludeContext() {
+        return formatter.isIncludeContext();
+    }
+    
+    public void setIncludeContext(boolean includeContext) {
+        formatter.setIncludeContext(includeContext);
+    }
+    
 }

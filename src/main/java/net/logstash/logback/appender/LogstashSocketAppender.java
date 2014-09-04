@@ -16,6 +16,7 @@ package net.logstash.logback.appender;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Layout;
@@ -26,13 +27,21 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     
     private String customFields = "{}";
     private boolean includeCallerInfo;
+    private boolean includeContext = true;
+    private boolean includeMdc = true;
+    private LogstashFieldNames fieldNames;
     
     @Override
     public Layout<ILoggingEvent> buildLayout() {
         LogstashLayout layout = new LogstashLayout();
         layout.setContext(getContext());
         layout.setCustomFields(customFields);
+        layout.setIncludeContext(includeContext);
+        layout.setIncludeMdc(includeMdc);
         layout.setIncludeCallerInfo(includeCallerInfo);
+        if (fieldNames != null) {
+            layout.setFieldNames(fieldNames);
+        }
         return layout;
     }
     
@@ -72,6 +81,30 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         this.includeCallerInfo = includeCallerInfo;
+    }
+    
+    public LogstashFieldNames getFieldNames() {
+        return fieldNames;
+    }
+    
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        this.fieldNames = fieldNames;
+    }
+    
+    public boolean isIncludeMdc() {
+        return includeMdc;
+    }
+    
+    public void setIncludeMdc(boolean includeMdc) {
+        this.includeMdc = includeMdc;
+    }
+    
+    public boolean isIncludeContext() {
+        return includeContext;
+    }
+    
+    public void setIncludeContext(boolean includeContext) {
+        this.includeContext = includeContext;
     }
     
     @Override
