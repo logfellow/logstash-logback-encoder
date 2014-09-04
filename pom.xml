@@ -275,6 +275,7 @@
                             <excludes>
                                 <exclude>ch.qos.logback:*</exclude>
                                 <exclude>org.slf4j:*</exclude>
+                                <exclude>com.fasterxml.jackson.core:*</exclude>
                             </excludes>
                         </artifactSet>
                         <relocations>
@@ -285,10 +286,6 @@
                             <relocation>
                                 <pattern>org.apache.commons.io</pattern>
                                 <shadedPattern>${project.groupId}.encoder.org.apache.commons.io</shadedPattern>
-                            </relocation>
-                            <relocation>
-                                <pattern>com.fasterxml.jackson</pattern>
-                                <shadedPattern>${project.groupId}.encoder.com.fasterxml.jackson</shadedPattern>
                             </relocation>
                         </relocations>
                     </configuration>
