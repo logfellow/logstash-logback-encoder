@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
+import com.fasterxml.jackson.databind.ser.ResolvableSerializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 
 /**
@@ -105,10 +106,15 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker {
         JsonSerializer<Object> jsonSerializer = beanSerializers.get(object.getClass());
         
         if (jsonSerializer == null) {
+            SerializerProvider serializerProvider = getSerializerProvider(mapper);
             JsonSerializer<Object> newSerializer = mapper.getSerializerFactory().createSerializer(
-                    getSerializerProvider(mapper),
+                    serializerProvider,
                     mapper.getSerializationConfig().constructType(object.getClass()))
                 .unwrappingSerializer(NameTransformer.NOP);
+            
+            if (newSerializer instanceof ResolvableSerializer) {
+                ((ResolvableSerializer) newSerializer).resolve(serializerProvider);
+            }
             
             JsonSerializer<Object> existingSerializer = beanSerializers.putIfAbsent(
                     object.getClass(),
