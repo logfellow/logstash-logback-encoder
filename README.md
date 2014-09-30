@@ -216,7 +216,18 @@ for all the field names that can be customized.
 
 Also, you can log the caller info, MDC properties, and context properties
 in sub-objects within the JSON event by specifying field
-names for `caller`, `mdc`, and `context`, respectively. 
+names for `caller`, `mdc`, and `context`, respectively.
+ 
+### Customizing Logger Name Field Length
+
+You can shorten the logger name field length similar to the normal pattern style of "%logger{36}".  Examples of how it is shortened
+can be found here: http://logback.qos.ch/manual/layouts.html#conversionWord
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+</encoder>
+```
 
 ### Custom Fields
 

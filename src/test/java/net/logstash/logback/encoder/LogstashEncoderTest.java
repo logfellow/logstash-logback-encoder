@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
@@ -106,6 +107,33 @@ public class LogstashEncoderTest {
                 (timestamp)));
         assertThat(node.get("@version").intValue(), is(1));
         assertThat(node.get("logger").textValue(), is("LoggerName"));
+        assertThat(node.get("thread").textValue(), is("ThreadName"));
+        assertThat(node.get("message").textValue(), is("My message"));
+        assertThat(node.get("level").textValue(), is("ERROR"));
+        assertThat(node.get("levelVal").intValue(), is(40000));
+    }
+
+    @Test
+    public void loggerNameIsShortenedProperly() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        final int length = 36;
+        final String shortenedLoggerName = new TargetLengthBasedClassNameAbbreviator(length).abbreviate(FastDateFormat.class.getCanonicalName());
+
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getLoggerName()).thenReturn(FastDateFormat.class.getCanonicalName());
+
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        encoder.setFieldNames(new ShortenedFieldNames());
+        encoder.setShortenedLoggerNameLength(length);
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+
+        assertThat(node.get("@timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
+                (timestamp)));
+        assertThat(node.get("@version").intValue(), is(1));
+        assertThat(node.get("logger").textValue(), is(shortenedLoggerName));
         assertThat(node.get("thread").textValue(), is("ThreadName"));
         assertThat(node.get("message").textValue(), is("My message"));
         assertThat(node.get("level").textValue(), is("ERROR"));

@@ -72,5 +72,7 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     public void setIncludeContext(boolean includeContext) {
         formatter.setIncludeContext(includeContext);
     }
+
+    public void setShortenedLoggerNameLength(int length) { formatter.setShortenedLoggerNameLength(length);}
     
 }

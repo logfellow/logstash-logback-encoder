@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
@@ -85,12 +86,22 @@ public class LogstashFormatter {
      * When non-null, the fields in this JsonNode will be embedded in the logstash json.
      */
     private JsonNode customFields;
-    
+
     /**
      * The field names to use when writing the standard event fields
      */
     private LogstashFieldNames fieldNames = new LogstashFieldNames();
-    
+
+    /**
+     * When set to anything >= 0 we will try to abbreviate the logger name
+     */
+    private int shortenedLoggerNameLength = -1;
+
+    /**
+     * Abbreviator that will shorten the logger classname if shortenedLoggerNameLength is set
+     */
+    private TargetLengthBasedClassNameAbbreviator abbreviator;
+
     /**
      * When true, logback's {@link Context} properties will be included.
      */
@@ -100,7 +111,7 @@ public class LogstashFormatter {
      * When true, {@link MDC} properties will be included.
      */
     private boolean includeMdc = true;
-    
+
     /**
      * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference} to a {@link BufferRecycler} used to provide a low-cost
      * buffer recycling between writer instances.
@@ -174,7 +185,12 @@ public class LogstashFormatter {
     }
     
     private void writeLoggerFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        generator.writeStringField(fieldNames.getLogger(), event.getLoggerName());
+        // according to documentation (http://logback.qos.ch/manual/layouts.html#conversionWord) length can be >=0
+        if (shortenedLoggerNameLength >= 0) {
+            generator.writeStringField(fieldNames.getLogger(), abbreviator.abbreviate(event.getLoggerName()));
+        } else {
+            generator.writeStringField(fieldNames.getLogger(), event.getLoggerName());
+        }
         generator.writeStringField(fieldNames.getThread(), event.getThreadName());
         generator.writeStringField(fieldNames.getLevel(), event.getLevel().toString());
         generator.writeNumberField(fieldNames.getLevelValue(), event.getLevel().toInt());
@@ -387,6 +403,11 @@ public class LogstashFormatter {
     
     public void setFieldNames(LogstashFieldNames fieldNames) {
         this.fieldNames = fieldNames;
+    }
+
+    public void setShortenedLoggerNameLength(int length) {
+        this.shortenedLoggerNameLength = length;
+        abbreviator = new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength);
     }
     
     public boolean isIncludeMdc() {
