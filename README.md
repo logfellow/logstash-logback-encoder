@@ -59,19 +59,23 @@ Use the `LogstashEncoder` along with the `LogstashTcpSocketAppender` to log over
 See the next section for an example of how to use the encoder with a file appender.
 
 Example appender configuration in `logback.xml`:
-```
-<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-    <!-- remoteHost and port are optional (default values shown) -->
-    <remoteHost>127.0.0.1</remoteHost>
-    <port>4560</port>
 
-    <!-- encoder is required -->
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-</appender>
-
-<root level="DEBUG">
-    <appender-ref ref="stash" />
-</root>
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <!-- remoteHost and port are optional (default values shown) -->
+      <remoteHost>127.0.0.1</remoteHost>
+      <port>4560</port>
+  
+      <!-- encoder is required -->
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+  
+  <root level="DEBUG">
+      <appender-ref ref="stash" />
+  </root>
+</configuration>
 ```
 
 Example logstash configuration to read `LogstashTcpSocketAppender` messages:
