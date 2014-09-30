@@ -56,7 +56,34 @@ You can also use the `udp` input, which provides threading.
 ### TCP Socket Appender
 
 Use the `LogstashEncoder` along with the `LogstashTcpSocketAppender` to log over TCP.
-See the next section for an example of how to use the encoder.
+See the next section for an example of how to use the encoder with a file appender.
+
+Example appender configuration in `logback.xml`:
+```
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <!-- remoteHost and port are optional (default values shown) -->
+    <remoteHost>127.0.0.1</remoteHost>
+    <port>4560</port>
+
+    <!-- encoder is required -->
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+</appender>
+
+<root level="DEBUG">
+    <appender-ref ref="stash" />
+</root>
+```
+
+Example logstash configuration to read `LogstashTcpSocketAppender` messages:
+
+```
+input {
+    tcp {
+        port => 4560
+        codec => json
+    }
+}
+```
 
 ### Encoder / Layout
 
