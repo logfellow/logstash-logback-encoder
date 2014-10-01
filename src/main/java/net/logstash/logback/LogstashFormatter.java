@@ -404,6 +404,10 @@ public class LogstashFormatter {
     public void setFieldNames(LogstashFieldNames fieldNames) {
         this.fieldNames = fieldNames;
     }
+    
+    public int getShortenedLoggerNameLength() {
+		return shortenedLoggerNameLength;
+	}
 
     public void setShortenedLoggerNameLength(int length) {
         this.shortenedLoggerNameLength = length;

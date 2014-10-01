@@ -81,7 +81,13 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         formatter.setFieldNames(fieldNames);
     }
 
-    public void setShortenedLoggerNameLength(int length) { formatter.setShortenedLoggerNameLength(length); }
+    public int getShortenedLoggerNameLength() {
+        return formatter.getShortenedLoggerNameLength();
+    }
+    
+    public void setShortenedLoggerNameLength(int length) {
+        formatter.setShortenedLoggerNameLength(length);
+    }
     
     public boolean isIncludeMdc() {
         return formatter.isIncludeMdc();
