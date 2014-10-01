@@ -470,7 +470,7 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
      * @param queueSize the maximum number of entries in the queue
      */
     public void setQueueSize(int queueSize) {
-        if(queue != null) {
+        if (queue != null) {
             throw new IllegalStateException("Queue size must be set before initialization");
         }
         this.queueSize = queueSize;
