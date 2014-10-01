@@ -256,6 +256,13 @@ logger.info(appendRaw("array", "[1,2,3]"), "log message");
  */
 logger.info(append("object", myobject), "log message");
 
+/*
+ * Add fields of any object that can be unwrapped by Jackson's UnwrappableBeanSerializer.
+ * i.e. The fields of an object can be written directly into the json output.
+ * This is similar to the @JsonUnwrapped annotation.
+ */
+logger.info(appendFields(myobject), "log message");
+
 ```
 
 See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.

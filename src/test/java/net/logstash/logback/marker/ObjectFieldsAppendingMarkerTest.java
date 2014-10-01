@@ -65,6 +65,21 @@ public class ObjectFieldsAppendingMarkerTest {
     }
     
     @Test
+    public void testWriteTo_nonUnwrappable() throws IOException {
+        
+        StringWriter writer = new StringWriter();
+        JsonGenerator generator = FACTORY.createGenerator(writer);
+        
+        ObjectFieldsAppendingMarker marker = Markers.appendFields(Long.valueOf(1L));
+        generator.writeStartObject();
+        marker.writeTo(generator, MAPPER);
+        generator.writeEndObject();
+        generator.flush();
+        
+        assertThat(writer.toString(), is("{}"));
+    }
+    
+    @Test
     public void testEquals() {
         MyClass myObject = new MyClass("value");
         
