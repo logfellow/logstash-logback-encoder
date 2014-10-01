@@ -268,7 +268,7 @@ logger.info(append("name", "value"), "log message");
 /*
  * Add "name1":"value1","name2":"value2" to the json event by using multiple markers.
  */
-logger.info(append("name1", "value1").with(append("name2", "value2")), "log message");
+logger.info(append("name1", "value1").and(append("name2", "value2")), "log message");
 
 /*
  * Add "name1":"value1","name2":"value2" to the json event by using a map.

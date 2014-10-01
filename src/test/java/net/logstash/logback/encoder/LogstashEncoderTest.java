@@ -558,7 +558,7 @@ public class LogstashEncoderTest {
         writer.print("");
         writer.close();
         MDC.put("myMdcKey", "myMdcValue");
-        LOG.info(append("appendedName", "appendedValue").with(append("n1", 2)), "Testing info logging.");
+        LOG.info(append("appendedName", "appendedValue").and(append("n1", 2)), "Testing info logging.");
         MDC.remove("myMdcKey");
         InputStream is = new FileInputStream(System.getProperty("java.io.tmpdir") + "/test.log");
         

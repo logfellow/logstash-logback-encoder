@@ -45,16 +45,25 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
      * {
      *     import static net.logstash.logback.marker.Markers.*
      *     
-     *     logger.info(append("name1", "value1).with(append("name2", "value2")), "log message");
+     *     logger.info(append("name1", "value1).and(append("name2", "value2")), "log message");
      * }
      * </pre>
      */
     @SuppressWarnings("unchecked")
-    public <T extends LogstashMarker> T with(Marker reference) {
+    public <T extends LogstashMarker> T and(Marker reference) {
         add(reference);
         return (T) this;
     }
     
+    /**
+     * @deprecated Use {@link #and(Marker)} instead
+     * @see #and(Marker)
+     */
+    @Deprecated
+    public <T extends LogstashMarker> T with(Marker reference) {
+        return and(reference);
+    }
+
     /**
      * Writes the data associated with this marker to the given {@link JsonGenerator}.
      * <p>
