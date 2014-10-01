@@ -73,8 +73,10 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
     /**
      * Default size of the queue used to hold logging events that are destined
      * for the remote peer.
+     * Assuming an average log entry to take 1k, this would result in the application
+     * using about 10MB additional memory if the queue is full
      */
-    public static final int DEFAULT_QUEUE_SIZE = 128;
+    public static final int DEFAULT_QUEUE_SIZE = 10000;
     
     /**
      * Default timeout when waiting for the remote server to accept our
@@ -100,6 +102,8 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
     private int acceptConnectionTimeout = DEFAULT_ACCEPT_CONNECTION_DELAY;
     
     private Duration eventDelayLimit = new Duration(DEFAULT_EVENT_DELAY_TIMEOUT);
+
+    private int queueSize = DEFAULT_QUEUE_SIZE;
     
     private BlockingQueue<ILoggingEvent> queue;
     
@@ -199,7 +203,7 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
         }
         
         if (errorCount == 0) {
-            queue = new LinkedBlockingQueue<ILoggingEvent>();
+            queue = new LinkedBlockingQueue<ILoggingEvent>(queueSize);
             peerId = "remote peer " + remoteHost + ":" + port + ": ";
             task = getContext().getExecutorService().submit(this);
             super.start();
@@ -233,7 +237,7 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
                     eventDelayLimit.getMilliseconds(), TimeUnit.MILLISECONDS);
             if (!inserted) {
                 addInfo("Dropping event due to timeout limit of ["
-                        + eventDelayLimit + "] milliseconds being exceeded");
+                        + eventDelayLimit + "] being exceeded");
             }
         } catch (InterruptedException e) {
             addError("Interrupted while appending event to SocketAppender", e);
@@ -451,5 +455,24 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
     void setAcceptConnectionTimeout(int acceptConnectionTimeout) {
         this.acceptConnectionTimeout = acceptConnectionTimeout;
     }
-    
+
+    /**
+     * Returns the value of the <b>queueSize</b> property.
+     */
+    public int getQueueSize() {
+        return queueSize;
+    }
+
+    /**
+     * Sets the maximum number of entries in the queue. Once the queue is full additional entries will be dropped
+     * if in the time given by the <b>eventDelayLimit</b> no space becomes available.
+     *
+     * @param queueSize the maximum number of entries in the queue
+     */
+    public void setQueueSize(int queueSize) {
+        if(queue != null) {
+            throw new IllegalStateException("Queue size must be set before initialization");
+        }
+        this.queueSize = queueSize;
+    }
 }
