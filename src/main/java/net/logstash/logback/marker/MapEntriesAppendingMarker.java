@@ -30,10 +30,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 
  * <pre>
  * {@code
- *     name1= a String "value1",
- *     name2= an Integer 5,
- *     name3= an array containing [1, 2, 3],
- *     name4= a map containing { name5=6 }
+ * name1= a String "value1",
+ * name2= an Integer 5,
+ * name3= an array containing [1, 2, 3],
+ * name4= a map containing  name5=6 
  * }
  * </pre>
  * <p>
