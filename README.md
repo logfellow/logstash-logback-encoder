@@ -56,7 +56,38 @@ You can also use the `udp` input, which provides threading.
 ### TCP Socket Appender
 
 Use the `LogstashEncoder` along with the `LogstashTcpSocketAppender` to log over TCP.
-See the next section for an example of how to use the encoder.
+See the next section for an example of how to use the encoder with a file appender.
+
+Example appender configuration in `logback.xml`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <!-- remoteHost and port are optional (default values shown) -->
+      <remoteHost>127.0.0.1</remoteHost>
+      <port>4560</port>
+  
+      <!-- encoder is required -->
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+  
+  <root level="DEBUG">
+      <appender-ref ref="stash" />
+  </root>
+</configuration>
+```
+
+Example logstash configuration to read `LogstashTcpSocketAppender` messages:
+
+```
+input {
+    tcp {
+        port => 4560
+        codec => json
+    }
+}
+```
 
 ### Encoder / Layout
 
@@ -185,7 +216,18 @@ for all the field names that can be customized.
 
 Also, you can log the caller info, MDC properties, and context properties
 in sub-objects within the JSON event by specifying field
-names for `caller`, `mdc`, and `context`, respectively. 
+names for `caller`, `mdc`, and `context`, respectively.
+ 
+### Customizing Logger Name Field Length
+
+You can shorten the logger name field length similar to the normal pattern style of "%logger{36}".  Examples of how it is shortened
+can be found here: http://logback.qos.ch/manual/layouts.html#conversionWord
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+</encoder>
+```
 
 ### Custom Fields
 
