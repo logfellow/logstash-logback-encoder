@@ -14,8 +14,6 @@
 package net.logstash.logback;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.lang.ref.SoftReference;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -25,7 +23,6 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
 
-import org.apache.commons.lang.time.FastDateFormat;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
@@ -35,23 +32,15 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.io.SegmentedStringWriter;
-import com.fasterxml.jackson.core.util.BufferRecycler;
-import com.fasterxml.jackson.core.util.ByteArrayBuilder;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 
  */
-public class LogstashFormatter {
+public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, LogstashFieldNames> {
     
     /**
      * Name of the {@link Marker} that indicates that the log event arguments should be appended to the
@@ -62,10 +51,7 @@ public class LogstashFormatter {
      */
     @Deprecated
     private static final String JSON_MARKER_NAME = "JSON";
-    
-    private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
-    private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
-    private static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
+
     private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
     
     /**
@@ -88,11 +74,6 @@ public class LogstashFormatter {
     private JsonNode customFields;
 
     /**
-     * The field names to use when writing the standard event fields
-     */
-    private LogstashFieldNames fieldNames = new LogstashFieldNames();
-
-    /**
      * When set to anything >= 0 we will try to abbreviate the logger name
      */
     private int shortenedLoggerNameLength = -1;
@@ -112,55 +93,24 @@ public class LogstashFormatter {
      */
     private boolean includeMdc = true;
 
-    /**
-     * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference} to a {@link BufferRecycler} used to provide a low-cost
-     * buffer recycling between writer instances.
-     */
-    private final ThreadLocal<SoftReference<BufferRecycler>> recycler = new ThreadLocal<SoftReference<BufferRecycler>>() {
-        protected SoftReference<BufferRecycler> initialValue() {
-            BufferRecycler bufferRecycler = new BufferRecycler();
-            return new SoftReference<BufferRecycler>(bufferRecycler);
-        };
-    };
-    
     public LogstashFormatter() {
         this(false);
     }
     
     public LogstashFormatter(boolean includeCallerInfo) {
+        this(includeCallerInfo, null);
         this.includeCallerInfo = includeCallerInfo;
     }
     
     public LogstashFormatter(boolean includeCallerInfo, JsonNode customFields) {
+        super(new LogstashFieldNames());
+
         this.includeCallerInfo = includeCallerInfo;
         this.customFields = customFields;
     }
-    
-    public byte[] writeValueAsBytes(ILoggingEvent event, Context context) throws IOException {
-        ByteArrayBuilder outputStream = new ByteArrayBuilder(getBufferRecycler());
-        
-        try {
-            writeValueToOutputStream(event, context, outputStream);
-            return outputStream.toByteArray();
-        } finally {
-            outputStream.release();
-        }
-    }
-    
-    public void writeValueToOutputStream(ILoggingEvent event, Context context, OutputStream outputStream) throws IOException {
-        JsonGenerator generator = FACTORY.createGenerator(outputStream);
-        writeValueToGenerator(generator, event, context);
-    }
-    
-    public String writeValueAsString(ILoggingEvent event, Context context) throws IOException {
-        SegmentedStringWriter writer = new SegmentedStringWriter(getBufferRecycler());
-        
-        JsonGenerator generator = FACTORY.createGenerator(writer);
-        writeValueToGenerator(generator, event, context);
-        return writer.getAndClear();
-    }
-    
-    private void writeValueToGenerator(JsonGenerator generator, ILoggingEvent event, Context context) throws IOException {
+
+    @Override
+    protected void writeValueToGenerator(JsonGenerator generator, ILoggingEvent event, Context context) throws IOException {
         
         generator.writeStartObject();
         writeLogstashFields(generator, event);
@@ -279,16 +229,7 @@ public class LogstashFormatter {
             }
         }
     }
-    
-    private void writeMapEntries(JsonGenerator generator, Map<?, ?> map) throws IOException, JsonGenerationException, JsonMappingException {
-        if (map != null) {
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                generator.writeFieldName(entry.getKey().toString());
-                MAPPER.writeValue(generator, entry.getValue());
-            }
-        }
-    }
-    
+
     private void writeGlobalCustomFields(JsonGenerator generator) throws IOException {
         writeFieldsOfNode(generator, customFields);
     }
@@ -397,14 +338,6 @@ public class LogstashFormatter {
         return this.customFields;
     }
     
-    public LogstashFieldNames getFieldNames() {
-        return fieldNames;
-    }
-    
-    public void setFieldNames(LogstashFieldNames fieldNames) {
-        this.fieldNames = fieldNames;
-    }
-    
     public int getShortenedLoggerNameLength() {
 		return shortenedLoggerNameLength;
 	}
@@ -445,14 +378,4 @@ public class LogstashFormatter {
     public void setEnableContextMap(boolean enableContextMap) {
         this.enableContextMap = enableContextMap;
     }
-    
-    private BufferRecycler getBufferRecycler() {
-        SoftReference<BufferRecycler> bufferRecyclerReference = recycler.get();
-        BufferRecycler bufferRecycler = bufferRecyclerReference.get();
-        if (bufferRecycler == null) {
-            recycler.remove();
-            return getBufferRecycler();
-        }
-        return bufferRecycler;
-    };
 }
