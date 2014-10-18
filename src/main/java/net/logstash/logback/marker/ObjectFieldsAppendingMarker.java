@@ -89,8 +89,9 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker {
     }
     
     @Override
-    public void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException {
+    public void writeTo(JsonGenerator generator) throws IOException {
         if (object != null) {
+            ObjectMapper mapper = (ObjectMapper) generator.getCodec();
             JsonSerializer<Object> serializer = getBeanSerializer(mapper);
             if (serializer.isUnwrappingSerializer()) {
                 serializer.serialize(object, generator, getSerializerProvider(mapper));

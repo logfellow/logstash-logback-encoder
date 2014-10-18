@@ -16,6 +16,8 @@ package net.logstash.logback.appender;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
+import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -25,24 +27,24 @@ import ch.qos.logback.core.net.SyslogOutputStream;
 
 public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     
-    private String customFields = "{}";
-    private boolean includeCallerInfo;
-    private boolean includeContext = true;
-    private boolean includeMdc = true;
-    private LogstashFieldNames fieldNames;
+    private final LogstashLayout logstashLayout = new LogstashLayout();
     
     @Override
     public Layout<ILoggingEvent> buildLayout() {
-        LogstashLayout layout = new LogstashLayout();
-        layout.setContext(getContext());
-        layout.setCustomFields(customFields);
-        layout.setIncludeContext(includeContext);
-        layout.setIncludeMdc(includeMdc);
-        layout.setIncludeCallerInfo(includeCallerInfo);
-        if (fieldNames != null) {
-            layout.setFieldNames(fieldNames);
-        }
-        return layout;
+        logstashLayout.setContext(getContext());
+        return logstashLayout;
+    }
+    
+    @Override
+    public void start() {
+        super.start();
+        getLayout().start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        getLayout().stop();
     }
     
     public LogstashSocketAppender() {
@@ -68,45 +70,69 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     }
     
     public void setCustomFields(String customFields) {
-        this.customFields = customFields;
+        logstashLayout.setCustomFields(customFields);
     }
     
     public String getCustomFields() {
-        return this.customFields;
+        return logstashLayout.getCustomFields().toString();
     }
     
     public boolean isIncludeCallerInfo() {
-        return this.includeCallerInfo;
+        return logstashLayout.isIncludeCallerInfo();
     }
     
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
-        this.includeCallerInfo = includeCallerInfo;
+        logstashLayout.setIncludeCallerInfo(includeCallerInfo);
     }
     
     public LogstashFieldNames getFieldNames() {
-        return fieldNames;
+        return logstashLayout.getFieldNames();
     }
     
     public void setFieldNames(LogstashFieldNames fieldNames) {
-        this.fieldNames = fieldNames;
+        logstashLayout.setFieldNames(fieldNames);
     }
     
     public boolean isIncludeMdc() {
-        return includeMdc;
+        return logstashLayout.isIncludeMdc();
     }
     
     public void setIncludeMdc(boolean includeMdc) {
-        this.includeMdc = includeMdc;
+        logstashLayout.setIncludeMdc(includeMdc);
     }
     
     public boolean isIncludeContext() {
-        return includeContext;
+        return logstashLayout.isIncludeContext();
     }
     
     public void setIncludeContext(boolean includeContext) {
-        this.includeContext = includeContext;
+        logstashLayout.setIncludeContext(includeContext);
+    }
+
+    public int getShortenedLoggerNameLength() {
+        return logstashLayout.getShortenedLoggerNameLength();
+    }
+
+    public void setShortenedLoggerNameLength(int length) {
+        logstashLayout.setShortenedLoggerNameLength(length);
     }
     
+    public JsonFactoryDecorator getJsonFactoryDecorator() {
+        return logstashLayout.getJsonFactoryDecorator();
+    }
+
+    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
+        logstashLayout.setJsonFactoryDecorator(jsonFactoryDecorator);
+    }
+
+    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+        return logstashLayout.getJsonGeneratorDecorator();
+    }
+
+    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
+        logstashLayout.setJsonGeneratorDecorator(jsonGeneratorDecorator);
+    }
+
     @Override
     public SyslogOutputStream createOutputStream() throws UnknownHostException, SocketException {
         return new SyslogOutputStream(this.getHost(), this.getPort());

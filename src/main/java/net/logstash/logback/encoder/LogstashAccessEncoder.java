@@ -30,7 +30,7 @@ public class LogstashAccessEncoder extends EncoderBase<IAccessEvent> {
      * If true, the caller information is included in the logged data.
      * Note: calculating the caller data is an expensive operation.
      */
-    private final LogstashAccessFormatter formatter = new LogstashAccessFormatter();
+    private final LogstashAccessFormatter formatter = new LogstashAccessFormatter(this);
     
     @Override
     public void doEncode(IAccessEvent event) throws IOException {
@@ -42,6 +42,18 @@ public class LogstashAccessEncoder extends EncoderBase<IAccessEvent> {
             outputStream.flush();
         }
         
+    }
+    
+    @Override
+    public void start() {
+        super.start();
+        formatter.start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        formatter.stop();
     }
     
     @Override

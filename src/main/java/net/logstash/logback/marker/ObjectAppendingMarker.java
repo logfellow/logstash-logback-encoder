@@ -49,8 +49,8 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
     }
     
     @Override
-    protected void writeFieldValue(JsonGenerator generator, ObjectMapper mapper) throws IOException {
-        mapper.writeValue(generator, object);
+    protected void writeFieldValue(JsonGenerator generator) throws IOException {
+        generator.writeObject(object);
     }
     
     @Override

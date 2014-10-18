@@ -44,6 +44,7 @@ public class LogstashAccessEncoderTest {
         outputStream = new ByteArrayOutputStream();
         encoder = new LogstashAccessEncoder();
         encoder.init(outputStream);
+        encoder.start();
     }
     
     @Test

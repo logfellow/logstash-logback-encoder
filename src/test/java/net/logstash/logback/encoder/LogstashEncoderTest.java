@@ -13,14 +13,20 @@
  */
 package net.logstash.logback.encoder;
 
-import static net.logstash.logback.marker.Markers.*;
-import static org.apache.commons.io.IOUtils.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static net.logstash.logback.marker.Markers.append;
+import static net.logstash.logback.marker.Markers.appendEntries;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.Collections;
@@ -28,8 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
 import org.apache.commons.io.IOUtils;
@@ -45,19 +52,26 @@ import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LogstashEncoderTest {
     
     private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    
+    private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+    private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
     private LogstashEncoder encoder;
     private ByteArrayOutputStream outputStream;
     
@@ -66,6 +80,7 @@ public class LogstashEncoderTest {
         outputStream = new ByteArrayOutputStream();
         encoder = new LogstashEncoder();
         encoder.init(outputStream);
+        encoder.start();
     }
     
     @Test
@@ -112,6 +127,49 @@ public class LogstashEncoderTest {
         assertThat(node.get("level").textValue(), is("ERROR"));
         assertThat(node.get("levelVal").intValue(), is(40000));
     }
+    
+    @Test
+    public void customDecorators() throws Exception {
+        encoder.stop();
+        encoder.setJsonFactoryDecorator(new JsonFactoryDecorator() {
+            
+            @Override
+            public MappingJsonFactory decorate(MappingJsonFactory factory) {
+                return (MappingJsonFactory) factory.disable(JsonGenerator.Feature.QUOTE_FIELD_NAMES);
+            }
+        });
+        
+        encoder.setJsonGeneratorDecorator(new JsonGeneratorDecorator() {
+            
+            @Override
+            public JsonGenerator decorate(JsonGenerator generator) {
+                return generator.useDefaultPrettyPrinter();
+            }
+        });
+        
+        encoder.start();
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        String output = outputStream.toString("UTF-8");
+        
+        assertThat(output, is(String.format(
+                "{%n"
+                + "  @timestamp : \"" + FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp) + "\",%n"
+                + "  @version : 1,%n"
+                + "  message : \"My message\",%n"
+                + "  logger_name : \"LoggerName\",%n"
+                + "  thread_name : \"ThreadName\",%n"
+                + "  level : \"ERROR\",%n"
+                + "  level_value : 40000%n"
+                + "}%n")));
+    }
+    
 
     @Test
     public void loggerNameIsShortenedProperly() throws Exception {
@@ -460,8 +518,12 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
-        Assert.assertTrue(node.get("roles").equals(LogstashFormatter.parseCustomFields("[\"customerorder\", \"auth\"]")));
-        Assert.assertTrue(node.get("buildinfo").equals(LogstashFormatter.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        Assert.assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
+        Assert.assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+    }
+    
+    public JsonNode parse(String string) throws JsonParseException, IOException {
+        return FACTORY.createParser(string).readValueAsTree();
     }
     
     @Test
@@ -576,8 +638,8 @@ public class LogstashEncoderTest {
         assertThat(node.get("appendedName").textValue(), is("appendedValue"));
         assertThat(node.get("myMdcKey"), is(nullValue()));
         assertThat(node.get("logger").textValue(), is(LogstashEncoderTest.class.getName()));
-        Assert.assertTrue(node.get("roles").equals(LogstashFormatter.parseCustomFields("[\"customerorder\", \"auth\"]")));
-        Assert.assertTrue(node.get("buildinfo").equals(LogstashFormatter.parseCustomFields("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        Assert.assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
+        Assert.assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
     
     private void assertJsonArray(JsonNode jsonNode, String... expected) {

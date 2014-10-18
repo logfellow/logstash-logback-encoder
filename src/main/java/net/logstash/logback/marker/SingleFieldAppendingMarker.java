@@ -45,9 +45,9 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
         return fieldName;
     }
     
-    public void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException {
+    public void writeTo(JsonGenerator generator) throws IOException {
         writeFieldName(generator);
-        writeFieldValue(generator, mapper);
+        writeFieldValue(generator);
     }
     
     /**
@@ -60,7 +60,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
     /**
      * Writes the field value to the generator.
      */
-    protected abstract void writeFieldValue(JsonGenerator generator, ObjectMapper mapper) throws IOException;
+    protected abstract void writeFieldValue(JsonGenerator generator) throws IOException;
     
     @Override
     public boolean equals(Object obj) {

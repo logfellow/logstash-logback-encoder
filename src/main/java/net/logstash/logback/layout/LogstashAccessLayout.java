@@ -21,7 +21,7 @@ import ch.qos.logback.core.LayoutBase;
 
 public class LogstashAccessLayout extends LayoutBase<IAccessEvent> {
     
-    private final LogstashAccessFormatter formatter = new LogstashAccessFormatter();
+    private final LogstashAccessFormatter formatter = new LogstashAccessFormatter(this);
     
     public String doLayout(IAccessEvent event) {
         try {
@@ -30,5 +30,17 @@ public class LogstashAccessLayout extends LayoutBase<IAccessEvent> {
             addWarn("Error formatting logging event", e);
             return null;
         }
+    }
+    
+    @Override
+    public void start() {
+        super.start();
+        formatter.start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        formatter.stop();
     }
 }

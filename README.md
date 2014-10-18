@@ -311,6 +311,33 @@ logger.info(appendFields(myobject), "log message");
 
 See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.
 
+## Customizing JSON Factory and Generator
+
+The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by creating
+custom instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
+or [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java), respectively.
+
+For example, you could enable pretty printing like this:
+```java
+public class PrettyPrintingDecorator implements JsonGeneratorDecorator {
+
+    @Override
+    public JsonGenerator decorate(JsonGenerator generator) {
+        return generator.useDefaultPrettyPrinter();
+    }
+
+}
+```
+
+and then specify your decorator in the logback.xml file like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonGeneratorDecorator class="your.package.PrettyPrintingDecorator"/>
+</encoder>
+
+```
+
 ## Logback access logs
 For logback access logs, use it in your `logback-access.xml` like this:
 

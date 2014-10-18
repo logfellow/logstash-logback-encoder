@@ -65,11 +65,7 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
 
     /**
      * Writes the data associated with this marker to the given {@link JsonGenerator}.
-     * <p>
-     * The {@link ObjectMapper} can be used to write objects if necessary. In particular {@link ObjectMapper#writeValue(JsonGenerator, Object)},
-     * {@link ObjectMapper#writeTree(JsonGenerator, com.fasterxml.jackson.databind.JsonNode)}, and {@link ObjectMapper#writeTree(JsonGenerator, com.fasterxml.jackson.core.TreeNode)} can be useful.
-     * 
      */
-    public abstract void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException;
+    public abstract void writeTo(JsonGenerator generator) throws IOException;
     
 }

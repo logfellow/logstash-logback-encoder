@@ -203,6 +203,7 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
         }
         
         if (errorCount == 0) {
+            encoder.start();
             queue = new LinkedBlockingQueue<ILoggingEvent>(queueSize);
             peerId = "remote peer " + remoteHost + ":" + port + ": ";
             task = getContext().getExecutorService().submit(this);
