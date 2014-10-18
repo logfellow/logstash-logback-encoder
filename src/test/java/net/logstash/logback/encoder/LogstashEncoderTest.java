@@ -85,7 +85,7 @@ public class LogstashEncoderTest {
         assertThat(node.get("@version").intValue(), is(1));
         assertThat(node.get("logger_name").textValue(), is("LoggerName"));
         assertThat(node.get("thread_name").textValue(), is("ThreadName"));
-        assertThat(node.get("@message").textValue(), is("My message"));
+        assertThat(node.get("message").textValue(), is("My message"));
         assertThat(node.get("level").textValue(), is("ERROR"));
         assertThat(node.get("level_value").intValue(), is(40000));
     }
@@ -108,7 +108,7 @@ public class LogstashEncoderTest {
         assertThat(node.get("@version").intValue(), is(1));
         assertThat(node.get("logger").textValue(), is("LoggerName"));
         assertThat(node.get("thread").textValue(), is("ThreadName"));
-        assertThat(node.get("@message").textValue(), is("My message"));
+        assertThat(node.get("message").textValue(), is("My message"));
         assertThat(node.get("level").textValue(), is("ERROR"));
         assertThat(node.get("levelVal").intValue(), is(40000));
     }
@@ -135,7 +135,7 @@ public class LogstashEncoderTest {
         assertThat(node.get("@version").intValue(), is(1));
         assertThat(node.get("logger").textValue(), is(shortenedLoggerName));
         assertThat(node.get("thread").textValue(), is("ThreadName"));
-        assertThat(node.get("@message").textValue(), is("My message"));
+        assertThat(node.get("message").textValue(), is("My message"));
         assertThat(node.get("level").textValue(), is("ERROR"));
         assertThat(node.get("levelVal").intValue(), is(40000));
     }
@@ -475,7 +475,7 @@ public class LogstashEncoderTest {
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-        assertThat(node.get("@message").textValue(), is("My message"));
+        assertThat(node.get("message").textValue(), is("My message"));
     }
     
     /**
