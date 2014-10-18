@@ -16,11 +16,8 @@ package net.logstash.logback.fieldnames;
 /**
  * Names of standard fields that appear in the JSON output.
  */
-public class LogstashFieldNames {
-    
-    private String timestamp = "@timestamp";
-    private String version = "@version";
-    private String message = "message";
+public class LogstashFieldNames extends LogstashCommonFieldNames {
+
     private String logger = "logger_name";
     private String thread = "thread_name";
     private String level = "level";
@@ -34,30 +31,6 @@ public class LogstashFieldNames {
     private String tags = "tags";
     private String mdc;
     private String context;
-    
-    public String getTimestamp() {
-        return timestamp;
-    }
-    
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
-    }
-    
-    public String getVersion() {
-        return version;
-    }
-    
-    public void setVersion(String version) {
-        this.version = version;
-    }
-    
-    public String getMessage() {
-        return message;
-    }
-    
-    public void setMessage(String message) {
-        this.message = message;
-    }
     
     public String getLogger() {
         return logger;

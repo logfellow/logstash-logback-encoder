@@ -321,5 +321,9 @@ For logback access logs, use it in your `logback-access.xml` like this:
 <appender-ref ref="stash" />
 ```
 
+The default field names used for access logs are different than those documented above.
+See [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
+for all the field names used for access logs.
+
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
