@@ -13,8 +13,9 @@
  */
 package net.logstash.logback.marker;
 
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -24,12 +25,10 @@ import org.junit.Test;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class ObjectFieldsAppendingMarkerTest {
     
     private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
-    private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
     
     public static class MyClass {
         private String myField;
@@ -57,7 +56,7 @@ public class ObjectFieldsAppendingMarkerTest {
         
         ObjectFieldsAppendingMarker marker = Markers.appendFields(myObject);
         generator.writeStartObject();
-        marker.writeTo(generator, MAPPER);
+        marker.writeTo(generator);
         generator.writeEndObject();
         generator.flush();
         
@@ -72,7 +71,7 @@ public class ObjectFieldsAppendingMarkerTest {
         
         ObjectFieldsAppendingMarker marker = Markers.appendFields(Long.valueOf(1L));
         generator.writeStartObject();
-        marker.writeTo(generator, MAPPER);
+        marker.writeTo(generator);
         generator.writeEndObject();
         generator.flush();
         

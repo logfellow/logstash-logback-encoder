@@ -16,13 +16,15 @@ package net.logstash.logback.layout;
 import java.io.IOException;
 
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.LayoutBase;
 
 public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     
-    private final LogstashFormatter formatter = new LogstashFormatter();
+    private final LogstashFormatter formatter = new LogstashFormatter(this);
     
     public String doLayout(ILoggingEvent event) {
         try {
@@ -33,8 +35,20 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
         }
     }
     
+    @Override
+    public void start() {
+        super.start();
+        formatter.start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        formatter.stop();
+    }
+    
     public void setCustomFields(String customFields) {
-        formatter.setCustomFieldsFromString(customFields, this);
+        formatter.setCustomFieldsFromString(customFields);
     }
     
     public String getCustomFields() {
@@ -84,5 +98,21 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     @Deprecated
     public void setEnableContextMap(boolean enableContextMap) {
         formatter.setEnableContextMap(enableContextMap);
+    }
+
+    public JsonFactoryDecorator getJsonFactoryDecorator() {
+        return formatter.getJsonFactoryDecorator();
+    }
+
+    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
+        formatter.setJsonFactoryDecorator(jsonFactoryDecorator);
+    }
+
+    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+        return formatter.getJsonGeneratorDecorator();
+    }
+
+    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
+        formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 }

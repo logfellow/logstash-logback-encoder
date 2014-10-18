@@ -18,7 +18,6 @@ import java.io.IOException;
 import org.apache.commons.lang.ObjectUtils;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A marker that writes a raw json value to the logstash json event
@@ -45,7 +44,7 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
     }
     
     @Override
-    protected void writeFieldValue(JsonGenerator generator, ObjectMapper mapper) throws IOException {
+    protected void writeFieldValue(JsonGenerator generator) throws IOException {
         generator.writeRawValue(rawJson);
     }
     

@@ -17,16 +17,18 @@ import java.io.IOException;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
+import ch.qos.logback.core.spi.ContextAware;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 /**
  *
  */
 public class LogstashAccessFormatter extends LogstashAbstractFormatter<IAccessEvent, LogstashAccessFieldNames> {
-    public LogstashAccessFormatter() {
-        super(new LogstashAccessFieldNames());
+    public LogstashAccessFormatter(ContextAware contextAware) {
+        super(contextAware, new LogstashAccessFieldNames());
     }
 
     @Override

@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
@@ -26,6 +25,7 @@ import net.logstash.logback.marker.Markers;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
@@ -33,8 +33,6 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -69,6 +67,12 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private boolean enableContextMap;
     
     /**
+     * The un-parsed custom fields string to use to initialize customFields
+     * when the formatter is started.
+     */
+    private String customFieldString;
+
+    /**
      * When non-null, the fields in this JsonNode will be embedded in the logstash json.
      */
     private JsonNode customFields;
@@ -93,20 +97,36 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
      */
     private boolean includeMdc = true;
 
-    public LogstashFormatter() {
-        this(false);
+    public LogstashFormatter(ContextAware contextAware) {
+        this(contextAware, false);
     }
     
-    public LogstashFormatter(boolean includeCallerInfo) {
-        this(includeCallerInfo, null);
+    public LogstashFormatter(ContextAware contextAware, boolean includeCallerInfo) {
+        this(contextAware, includeCallerInfo, null);
         this.includeCallerInfo = includeCallerInfo;
     }
     
-    public LogstashFormatter(boolean includeCallerInfo, JsonNode customFields) {
-        super(new LogstashFieldNames());
+    public LogstashFormatter(ContextAware contextAware, boolean includeCallerInfo, JsonNode customFields) {
+        super(contextAware, new LogstashFieldNames());
 
         this.includeCallerInfo = includeCallerInfo;
         this.customFields = customFields;
+    }
+    
+    @Override
+    public void start() {
+        super.start();
+        initializeCustomFields();
+    }
+
+    private void initializeCustomFields() {
+        if (this.customFieldString != null) {
+            try {
+                this.customFields = getJsonFactory().createParser(customFieldString).readValueAsTree();
+            } catch (IOException e) {
+                contextAware.addError("Failed to parse custom fields [" + customFieldString + "]", e);
+            }
+        }
     }
 
     @Override
@@ -194,7 +214,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
         final Marker marker = event.getMarker();
         if (marker != null && marker.contains(JSON_MARKER_NAME)) {
             generator.writeFieldName("json_message");
-            MAPPER.writeValue(generator, event.getArgumentArray());
+            generator.writeObject(event.getArgumentArray());
         }
     }
     
@@ -277,7 +297,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private void writeLogstashMarkerIfNecessary(JsonGenerator generator, Marker marker) throws IOException {
         if (marker != null) {
             if (isLogstashMarker(marker)) {
-                ((LogstashMarker) marker).writeTo(generator, MAPPER);
+                ((LogstashMarker) marker).writeTo(generator);
             }
             
             if (marker.hasReferences()) {
@@ -318,15 +338,10 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
         this.includeCallerInfo = includeCallerInfo;
     }
     
-    public static JsonNode parseCustomFields(String customFields) throws JsonParseException, JsonProcessingException, IOException {
-        return FACTORY.createParser(customFields).readValueAsTree();
-    }
-    
-    public void setCustomFieldsFromString(String customFields, ContextAware contextAware) {
-        try {
-            setCustomFields(parseCustomFields(customFields));
-        } catch (IOException e) {
-            contextAware.addError("Failed to parse custom fields [" + customFields + "]", e);
+    public void setCustomFieldsFromString(String customFields) {
+        this.customFieldString = customFields;
+        if (isStarted()) {
+            initializeCustomFields();
         }
     }
     

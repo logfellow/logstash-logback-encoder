@@ -73,11 +73,11 @@ public class MapEntriesAppendingMarker extends LogstashMarker {
     }
     
     @Override
-    public void writeTo(JsonGenerator generator, ObjectMapper mapper) throws IOException {
+    public void writeTo(JsonGenerator generator) throws IOException {
         if (map != null) {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
                 generator.writeFieldName(entry.getKey().toString());
-                mapper.writeValue(generator, entry.getValue());
+                generator.writeObject(entry.getValue());
             }
         }
     }

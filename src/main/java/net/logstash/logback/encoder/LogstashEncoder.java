@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.Markers;
 
@@ -30,7 +32,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     
     private boolean immediateFlush = true;
     
-    private final LogstashFormatter formatter = new LogstashFormatter();
+    private final LogstashFormatter formatter = new LogstashFormatter(this);
     
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
@@ -42,6 +44,18 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
             outputStream.flush();
         }
         
+    }
+    
+    @Override
+    public void start() {
+        super.start();
+        formatter.start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        formatter.stop();
     }
     
     @Override
@@ -66,7 +80,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     }
     
     public void setCustomFields(String customFields) {
-        formatter.setCustomFieldsFromString(customFields, this);
+        formatter.setCustomFieldsFromString(customFields);
     }
     
     public String getCustomFields() {
@@ -145,6 +159,22 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         return formatter.isEnableContextMap();
     }
     
+    public JsonFactoryDecorator getJsonFactoryDecorator() {
+        return formatter.getJsonFactoryDecorator();
+    }
+
+    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
+        formatter.setJsonFactoryDecorator(jsonFactoryDecorator);
+    }
+
+    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+        return formatter.getJsonGeneratorDecorator();
+    }
+
+    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
+        formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
+    }
+
     protected LogstashFormatter getFormatter() {
         return formatter;
     }
