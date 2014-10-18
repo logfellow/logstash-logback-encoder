@@ -38,7 +38,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * 
  * <i> SYSTEM </i> operating system new line. <br/>
  * 
- * <i> WINDOWS </i> the \n\r combination
+ * <i> WINDOWS </i> the \r\n combination
  * </p>
  * 
  * @author <a href="mailto:mirko.bernardoni@gmail.com">Mirko Bernardoni</a>
@@ -94,7 +94,7 @@ public class LogstashTcpEncoder extends LogstashEncoder {
      * NULL no new line. <br/>
      * SYSTEM operating system new line. <br/>
      * UNIX is the \n combination (default). <br/>
-     * WINDOWS is \n\r combination
+     * WINDOWS is \r\n combination
      * 
      * @param newLine
      *            the newLine to set
@@ -106,7 +106,7 @@ public class LogstashTcpEncoder extends LogstashEncoder {
             this.newLine = System.getProperty("line.separator");
         } else if (newLine.equalsIgnoreCase("UNIX")) {
             this.newLine = "\n";
-        } else if (newLine.equalsIgnoreCase("UNIX")) {
+        } else if (newLine.equalsIgnoreCase("WINDOWS")) {
             this.newLine = "\r\n";
         } else {
             this.newLine = newLine;
