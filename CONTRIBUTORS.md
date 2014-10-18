@@ -6,6 +6,7 @@
 * Mirko Friedenhagen (mfriedenhagen)
 * Christophe Furmaniak (looztra)
 * Michal Galet (galet)
+* Edu Garcia (Arcnor)
 * Jorg Heymans (heymjo)
 * Bernd Kiefer (brndkfr)
 * Matthias Kiefer (kiefermat)
