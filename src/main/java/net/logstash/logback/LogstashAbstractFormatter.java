@@ -15,6 +15,7 @@ package net.logstash.logback;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SegmentedStringWriter;
@@ -23,7 +24,9 @@ import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
+
 import org.apache.commons.lang.time.FastDateFormat;
 
 import java.io.IOException;
@@ -32,6 +35,20 @@ import java.lang.ref.SoftReference;
 import java.util.Map;
 
 abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAware, FieldNamesType extends LogstashCommonFieldNames> {
+    /**
+     * Field name to use in logback configuration files
+     * if you want the field to be ignored (not output).
+     * 
+     * Unfortunately, logback does not provide a way to set a
+     * field value to null via xml config,
+     * so we have to fall back to using this magic string.
+     * 
+     * Note that if you're programmatically configuring the field names,
+     * then you can just set the field name to null in the
+     * FieldNamesType.  
+     */
+    public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
+    
     protected static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
     protected static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
     protected static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
@@ -89,6 +106,37 @@ abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAwa
                 MAPPER.writeValue(generator, entry.getValue());
             }
         }
+    }
+    
+    /**
+     * Writes the field to the generator if and only if the fieldName and fieldValue are not null.
+     */
+    protected void writeStringField(JsonGenerator generator, String fieldName, String fieldValue) throws IOException {
+        if (shouldWriteField(fieldName) && shouldWriteField(fieldValue)) {
+            generator.writeStringField(fieldName, fieldValue);
+        }
+    }
+
+    /**
+     * Writes the field to the generator if and only if the fieldName is not null.
+     */
+    protected void writeNumberField(JsonGenerator generator, String fieldName, int fieldValue) throws IOException {
+        if (shouldWriteField(fieldName)) {
+            generator.writeNumberField(fieldName, fieldValue);
+        }
+    }
+
+    /**
+     * Writes the field to the generator if and only if the fieldName is not null.
+     */
+    protected void writeNumberField(JsonGenerator generator, String fieldName, long fieldValue) throws IOException {
+        if (shouldWriteField(fieldName)) {
+            generator.writeNumberField(fieldName, fieldValue);
+        }
+    }
+
+    private boolean shouldWriteField(String fieldName) {
+        return fieldName != null && !fieldName.equals(IGNORE_FIELD_INDICATOR);
     }
 
     private BufferRecycler getBufferRecycler() {

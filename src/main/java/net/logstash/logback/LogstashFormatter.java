@@ -129,21 +129,21 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     }
     
     private void writeLogstashFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        generator.writeStringField(fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
-        generator.writeNumberField(fieldNames.getVersion(), 1);
-        generator.writeStringField(fieldNames.getMessage(), event.getFormattedMessage());
+        writeStringField(generator, fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
+        writeNumberField(generator, fieldNames.getVersion(), 1);
+        writeStringField(generator, fieldNames.getMessage(), event.getFormattedMessage());
     }
     
     private void writeLoggerFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
         // according to documentation (http://logback.qos.ch/manual/layouts.html#conversionWord) length can be >=0
         if (shortenedLoggerNameLength >= 0) {
-            generator.writeStringField(fieldNames.getLogger(), abbreviator.abbreviate(event.getLoggerName()));
+            writeStringField(generator, fieldNames.getLogger(), abbreviator.abbreviate(event.getLoggerName()));
         } else {
-            generator.writeStringField(fieldNames.getLogger(), event.getLoggerName());
+            writeStringField(generator, fieldNames.getLogger(), event.getLoggerName());
         }
-        generator.writeStringField(fieldNames.getThread(), event.getThreadName());
-        generator.writeStringField(fieldNames.getLevel(), event.getLevel().toString());
-        generator.writeNumberField(fieldNames.getLevelValue(), event.getLevel().toInt());
+        writeStringField(generator, fieldNames.getThread(), event.getThreadName());
+        writeStringField(generator, fieldNames.getLevel(), event.getLevel().toString());
+        writeNumberField(generator, fieldNames.getLevelValue(), event.getLevel().toInt());
     }
     
     private void writeCallerDataFieldsIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
@@ -152,10 +152,10 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
             if (fieldNames.getCaller() != null) {
                 generator.writeObjectFieldStart(fieldNames.getCaller());
             }
-            generator.writeStringField(fieldNames.getCallerClass(), callerData.getClassName());
-            generator.writeStringField(fieldNames.getCallerMethod(), callerData.getMethodName());
-            generator.writeStringField(fieldNames.getCallerFile(), callerData.getFileName());
-            generator.writeNumberField(fieldNames.getCallerLine(), callerData.getLineNumber());
+            writeStringField(generator, fieldNames.getCallerClass(), callerData.getClassName());
+            writeStringField(generator, fieldNames.getCallerMethod(), callerData.getMethodName());
+            writeStringField(generator, fieldNames.getCallerFile(), callerData.getFileName());
+            writeNumberField(generator, fieldNames.getCallerLine(), callerData.getLineNumber());
             if (fieldNames.getCaller() != null) {
                 generator.writeEndObject();
             }
@@ -165,7 +165,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private void writeStackTraceFieldIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
-            generator.writeStringField(fieldNames.getStackTrace(), ThrowableProxyUtil.asString(throwableProxy));
+            writeStringField(generator, fieldNames.getStackTrace(), ThrowableProxyUtil.asString(throwableProxy));
         }
     }
     

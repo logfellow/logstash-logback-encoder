@@ -33,9 +33,9 @@ public class LogstashAccessFormatter extends LogstashAbstractFormatter<IAccessEv
     protected void writeValueToGenerator(JsonGenerator generator, IAccessEvent event, Context context) throws IOException {
         
         generator.writeStartObject();
-        generator.writeStringField(fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
-        generator.writeNumberField(fieldNames.getVersion(), 1);
-        generator.writeStringField(
+        writeStringField(generator, fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
+        writeNumberField(generator, fieldNames.getVersion(), 1);
+        writeStringField(generator, 
                 fieldNames.getMessage(),
                 String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser() == null ? "-" : event.getRemoteUser(),
                         ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
@@ -48,16 +48,16 @@ public class LogstashAccessFormatter extends LogstashAbstractFormatter<IAccessEv
     
     private void writeFields(JsonGenerator generator, IAccessEvent event, Context context) throws IOException {
         
-        generator.writeStringField(fieldNames.getFieldsMethod(), event.getMethod());
-        generator.writeStringField(fieldNames.getFieldsProtocol(), event.getProtocol());
-        generator.writeNumberField(fieldNames.getFieldsStatusCode(), event.getStatusCode());
-        generator.writeStringField(fieldNames.getFieldsRequestedUrl(), event.getRequestURL());
-        generator.writeStringField(fieldNames.getFieldsRequestedUri(), event.getRequestURI());
-        generator.writeStringField(fieldNames.getFieldsRemoteHost(), event.getRemoteHost());
-        generator.writeStringField(fieldNames.getFieldsHostname(), event.getRemoteHost());
-        generator.writeStringField(fieldNames.getFieldsRemoteUser(), event.getRemoteUser());
-        generator.writeNumberField(fieldNames.getFieldsContentLength(), event.getContentLength());
-        generator.writeNumberField(fieldNames.getFieldsElapsedTime(), event.getElapsedTime());
+        writeStringField(generator, fieldNames.getFieldsMethod(), event.getMethod());
+        writeStringField(generator, fieldNames.getFieldsProtocol(), event.getProtocol());
+        writeNumberField(generator, fieldNames.getFieldsStatusCode(), event.getStatusCode());
+        writeStringField(generator, fieldNames.getFieldsRequestedUrl(), event.getRequestURL());
+        writeStringField(generator, fieldNames.getFieldsRequestedUri(), event.getRequestURI());
+        writeStringField(generator, fieldNames.getFieldsRemoteHost(), event.getRemoteHost());
+        writeStringField(generator, fieldNames.getFieldsHostname(), event.getRemoteHost());
+        writeStringField(generator, fieldNames.getFieldsRemoteUser(), event.getRemoteUser());
+        writeNumberField(generator, fieldNames.getFieldsContentLength(), event.getContentLength());
+        writeNumberField(generator, fieldNames.getFieldsElapsedTime(), event.getElapsedTime());
         
         writeContextPropertiesIfNecessary(generator, context);
     }

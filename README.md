@@ -214,7 +214,9 @@ If you want to customize individual field names, you can do so like this:
 See [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
 for all the field names that can be customized.
 
-Also, you can log the caller info, MDC properties, and context properties
+Prevent a field from being output by setting the field name to `[ignore]`.
+
+Log the caller info, MDC properties, and context properties
 in sub-objects within the JSON event by specifying field
 names for `caller`, `mdc`, and `context`, respectively.
  

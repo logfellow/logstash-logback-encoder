@@ -564,6 +564,13 @@ public class LogstashEncoderTest {
         
         List<String> lines = IOUtils.readLines(is);
         JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
+
+        /*
+         * The configuration suppresses the version field,
+         * make sure it doesn't appear.
+         */
+        assertThat(node.get("@version"), is(nullValue()));
+        assertThat(node.get(LogstashFormatter.IGNORE_FIELD_INDICATOR), is(nullValue()));
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
         assertThat(node.get("appendedName").textValue(), is("appendedValue"));
