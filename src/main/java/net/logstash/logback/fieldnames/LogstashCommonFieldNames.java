@@ -13,6 +13,10 @@
  */
 package net.logstash.logback.fieldnames;
 
+/**
+ * Common field names between the regular {@link net.logstash.logback.LogstashFormatter}
+ * and the {@link net.logstash.logback.LogstashAccessFormatter}. 
+ */
 public abstract class LogstashCommonFieldNames {
     private String timestamp = "@timestamp";
     private String version = "@version";
