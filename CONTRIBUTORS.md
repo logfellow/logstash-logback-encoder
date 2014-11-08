@@ -20,6 +20,7 @@
 * Kyle Prager (kyleprager)
 * Neil Prosser (neilprosser)
 * Dmitry Sklyut (dsklyut)
+* Behar Veliqi (bveliqi)
 * Gunnar Wagenknecht (guw)
 * Ivan Yatskevich (yatskevich)
 * Brandon Zeeb (phasebash)
