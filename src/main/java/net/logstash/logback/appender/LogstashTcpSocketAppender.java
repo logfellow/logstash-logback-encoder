@@ -121,6 +121,8 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
      */
     protected Encoder<ILoggingEvent> encoder;
     
+    private boolean includeCallerData;
+
     /**
      * @return the encoder
      */
@@ -238,6 +240,11 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
             return;
         
         try {
+            event.prepareForDeferredProcessing();
+            if (includeCallerData) {
+                event.getCallerData();
+            }
+
             final boolean inserted = queue.offer(event,
                     eventDelayLimit.getMilliseconds(), TimeUnit.MILLISECONDS);
             if (!inserted) {
@@ -480,4 +487,13 @@ public class LogstashTcpSocketAppender extends AppenderBase<ILoggingEvent>
         }
         this.queueSize = queueSize;
     }
+
+    public boolean isIncludeCallerData() {
+        return includeCallerData;
+    }
+
+    public void setIncludeCallerData(boolean includeCallerData) {
+        this.includeCallerData = includeCallerData;
+    }
+
 }
