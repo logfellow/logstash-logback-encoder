@@ -54,12 +54,14 @@ public class LogstashAccessEncoderTest {
         IAccessEvent event = mockBasicILoggingEvent();
         when(event.getTimeStamp()).thenReturn(timestamp);
         
+        encoder.getFieldNames().setTimestamp("timestamp");
+        
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
-        assertThat(node.get("@timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
+        assertThat(node.get("timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                 (timestamp)));
         assertThat(node.get("@version").intValue(), is(1));
         assertThat(node.get("@message").textValue(), is(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
