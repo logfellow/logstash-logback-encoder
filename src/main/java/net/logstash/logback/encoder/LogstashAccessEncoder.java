@@ -79,7 +79,7 @@ public class LogstashAccessEncoder extends EncoderBase<IAccessEvent> {
     
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
         formatter.setFieldNames(fieldNames);
-    
+    }
 
     public JsonFactoryDecorator getJsonFactoryDecorator() {
         return formatter.getJsonFactoryDecorator();
