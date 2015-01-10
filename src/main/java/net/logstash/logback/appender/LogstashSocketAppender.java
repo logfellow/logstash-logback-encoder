@@ -20,6 +20,7 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
+import net.logstash.logback.stacktrace.StackTraceFormatter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
@@ -131,6 +132,14 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
 
     public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
         logstashLayout.setJsonGeneratorDecorator(jsonGeneratorDecorator);
+    }
+
+    public StackTraceFormatter getStackTraceFormatter() {
+        return logstashLayout.getStackTraceFormatter();
+    }
+
+    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
+        logstashLayout.setStackTraceFormatter(stackTraceFormatter);
     }
 
     @Override

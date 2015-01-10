@@ -335,7 +335,31 @@ and then specify your decorator in the logback.xml file like this:
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <jsonGeneratorDecorator class="your.package.PrettyPrintingDecorator"/>
 </encoder>
+```
 
+## Customizing Stack Traces
+
+By default, stack traces are formatted using logback's default format.
+
+Alternatively, you can use your own stack trace formatter, or the included
+[`ShortenedStackTraceFormatter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedStackTraceFormatter.java)
+to shorten stacktraces by:
+
+* Limiting the number of stackTraceElements per throwable (applies to each individual throwable.  e.g. caused-bys and suppressed).
+* Abbreviating class names (similar to how logger names are shortened)</li>
+* Filtering out consecutive unwanted stackTraceElements based on regular expressions
+
+For example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <stackTraceFormatter class="net.logstash.logback.stacktrace.ShortenedStackTraceFormatter">
+    <maxStackTraceElementsPerThrowable>30</maxStackTraceElementsPerThrowable>
+    <shortenedClassNameLength>20</shortenedClassNameLength>
+    <exclude>sun\.reflect\..*\.invoke.*</exclude>
+    <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+  </stackTraceFormatter>
+</encoder>
 ```
 
 ## Logback access logs

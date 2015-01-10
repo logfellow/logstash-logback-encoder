@@ -21,6 +21,8 @@ import java.util.Map.Entry;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
+import net.logstash.logback.stacktrace.StackTraceFormatter;
+import net.logstash.logback.stacktrace.StandardStackTraceFormatter;
 
 import org.slf4j.MDC;
 import org.slf4j.Marker;
@@ -29,7 +31,6 @@ import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
 
@@ -86,7 +87,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     /**
      * Abbreviator that will shorten the logger classname if shortenedLoggerNameLength is set
      */
-    private Abbreviator abbreviator;
+    private Abbreviator abbreviator = NullAbbreviator.INSTANCE;
 
     /**
      * When true, logback's {@link Context} properties will be included.
@@ -97,6 +98,11 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
      * When true, {@link MDC} properties will be included.
      */
     private boolean includeMdc = true;
+    
+    /**
+     * Used to format stacktraces as Strings.
+     */
+    private StackTraceFormatter stackTraceFormatter = new StandardStackTraceFormatter();
 
     public LogstashFormatter(ContextAware contextAware) {
         this(contextAware, false);
@@ -157,11 +163,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     
     private void writeLoggerFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
         // according to documentation (http://logback.qos.ch/manual/layouts.html#conversionWord) length can be >=0
-        if (shortenedLoggerNameLength >= 0) {
-            writeStringField(generator, fieldNames.getLogger(), abbreviator.abbreviate(event.getLoggerName()));
-        } else {
-            writeStringField(generator, fieldNames.getLogger(), event.getLoggerName());
-        }
+        writeStringField(generator, fieldNames.getLogger(), abbreviator.abbreviate(event.getLoggerName()));
         writeStringField(generator, fieldNames.getThread(), event.getThreadName());
         writeStringField(generator, fieldNames.getLevel(), event.getLevel().toString());
         writeNumberField(generator, fieldNames.getLevelValue(), event.getLevel().toInt());
@@ -186,7 +188,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private void writeStackTraceFieldIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
-            writeStringField(generator, fieldNames.getStackTrace(), ThrowableProxyUtil.asString(throwableProxy));
+            writeStringField(generator, fieldNames.getStackTrace(), stackTraceFormatter.format(throwableProxy));
         }
     }
     
@@ -355,12 +357,16 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     }
     
     public int getShortenedLoggerNameLength() {
-		return shortenedLoggerNameLength;
-	}
+        return shortenedLoggerNameLength;
+    }
 
     public void setShortenedLoggerNameLength(int length) {
         this.shortenedLoggerNameLength = length;
-        abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength));
+        if (length >= 0) {
+            abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength));
+        } else {
+            abbreviator = NullAbbreviator.INSTANCE;
+        }
     }
     
     public boolean isIncludeMdc() {
@@ -377,6 +383,14 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     
     public void setIncludeContext(boolean includeContext) {
         this.includeContext = includeContext;
+    }
+    
+    public StackTraceFormatter getStackTraceFormatter() {
+        return stackTraceFormatter;
+    }
+
+    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
+        this.stackTraceFormatter = stackTraceFormatter;
     }
     
     /**

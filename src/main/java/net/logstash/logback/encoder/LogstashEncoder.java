@@ -21,6 +21,7 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.Markers;
+import net.logstash.logback.stacktrace.StackTraceFormatter;
 
 import org.apache.commons.io.IOUtils;
 
@@ -173,6 +174,14 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
 
     public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
+    }
+
+    public StackTraceFormatter getStackTraceFormatter() {
+        return formatter.getStackTraceFormatter();
+    }
+
+    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
+        formatter.setStackTraceFormatter(stackTraceFormatter);
     }
 
     protected LogstashFormatter getFormatter() {
