@@ -25,6 +25,7 @@ import net.logstash.logback.marker.Markers;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
+import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
@@ -85,7 +86,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     /**
      * Abbreviator that will shorten the logger classname if shortenedLoggerNameLength is set
      */
-    private TargetLengthBasedClassNameAbbreviator abbreviator;
+    private Abbreviator abbreviator;
 
     /**
      * When true, logback's {@link Context} properties will be included.
@@ -359,7 +360,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
 
     public void setShortenedLoggerNameLength(int length) {
         this.shortenedLoggerNameLength = length;
-        abbreviator = new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength);
+        abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength));
     }
     
     public boolean isIncludeMdc() {
