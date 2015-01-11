@@ -25,6 +25,7 @@
 * Ivan Yatskevich (yatskevich)
 * Brandon Zeeb (phasebash)
 * Matjaž (mpecan)
+* (dimas)
 * (jaag82)
 * (ouaibsky)
 * (schup)
