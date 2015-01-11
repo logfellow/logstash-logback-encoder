@@ -13,26 +13,13 @@
  */
 package net.logstash.logback.appender;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.access.spi.IAccessEvent;
 
-public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender<ILoggingEvent> {
-
-    private boolean includeCallerData;
+public class LogstashAccessTcpSocketAppender extends AbstractLogstashTcpSocketAppender<IAccessEvent> {
 
     @Override
-    protected void prepareForDeferredProcessing(final ILoggingEvent event) {
+    protected void prepareForDeferredProcessing(final IAccessEvent event) {
         event.prepareForDeferredProcessing();
-        if (includeCallerData) {
-            event.getCallerData();
-        }
-    }
-
-    public boolean isIncludeCallerData() {
-        return includeCallerData;
-    }
-
-    public void setIncludeCallerData(boolean includeCallerData) {
-        this.includeCallerData = includeCallerData;
     }
 
 }

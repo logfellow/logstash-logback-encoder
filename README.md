@@ -374,6 +374,18 @@ For logback access logs, use it in your `logback-access.xml` like this:
 <appender-ref ref="stash" />
 ```
 
+or if you want to log directly into logstash,
+
+```xml
+<appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+  <remoteHost>........</remoteHost>
+  <port>.....</port>
+  <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+</appender>
+
+<appender-ref ref="stash" />
+```
+
 The default field names used for access logs are different than those documented above.
 See [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names used for access logs.
