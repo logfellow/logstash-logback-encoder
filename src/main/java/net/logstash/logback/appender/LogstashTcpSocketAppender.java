@@ -13,13 +13,9 @@
  */
 package net.logstash.logback.appender;
 
-import ch.qos.logback.classic.net.LoggingEventPreSerializationTransformer;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.spi.PreSerializationTransformer;
 
 public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender<ILoggingEvent> {
-
-    private static final PreSerializationTransformer<ILoggingEvent> PST = new LoggingEventPreSerializationTransformer();
 
     private boolean includeCallerData;
 
@@ -39,13 +35,4 @@ public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender
         this.includeCallerData = includeCallerData;
     }
 
-    /**
-     * Get the pre-serialization transformer that will be used to transform each
-     * event into a Serializable object before delivery to the remote receiver.
-     *
-     * @return transformer object
-     */
-    public PreSerializationTransformer<ILoggingEvent> getPST() {
-        return PST;
-    }
 }

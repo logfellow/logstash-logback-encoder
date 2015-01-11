@@ -13,26 +13,13 @@
  */
 package net.logstash.logback.appender;
 
-import ch.qos.logback.access.net.AccessEventPreSerializationTransformer;
 import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.spi.PreSerializationTransformer;
 
 public class LogstashAccessTcpSocketAppender extends AbstractLogstashTcpSocketAppender<IAccessEvent> {
-
-    private static final PreSerializationTransformer<IAccessEvent> PST = new AccessEventPreSerializationTransformer();
 
     @Override
     protected void prepareForDeferredProcessing(final IAccessEvent event) {
         event.prepareForDeferredProcessing();
     }
 
-    /**
-     * Get the pre-serialization transformer that will be used to transform each
-     * event into a Serializable object before delivery to the remote receiver.
-     *
-     * @return transformer object
-     */
-    public PreSerializationTransformer<IAccessEvent> getPST() {
-        return PST;
-    }
 }

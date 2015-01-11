@@ -13,17 +13,6 @@
  */
 package net.logstash.logback.appender;
 
-import ch.qos.logback.core.AppenderBase;
-import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.net.DefaultSocketConnector;
-import ch.qos.logback.core.net.SocketConnector;
-import ch.qos.logback.core.spi.PreSerializationTransformer;
-import ch.qos.logback.core.status.ErrorStatus;
-import ch.qos.logback.core.util.CloseUtil;
-import ch.qos.logback.core.util.Duration;
-
-import javax.net.SocketFactory;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,7 +20,23 @@ import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
+
+import javax.net.SocketFactory;
+
+import ch.qos.logback.core.AppenderBase;
+import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.net.DefaultSocketConnector;
+import ch.qos.logback.core.net.SocketConnector;
+import ch.qos.logback.core.status.ErrorStatus;
+import ch.qos.logback.core.util.CloseUtil;
+import ch.qos.logback.core.util.Duration;
 
 /**
  * This class is a modification of {@link ch.qos.logback.classic.net.SocketAppender}. The queue type and
@@ -47,8 +52,6 @@ import java.util.concurrent.*;
  */
 public abstract class AbstractLogstashTcpSocketAppender<E> extends AppenderBase<E>
         implements Runnable, SocketConnector.ExceptionHandler {
-
-    private PreSerializationTransformer<E> pst;
 
     /**
      * The default port number of remote logging server (4560).
