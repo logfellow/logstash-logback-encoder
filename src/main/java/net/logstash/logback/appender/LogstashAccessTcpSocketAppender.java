@@ -13,30 +13,17 @@
  */
 package net.logstash.logback.appender;
 
-import ch.qos.logback.classic.net.LoggingEventPreSerializationTransformer;
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.access.net.AccessEventPreSerializationTransformer;
+import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.spi.PreSerializationTransformer;
 
-public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender<ILoggingEvent> {
+public class LogstashAccessTcpSocketAppender extends AbstractLogstashTcpSocketAppender<IAccessEvent> {
 
-    private static final PreSerializationTransformer<ILoggingEvent> PST = new LoggingEventPreSerializationTransformer();
-
-    private boolean includeCallerData;
+    private static final PreSerializationTransformer<IAccessEvent> PST = new AccessEventPreSerializationTransformer();
 
     @Override
-    protected void prepareForDeferredProcessing(final ILoggingEvent event) {
+    protected void prepareForDeferredProcessing(final IAccessEvent event) {
         event.prepareForDeferredProcessing();
-        if (includeCallerData) {
-            event.getCallerData();
-        }
-    }
-
-    public boolean isIncludeCallerData() {
-        return includeCallerData;
-    }
-
-    public void setIncludeCallerData(boolean includeCallerData) {
-        this.includeCallerData = includeCallerData;
     }
 
     /**
@@ -45,7 +32,7 @@ public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender
      *
      * @return transformer object
      */
-    public PreSerializationTransformer<ILoggingEvent> getPST() {
+    public PreSerializationTransformer<IAccessEvent> getPST() {
         return PST;
     }
 }
