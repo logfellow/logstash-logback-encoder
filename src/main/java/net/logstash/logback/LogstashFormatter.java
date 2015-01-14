@@ -21,14 +21,15 @@ import java.util.Map.Entry;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
-import net.logstash.logback.stacktrace.StackTraceFormatter;
-import net.logstash.logback.stacktrace.StandardStackTraceFormatter;
 
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
 import ch.qos.logback.classic.pattern.Abbreviator;
+import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
+import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
+import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.Context;
@@ -100,9 +101,9 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private boolean includeMdc = true;
     
     /**
-     * Used to format stacktraces as Strings.
+     * Used to format throwables as Strings.
      */
-    private StackTraceFormatter stackTraceFormatter = new StandardStackTraceFormatter();
+    private ThrowableHandlingConverter throwableConverter = new ExtendedThrowableProxyConverter();
 
     public LogstashFormatter(ContextAware contextAware) {
         this(contextAware, false);
@@ -124,6 +125,13 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     public void start() {
         super.start();
         initializeCustomFields();
+        this.throwableConverter.start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        this.throwableConverter.stop();
     }
 
     private void initializeCustomFields() {
@@ -188,7 +196,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private void writeStackTraceFieldIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
-            writeStringField(generator, fieldNames.getStackTrace(), stackTraceFormatter.format(throwableProxy));
+            writeStringField(generator, fieldNames.getStackTrace(), throwableConverter.convert(event));
         }
     }
     
@@ -385,12 +393,12 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
         this.includeContext = includeContext;
     }
     
-    public StackTraceFormatter getStackTraceFormatter() {
-        return stackTraceFormatter;
+    public ThrowableHandlingConverter getThrowableConverter() {
+        return throwableConverter;
     }
 
-    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
-        this.stackTraceFormatter = stackTraceFormatter;
+    public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
+        this.throwableConverter = throwableConverter;
     }
     
     /**

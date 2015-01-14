@@ -339,28 +339,38 @@ and then specify your decorator in the logback.xml file like this:
 
 ## Customizing Stack Traces
 
-By default, stack traces are formatted using logback's default format.
+By default, stack traces are formatted using logback's `ExtendedThrowableProxyConverter`.
+However, you can configure the encoder to use any `ThrowableHandlingConverter`
+to format stacktraces.
 
-Alternatively, you can use your own stack trace formatter, or the included
-[`ShortenedStackTraceFormatter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedStackTraceFormatter.java)
-to shorten stacktraces by:
+A powerful [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
+is included within logstash-logback-encoder to format stacktraces by:
 
-* Limiting the number of stackTraceElements per throwable (applies to each individual throwable.  e.g. caused-bys and suppressed).
-* Abbreviating class names (similar to how logger names are shortened)</li>
-* Filtering out consecutive unwanted stackTraceElements based on regular expressions
+* Limiting the number of stackTraceElements per throwable (applies to each individual throwable.  e.g. caused-bys and suppressed)
+* Limiting the total length in characters of the trace
+* Abbreviating class names
+* Filtering out consecutive unwanted stackTraceElements based on regular expressions.
+* Using evaluators to determine if the stacktrace should be logged.
+* Outputing in either 'normal' order (root-cause-last), or root-cause-first.
 
 For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <stackTraceFormatter class="net.logstash.logback.stacktrace.ShortenedStackTraceFormatter">
-    <maxStackTraceElementsPerThrowable>30</maxStackTraceElementsPerThrowable>
+  <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+    <maxDepthPerThrowable>30</maxDepthPerThrowable>
+    <maxLength>2048</maxLength>
     <shortenedClassNameLength>20</shortenedClassNameLength>
     <exclude>sun\.reflect\..*\.invoke.*</exclude>
     <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
-  </stackTraceFormatter>
+    <evaluator class="myorg.MyCustomEvaluator"/>
+    <rootCauseFirst>true</rootCauseFirst>
+  </throwableConverter>
 </encoder>
 ```
+
+[`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
+can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
 
 ## Logback access logs
 For logback access logs, use it in your `logback-access.xml` like this:

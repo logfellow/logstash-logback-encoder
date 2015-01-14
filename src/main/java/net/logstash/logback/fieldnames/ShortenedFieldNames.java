@@ -21,16 +21,26 @@ package net.logstash.logback.fieldnames;
  */
 public class ShortenedFieldNames extends LogstashFieldNames {
     
+    public static final String FIELD_LOGGER = "logger";
+    public static final String FIELD_THREAD = "thread";
+    public static final String FIELD_LEVEL_VAL = "levelVal";
+    public static final String FIELD_CALLER = "caller";
+    public static final String FIELD_CLASS = "class";
+    public static final String FIELD_METHOD = "method";
+    public static final String FIELD_FILE = "file";
+    public static final String FIELD_LINE = "line";
+    public static final String FIELD_STACKTRACE = "stacktrace";
+
     public ShortenedFieldNames() {
-        setLogger("logger");
-        setThread("thread");
-        setLevelValue("levelVal");
-        setCaller("caller");
-        setCallerClass("class");
-        setCallerMethod("method");
-        setCallerFile("file");
-        setCallerLine("line");
-        setStackTrace("stacktrace");
+        setLogger(FIELD_LOGGER);
+        setThread(FIELD_THREAD);
+        setLevelValue(FIELD_LEVEL_VAL);
+        setCaller(FIELD_CALLER);
+        setCallerClass(FIELD_CLASS);
+        setCallerMethod(FIELD_METHOD);
+        setCallerFile(FIELD_FILE);
+        setCallerLine(FIELD_LINE);
+        setStackTrace(FIELD_STACKTRACE);
     }
     
 }

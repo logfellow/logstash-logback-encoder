@@ -19,7 +19,7 @@ import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
-import net.logstash.logback.stacktrace.StackTraceFormatter;
+import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.LayoutBase;
 
@@ -117,12 +117,11 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
-    public StackTraceFormatter getStackTraceFormatter() {
-        return formatter.getStackTraceFormatter();
+    public ThrowableHandlingConverter getThrowableConverter() {
+        return formatter.getThrowableConverter();
     }
 
-    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
-        formatter.setStackTraceFormatter(stackTraceFormatter);
+    public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
+        formatter.setThrowableConverter(throwableConverter);
     }
-
 }
