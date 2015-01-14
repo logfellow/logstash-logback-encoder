@@ -231,7 +231,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             return CoreConstants.EMPTY_STRING;
         }
         
-        StringBuilder builder = new StringBuilder(Math.min(BUFFER_INITIAL_CAPACITY, this.maxLength + 100));
+        /*
+         * The extra 100 gives a little more buffer room since we actually
+         * go over the maxLength before detecting it and truncating.
+         */
+        StringBuilder builder = new StringBuilder(Math.min(BUFFER_INITIAL_CAPACITY, Math.max(Integer.MAX_VALUE, this.maxLength + 100)));
         if (rootCauseFirst) {
             appendRootCauseFirst(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy);
         } else {
