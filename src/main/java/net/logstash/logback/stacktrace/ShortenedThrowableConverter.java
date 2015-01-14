@@ -346,6 +346,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         boolean appendingExcluded = false;
         int consecutiveExcluded = 0;
         int appended = 0;
+        StackTraceElementProxy previousWrittenStackTraceElement = null;
         for (int i = 0; i < stackTraceElements.length - commonFrames; i++) {
             if (maxDepthPerThrowable > 0 && appended >= maxDepthPerThrowable) {
                 /*
@@ -377,14 +378,16 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                     i -= 2;
                     continue;
                 }
-                appendStackTraceElement(builder, indent, stackTraceElement);
+                appendStackTraceElement(builder, indent, stackTraceElement, previousWrittenStackTraceElement);
+                previousWrittenStackTraceElement = stackTraceElement;
                 appendingExcluded = false;
                 appended++;
             } else if (appendingExcluded) {
                 /*
                  * We're going back and appending something we previously excluded
                  */
-                appendStackTraceElement(builder, indent, stackTraceElement);
+                appendStackTraceElement(builder, indent, stackTraceElement, previousWrittenStackTraceElement);
+                previousWrittenStackTraceElement = stackTraceElement;
                 appended++;
             } else {
                 consecutiveExcluded++;
@@ -440,7 +443,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     /**
      * Appends a single stack trace element.
      */
-    private void appendStackTraceElement(StringBuilder builder, int indent, StackTraceElementProxy step) {
+    private void appendStackTraceElement(StringBuilder builder, int indent, StackTraceElementProxy step, StackTraceElementProxy previousStep) {
         if (builder.length() > maxLength) {
             return;
         }
@@ -463,8 +466,26 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         }
         builder.append(")");
         
-        appendPackagingData(builder, step);
+        if (shouldAppendPackagingData(step, previousStep)) {
+            appendPackagingData(builder, step);
+        }
         builder.append(CoreConstants.LINE_SEPARATOR);
+    }
+
+    /**
+     * Return true if packaging data should be appended for the current step.
+     * 
+     * Packaging data for the current step is only appended if it differs
+     * from the packaging data from the previous step.
+     */
+    private boolean shouldAppendPackagingData(StackTraceElementProxy step, StackTraceElementProxy previousStep) {
+        if (step == null || step.getClassPackagingData() == null) {
+            return false;
+        }
+        if (previousStep == null || previousStep.getClassPackagingData() == null) {
+            return true;
+        }
+        return !step.getClassPackagingData().equals(previousStep.getClassPackagingData());
     }
 
     private void appendPackagingData(StringBuilder builder, StackTraceElementProxy step) {
