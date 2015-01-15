@@ -18,6 +18,20 @@ package net.logstash.logback.fieldnames;
  * and the {@link net.logstash.logback.LogstashAccessFormatter}. 
  */
 public abstract class LogstashCommonFieldNames {
+    /**
+     * Field name to use in logback configuration files
+     * if you want the field to be ignored (not output).
+     * 
+     * Unfortunately, logback does not provide a way to set a
+     * field value to null via xml config,
+     * so we have to fall back to using this magic string.
+     * 
+     * Note that if you're programmatically configuring the field names,
+     * then you can just set the field name to null in the
+     * FieldNamesType.  
+     */
+    public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
+  
     private String timestamp = "@timestamp";
     private String version = "@version";
     private String message = "message";

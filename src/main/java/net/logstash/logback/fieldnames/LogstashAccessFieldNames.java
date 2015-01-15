@@ -24,6 +24,8 @@ public class LogstashAccessFieldNames extends LogstashCommonFieldNames {
     private String fieldsRemoteUser = "@fields.remote_user";
     private String fieldsContentLength = "@fields.content_length";
     private String fieldsElapsedTime = "@fields.elapsed_time";
+    private String fieldsRequestHeaders = "@fields.request_headers";
+    private String fieldsResponseHeaders = "@fields.response_headers";
     
     public LogstashAccessFieldNames() {
         /*
@@ -32,6 +34,14 @@ public class LogstashAccessFieldNames extends LogstashCommonFieldNames {
          * LogstashEncoder uses 'message'.
          */
         setMessage("@message");
+
+        /*
+         * By default:
+         * fieldsRequestHeaders and fieldsResponseHeaders are ignored
+         * because those fields can be quite big.
+         */
+        setFieldsRequestHeaders(IGNORE_FIELD_INDICATOR);
+        setFieldsResponseHeaders(IGNORE_FIELD_INDICATOR);
     }
 
     public String getFieldsMethod() {
@@ -112,5 +122,21 @@ public class LogstashAccessFieldNames extends LogstashCommonFieldNames {
 
     public void setFieldsElapsedTime(String fieldsElapsedTime) {
         this.fieldsElapsedTime = fieldsElapsedTime;
+    }
+
+    public String getFieldsRequestHeaders() {
+      return fieldsRequestHeaders;
+    }
+
+    public void setFieldsRequestHeaders(String fieldsRequestHeaders) {
+      this.fieldsRequestHeaders = fieldsRequestHeaders;
+    }
+
+    public String getFieldsResponseHeaders() {
+      return fieldsResponseHeaders;
+    }
+
+    public void setFieldsResponseHeaders(String fieldsResponseHeaders) {
+      this.fieldsResponseHeaders = fieldsResponseHeaders;
     }
 }

@@ -400,5 +400,16 @@ The default field names used for access logs are different than those documented
 See [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names used for access logs.
 
+By default, the request and response headers are not logged. If you want to include them, you need to configure the encoder like that :
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <fieldNames>
+    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
+    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+  </fieldNames>
+</encoder>
+```
+
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)

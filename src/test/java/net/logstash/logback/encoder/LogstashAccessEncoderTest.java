@@ -79,6 +79,8 @@ public class LogstashAccessEncoderTest {
         assertThat(node.get("@fields.remote_user").textValue(), is(event.getRemoteUser()));
         assertThat(node.get("@fields.content_length").asLong(), is(event.getContentLength()));
         assertThat(node.get("@fields.elapsed_time").asLong(), is(event.getElapsedTime()));
+        assertThat(node.get("@fields.request_headers"), is(nullValue()));
+        assertThat(node.get("@fields.response_headers"), is(nullValue()));
         
     }
     
@@ -115,6 +117,29 @@ public class LogstashAccessEncoderTest {
     }
     
     @Test
+    public void requestAndResponseHeadersAreIncluded() throws Exception {
+        IAccessEvent event = mockBasicILoggingEvent();
+        
+        encoder.getFieldNames().setFieldsRequestHeaders("@fields.request_headers");
+        encoder.getFieldNames().setFieldsResponseHeaders("@fields.response_headers");
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+
+        assertThat(node.get("@fields.request_headers").size(), is(2));
+        assertThat(node.get("@fields.request_headers").get("User-Agent").textValue(), is("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"));
+        assertThat(node.get("@fields.request_headers").get("Accept").textValue(), is("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
+        assertThat(node.get("@fields.request_headers").get("Unknown"), is(nullValue()));
+        
+        assertThat(node.get("@fields.response_headers").size(), is(2));
+        assertThat(node.get("@fields.response_headers").get("Content-Type").textValue(), is("text/html; charset=UTF-8"));
+        assertThat(node.get("@fields.response_headers").get("Content-Length").textValue(), is("42"));
+        assertThat(node.get("@fields.response_headers").get("Unknown"), is(nullValue()));
+    }
+    
+    @Test
     public void immediateFlushIsSane() {
         encoder.setImmediateFlush(true);
         assertThat(encoder.isImmediateFlush(), is(true));
@@ -135,6 +160,14 @@ public class LogstashAccessEncoderTest {
         when(event.getStatusCode()).thenReturn(200);
         when(event.getTimeStamp()).thenReturn(System.currentTimeMillis());
         when(event.getElapsedTime()).thenReturn(246L);
+        when(event.getRequestHeaderMap()).thenReturn(new HashMap<String, String>() {{
+            put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
+            put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        }});
+        when(event.getResponseHeaderMap()).thenReturn(new HashMap<String, String>() {{
+            put("Content-Type", "text/html; charset=UTF-8");
+            put("Content-Length", "42");
+        }});
         return event;
     }
     

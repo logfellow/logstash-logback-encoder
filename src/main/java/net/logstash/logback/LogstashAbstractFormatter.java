@@ -41,19 +41,6 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAware, FieldNamesType extends LogstashCommonFieldNames> implements LifeCycle {
-    /**
-     * Field name to use in logback configuration files
-     * if you want the field to be ignored (not output).
-     * 
-     * Unfortunately, logback does not provide a way to set a
-     * field value to null via xml config,
-     * so we have to fall back to using this magic string.
-     * 
-     * Note that if you're programmatically configuring the field names,
-     * then you can just set the field name to null in the
-     * FieldNamesType.  
-     */
-    public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
     
     protected static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
     
@@ -163,6 +150,19 @@ abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAwa
             }
         }
     }
+
+    /**
+     * Writes a map as String fields to the generator if and only if the fieldName and values are not null.
+     */
+    protected void writeMapStringFields(JsonGenerator generator, String fieldName, Map<String, String> map) throws IOException, JsonMappingException {
+        if (shouldWriteField(fieldName) && map != null && !map.isEmpty()) {
+            generator.writeObjectFieldStart(fieldName);
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                writeStringField(generator, entry.getKey(), entry.getValue());
+            }
+            generator.writeEndObject();
+        }
+    }
     
     /**
      * Writes the field to the generator if and only if the fieldName and fieldValue are not null.
@@ -192,7 +192,7 @@ abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAwa
     }
 
     private boolean shouldWriteField(String fieldName) {
-        return fieldName != null && !fieldName.equals(IGNORE_FIELD_INDICATOR);
+        return fieldName != null && !fieldName.equals(LogstashCommonFieldNames.IGNORE_FIELD_INDICATOR);
     }
 
     private BufferRecycler getBufferRecycler() {

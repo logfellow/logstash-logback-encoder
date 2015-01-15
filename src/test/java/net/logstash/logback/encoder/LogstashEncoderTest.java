@@ -34,9 +34,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
 import org.apache.commons.io.IOUtils;
@@ -632,7 +632,7 @@ public class LogstashEncoderTest {
          * make sure it doesn't appear.
          */
         assertThat(node.get("@version"), is(nullValue()));
-        assertThat(node.get(LogstashFormatter.IGNORE_FIELD_INDICATOR), is(nullValue()));
+        assertThat(node.get(LogstashCommonFieldNames.IGNORE_FIELD_INDICATOR), is(nullValue()));
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
         assertThat(node.get("appendedName").textValue(), is("appendedValue"));

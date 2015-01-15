@@ -60,6 +60,8 @@ public class LogstashAccessFormatter extends LogstashAbstractFormatter<IAccessEv
         writeStringField(generator, fieldNames.getFieldsRemoteUser(), event.getRemoteUser());
         writeNumberField(generator, fieldNames.getFieldsContentLength(), event.getContentLength());
         writeNumberField(generator, fieldNames.getFieldsElapsedTime(), event.getElapsedTime());
+        writeMapStringFields(generator, fieldNames.getFieldsRequestHeaders(), event.getRequestHeaderMap());
+        writeMapStringFields(generator, fieldNames.getFieldsResponseHeaders(), event.getResponseHeaderMap());
         
         writeContextPropertiesIfNecessary(generator, context);
     }
