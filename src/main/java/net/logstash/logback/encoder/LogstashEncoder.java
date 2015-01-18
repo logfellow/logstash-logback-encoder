@@ -111,7 +111,7 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     public void setIncludeMdc(boolean includeMdc) {
         formatter.setIncludeMdc(includeMdc);
     }
-    
+
     public boolean isIncludeContext() {
         return formatter.isIncludeContext();
     }

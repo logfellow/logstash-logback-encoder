@@ -13,30 +13,25 @@
  */
 package net.logstash.logback;
 
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import net.logstash.logback.fieldnames.LogstashFieldNames;
-import net.logstash.logback.marker.LogstashMarker;
-import net.logstash.logback.marker.Markers;
-
-import org.slf4j.MDC;
-import org.slf4j.Marker;
-
 import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
-import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
+import net.logstash.logback.marker.LogstashMarker;
+import net.logstash.logback.marker.Markers;
+import org.slf4j.MDC;
+import org.slf4j.Marker;
+
+import java.io.IOException;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * 
@@ -99,7 +94,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
      * When true, {@link MDC} properties will be included.
      */
     private boolean includeMdc = true;
-    
+
     /**
      * Used to format throwables as Strings.
      */
@@ -235,6 +230,12 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
             if (mdcProperties != null && !mdcProperties.isEmpty()) {
                 if (fieldNames.getMdc() != null) {
                     generator.writeObjectFieldStart(fieldNames.getMdc());
+                }
+                List<String> mdcFieldNames = fieldNames.getMdcFieldNamesList();
+                if (!mdcFieldNames.isEmpty()) {
+                    Map<String, String> includedProperties = new HashMap<String, String>(mdcProperties);
+                    includedProperties.keySet().retainAll(mdcFieldNames);
+                    mdcProperties = includedProperties;
                 }
                 writeMapEntries(generator, mdcProperties);
                 if (fieldNames.getMdc() != null) {
@@ -384,15 +385,15 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     public void setIncludeMdc(boolean includeMdc) {
         this.includeMdc = includeMdc;
     }
-    
+
     public boolean isIncludeContext() {
         return includeContext;
     }
-    
+
     public void setIncludeContext(boolean includeContext) {
         this.includeContext = includeContext;
     }
-    
+
     public ThrowableHandlingConverter getThrowableConverter() {
         return throwableConverter;
     }
@@ -400,7 +401,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
         this.throwableConverter = throwableConverter;
     }
-    
+
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
@@ -408,7 +409,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     public boolean isEnableContextMap() {
         return enableContextMap;
     }
-    
+
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
