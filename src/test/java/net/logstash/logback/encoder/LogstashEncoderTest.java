@@ -29,14 +29,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
 import org.apache.commons.io.IOUtils;
@@ -241,6 +239,30 @@ public class LogstashEncoderTest {
         assertThat(node.get("thing_one").textValue(), is("One"));
         assertThat(node.get("thing_two").textValue(), is("Three"));
     }
+
+    @Test
+    public void onlySelectedPropertiesInMDCAreIncluded() throws Exception {
+        Map<String, String> mdcMap = new HashMap<String, String>();
+        mdcMap.put("thing_one", "One");
+        mdcMap.put("thing_two", "Three");
+        mdcMap.put("thing_three", "Four");
+
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
+
+        LogstashFieldNames fieldNames = new LogstashFieldNames();
+        fieldNames.setMdcFieldNames("thing_one,thing_three");
+
+        encoder.setFieldNames(fieldNames);
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+
+        assertThat(node.get("thing_one").textValue(), is("One"));
+        assertThat(node.get("thing_two"), is(nullValue()));
+        assertThat(node.get("thing_three").textValue(), is("Four"));
+    }
     
     @Test
     public void propertiesInMDCAreNotIncludedIfSwitchedOff() throws Exception {
@@ -279,7 +301,7 @@ public class LogstashEncoderTest {
         assertThat(node.get("mdc").get("thing_one").textValue(), is("One"));
         assertThat(node.get("mdc").get("thing_two").textValue(), is("Three"));
     }
-    
+
     @Test
     public void nullMDCDoesNotCauseEverythingToBlowUp() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);

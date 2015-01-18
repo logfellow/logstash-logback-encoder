@@ -13,6 +13,10 @@
  */
 package net.logstash.logback.fieldnames;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Common field names between the regular {@link net.logstash.logback.LogstashFormatter}
  * and the {@link net.logstash.logback.LogstashAccessFormatter}. 
@@ -21,6 +25,8 @@ public abstract class LogstashCommonFieldNames {
     private String timestamp = "@timestamp";
     private String version = "@version";
     private String message = "message";
+    private String mdcFieldNames = null;
+    private List<String> mdcFieldNamesList = Collections.emptyList();
 
     public String getTimestamp() {
         return timestamp;
@@ -44,5 +50,20 @@ public abstract class LogstashCommonFieldNames {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getMdcFieldNames() {
+        return this.mdcFieldNames;
+    }
+
+    public void setMdcFieldNames(String commaSeparatedFieldNames) {
+        this.mdcFieldNames = commaSeparatedFieldNames;
+        if (this.mdcFieldNames != null) {
+            this.mdcFieldNamesList = Collections.unmodifiableList(Arrays.asList(mdcFieldNames.split(",")));
+        }
+    }
+
+    public List<String> getMdcFieldNamesList() {
+        return this.mdcFieldNamesList;
     }
 }
