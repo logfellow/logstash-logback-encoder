@@ -14,6 +14,7 @@
 package net.logstash.logback.encoder;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
@@ -112,6 +113,30 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         formatter.setIncludeMdc(includeMdc);
     }
     
+    public List<String> getIncludeMdcKeyNames() {
+        return formatter.getIncludeMdcKeyNames();
+    }
+
+    public void addIncludeMdcKeyName(String includedMdcKeyName) {
+        formatter.addIncludeMdcKeyName(includedMdcKeyName);
+    }
+
+    public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
+        formatter.setIncludeMdcKeyNames(includeMdcKeyNames);
+    }
+
+    public List<String> getExcludeMdcKeyNames() {
+        return formatter.getExcludeMdcKeyNames();
+    }
+
+    public void addExcludeMdcKeyName(String excludedMdcKeyName) {
+        formatter.addExcludeMdcKeyName(excludedMdcKeyName);
+    }
+
+    public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
+        formatter.setExcludeMdcKeyNames(excludeMdcKeyNames);
+    }
+
     public boolean isIncludeContext() {
         return formatter.isIncludeContext();
     }
@@ -187,4 +212,5 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
     protected LogstashFormatter getFormatter() {
         return formatter;
     }
+
 }

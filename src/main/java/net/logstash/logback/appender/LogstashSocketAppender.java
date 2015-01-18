@@ -15,6 +15,7 @@ package net.logstash.logback.appender;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
@@ -100,6 +101,30 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     
     public void setIncludeMdc(boolean includeMdc) {
         logstashLayout.setIncludeMdc(includeMdc);
+    }
+    
+    public List<String> getIncludeMdcKeyNames() {
+        return logstashLayout.getIncludeMdcKeyNames();
+    }
+
+    public void addIncludeMdcKeyName(String includedMdcKeyName) {
+        logstashLayout.addIncludeMdcKeyName(includedMdcKeyName);
+    }
+
+    public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
+        logstashLayout.setIncludeMdcKeyNames(includeMdcKeyNames);
+    }
+
+    public List<String> getExcludeMdcKeyNames() {
+        return logstashLayout.getExcludeMdcKeyNames();
+    }
+
+    public void addExcludeMdcKeyName(String excludedMdcKeyName) {
+        logstashLayout.addExcludeMdcKeyName(excludedMdcKeyName);
+    }
+
+    public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
+        logstashLayout.setExcludeMdcKeyNames(excludeMdcKeyNames);
     }
     
     public boolean isIncludeContext() {
