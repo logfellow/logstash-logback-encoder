@@ -15,6 +15,8 @@ package net.logstash.logback.encoder;
 
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
+import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.layout.AbstractJsonPatternLayout;
 
 import java.io.IOException;
@@ -92,5 +94,13 @@ public abstract class AbstractJsonPatternLayoutEncoder<E> extends EncoderBase<E>
 
     public void setPattern(String pattern) {
         layout.setPattern(pattern);
+    }
+
+    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
+        layout.setJsonFactoryDecorator(jsonFactoryDecorator);
+    }
+
+    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
+        layout.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 }
