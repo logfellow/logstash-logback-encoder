@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>3.6</version>
+    <version>3.7-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
@@ -19,7 +19,7 @@
     <scm>
         <connection>scm:git:git@github.com:logstash/logstash-logback-encoder.git</connection>
         <developerConnection>scm:git:git@github.com:logstash/logstash-logback-encoder.git</developerConnection>
-        <tag>logstash-logback-encoder-3.6</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <prerequisites>
