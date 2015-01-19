@@ -35,6 +35,7 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
     @Override
     protected IAccessEvent createEvent() {
         given(event.getMethod()).willReturn("PUT");
+        given(event.getAttribute("MISSING")).willReturn("-"); // Just like logback itself does for non-existent attrs
         return event;
     }
 
@@ -56,6 +57,23 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
                 + "    \"level\": \"PUT\"\n"
                 + "}";
 
-        test(pattern, expected);
+        verifyWithoutDefaultFields(pattern, expected);
+    }
+
+    @Test
+    public void noNaOperationShouldNullifySingleDash() throws IOException {
+
+        String pattern = ""
+                + "{\n"
+                + "    \"cookie1\": \"%requestAttribute{MISSING}\",\n"
+                + "    \"cookie2\": \"#nullNA{%requestAttribute{MISSING}}\"\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "    \"cookie1\": \"-\"\n"
+                + "}";
+
+        verifyWithoutDefaultFields(pattern, expected);
     }
 }

@@ -27,6 +27,30 @@ public class AccessEventJsonPatternParser extends AbstractJsonPatternParser<IAcc
         super(contextAware);
     }
 
+    static class NullNaValueTransformer<E> implements ValueGetter<String, E> {
+
+        private final ValueGetter<String, E> generator;
+
+        NullNaValueTransformer(final ValueGetter<String, E> generator) {
+            this.generator = generator;
+        }
+
+        @Override
+        public String getValue(final E event) {
+            final String value = generator.getValue(event);
+            return "-".equals(value) ? null : value;
+        }
+    }
+
+    @Override
+    protected ValueGetter<?, IAccessEvent> operation(final String operation, final String data) {
+        if ("nullNA".equals(operation) && data != null) {
+            return new NullNaValueTransformer<IAccessEvent>(makeLayoutValueGetter(data));
+        } else {
+            return super.operation(operation, data);
+        }
+    }
+
     @Override
     protected PatternLayoutBase<IAccessEvent> createLayout() {
         return new PatternLayout();

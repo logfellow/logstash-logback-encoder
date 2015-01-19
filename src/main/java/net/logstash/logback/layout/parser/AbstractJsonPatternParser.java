@@ -37,7 +37,10 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractJsonPatternParser<E> {
 
-    public static final Pattern OPERATION_PATTERN = Pattern.compile("@(\\w+) (?: \\{ (.*) \\} )?", Pattern.COMMENTS);
+    public static final Pattern OPERATION_PATTERN = Pattern.compile("\\# (\\w+) (?: \\{ (.*) \\} )?", Pattern.COMMENTS);
+
+    private static final String TIMESTAMP_FIELD = "@timestamp";
+    private static final String VERSION_FIELD = "@version";
 
     private ContextAware contextAware;
 
@@ -61,7 +64,9 @@ public abstract class AbstractJsonPatternParser<E> {
 
         private final ValueGetter<String, E> generator;
 
-        AbstractAsNumberTransformer(final ValueGetter<String, E> generator) {this.generator = generator;}
+        AbstractAsNumberTransformer(final ValueGetter<String, E> generator) {
+            this.generator = generator;
+        }
 
         @Override
         public T getValue(final E event) {
@@ -198,7 +203,7 @@ public abstract class AbstractJsonPatternParser<E> {
         }
     }
 
-    private PatternLayoutBase<E> buildLayout(String format) {
+    protected PatternLayoutBase<E> buildLayout(String format) {
         PatternLayoutBase<E> layout = createLayout();
         layout.setContext(contextAware.getContext());
         layout.setPattern(format);
@@ -212,14 +217,16 @@ public abstract class AbstractJsonPatternParser<E> {
 
     protected ValueGetter<?, E> operation(String operation, String data) {
         if ("asLong".equals(operation) && data != null)  {
-            LayoutValueGetter<E> getter = new LayoutValueGetter<E>(buildLayout(data));
-            return new AsLongValueTransformer<E>(getter);
+            return new AsLongValueTransformer<E>(makeLayoutValueGetter(data));
         } else if ("asDouble".equals(operation) && data != null) {
-            LayoutValueGetter<E> getter = new LayoutValueGetter<E>(buildLayout(data));
-            return new AsDoubleValueTransformer<E>(getter);
+            return new AsDoubleValueTransformer<E>(makeLayoutValueGetter(data));
         } else {
             return null;
         }
+    }
+
+    protected LayoutValueGetter<E> makeLayoutValueGetter(final String data) {
+        return new LayoutValueGetter<E>(buildLayout(data));
     }
 
     private ValueGetter<?, E> makeComputableValueGetter(String pattern) {
@@ -236,7 +243,7 @@ public abstract class AbstractJsonPatternParser<E> {
             }
         }
 
-        return new LayoutValueGetter<E>(buildLayout(pattern));
+        return makeLayoutValueGetter(pattern);
     }
 
     private NodeWriter<E> parseValue(JsonNode node) {
@@ -283,6 +290,42 @@ public abstract class AbstractJsonPatternParser<E> {
         return new ObjectWriter<E>(children);
     }
 
+    private ObjectWriter<E> parseRootObject(JsonNode node) {
+        // This is copy&paste of parseObject with addition of default fields.
+        // Sorry, did not want to introduce another abstraction layer here
+        boolean seenVersion = false;
+        boolean seenTimestamp = false;
+        List<FieldWriter<E>> children = new ArrayList<FieldWriter<E>>();
+        for (Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields(); nodeFields.hasNext(); ) {
+            Map.Entry<String, JsonNode> field = nodeFields.next();
+
+            String key = field.getKey();
+            JsonNode value = field.getValue();
+
+            if (value.isTextual()) {
+                ValueGetter<?, E> getter = makeComputableValueGetter(value.asText());
+                children.add(new ComputableObjectFieldWriter<E>(key, getter));
+            } else {
+                children.add(new DelegatingObjectFieldWriter<E>(key, parseValue(value)));
+            }
+
+            seenVersion |= VERSION_FIELD.equals(key);
+            seenTimestamp |= TIMESTAMP_FIELD.equals(key);
+
+        }
+
+        if (!seenVersion) {
+            children.add(0, new DelegatingObjectFieldWriter<E>(VERSION_FIELD, new ConstantValueWriter<E>(1)));
+        }
+
+        if (!seenTimestamp) {
+            children.add(0, new ComputableObjectFieldWriter<E>(TIMESTAMP_FIELD,
+                    makeLayoutValueGetter("%date{ISO8601}")));
+        }
+
+        return new ObjectWriter<E>(children);
+    }
+
     public NodeWriter<E> parse(JsonFactory jsonFactory, String pattern) {
 
         if (pattern == null) {
@@ -308,6 +351,6 @@ public abstract class AbstractJsonPatternParser<E> {
             return null;
         }
 
-        return parseObject(node);
+        return parseRootObject(node);
     }
 }

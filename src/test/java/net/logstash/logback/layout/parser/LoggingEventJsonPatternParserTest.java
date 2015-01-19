@@ -64,7 +64,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
                 + "    \"level\": \"DEBUG\"\n"
                 + "}";
 
-        test(pattern, expected);
+        verifyWithoutDefaultFields(pattern, expected);
     }
 
     @Test
@@ -72,7 +72,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
 
         String pattern = ""
                 + "{\n"
-                + "    \"map\": \"@mdc\"\n"
+                + "    \"map\": \"#mdc\"\n"
                 + "}";
 
         String expected = ""
@@ -83,7 +83,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
                 + "    }\n"
                 + "}";
 
-        test(pattern, expected);
+        verifyWithoutDefaultFields(pattern, expected);
     }
 
     @Test
@@ -99,6 +99,6 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
                 + "    \"mdc.key1\": \"value1\"\n"
                 + "}";
 
-        test(pattern, expected);
+        verifyWithoutDefaultFields(pattern, expected);
     }
 }
