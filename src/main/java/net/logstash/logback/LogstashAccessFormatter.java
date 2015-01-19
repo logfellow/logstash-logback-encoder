@@ -35,12 +35,12 @@ public class LogstashAccessFormatter extends LogstashAbstractFormatter<IAccessEv
     protected void writeValueToGenerator(JsonGenerator generator, IAccessEvent event, Context context) throws IOException {
         
         generator.writeStartObject();
-        writeStringField(generator, fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
+        writeStringField(generator, fieldNames.getTimestamp(), isoDateTimeTimeZoneFormatWithMillis.format(event.getTimeStamp()));
         writeNumberField(generator, fieldNames.getVersion(), 1);
         writeStringField(generator, 
                 fieldNames.getMessage(),
                 String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser() == null ? "-" : event.getRemoteUser(),
-                        ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
+                        isoDateTimeTimeZoneFormatWithMillis.format(event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
                         event.getContentLength()));
         
         writeFields(generator, event, context);

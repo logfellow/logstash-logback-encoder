@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.ref.SoftReference;
 import java.util.Map;
+import java.util.TimeZone;
 
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
@@ -55,8 +56,6 @@ abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAwa
      */
     public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
     
-    protected static final FastDateFormat ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS = FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ");
-    
     /**
      * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference} to a {@link BufferRecycler} used to provide a low-cost
      * buffer recycling between writer instances.
@@ -92,6 +91,11 @@ abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAwa
      */
     protected FieldNamesType fieldNames;
 
+    /**
+     * Used to format timestamps.
+     */
+    protected FastDateFormat isoDateTimeTimeZoneFormatWithMillis = createFastDateFormat(null);
+    
     private volatile boolean started;
 
     protected final ContextAware contextAware;
@@ -205,6 +209,10 @@ abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAwa
         return bufferRecycler;
     }
 
+    private FastDateFormat createFastDateFormat(TimeZone timeZone) {
+        return FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", timeZone);
+    }
+
     public FieldNamesType getFieldNames() {
         return fieldNames;
     }
@@ -227,5 +235,12 @@ abstract class LogstashAbstractFormatter<EventType extends DeferredProcessingAwa
 
     public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
         this.jsonGeneratorDecorator = jsonGeneratorDecorator;
+    }
+    
+    public String getTimeZone() {
+        return this.isoDateTimeTimeZoneFormatWithMillis.getTimeZone().getID();
+    }
+    public void setTimeZone(String timeZoneId) {
+        this.isoDateTimeTimeZoneFormatWithMillis = createFastDateFormat(TimeZone.getTimeZone(timeZoneId));
     }
 }

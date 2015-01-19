@@ -134,6 +134,14 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         logstashLayout.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
+    public String getTimeZone() {
+        return logstashLayout.getTimeZone();
+    }
+
+    public void setTimeZone(String timeZoneId) {
+        logstashLayout.setTimeZone(timeZoneId);
+    }
+
     public ThrowableHandlingConverter getThrowableConverter() {
         return logstashLayout.getThrowableConverter();
     }

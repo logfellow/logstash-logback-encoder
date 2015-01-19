@@ -29,7 +29,6 @@ import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
-import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.Context;
@@ -164,7 +163,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     }
     
     private void writeLogstashFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        writeStringField(generator, fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
+        writeStringField(generator, fieldNames.getTimestamp(), isoDateTimeTimeZoneFormatWithMillis.format(event.getTimeStamp()));
         writeNumberField(generator, fieldNames.getVersion(), 1);
         writeStringField(generator, fieldNames.getMessage(), event.getFormattedMessage());
     }
