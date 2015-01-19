@@ -97,4 +97,12 @@ public class LogstashAccessEncoder extends EncoderBase<IAccessEvent> {
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
+    public String getTimeZone() {
+        return formatter.getTimeZone();
+    }
+
+    public void setTimeZone(String timeZoneId) {
+        formatter.setTimeZone(timeZoneId);
+    }
+
 }

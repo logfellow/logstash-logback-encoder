@@ -141,7 +141,7 @@ The field names can be customized (see below).
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See below for customizing the timezone.
 | `@version`    | Logstash format version (e.g. 1)
 | `message`     | Formatted log message of the event 
 | `logger_name` | Name of the logger that logged the event
@@ -336,6 +336,19 @@ and then specify your decorator in the logback.xml file like this:
   <jsonGeneratorDecorator class="your.package.PrettyPrintingDecorator"/>
 </encoder>
 ```
+
+## Customizing TimeZone
+
+By default, timestamps are logged in the default TimeZone of the host Java platform.
+You can change the timezone like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timeZone>UTC</timeZone>
+</encoder>
+```
+
+The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
 
 ## Customizing Stack Traces
 

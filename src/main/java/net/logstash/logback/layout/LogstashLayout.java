@@ -117,6 +117,14 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
+    public String getTimeZone() {
+        return formatter.getTimeZone();
+    }
+
+    public void setTimeZone(String timeZoneId) {
+        formatter.setTimeZone(timeZoneId);
+    }
+
     public ThrowableHandlingConverter getThrowableConverter() {
         return formatter.getThrowableConverter();
     }

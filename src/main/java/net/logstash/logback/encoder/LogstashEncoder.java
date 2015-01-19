@@ -184,6 +184,14 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         formatter.setThrowableConverter(throwableConverter);
     }
 
+    public String getTimeZone() {
+        return formatter.getTimeZone();
+    }
+
+    public void setTimeZone(String timeZoneId) {
+        formatter.setTimeZone(timeZoneId);
+    }
+
     protected LogstashFormatter getFormatter() {
         return formatter;
     }

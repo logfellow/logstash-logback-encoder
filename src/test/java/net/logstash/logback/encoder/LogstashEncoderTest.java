@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
@@ -520,6 +521,29 @@ public class LogstashEncoderTest {
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
         Assert.assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
         Assert.assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+    }
+    
+    @Test
+    public void customTimeZone() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimeZone("UTC");
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("@timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", TimeZone.getTimeZone("UTC")).format
+                (timestamp)));
+        assertThat(node.get("@version").intValue(), is(1));
+        assertThat(node.get("logger_name").textValue(), is("LoggerName"));
+        assertThat(node.get("thread_name").textValue(), is("ThreadName"));
+        assertThat(node.get("message").textValue(), is("My message"));
+        assertThat(node.get("level").textValue(), is("ERROR"));
+        assertThat(node.get("level_value").intValue(), is(40000));
     }
     
     public JsonNode parse(String string) throws JsonParseException, IOException {
