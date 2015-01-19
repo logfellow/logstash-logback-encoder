@@ -11,7 +11,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>3.5</version>
+  <version>3.6</version>
 </dependency>
 ```
 ## Usage
