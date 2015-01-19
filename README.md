@@ -390,5 +390,135 @@ The default field names used for access logs are different than those documented
 See [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names used for access logs.
 
+### Using PatternLayout--based JSON encoders
+In addition to the pair of encoder (LogstashEncoder/LogstashAccessEncoder) shown in the examples above, there is
+a pair of alternative encoders (LoggingEventJsonPatternLayoutEncoder/AccessEventJsonPatternLayoutEncoder) that allow you to
+customize JSON being that is send to logstash even more.
+
+Effectively you are providing a template of JSON to be send to the logstash server and encoder just populates it with values.
+Every value in the template is treated as a pattern for logback's standard PatternLayout so it can be a combination
+of literal strings (for some constants) and various conversion specifiers (like %d for date).
+Only the fields you explicitly included into pattern will be logged.
+
+Note that "@version" and "@timestamp" fields are added automatically so they do not have to be specified in the format pattern.
+If, however, you include them in the format then your definition will be used instead.
+
+This example
+```xml
+        <encoder class="net.logstash.logback.encoder.LoggingEventJsonPatternLayoutEncoder">
+            <pattern>
+                { "level": "%p" }
+            </pattern>
+        </encoder>
+```
+Will produce something like
+```
+{"@time":"...", "@version": 1, "level": "DEBUG"}
+```
+
+The real power comes from the fact that there are lots of standard conversion specifiers so you
+can customise what is logged and how. For example, you could log a single specific value from MDC with "%X{mykey}"
+or, for access logs, you could log a single request header with "%i{User-Agent}".
+
+You can use nested objects an arrays in your pattern which provides you the same functionality as custom fields feature
+of other logstash appenders.
+
+<b>Important note</b>: if you use a null, number or a boolean constant in a pattern, it will keep its type in the
+resulting JSON. However only the text values are searched for conversion patterns.
+And, as these patterns are sent through PatternLayout, the result is always a string
+even for something which you may feel should be a number - like for %b (bytes sent, in access logs).
+
+You can either deal with the type conversion on the logstash side or you may use special operations provided by this encoder.
+The operations are:
+
+* @asLong{...} - evaluates pattern in curly braces and then converts resulting string to a long.
+* @asDouble{...} - evaluates pattern in curly braces and then converts resulting string to a double.
+
+So this example
+```xml
+            <pattern>
+                {
+                "bytes_sent_str": "%b",
+                "bytes_sent_long": "@asLong{%b}"
+                }
+            </pattern>
+```
+Will produce something like
+```
+{"@time":"...", "@version": 1, "bytes_sent_str": "1024", "bytes_sent_long": 1024}
+```
+
+So value that is sent for bytes_sent_long is a number even though in your pattern it is a quoted text.
+
+Note that there are two different PatternLayouts just like there are two different encoders for logstash.
+And these layouts support different set of conversion patterns
+
+### LoggingEventJsonPatternLayoutEncoder
+
+LogstashLoggingLoggingEncoder uses PatternLayouts from logback-classic - http://logback.qos.ch/xref/ch/qos/logback/classic/PatternLayout.html
+
+For the help with supported conversions - see http://logback.qos.ch/manual/layouts.html#conversionWord
+
+```xml
+        <encoder class="net.logstash.logback.encoder.LoggingEventJsonPatternLayoutEncoder">
+            <pattern>
+                {
+                "custom_constant": "123",
+                "tags": ["one", "two"],
+
+                "logger": "%logger",
+                "level": "%level",
+                "thread": "%thread",
+                "message": "%m%n%ex",
+...
+                }
+            </pattern>
+        </encoder>
+```
+
+Note that LogstashLoggingAccessEncoder does not support stack trace formatters supported by LogstashLayout so
+you cannot abbreviate class names in the stack trace. You still can limit stack length though with the
+standard conversion pattern of %ex{10} for 10 first lines.
+
+There is also a special operation that can be used with this encoder:
+* @mdc - if you use it as a value, that value will be replaced with a nested object containing all
+the values from MDC
+
+If, instead, you want your MDC values on the top level, you will have to pick them individually with something like
+
+```xml
+            <pattern>
+                {
+                "mdckey1": "%X{key1}",
+                "mdckey2": "%X{key2}"
+                }
+            </pattern>
+```
+
+There is no way to include all the values from MDC into the top level of the resulting JSON object.
+
+
+### AccessEventJsonPatternLayoutEncoder
+
+LogstashLoggingAccessEncoder uses PatternLayouts from logback-access - http://logback.qos.ch/xref/ch/qos/logback/access/PatternLayout.html
+
+```xml
+        <encoder class="net.logstash.logback.encoder.AccessEventJsonPatternLayoutEncoder">
+            <pattern>
+                {
+                "custom_constant": "123",
+
+                "remote_ip": "%a",
+                "status_code": "%s",
+                "elapsed_time": "%D",
+                "user_agent": "%i{User-Agent}",
+                "accept": "%i{Accept}",
+                "referer": "%i{Referer}",
+...
+                }
+            </pattern>
+        </encoder>
+```
+
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
