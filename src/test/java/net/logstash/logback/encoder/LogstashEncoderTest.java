@@ -226,7 +226,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void propertiesInMDCAreIncluded() throws Exception {
+    public void mdcAllIncluded() throws Exception {
         Map<String, String> mdcMap = new HashMap<String, String>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
@@ -244,7 +244,47 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void propertiesInMDCAreNotIncludedIfSwitchedOff() throws Exception {
+    public void mdcSomeIncluded() throws Exception {
+        Map<String, String> mdcMap = new HashMap<String, String>();
+        mdcMap.put("thing_one", "One");
+        mdcMap.put("thing_two", "Three");
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
+        
+        encoder.addIncludeMdcKeyName("thing_one");
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("thing_one").textValue(), is("One"));
+        assertThat(node.get("thing_two"), is(nullValue()));
+    }
+    
+    @Test
+    public void mdcSomeExcluded() throws Exception {
+        Map<String, String> mdcMap = new HashMap<String, String>();
+        mdcMap.put("thing_one", "One");
+        mdcMap.put("thing_two", "Three");
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
+        
+        encoder.addExcludeMdcKeyName("thing_two");
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("thing_one").textValue(), is("One"));
+        assertThat(node.get("thing_two"), is(nullValue()));
+    }
+    
+    @Test
+    public void mdcNoneIncluded() throws Exception {
         Map<String, String> mdcMap = new HashMap<String, String>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");

@@ -14,6 +14,7 @@
 package net.logstash.logback.layout;
 
 import java.io.IOException;
+import java.util.List;
 
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
@@ -78,6 +79,30 @@ public class LogstashLayout extends LayoutBase<ILoggingEvent> {
     
     public void setIncludeMdc(boolean includeMdc) {
         formatter.setIncludeMdc(includeMdc);
+    }
+    
+    public List<String> getIncludeMdcKeyNames() {
+        return formatter.getIncludeMdcKeyNames();
+    }
+
+    public void addIncludeMdcKeyName(String includedMdcKeyName) {
+        formatter.addIncludeMdcKeyName(includedMdcKeyName);
+    }
+
+    public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
+        formatter.setIncludeMdcKeyNames(includeMdcKeyNames);
+    }
+
+    public List<String> getExcludeMdcKeyNames() {
+        return formatter.getExcludeMdcKeyNames();
+    }
+
+    public void addExcludeMdcKeyName(String excludedMdcKeyName) {
+        formatter.addExcludeMdcKeyName(excludedMdcKeyName);
+    }
+
+    public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
+        formatter.setExcludeMdcKeyNames(excludeMdcKeyNames);
     }
     
     public boolean isIncludeContext() {

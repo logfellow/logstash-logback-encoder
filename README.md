@@ -151,12 +151,41 @@ The field names can be customized (see below).
 | `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.
 | `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.)
 
+#### MDC fields
 
-Additionally, every field in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)
-and properties of Logback's Context (`ch.qos.logback.core.Context`) will appear as a field in the log event.
-These can be disabled by specifying `<includeMdc>false</includeMdc>` or `<includeContext>false</includeContext>`,
-respectively, in the encoder/layout/appender configuration.
+By default, each entry in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)
+will appear as a field in the log event.
 
+This can be fully disabled by specifying `<includeMdc>false</includeMdc>`,
+in the encoder/layout/appender configuration.
+
+You can also configure specific entries in the MDC to be included or excluded as follows:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <includeMdcKeyName>key1ToInclude</includeMdcKeyName>
+  <includeMdcKeyName>key2ToInclude</includeMdcKeyName>
+</encoder>
+```
+or
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <excludeMdcKeyName>key1ToExclude</excludeMdcKeyName>
+  <excludeMdcKeyName>key2ToExclude</excludeMdcKeyName>
+</encoder>
+```
+
+When key names are specified for inclusion, then all other fields will be excluded.
+When key names are specified for exclusion, then all other fields will be included.
+It is a configuration error to specify both included and excluded key names.
+
+#### Context fields
+
+By default, each property of Logback's Context (`ch.qos.logback.core.Context`)
+will appear as a field in the log event.
+This can be disabled by specifying `<includeContext>false</includeContext>`
+in the encoder/layout/appender configuration.
 
 #### Caller Info Fields
 The encoder/layout/appender do not contain caller info by default. 

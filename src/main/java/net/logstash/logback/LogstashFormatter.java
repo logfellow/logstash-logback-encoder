@@ -14,7 +14,11 @@
 package net.logstash.logback;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -95,9 +99,37 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private boolean includeContext = true;
     
     /**
-     * When true, {@link MDC} properties will be included.
+     * When true, {@link MDC} properties will be included according to
+     * {@link #includeMdcKeyNames} and {@link #excludeMdcKeyNames}.
+     * <p>
+     * There are three valid combinations of {@link #includeMdcKeyNames}
+     * and {@link #excludeMdcKeyNames}:
+     * 
+     * <ol>
+     * <li>When {@link #includeMdcKeyNames} and {@link #excludeMdcKeyNames}
+     *     are both empty, then all entries will be included.</li>
+     * <li>When {@link #includeMdcKeyNames} is not empty and
+     *     {@link #excludeMdcKeyNames} is empty, then only those entries
+     *     with key names in {@link #includeMdcKeyNames} will be included.</li> 
+     * <li>When {@link #includeMdcKeyNames} is empty and
+     *     {@link #excludeMdcKeyNames} is not empty, then all entries except those
+     *     with key names in {@link #excludeMdcKeyNames} will be included.</li>
+     * </ol>
+     * 
+     *  It is a configuration error for both {@link #includeMdcKeyNames}
+     *  and {@link #excludeMdcKeyNames} to be not empty.
      */
     private boolean includeMdc = true;
+    
+    /**
+     * See {@link #includeMdc}.
+     */
+    private List<String> includeMdcKeyNames = new ArrayList<String>();
+    
+    /**
+     * See {@link #includeMdc}.
+     */
+    private List<String> excludeMdcKeyNames = new ArrayList<String>();
     
     /**
      * Used to format throwables as Strings.
@@ -124,6 +156,9 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     public void start() {
         super.start();
         initializeCustomFields();
+        if (!this.includeMdcKeyNames.isEmpty() && !this.excludeMdcKeyNames.isEmpty()) {
+            contextAware.addError("Both includeMdcKeyNames and excludeMdcKeyNames are not empty.  Only one is allowed to be not empty.");
+        }
         this.throwableConverter.start();
     }
     
@@ -234,6 +269,14 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
             if (mdcProperties != null && !mdcProperties.isEmpty()) {
                 if (fieldNames.getMdc() != null) {
                     generator.writeObjectFieldStart(fieldNames.getMdc());
+                }
+                if (!includeMdcKeyNames.isEmpty()) {
+                    mdcProperties = new HashMap<String, String>(mdcProperties);
+                    mdcProperties.keySet().retainAll(includeMdcKeyNames);
+                }
+                if (!excludeMdcKeyNames.isEmpty()) {
+                    mdcProperties = new HashMap<String, String>(mdcProperties);
+                    mdcProperties.keySet().removeAll(excludeMdcKeyNames);
                 }
                 writeMapEntries(generator, mdcProperties);
                 if (fieldNames.getMdc() != null) {
@@ -382,6 +425,26 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     
     public void setIncludeMdc(boolean includeMdc) {
         this.includeMdc = includeMdc;
+    }
+    
+    public List<String> getIncludeMdcKeyNames() {
+        return Collections.unmodifiableList(includeMdcKeyNames);
+    }
+    public void addIncludeMdcKeyName(String includedMdcKeyName) {
+        this.includeMdcKeyNames.add(includedMdcKeyName);
+    }
+    public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
+        this.includeMdcKeyNames = new ArrayList<String>(includeMdcKeyNames);
+    }
+    
+    public List<String> getExcludeMdcKeyNames() {
+        return Collections.unmodifiableList(excludeMdcKeyNames);
+    }
+    public void addExcludeMdcKeyName(String excludedMdcKeyName) {
+        this.excludeMdcKeyNames.add(excludedMdcKeyName);
+    }
+    public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
+        this.excludeMdcKeyNames = new ArrayList<String>(excludeMdcKeyNames);
     }
     
     public boolean isIncludeContext() {
