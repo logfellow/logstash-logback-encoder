@@ -179,10 +179,8 @@ public abstract class AbstractJsonPatternParser<E> {
 
         public void write(JsonGenerator generator, E event) throws IOException {
             Object value = getter.getValue(event);
-            if (value != null) {
-                generator.writeFieldName(name);
-                generator.writeObject(value);
-            }
+            generator.writeFieldName(name);
+            generator.writeObject(value);
         }
     }
 

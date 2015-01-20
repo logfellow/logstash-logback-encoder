@@ -71,7 +71,8 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
 
         String expected = ""
                 + "{\n"
-                + "    \"cookie1\": \"-\"\n"
+                + "    \"cookie1\": \"-\",\n"
+                + "    \"cookie2\": null\n"
                 + "}";
 
         verifyWithoutDefaultFields(pattern, expected);

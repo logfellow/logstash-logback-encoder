@@ -213,7 +213,7 @@ public abstract class AbstractJsonPatternParserTest<E> {
     }
 
     @Test
-    public void shouldOmitNonTransformableValuesFromOutput() throws IOException {
+    public void shouldSendNonTransformableValuesAsNulls() throws IOException {
 
         String pattern = ""
                 + "{\n"
@@ -224,7 +224,9 @@ public abstract class AbstractJsonPatternParserTest<E> {
 
         String expected = ""
                 + "{\n"
-                + "    \"key2\": \"test\"\n"
+                + "    \"key1\": null,\n"
+                + "    \"key2\": \"test\",\n"
+                + "    \"key3\": null\n"
                 + "}";
 
         verifyWithoutDefaultFields(pattern, expected);

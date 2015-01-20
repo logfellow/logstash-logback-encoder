@@ -390,12 +390,12 @@ The default field names used for access logs are different than those documented
 See [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names used for access logs.
 
-### Using PatternLayout-based JSON encoders
+## Using PatternLayout-based JSON encoders
 In addition to the pair of encoder ([`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java)
 and [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java))
 shown in all the examples above, there is
-a pair of alternative encoders ([`LoggingEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventJsonPatternLayoutEncoder.java))
-and [`AccessEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventJsonPatternLayoutEncoder.java)))
+a pair of alternative encoders ([`LoggingEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventJsonPatternLayoutEncoder.java)
+and [`AccessEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventJsonPatternLayoutEncoder.java))
 that allow you to customize JSON being that is send to logstash even more.
 
 Effectively you are providing a template of JSON to be send to the logstash server and encoder just populates it with values.
@@ -434,8 +434,8 @@ even for something which you may feel should be a number - like for %b (bytes se
 You can either deal with the type conversion on the logstash side or you may use special operations provided by this encoder.
 The operations are:
 
-* #asLong{...} - evaluates pattern in curly braces and then converts resulting string to a long.
-* #asDouble{...} - evaluates pattern in curly braces and then converts resulting string to a double.
+* #asLong{...} - evaluates pattern in curly braces and then converts resulting string to a long (or a null if conversion fails).
+* #asDouble{...} - evaluates pattern in curly braces and then converts resulting string to a double (or a null if conversion fails).
 
 So this example
 ```xml
@@ -453,12 +453,12 @@ Will produce something like
 
 So value that is sent for bytes_sent_long is a number even though in your pattern it is a quoted text.
 
-Note that there are two different PatternLayouts just like there are two different encoders for logstash.
+There are two different PatternLayouts just like there are two different encoders for logstash.
 And these layouts support different set of conversion patterns
 
 ### LoggingEventJsonPatternLayoutEncoder
 
-[`LoggingEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventJsonPatternLayoutEncoder.java))
+[`LoggingEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventJsonPatternLayoutEncoder.java)
 uses PatternLayouts from logback-classic - http://logback.qos.ch/xref/ch/qos/logback/classic/PatternLayout.html
 
 For the help with supported conversions - see http://logback.qos.ch/manual/layouts.html#conversionWord
@@ -473,7 +473,7 @@ For the help with supported conversions - see http://logback.qos.ch/manual/layou
         "logger": "%logger",
         "level": "%level",
         "thread": "%thread",
-        "message": "%m%n%ex",
+        "message": "%m",
 ...
         }
     </pattern>
@@ -504,7 +504,7 @@ There is no way to include all the values from MDC into the top level of the res
 
 ### AccessEventJsonPatternLayoutEncoder
 
-[`AccessEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventJsonPatternLayoutEncoder.java))
+[`AccessEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventJsonPatternLayoutEncoder.java)
 uses PatternLayouts from logback-access - http://logback.qos.ch/xref/ch/qos/logback/access/PatternLayout.html
 
 ```xml
@@ -529,12 +529,11 @@ uses PatternLayouts from logback-access - http://logback.qos.ch/xref/ch/qos/logb
 
 Note that PatternLayout for access logs does not support MDC. If your web application uses MDC to track
 any request details, you will need a filter to copy that data from MDC into request attributes at the end of request.
-And then, request attributes can actually be logged with "%requestAttribute{name}".
-Also note that latest Logback (1.1.2 at the moment of writing), does not support deferred processing of
+And then request attributes can actually be logged with "%requestAttribute{name}".
+Also note that the latest Logback (1.1.2 at the moment of writing), does not support deferred processing of
 request attributes. And because `LogstashTcpSocketAppender` defers processing of the event to a background thread,
 you won't be able to use "%requestAttribute{name}" with TCP appender until this issue is fixed (or you build yourself
-a custom logback) - http://jira.qos.ch/browse/LOGBACK-1033
-
+a custom logback). See http://jira.qos.ch/browse/LOGBACK-1033
 
 There is also a special operation that can be used with this encoder:
 * #nullNA{...} - if the pattern in curly braces evaluates to a dash ("-"), it will be replaced with a null value.
@@ -546,16 +545,13 @@ So the following pattern
 <pattern>
     {
     "default_cookie": "%requestCookie{MISSING}",
-    "cookie_as_text": "#nullNA{%requestCookie{MISSING}}"
+    "filtered_cookie": "#nullNA{%requestCookie{MISSING}}"
     }
 </pattern>
 ```
 
 will produce
-{"@time":"...", "@version": 1, "default_cookie": "-"}
-
-note that "cookie_as_text" was replaced with null and omitted. Alternatively you can do this kind of
-processing on logstash server side.
+{"@time":"...", "@version": 1, "default_cookie": "-", "filtered_cookie": null}
 
 
 ## Build status
