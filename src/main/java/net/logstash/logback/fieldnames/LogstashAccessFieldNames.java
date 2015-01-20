@@ -13,19 +13,37 @@
  */
 package net.logstash.logback.fieldnames;
 
+import net.logstash.logback.composite.accessevent.AccessMessageJsonProvider;
+import net.logstash.logback.composite.accessevent.ContentLengthJsonProvider;
+import net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider;
+import net.logstash.logback.composite.accessevent.HostnameJsonProvider;
+import net.logstash.logback.composite.accessevent.MethodJsonProvider;
+import net.logstash.logback.composite.accessevent.ProtocolJsonProvider;
+import net.logstash.logback.composite.accessevent.RemoteHostJsonProvider;
+import net.logstash.logback.composite.accessevent.RemoteUserJsonProvider;
+import net.logstash.logback.composite.accessevent.RequestedUriJsonProvider;
+import net.logstash.logback.composite.accessevent.RequestedUrlJsonProvider;
+import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
+
 public class LogstashAccessFieldNames extends LogstashCommonFieldNames {
-    private String fieldsMethod = "@fields.method";
-    private String fieldsProtocol = "@fields.protocol";
-    private String fieldsStatusCode = "@fields.status_code";
-    private String fieldsRequestedUrl = "@fields.requested_url";
-    private String fieldsRequestedUri = "@fields.requested_uri";
-    private String fieldsRemoteHost = "@fields.remote_host";
-    private String fieldsHostname = "@fields.HOSTNAME";
-    private String fieldsRemoteUser = "@fields.remote_user";
-    private String fieldsContentLength = "@fields.content_length";
-    private String fieldsElapsedTime = "@fields.elapsed_time";
-    private String fieldsRequestHeaders = "@fields.request_headers";
-    private String fieldsResponseHeaders = "@fields.response_headers";
+    
+    private String fieldsMethod = MethodJsonProvider.FIELD_METHOD;
+    private String fieldsProtocol = ProtocolJsonProvider.FIELD_PROTOCOL;
+    private String fieldsStatusCode = StatusCodeJsonProvider.FIELD_STATUS_CODE;
+    private String fieldsRequestedUrl = RequestedUrlJsonProvider.FIELD_REQUESTED_URL;
+    private String fieldsRequestedUri = RequestedUriJsonProvider.FIELD_REQUESTED_URI;
+    private String fieldsRemoteHost = RemoteHostJsonProvider.FIELD_REMOTE_HOST;
+    private String fieldsHostname = HostnameJsonProvider.FIELD_HOSTNAME;
+    private String fieldsRemoteUser = RemoteUserJsonProvider.FIELD_REMOTE_USER;
+    private String fieldsContentLength = ContentLengthJsonProvider.FIELD_CONTENT_LENGTH;
+    private String fieldsElapsedTime = ElapsedTimeJsonProvider.FIELD_ELAPSED_TIME;
+    /*
+     * By default:
+     * fieldsRequestHeaders and fieldsResponseHeaders are ignored
+     * because those fields can be quite big.
+     */
+    private String fieldsRequestHeaders;
+    private String fieldsResponseHeaders;
     
     public LogstashAccessFieldNames() {
         /*
@@ -33,15 +51,7 @@ public class LogstashAccessFieldNames extends LogstashCommonFieldNames {
          * LogstashAccessEncoder uses '@message' for the message field.
          * LogstashEncoder uses 'message'.
          */
-        setMessage("@message");
-
-        /*
-         * By default:
-         * fieldsRequestHeaders and fieldsResponseHeaders are ignored
-         * because those fields can be quite big.
-         */
-        setFieldsRequestHeaders(IGNORE_FIELD_INDICATOR);
-        setFieldsResponseHeaders(IGNORE_FIELD_INDICATOR);
+        setMessage(AccessMessageJsonProvider.FIELD_MESSAGE);
     }
 
     public String getFieldsMethod() {

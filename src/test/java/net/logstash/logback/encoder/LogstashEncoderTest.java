@@ -81,7 +81,6 @@ public class LogstashEncoderTest {
         outputStream = new ByteArrayOutputStream();
         encoder = new LogstashEncoder();
         encoder.init(outputStream);
-        encoder.start();
     }
     
     @Test
@@ -91,6 +90,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getTimeStamp()).thenReturn(timestamp);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -114,6 +114,7 @@ public class LogstashEncoderTest {
         
         when(event.getTimeStamp()).thenReturn(timestamp);
         encoder.setFieldNames(new ShortenedFieldNames());
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -184,6 +185,7 @@ public class LogstashEncoderTest {
         when(event.getTimeStamp()).thenReturn(timestamp);
         encoder.setFieldNames(new ShortenedFieldNames());
         encoder.setShortenedLoggerNameLength(length);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
 
@@ -203,6 +205,7 @@ public class LogstashEncoderTest {
     public void closePutsSeparatorAtTheEnd() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         
+        encoder.start();
         encoder.doEncode(event);
         encoder.close();
         closeQuietly(outputStream);
@@ -217,6 +220,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getThrowableProxy()).thenReturn(throwableProxy);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -234,6 +238,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(mdcMap);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -254,6 +259,7 @@ public class LogstashEncoderTest {
         
         encoder.addIncludeMdcKeyName("thing_one");
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -274,6 +280,7 @@ public class LogstashEncoderTest {
         
         encoder.addExcludeMdcKeyName("thing_two");
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -293,6 +300,7 @@ public class LogstashEncoderTest {
         when(event.getMDCPropertyMap()).thenReturn(mdcMap);
         
         encoder.setIncludeMdc(false);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -312,6 +320,7 @@ public class LogstashEncoderTest {
         when(event.getMDCPropertyMap()).thenReturn(mdcMap);
         
         encoder.getFieldNames().setMdc("mdc");
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -326,6 +335,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(null);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
     }
@@ -339,6 +349,7 @@ public class LogstashEncoderTest {
         
         encoder.setIncludeCallerInfo(true);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -359,7 +370,7 @@ public class LogstashEncoderTest {
         
         encoder.setIncludeCallerInfo(true);
         encoder.getFieldNames().setCaller("caller");
-        
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -384,6 +395,7 @@ public class LogstashEncoderTest {
         
         encoder.setIncludeCallerInfo(false);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -406,6 +418,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         
         encoder.setContext(context);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -427,6 +440,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         encoder.setIncludeContext(false);
         encoder.setContext(context);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -449,6 +463,7 @@ public class LogstashEncoderTest {
         
         encoder.getFieldNames().setContext("context");
         encoder.setContext(context);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -464,6 +479,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -479,6 +495,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -492,6 +509,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(null);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -514,6 +532,7 @@ public class LogstashEncoderTest {
         when(event.getMarker()).thenReturn(marker);
         when(event.getArgumentArray()).thenReturn(argArray);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -530,6 +549,7 @@ public class LogstashEncoderTest {
         when(event.getMarker()).thenReturn(marker);
         when(event.getArgumentArray()).thenReturn(argArray);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -553,6 +573,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         
         encoder.setCustomFields(customFields);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -571,6 +592,7 @@ public class LogstashEncoderTest {
         when(event.getTimeStamp()).thenReturn(timestamp);
         
         encoder.setTimeZone("UTC");
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -597,6 +619,7 @@ public class LogstashEncoderTest {
         when(event.getArgumentArray()).thenReturn(null);
         
         encoder.setEnableContextMap(true);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -628,6 +651,7 @@ public class LogstashEncoderTest {
         when(event.getArgumentArray()).thenReturn(argList);
         
         encoder.setEnableContextMap(true);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -662,6 +686,7 @@ public class LogstashEncoderTest {
         Marker marker = appendEntries(contextMap);
         when(event.getMarker()).thenReturn(marker);
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         

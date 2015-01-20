@@ -13,6 +13,10 @@
  */
 package net.logstash.logback.fieldnames;
 
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
+
 /**
  * Common field names between the regular {@link net.logstash.logback.LogstashFormatter}
  * and the {@link net.logstash.logback.LogstashAccessFormatter}. 
@@ -32,9 +36,9 @@ public abstract class LogstashCommonFieldNames {
      */
     public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
   
-    private String timestamp = "@timestamp";
-    private String version = "@version";
-    private String message = "message";
+    private String timestamp = FormattedTimestampJsonProvider.FIELD_TIMESTAMP;
+    private String version = LogstashVersionJsonProvider.FIELD_VERSION;
+    private String message = MessageJsonProvider.FIELD_MESSAGE;
 
     public String getTimestamp() {
         return timestamp;

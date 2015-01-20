@@ -13,37 +13,24 @@
  */
 package net.logstash.logback.encoder;
 
-import net.logstash.logback.LogstashAccessFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
-import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
+import net.logstash.logback.composite.JsonProviders;
+import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
+import net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter;
 import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 
-public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
+public class AccessEventCompositeJsonEncoder extends CompositeJsonEncoder<IAccessEvent> {
+    
     
     @Override
     protected CompositeJsonFormatter<IAccessEvent> createFormatter() {
-        return new LogstashAccessFormatter(this);
+        return new AccessEventCompositeJsonFormatter(this);
     }
     
     @Override
-    protected LogstashAccessFormatter getFormatter() {
-        return (LogstashAccessFormatter) super.getFormatter();
+    @DefaultClass(AccessEventJsonProviders.class)
+    public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {
+        super.setProviders(jsonProviders);
     }
-    
-    public LogstashAccessFieldNames getFieldNames() {
-        return getFormatter().getFieldNames();
-    }
-    
-    public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        getFormatter().setFieldNames(fieldNames);
-    }
-
-    public String getTimeZone() {
-        return getFormatter().getTimeZone();
-    }
-
-    public void setTimeZone(String timeZoneId) {
-        getFormatter().setTimeZone(timeZoneId);
-    }
-
 }

@@ -53,7 +53,7 @@ public class LogstashTcpEncoder extends LogstashEncoder {
     @Override
     public void doEncode(ILoggingEvent event) throws IOException {
         
-        String log = getFormatter().writeValueAsString(event, context);
+        String log = getFormatter().writeEventAsString(event);
         outputStream.write(log.getBytes(encoding));
         if (newLine != null) {
             outputStream.write(newLine.getBytes(Charset.forName(encoding)));

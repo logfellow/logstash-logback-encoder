@@ -13,62 +13,153 @@
  */
 package net.logstash.logback;
 
-import java.io.IOException;
-
+import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.ContextJsonProvider;
+import net.logstash.logback.composite.JsonProvider;
+import net.logstash.logback.composite.JsonProviders;
+import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter;
+import net.logstash.logback.composite.accessevent.AccessEventFormattedTimestampJsonProvider;
+import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
+import net.logstash.logback.composite.accessevent.AccessMessageJsonProvider;
+import net.logstash.logback.composite.accessevent.ContentLengthJsonProvider;
+import net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider;
+import net.logstash.logback.composite.accessevent.HostnameJsonProvider;
+import net.logstash.logback.composite.accessevent.MethodJsonProvider;
+import net.logstash.logback.composite.accessevent.ProtocolJsonProvider;
+import net.logstash.logback.composite.accessevent.RemoteHostJsonProvider;
+import net.logstash.logback.composite.accessevent.RemoteUserJsonProvider;
+import net.logstash.logback.composite.accessevent.RequestHeadersJsonProvider;
+import net.logstash.logback.composite.accessevent.RequestedUriJsonProvider;
+import net.logstash.logback.composite.accessevent.RequestedUrlJsonProvider;
+import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
+import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonFormatter;
+import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
-import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
-
 /**
- *
+ * A {@link AccessEventCompositeJsonFormatter} that contains a common
+ * pre-defined set of {@link JsonProvider}s.
+ * 
+ * The included providers are configured via properties on this
+ * formatter, rather than configuring the providers directly.
+ * This leads to a somewhat simpler configuration definitions. 
+ * 
+ * You cannot remove any of the pre-defined providers, but
+ * you can add additional providers via {@link #addProvider(JsonProvider)}.
+ * 
+ * If you would like full control over the providers, you
+ * should instead use {@link AccessEventCompositeJsonFormatter} directly.
  */
-public class LogstashAccessFormatter extends LogstashAbstractFormatter<IAccessEvent, LogstashAccessFieldNames> {
-    public LogstashAccessFormatter(ContextAware contextAware) {
-        super(contextAware, new LogstashAccessFieldNames());
+public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
+    
+    /**
+     * The field names to use when writing the access event fields
+     */
+    protected LogstashAccessFieldNames fieldNames;
+    
+    private AccessEventFormattedTimestampJsonProvider timestampProvider = new AccessEventFormattedTimestampJsonProvider();
+    private LogstashVersionJsonProvider<IAccessEvent> versionProvider = new LogstashVersionJsonProvider<IAccessEvent>();
+    private AccessMessageJsonProvider messageProvider = new AccessMessageJsonProvider();
+    private MethodJsonProvider methodProvider = new MethodJsonProvider();
+    private ProtocolJsonProvider protocolProvider = new ProtocolJsonProvider();
+    private StatusCodeJsonProvider statusCodeProvider = new StatusCodeJsonProvider();
+    private RequestedUrlJsonProvider requestedUrlProvider = new RequestedUrlJsonProvider();
+    private RequestedUriJsonProvider requestedUriProvider = new RequestedUriJsonProvider();
+    private RemoteHostJsonProvider remoteHostProvider = new RemoteHostJsonProvider();
+    private HostnameJsonProvider hostnameProvider = new HostnameJsonProvider();
+    private RemoteUserJsonProvider remoteUserProvider = new RemoteUserJsonProvider();
+    private ContentLengthJsonProvider contentLengthProvider = new ContentLengthJsonProvider();
+    private ElapsedTimeJsonProvider elapsedTimeProvider = new ElapsedTimeJsonProvider();
+    private RequestHeadersJsonProvider requestHeadersProvider = new RequestHeadersJsonProvider();
+    private ResponseHeadersJsonProvider responseHeadersProvider = new ResponseHeadersJsonProvider();
+    private ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
+    
+    public LogstashAccessFormatter(ContextAware declaredOrigin) {
+        super(declaredOrigin);
+        
+        this.fieldNames = new LogstashAccessFieldNames();
+        
+        getProviders().addTimestamp(this.timestampProvider);
+        getProviders().addVersion(this.versionProvider);
+        getProviders().addAccessMessage(this.messageProvider);
+        getProviders().addMethod(this.methodProvider);
+        getProviders().addProtocol(this.protocolProvider);
+        getProviders().addStatusCode(this.statusCodeProvider);
+        getProviders().addRequestedUrl(this.requestedUrlProvider);
+        getProviders().addRequestedUri(this.requestedUriProvider);
+        getProviders().addRemoteHost(this.remoteHostProvider);
+        getProviders().addHostname(this.hostnameProvider);
+        getProviders().addRemoteUser(this.remoteUserProvider);
+        getProviders().addContentLength(this.contentLengthProvider);
+        getProviders().addElapsedTime(this.elapsedTimeProvider);
+        getProviders().addRequestHeaders(this.requestHeadersProvider);
+        getProviders().addResponseHeaders(this.responseHeadersProvider);
+        getProviders().addContext(this.contextProvider);
+    }
+    
+    @Override
+    public void start() {
+        configureProvidersFieldNames();
+        super.start();
     }
 
+    protected void configureProvidersFieldNames() {
+        configureProviderFieldName(timestampProvider, fieldNames.getTimestamp());
+        configureProviderFieldName(versionProvider, fieldNames.getVersion());
+        configureProviderFieldName(messageProvider, fieldNames.getMessage());
+        configureProviderFieldName(methodProvider, fieldNames.getFieldsMethod());
+        configureProviderFieldName(protocolProvider, fieldNames.getFieldsProtocol());
+        configureProviderFieldName(statusCodeProvider, fieldNames.getFieldsStatusCode());
+        configureProviderFieldName(requestedUrlProvider, fieldNames.getFieldsRequestedUrl());
+        configureProviderFieldName(requestedUriProvider, fieldNames.getFieldsRequestedUri());
+        configureProviderFieldName(remoteHostProvider, fieldNames.getFieldsRemoteHost());
+        configureProviderFieldName(hostnameProvider, fieldNames.getFieldsHostname());
+        configureProviderFieldName(remoteUserProvider, fieldNames.getFieldsRemoteUser());
+        configureProviderFieldName(contentLengthProvider, fieldNames.getFieldsContentLength());
+        configureProviderFieldName(elapsedTimeProvider, fieldNames.getFieldsElapsedTime());
+        configureProviderFieldName(requestHeadersProvider, fieldNames.getFieldsRequestHeaders());
+        configureProviderFieldName(responseHeadersProvider, fieldNames.getFieldsResponseHeaders());
+    }
+
+    protected void configureProviderFieldName(AbstractFieldJsonProvider<IAccessEvent> provider, String fieldName) {
+        if (provider != null) {
+            provider.setFieldName(fieldName);
+        }
+    }
+
+    public void addProvider(JsonProvider<IAccessEvent> provider) {
+        getProviders().addProvider(provider);
+    }
+    
     @Override
-    protected void writeValueToGenerator(JsonGenerator generator, IAccessEvent event, Context context) throws IOException {
-        
-        generator.writeStartObject();
-        writeStringField(generator, fieldNames.getTimestamp(), isoDateTimeTimeZoneFormatWithMillis.format(event.getTimeStamp()));
-        writeNumberField(generator, fieldNames.getVersion(), 1);
-        writeStringField(generator, 
-                fieldNames.getMessage(),
-                String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser() == null ? "-" : event.getRemoteUser(),
-                        isoDateTimeTimeZoneFormatWithMillis.format(event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
-                        event.getContentLength()));
-        
-        writeFields(generator, event, context);
-        generator.writeEndObject();
-        generator.flush();
+    public AccessEventJsonProviders getProviders() {
+        return (AccessEventJsonProviders) super.getProviders();
     }
     
-    private void writeFields(JsonGenerator generator, IAccessEvent event, Context context) throws IOException {
-        
-        writeStringField(generator, fieldNames.getFieldsMethod(), event.getMethod());
-        writeStringField(generator, fieldNames.getFieldsProtocol(), event.getProtocol());
-        writeNumberField(generator, fieldNames.getFieldsStatusCode(), event.getStatusCode());
-        writeStringField(generator, fieldNames.getFieldsRequestedUrl(), event.getRequestURL());
-        writeStringField(generator, fieldNames.getFieldsRequestedUri(), event.getRequestURI());
-        writeStringField(generator, fieldNames.getFieldsRemoteHost(), event.getRemoteHost());
-        writeStringField(generator, fieldNames.getFieldsHostname(), event.getRemoteHost());
-        writeStringField(generator, fieldNames.getFieldsRemoteUser(), event.getRemoteUser());
-        writeNumberField(generator, fieldNames.getFieldsContentLength(), event.getContentLength());
-        writeNumberField(generator, fieldNames.getFieldsElapsedTime(), event.getElapsedTime());
-        writeMapStringFields(generator, fieldNames.getFieldsRequestHeaders(), event.getRequestHeaderMap());
-        writeMapStringFields(generator, fieldNames.getFieldsResponseHeaders(), event.getResponseHeaderMap());
-        
-        writeContextPropertiesIfNecessary(generator, context);
+    public LogstashAccessFieldNames getFieldNames() {
+        return fieldNames;
+    }
+
+    public void setFieldNames(LogstashAccessFieldNames fieldNames) {
+        this.fieldNames = fieldNames;
+    }
+
+    public String getTimeZone() {
+        return timestampProvider.getTimeZone();
+    }
+    public void setTimeZone(String timeZoneId) {
+        this.timestampProvider.setTimeZone(timeZoneId);
     }
     
-    private void writeContextPropertiesIfNecessary(JsonGenerator generator, Context context) throws IOException {
-        if (context != null) {
-            writeMapEntries(generator, context.getCopyOfPropertyMap());
+    @Override
+    public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {
+        if (super.getProviders() != null && !super.getProviders().getProviders().isEmpty()) {
+            addError("Unable to set providers when using predefined composites.");
+        } else {
+            super.setProviders(jsonProviders);
         }
     }
 }

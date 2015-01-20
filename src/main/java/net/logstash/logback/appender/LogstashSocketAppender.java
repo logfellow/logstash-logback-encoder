@@ -17,6 +17,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
 
+import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
@@ -69,6 +70,10 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
      */
     public void setHost(String host) {
         setSyslogHost(host);
+    }
+    
+    public void addProvider(JsonProvider<ILoggingEvent> provider) {
+        logstashLayout.addProvider(provider);
     }
     
     public void setCustomFields(String customFields) {

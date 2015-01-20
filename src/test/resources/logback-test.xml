@@ -17,7 +17,88 @@
             <includeMdc>false</includeMdc>
         </encoder>
     </appender>
+    
+    <!--
+        The logstashEncoderAppender and loggingEventCompositeJsonEncoderAppender are
+        both tested by ConfigurationTest, and should result in roughly the same configuration.
+        
+        The logstashEncoderAppender uses the "old" configuration.
+        The loggingEventCompositeJsonEncoderAppender uses the "new" composite configuration.
+    -->
+    <appender name="logstashEncoderAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <fieldNames>
+                <message>customMessage</message>
+                <caller>caller</caller>
+                <callerClass>class</callerClass>
+                <callerMethod>method</callerMethod>
+                <callerFile>file</callerFile>
+                <callerLine>line</callerLine>
+            </fieldNames>
+            <includeCallerInfo>true</includeCallerInfo>
+            <enableContextMap>true</enableContextMap>
+            <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>20</maxDepthPerThrowable>
+                <maxLength>1000</maxLength>
+                <shortenedClassNameLength>30</shortenedClassNameLength>
+                <rootCauseFirst>true</rootCauseFirst>
+                <exclude>excluded</exclude>
+            </throwableConverter>
+            <includeMdcKeyName>included</includeMdcKeyName>
+            <customFields>{"name":"value"}</customFields>
+        </encoder>
+    </appender>
+    <appender name="loggingEventCompositeJsonEncoderAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+                <version/>
+                <message>
+                    <fieldName>customMessage</fieldName>
+                </message>
+                <loggerName>
+                    <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
+                </loggerName>
+                <threadName/>
+                <logLevel/>
+                <logLevelValue/>
+                <callerData>
+                    <fieldName>caller</fieldName>
+                    <classFieldName>class</classFieldName>
+                    <methodFieldName>method</methodFieldName>
+                    <fileFieldName>file</fileFieldName>
+                    <lineFieldName>line</lineFieldName>
+                </callerData>
+                <stackTrace>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>20</maxDepthPerThrowable>
+                        <maxLength>1000</maxLength>
+                        <shortenedClassNameLength>30</shortenedClassNameLength>
+                        <rootCauseFirst>true</rootCauseFirst>
+                        <exclude>excluded</exclude>
+                    </throwableConverter>
+                </stackTrace>
+                <context/>
+                <jsonMessage/>
+                <mdc>
+                    <includeMdcKeyName>included</includeMdcKeyName>
+                </mdc>
+                <contextMap/>
+                <globalCustomFields>
+                    <customFields>{"name":"value"}</customFields>
+                </globalCustomFields>
+                <tags/>
+                <logstashMarkers/>
+                <provider class="net.logstash.logback.TestJsonProvider"/>
+            </providers>
+        </encoder>
+    </appender>
     <logger name="net.logstash.logback.encoder.LogstashEncoderTest" level="DEBUG">
         <appender-ref ref="stash" />
+    </logger>
+    <logger name="net.logstash.logback.ConfigurationTest" level="DEBUG">
+        <appender-ref ref="loggingEventCompositeJsonEncoderAppender" />
+        <appender-ref ref="logstashEncoderAppender" />
     </logger>
 </configuration>
