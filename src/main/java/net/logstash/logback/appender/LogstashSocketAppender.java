@@ -15,12 +15,13 @@ package net.logstash.logback.appender;
 
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.List;
 
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
-import net.logstash.logback.stacktrace.StackTraceFormatter;
+import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
@@ -102,6 +103,30 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         logstashLayout.setIncludeMdc(includeMdc);
     }
     
+    public List<String> getIncludeMdcKeyNames() {
+        return logstashLayout.getIncludeMdcKeyNames();
+    }
+
+    public void addIncludeMdcKeyName(String includedMdcKeyName) {
+        logstashLayout.addIncludeMdcKeyName(includedMdcKeyName);
+    }
+
+    public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
+        logstashLayout.setIncludeMdcKeyNames(includeMdcKeyNames);
+    }
+
+    public List<String> getExcludeMdcKeyNames() {
+        return logstashLayout.getExcludeMdcKeyNames();
+    }
+
+    public void addExcludeMdcKeyName(String excludedMdcKeyName) {
+        logstashLayout.addExcludeMdcKeyName(excludedMdcKeyName);
+    }
+
+    public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
+        logstashLayout.setExcludeMdcKeyNames(excludeMdcKeyNames);
+    }
+    
     public boolean isIncludeContext() {
         return logstashLayout.isIncludeContext();
     }
@@ -134,12 +159,20 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         logstashLayout.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
-    public StackTraceFormatter getStackTraceFormatter() {
-        return logstashLayout.getStackTraceFormatter();
+    public String getTimeZone() {
+        return logstashLayout.getTimeZone();
     }
 
-    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
-        logstashLayout.setStackTraceFormatter(stackTraceFormatter);
+    public void setTimeZone(String timeZoneId) {
+        logstashLayout.setTimeZone(timeZoneId);
+    }
+
+    public ThrowableHandlingConverter getThrowableConverter() {
+        return logstashLayout.getThrowableConverter();
+    }
+
+    public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
+        logstashLayout.setThrowableConverter(throwableConverter);
     }
 
     @Override

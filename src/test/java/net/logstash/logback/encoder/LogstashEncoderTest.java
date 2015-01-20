@@ -33,10 +33,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
-import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
 import org.apache.commons.io.IOUtils;
@@ -225,7 +226,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void propertiesInMDCAreIncluded() throws Exception {
+    public void mdcAllIncluded() throws Exception {
         Map<String, String> mdcMap = new HashMap<String, String>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
@@ -243,7 +244,47 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void propertiesInMDCAreNotIncludedIfSwitchedOff() throws Exception {
+    public void mdcSomeIncluded() throws Exception {
+        Map<String, String> mdcMap = new HashMap<String, String>();
+        mdcMap.put("thing_one", "One");
+        mdcMap.put("thing_two", "Three");
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
+        
+        encoder.addIncludeMdcKeyName("thing_one");
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("thing_one").textValue(), is("One"));
+        assertThat(node.get("thing_two"), is(nullValue()));
+    }
+    
+    @Test
+    public void mdcSomeExcluded() throws Exception {
+        Map<String, String> mdcMap = new HashMap<String, String>();
+        mdcMap.put("thing_one", "One");
+        mdcMap.put("thing_two", "Three");
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
+        
+        encoder.addExcludeMdcKeyName("thing_two");
+        
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("thing_one").textValue(), is("One"));
+        assertThat(node.get("thing_two"), is(nullValue()));
+    }
+    
+    @Test
+    public void mdcNoneIncluded() throws Exception {
         Map<String, String> mdcMap = new HashMap<String, String>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
@@ -522,6 +563,29 @@ public class LogstashEncoderTest {
         Assert.assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
     
+    @Test
+    public void customTimeZone() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimeZone("UTC");
+        encoder.doEncode(event);
+        closeQuietly(outputStream);
+        
+        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        
+        assertThat(node.get("@timestamp").textValue(), is(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", TimeZone.getTimeZone("UTC")).format
+                (timestamp)));
+        assertThat(node.get("@version").intValue(), is(1));
+        assertThat(node.get("logger_name").textValue(), is("LoggerName"));
+        assertThat(node.get("thread_name").textValue(), is("ThreadName"));
+        assertThat(node.get("message").textValue(), is("My message"));
+        assertThat(node.get("level").textValue(), is("ERROR"));
+        assertThat(node.get("level_value").intValue(), is(40000));
+    }
+    
     public JsonNode parse(String string) throws JsonParseException, IOException {
         return FACTORY.createParser(string).readValueAsTree();
     }
@@ -632,7 +696,7 @@ public class LogstashEncoderTest {
          * make sure it doesn't appear.
          */
         assertThat(node.get("@version"), is(nullValue()));
-        assertThat(node.get(LogstashFormatter.IGNORE_FIELD_INDICATOR), is(nullValue()));
+        assertThat(node.get(LogstashCommonFieldNames.IGNORE_FIELD_INDICATOR), is(nullValue()));
         
         assertThat(node.get("appname").textValue(), is("damnGodWebservice"));
         assertThat(node.get("appendedName").textValue(), is("appendedValue"));

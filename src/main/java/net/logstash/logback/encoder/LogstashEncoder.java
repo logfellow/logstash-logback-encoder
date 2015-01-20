@@ -14,6 +14,7 @@
 package net.logstash.logback.encoder;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
@@ -21,10 +22,10 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.Markers;
-import net.logstash.logback.stacktrace.StackTraceFormatter;
 
 import org.apache.commons.io.IOUtils;
 
+import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -112,6 +113,30 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         formatter.setIncludeMdc(includeMdc);
     }
     
+    public List<String> getIncludeMdcKeyNames() {
+        return formatter.getIncludeMdcKeyNames();
+    }
+
+    public void addIncludeMdcKeyName(String includedMdcKeyName) {
+        formatter.addIncludeMdcKeyName(includedMdcKeyName);
+    }
+
+    public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
+        formatter.setIncludeMdcKeyNames(includeMdcKeyNames);
+    }
+
+    public List<String> getExcludeMdcKeyNames() {
+        return formatter.getExcludeMdcKeyNames();
+    }
+
+    public void addExcludeMdcKeyName(String excludedMdcKeyName) {
+        formatter.addExcludeMdcKeyName(excludedMdcKeyName);
+    }
+
+    public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
+        formatter.setExcludeMdcKeyNames(excludeMdcKeyNames);
+    }
+
     public boolean isIncludeContext() {
         return formatter.isIncludeContext();
     }
@@ -176,15 +201,24 @@ public class LogstashEncoder extends EncoderBase<ILoggingEvent> {
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
-    public StackTraceFormatter getStackTraceFormatter() {
-        return formatter.getStackTraceFormatter();
+    public ThrowableHandlingConverter getThrowableConverter() {
+        return formatter.getThrowableConverter();
     }
 
-    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
-        formatter.setStackTraceFormatter(stackTraceFormatter);
+    public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
+        formatter.setThrowableConverter(throwableConverter);
+    }
+
+    public String getTimeZone() {
+        return formatter.getTimeZone();
+    }
+
+    public void setTimeZone(String timeZoneId) {
+        formatter.setTimeZone(timeZoneId);
     }
 
     protected LogstashFormatter getFormatter() {
         return formatter;
     }
+
 }

@@ -11,7 +11,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>3.5</version>
+  <version>3.6</version>
 </dependency>
 ```
 ## Usage
@@ -141,7 +141,7 @@ The field names can be customized (see below).
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See below for customizing the timezone.
 | `@version`    | Logstash format version (e.g. 1)
 | `message`     | Formatted log message of the event 
 | `logger_name` | Name of the logger that logged the event
@@ -151,12 +151,41 @@ The field names can be customized (see below).
 | `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.
 | `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.)
 
+#### MDC fields
 
-Additionally, every field in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)
-and properties of Logback's Context (`ch.qos.logback.core.Context`) will appear as a field in the log event.
-These can be disabled by specifying `<includeMdc>false</includeMdc>` or `<includeContext>false</includeContext>`,
-respectively, in the encoder/layout/appender configuration.
+By default, each entry in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)
+will appear as a field in the log event.
 
+This can be fully disabled by specifying `<includeMdc>false</includeMdc>`,
+in the encoder/layout/appender configuration.
+
+You can also configure specific entries in the MDC to be included or excluded as follows:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <includeMdcKeyName>key1ToInclude</includeMdcKeyName>
+  <includeMdcKeyName>key2ToInclude</includeMdcKeyName>
+</encoder>
+```
+or
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <excludeMdcKeyName>key1ToExclude</excludeMdcKeyName>
+  <excludeMdcKeyName>key2ToExclude</excludeMdcKeyName>
+</encoder>
+```
+
+When key names are specified for inclusion, then all other fields will be excluded.
+When key names are specified for exclusion, then all other fields will be included.
+It is a configuration error to specify both included and excluded key names.
+
+#### Context fields
+
+By default, each property of Logback's Context (`ch.qos.logback.core.Context`)
+will appear as a field in the log event.
+This can be disabled by specifying `<includeContext>false</includeContext>`
+in the encoder/layout/appender configuration.
 
 #### Caller Info Fields
 The encoder/layout/appender do not contain caller info by default. 
@@ -337,30 +366,53 @@ and then specify your decorator in the logback.xml file like this:
 </encoder>
 ```
 
+## Customizing TimeZone
+
+By default, timestamps are logged in the default TimeZone of the host Java platform.
+You can change the timezone like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timeZone>UTC</timeZone>
+</encoder>
+```
+
+The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
+
 ## Customizing Stack Traces
 
-By default, stack traces are formatted using logback's default format.
+By default, stack traces are formatted using logback's `ExtendedThrowableProxyConverter`.
+However, you can configure the encoder to use any `ThrowableHandlingConverter`
+to format stacktraces.
 
-Alternatively, you can use your own stack trace formatter, or the included
-[`ShortenedStackTraceFormatter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedStackTraceFormatter.java)
-to shorten stacktraces by:
+A powerful [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
+is included within logstash-logback-encoder to format stacktraces by:
 
-* Limiting the number of stackTraceElements per throwable (applies to each individual throwable.  e.g. caused-bys and suppressed).
-* Abbreviating class names (similar to how logger names are shortened)</li>
-* Filtering out consecutive unwanted stackTraceElements based on regular expressions
+* Limiting the number of stackTraceElements per throwable (applies to each individual throwable.  e.g. caused-bys and suppressed)
+* Limiting the total length in characters of the trace
+* Abbreviating class names
+* Filtering out consecutive unwanted stackTraceElements based on regular expressions.
+* Using evaluators to determine if the stacktrace should be logged.
+* Outputing in either 'normal' order (root-cause-last), or root-cause-first.
 
 For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <stackTraceFormatter class="net.logstash.logback.stacktrace.ShortenedStackTraceFormatter">
-    <maxStackTraceElementsPerThrowable>30</maxStackTraceElementsPerThrowable>
+  <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+    <maxDepthPerThrowable>30</maxDepthPerThrowable>
+    <maxLength>2048</maxLength>
     <shortenedClassNameLength>20</shortenedClassNameLength>
     <exclude>sun\.reflect\..*\.invoke.*</exclude>
     <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
-  </stackTraceFormatter>
+    <evaluator class="myorg.MyCustomEvaluator"/>
+    <rootCauseFirst>true</rootCauseFirst>
+  </throwableConverter>
 </encoder>
 ```
+
+[`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
+can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
 
 ## Logback access logs
 For logback access logs, use it in your `logback-access.xml` like this:
@@ -389,6 +441,17 @@ or if you want to log directly into logstash,
 The default field names used for access logs are different than those documented above.
 See [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names used for access logs.
+
+By default, the request and response headers are not logged. If you want to include them, you need to configure the encoder like that :
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <fieldNames>
+    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
+    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+  </fieldNames>
+</encoder>
+```
 
 ## Using PatternLayout-based JSON encoders
 In addition to the pair of encoder ([`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java)

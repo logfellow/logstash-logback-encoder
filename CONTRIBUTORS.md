@@ -15,6 +15,7 @@
 * David MacDonald (dmacdonald2013)
 * Tim Meighen (tmeighen)
 * Ryan O'Keeffe (danielredoak)
+* Shai Nagar (sha1n)
 * Sébastien Pasche (braoru)
 * James Pennell (jpennell)
 * Kyle Prager (kyleprager)

@@ -14,21 +14,25 @@
 package net.logstash.logback;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
-import net.logstash.logback.stacktrace.StackTraceFormatter;
-import net.logstash.logback.stacktrace.StandardStackTraceFormatter;
 
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 
 import ch.qos.logback.classic.pattern.Abbreviator;
+import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
+import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.core.Context;
@@ -95,14 +99,42 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private boolean includeContext = true;
     
     /**
-     * When true, {@link MDC} properties will be included.
+     * When true, {@link MDC} properties will be included according to
+     * {@link #includeMdcKeyNames} and {@link #excludeMdcKeyNames}.
+     * <p>
+     * There are three valid combinations of {@link #includeMdcKeyNames}
+     * and {@link #excludeMdcKeyNames}:
+     * 
+     * <ol>
+     * <li>When {@link #includeMdcKeyNames} and {@link #excludeMdcKeyNames}
+     *     are both empty, then all entries will be included.</li>
+     * <li>When {@link #includeMdcKeyNames} is not empty and
+     *     {@link #excludeMdcKeyNames} is empty, then only those entries
+     *     with key names in {@link #includeMdcKeyNames} will be included.</li> 
+     * <li>When {@link #includeMdcKeyNames} is empty and
+     *     {@link #excludeMdcKeyNames} is not empty, then all entries except those
+     *     with key names in {@link #excludeMdcKeyNames} will be included.</li>
+     * </ol>
+     * 
+     *  It is a configuration error for both {@link #includeMdcKeyNames}
+     *  and {@link #excludeMdcKeyNames} to be not empty.
      */
     private boolean includeMdc = true;
     
     /**
-     * Used to format stacktraces as Strings.
+     * See {@link #includeMdc}.
      */
-    private StackTraceFormatter stackTraceFormatter = new StandardStackTraceFormatter();
+    private List<String> includeMdcKeyNames = new ArrayList<String>();
+    
+    /**
+     * See {@link #includeMdc}.
+     */
+    private List<String> excludeMdcKeyNames = new ArrayList<String>();
+    
+    /**
+     * Used to format throwables as Strings.
+     */
+    private ThrowableHandlingConverter throwableConverter = new ExtendedThrowableProxyConverter();
 
     public LogstashFormatter(ContextAware contextAware) {
         this(contextAware, false);
@@ -124,6 +156,16 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     public void start() {
         super.start();
         initializeCustomFields();
+        if (!this.includeMdcKeyNames.isEmpty() && !this.excludeMdcKeyNames.isEmpty()) {
+            contextAware.addError("Both includeMdcKeyNames and excludeMdcKeyNames are not empty.  Only one is allowed to be not empty.");
+        }
+        this.throwableConverter.start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        this.throwableConverter.stop();
     }
 
     private void initializeCustomFields() {
@@ -156,7 +198,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     }
     
     private void writeLogstashFields(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        writeStringField(generator, fieldNames.getTimestamp(), ISO_DATETIME_TIME_ZONE_FORMAT_WITH_MILLIS.format(event.getTimeStamp()));
+        writeStringField(generator, fieldNames.getTimestamp(), isoDateTimeTimeZoneFormatWithMillis.format(event.getTimeStamp()));
         writeNumberField(generator, fieldNames.getVersion(), 1);
         writeStringField(generator, fieldNames.getMessage(), event.getFormattedMessage());
     }
@@ -188,7 +230,7 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
     private void writeStackTraceFieldIfNecessary(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
-            writeStringField(generator, fieldNames.getStackTrace(), stackTraceFormatter.format(throwableProxy));
+            writeStringField(generator, fieldNames.getStackTrace(), throwableConverter.convert(event));
         }
     }
     
@@ -227,6 +269,14 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
             if (mdcProperties != null && !mdcProperties.isEmpty()) {
                 if (fieldNames.getMdc() != null) {
                     generator.writeObjectFieldStart(fieldNames.getMdc());
+                }
+                if (!includeMdcKeyNames.isEmpty()) {
+                    mdcProperties = new HashMap<String, String>(mdcProperties);
+                    mdcProperties.keySet().retainAll(includeMdcKeyNames);
+                }
+                if (!excludeMdcKeyNames.isEmpty()) {
+                    mdcProperties = new HashMap<String, String>(mdcProperties);
+                    mdcProperties.keySet().removeAll(excludeMdcKeyNames);
                 }
                 writeMapEntries(generator, mdcProperties);
                 if (fieldNames.getMdc() != null) {
@@ -377,6 +427,26 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
         this.includeMdc = includeMdc;
     }
     
+    public List<String> getIncludeMdcKeyNames() {
+        return Collections.unmodifiableList(includeMdcKeyNames);
+    }
+    public void addIncludeMdcKeyName(String includedMdcKeyName) {
+        this.includeMdcKeyNames.add(includedMdcKeyName);
+    }
+    public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
+        this.includeMdcKeyNames = new ArrayList<String>(includeMdcKeyNames);
+    }
+    
+    public List<String> getExcludeMdcKeyNames() {
+        return Collections.unmodifiableList(excludeMdcKeyNames);
+    }
+    public void addExcludeMdcKeyName(String excludedMdcKeyName) {
+        this.excludeMdcKeyNames.add(excludedMdcKeyName);
+    }
+    public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
+        this.excludeMdcKeyNames = new ArrayList<String>(excludeMdcKeyNames);
+    }
+    
     public boolean isIncludeContext() {
         return includeContext;
     }
@@ -385,12 +455,12 @@ public class LogstashFormatter extends LogstashAbstractFormatter<ILoggingEvent, 
         this.includeContext = includeContext;
     }
     
-    public StackTraceFormatter getStackTraceFormatter() {
-        return stackTraceFormatter;
+    public ThrowableHandlingConverter getThrowableConverter() {
+        return throwableConverter;
     }
 
-    public void setStackTraceFormatter(StackTraceFormatter stackTraceFormatter) {
-        this.stackTraceFormatter = stackTraceFormatter;
+    public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
+        this.throwableConverter = throwableConverter;
     }
     
     /**
