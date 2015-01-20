@@ -14,7 +14,6 @@
 package net.logstash.logback.encoder;
 
 import ch.qos.logback.core.Context;
-import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 import net.logstash.logback.layout.AbstractJsonPatternLayout;
 import org.hamcrest.Matchers;
 import org.junit.Before;
@@ -23,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -84,7 +84,7 @@ public abstract class AbstractJsonPatternLayoutEncoderTest<E> {
     @Test
     public void doEncodeShouldCallLayout() throws IOException {
         // pattern used does not matter because decorated "parser" will always generate TEST_NODEWRITER_RESULT
-        ByteOutputStream os = new ByteOutputStream();
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
         encoder.init(os);
         encoder.start();
 
@@ -93,7 +93,7 @@ public abstract class AbstractJsonPatternLayoutEncoderTest<E> {
         // should actually invoke layout with the event
         verify(layout).doLayout(event);
         // and the end result should be what layout returns. But only match prefix as newline will be added
-        String result = new String(os.getBytes());
+        String result = new String(os.toByteArray());
         assertThat(result, Matchers.startsWith(TEST_LAYOUT_RESULT));
     }
 }
