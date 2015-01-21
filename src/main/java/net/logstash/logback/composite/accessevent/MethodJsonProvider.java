@@ -19,9 +19,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
-public class MethodJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> {
+public class MethodJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
     public static final String FIELD_METHOD = "@fields.method";
     
@@ -32,6 +34,11 @@ public class MethodJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> 
     @Override
     public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
         JsonWritingUtils.writeStringField(generator, getFieldName(), event.getMethod());
+    }
+    
+    @Override
+    public void setFieldNames(LogstashAccessFieldNames fieldNames) {
+        setFieldName(fieldNames.getFieldsMethod());
     }
 
 }

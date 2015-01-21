@@ -23,7 +23,9 @@ import java.util.Map;
 import org.slf4j.MDC;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -49,7 +51,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *  It is a configuration error for both {@link #includeMdcKeyNames}
  *  and {@link #excludeMdcKeyNames} to be not empty.
  */
-public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
     /**
      * See {@link #includeMdc}.
@@ -89,6 +91,11 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
                 generator.writeEndObject();
             }
         }
+    }
+    
+    @Override
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        setFieldName(fieldNames.getMdc());
     }
 
     public List<String> getIncludeMdcKeyNames() {

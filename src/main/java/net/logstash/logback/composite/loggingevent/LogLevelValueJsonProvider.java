@@ -20,9 +20,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 
-public class LogLevelValueJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+public class LogLevelValueJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
     public static final String FIELD_LEVEL_VALUE = "level_value";
     
@@ -33,6 +35,11 @@ public class LogLevelValueJsonProvider extends AbstractFieldJsonProvider<ILoggin
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         JsonWritingUtils.writeNumberField(generator, getFieldName(), event.getLevel().toInt());
+    }
+    
+    @Override
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        setFieldName(fieldNames.getLevelValue());
     }
 
 }

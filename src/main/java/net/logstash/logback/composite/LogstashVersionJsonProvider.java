@@ -15,11 +15,13 @@ package net.logstash.logback.composite;
 
 import java.io.IOException;
 
+import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
-public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> {
+public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<LogstashCommonFieldNames> {
     
     public static final String FIELD_VERSION = "@version";
     
@@ -34,6 +36,11 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
         JsonWritingUtils.writeNumberField(generator, getFieldName(), version);
+    }
+    
+    @Override
+    public void setFieldNames(LogstashCommonFieldNames fieldNames) {
+        setFieldName(fieldNames.getVersion());
     }
     
     public int getVersion() {

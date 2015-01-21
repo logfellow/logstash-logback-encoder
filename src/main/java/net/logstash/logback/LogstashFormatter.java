@@ -19,6 +19,7 @@ import java.util.Map;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.ContextJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
@@ -38,11 +39,13 @@ import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
+import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.Markers;
 
 import org.slf4j.MDC;
 
+import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
@@ -143,41 +146,19 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     
     @Override
     public void start() {
-        configureProvidersFieldNames();
+        configureProviderFieldNames();
         super.start();
     }
     
-    protected void configureProvidersFieldNames() {
-        configureProviderFieldName(timestampProvider, fieldNames.getTimestamp());
-        configureProviderFieldName(versionProvider, fieldNames.getVersion());
-        configureProviderFieldName(messageProvider, fieldNames.getMessage());
-        configureProviderFieldName(loggerNameProvider, fieldNames.getLogger());
-        configureProviderFieldName(threadNameProvider, fieldNames.getThread());
-        configureProviderFieldName(logLevelProvider, fieldNames.getLevel());
-        configureProviderFieldName(logLevelValueProvider, fieldNames.getLevelValue());
-        configureProviderFieldName(stackTraceProvider, fieldNames.getStackTrace());
-        configureProviderFieldName(contextProvider, fieldNames.getContext());
-        configureProviderFieldName(mdcProvider, fieldNames.getMdc());
-        configureProviderFieldName(tagsProvider, fieldNames.getTags());
-        
-        configureCallerDataFieldNames();
-    }
-
-    private void configureCallerDataFieldNames() {
-        if (this.callerDataProvider != null) {
-            this.callerDataProvider.setFieldName(fieldNames.getCaller());
-            this.callerDataProvider.setClassFieldName(fieldNames.getCallerClass());
-            this.callerDataProvider.setMethodFieldName(fieldNames.getCallerMethod());
-            this.callerDataProvider.setFileFieldName(fieldNames.getCallerFile());
-            this.callerDataProvider.setLineFieldName(fieldNames.getCallerLine());
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    protected void configureProviderFieldNames() {
+        for (JsonProvider<ILoggingEvent> provider : getProviders().getProviders()) {
+            if (provider instanceof FieldNamesAware) {
+                ((FieldNamesAware) provider).setFieldNames(fieldNames);
+            }
         }
     }
     
-    protected void configureProviderFieldName(AbstractFieldJsonProvider<ILoggingEvent> provider, String fieldName) {
-        if (provider != null) {
-            provider.setFieldName(fieldName);
-        }
-    }
     public boolean isIncludeCallerInfo() {
         return callerDataProvider != null;
     }
@@ -187,7 +168,6 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             getProviders().removeProvider(callerDataProvider);
             if (includeCallerInfo) {
                 getProviders().addCallerData(callerDataProvider = new CallerDataJsonProvider());
-                configureCallerDataFieldNames();
             }
         }
     }

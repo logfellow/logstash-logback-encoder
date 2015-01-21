@@ -22,9 +22,11 @@ import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 
-public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
     public static final String FIELD_STACK_TRACE = "stack_trace";
 
@@ -55,6 +57,11 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
         if (throwableProxy != null) {
             JsonWritingUtils.writeStringField(generator, getFieldName(), throwableConverter.convert(event));
         }
+    }
+    
+    @Override
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        setFieldName(fieldNames.getStackTrace());
     }
     
     public ThrowableHandlingConverter getThrowableConverter() {

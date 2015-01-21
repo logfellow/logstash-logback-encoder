@@ -16,13 +16,15 @@ package net.logstash.logback.composite;
 import java.io.IOException;
 import java.util.TimeZone;
 
+import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
+
 import org.apache.commons.lang.time.FastDateFormat;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
-public abstract class FormattedTimestampJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> {
+public abstract class FormattedTimestampJsonProvider<Event extends DeferredProcessingAware, FieldNames extends LogstashCommonFieldNames> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<FieldNames> {
     
     public static final String FIELD_TIMESTAMP = "@timestamp";
     
@@ -36,6 +38,11 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     
     public FormattedTimestampJsonProvider() {
         setFieldName(FIELD_TIMESTAMP);
+    }
+    
+    @Override
+    public void setFieldNames(FieldNames fieldNames) {
+        setFieldName(fieldNames.getTimestamp());
     }
     
     @Override

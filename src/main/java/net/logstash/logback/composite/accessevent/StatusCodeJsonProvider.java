@@ -19,9 +19,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
-public class StatusCodeJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> {
+public class StatusCodeJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
     public static final String FIELD_STATUS_CODE = "@fields.status_code";
     
@@ -32,6 +34,11 @@ public class StatusCodeJsonProvider extends AbstractFieldJsonProvider<IAccessEve
     @Override
     public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
         JsonWritingUtils.writeNumberField(generator, getFieldName(), event.getStatusCode());
+    }
+    
+    @Override
+    public void setFieldNames(LogstashAccessFieldNames fieldNames) {
+        setFieldName(fieldNames.getFieldsStatusCode());
     }
 
 }

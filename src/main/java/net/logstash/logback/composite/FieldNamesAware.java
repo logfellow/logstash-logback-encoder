@@ -11,17 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite;
 
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
-public class LoggingEventFormattedTimestampJsonProvider extends FormattedTimestampJsonProvider<ILoggingEvent, LogstashFieldNames> {
+/**
+ * Identifies classes that are aware of logstash field names.
+ * <p>
+ * 
+ * This is generally used by {@link JsonProvider}s to configure their own
+ * field name from the field names given.
+ */
+public interface FieldNamesAware<FieldNames extends LogstashCommonFieldNames> {
     
-    @Override
-    protected long getTimestampAsMillis(ILoggingEvent event) {
-        return event.getTimeStamp();
-    }
+    void setFieldNames(FieldNames fieldNames);
 
 }

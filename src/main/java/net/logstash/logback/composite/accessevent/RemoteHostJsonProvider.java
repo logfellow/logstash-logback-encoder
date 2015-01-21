@@ -19,9 +19,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
-public class RemoteHostJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> {
+public class RemoteHostJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
     public static final String FIELD_REMOTE_HOST = "@fields.remote_host";
     
@@ -32,6 +34,11 @@ public class RemoteHostJsonProvider extends AbstractFieldJsonProvider<IAccessEve
     @Override
     public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
         JsonWritingUtils.writeStringField(generator, getFieldName(), event.getRemoteHost());
+    }
+    
+    @Override
+    public void setFieldNames(LogstashAccessFieldNames fieldNames) {
+        setFieldName(fieldNames.getFieldsRemoteHost());
     }
 
 }

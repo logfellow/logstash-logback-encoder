@@ -15,17 +15,19 @@ package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
-import ch.qos.logback.classic.pattern.Abbreviator;
-import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.CachingAbbreviator;
 import net.logstash.logback.NullAbbreviator;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
+import ch.qos.logback.classic.pattern.Abbreviator;
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 
-public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+import com.fasterxml.jackson.core.JsonGenerator;
+
+public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
     public static final String FIELD_LOGGER_NAME = "logger_name";
 
@@ -46,6 +48,11 @@ public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         JsonWritingUtils.writeStringField(generator, getFieldName(), abbreviator.abbreviate(event.getLoggerName()));
+    }
+    
+    @Override
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        setFieldName(fieldNames.getLogger());
     }
 
     public int getShortenedLoggerNameLength() {

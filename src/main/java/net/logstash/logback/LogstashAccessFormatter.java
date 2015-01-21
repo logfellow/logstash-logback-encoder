@@ -13,8 +13,8 @@
  */
 package net.logstash.logback;
 
-import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.ContextJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
@@ -34,7 +34,6 @@ import net.logstash.logback.composite.accessevent.RequestedUriJsonProvider;
 import net.logstash.logback.composite.accessevent.RequestedUrlJsonProvider;
 import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
 import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
-import net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonFormatter;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.spi.ContextAware;
@@ -102,31 +101,16 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     
     @Override
     public void start() {
-        configureProvidersFieldNames();
+        configureProviderFieldNames();
         super.start();
     }
 
-    protected void configureProvidersFieldNames() {
-        configureProviderFieldName(timestampProvider, fieldNames.getTimestamp());
-        configureProviderFieldName(versionProvider, fieldNames.getVersion());
-        configureProviderFieldName(messageProvider, fieldNames.getMessage());
-        configureProviderFieldName(methodProvider, fieldNames.getFieldsMethod());
-        configureProviderFieldName(protocolProvider, fieldNames.getFieldsProtocol());
-        configureProviderFieldName(statusCodeProvider, fieldNames.getFieldsStatusCode());
-        configureProviderFieldName(requestedUrlProvider, fieldNames.getFieldsRequestedUrl());
-        configureProviderFieldName(requestedUriProvider, fieldNames.getFieldsRequestedUri());
-        configureProviderFieldName(remoteHostProvider, fieldNames.getFieldsRemoteHost());
-        configureProviderFieldName(hostnameProvider, fieldNames.getFieldsHostname());
-        configureProviderFieldName(remoteUserProvider, fieldNames.getFieldsRemoteUser());
-        configureProviderFieldName(contentLengthProvider, fieldNames.getFieldsContentLength());
-        configureProviderFieldName(elapsedTimeProvider, fieldNames.getFieldsElapsedTime());
-        configureProviderFieldName(requestHeadersProvider, fieldNames.getFieldsRequestHeaders());
-        configureProviderFieldName(responseHeadersProvider, fieldNames.getFieldsResponseHeaders());
-    }
-
-    protected void configureProviderFieldName(AbstractFieldJsonProvider<IAccessEvent> provider, String fieldName) {
-        if (provider != null) {
-            provider.setFieldName(fieldName);
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    protected void configureProviderFieldNames() {
+        for (JsonProvider<IAccessEvent> provider : getProviders().getProviders()) {
+            if (provider instanceof FieldNamesAware) {
+                ((FieldNamesAware) provider).setFieldNames(fieldNames);
+            }
         }
     }
 
@@ -152,6 +136,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     }
     public void setTimeZone(String timeZoneId) {
         this.timestampProvider.setTimeZone(timeZoneId);
+        this.messageProvider.setTimeZone(timeZoneId);
     }
     
     @Override

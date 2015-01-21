@@ -16,12 +16,14 @@ package net.logstash.logback.composite.loggingevent;
 import java.io.IOException;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
-public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
     private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
 
     public static final String FIELD_CALLER_CLASS_NAME = "caller_class_name";
@@ -60,6 +62,15 @@ public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
             return DEFAULT_CALLER_DATA;
         }
         return ste[0];
+    }
+    
+    @Override
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        setFieldName(fieldNames.getCaller());
+        setClassFieldName(fieldNames.getCallerClass());
+        setMethodFieldName(fieldNames.getCallerMethod());
+        setFileFieldName(fieldNames.getCallerFile());
+        setLineFieldName(fieldNames.getCallerLine());
     }
     
     public String getClassFieldName() {
