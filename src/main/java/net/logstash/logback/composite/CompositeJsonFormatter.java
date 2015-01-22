@@ -79,7 +79,8 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     @Override
     public void start() {
         jsonFactory = this.jsonFactoryDecorator.decorate(this.jsonFactory);
-        jsonProviders.setContext(context);;
+        jsonProviders.setJsonFactory(jsonFactory);
+        jsonProviders.setContext(context);
         jsonProviders.start();
         started = true;
     }

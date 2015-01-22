@@ -11,19 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder;
+package net.logstash.logback.pattern;
 
-import ch.qos.logback.access.spi.IAccessEvent;
-import net.logstash.logback.layout.AbstractJsonPatternLayout;
-import net.logstash.logback.layout.AccessEventJsonPatternLayout;
+import com.fasterxml.jackson.core.JsonGenerator;
+
+import java.io.IOException;
 
 /**
+ * Writes a JSON pattern node into JSON generator supplied.
+ *
+ * @param <Event> - type of the event (ILoggingEvent, IAccessEvent)
+ *
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public class AccessEventJsonPatternLayoutEncoder extends AbstractJsonPatternLayoutEncoder<IAccessEvent> {
-
-    @Override
-    protected AbstractJsonPatternLayout<IAccessEvent> createLayout() {
-        return new AccessEventJsonPatternLayout();
-    }
+public interface NodeWriter<Event> {
+    void write(JsonGenerator generator, Event event) throws IOException;
 }

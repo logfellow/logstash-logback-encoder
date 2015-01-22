@@ -11,20 +11,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.layout;
+package net.logstash.logback.composite.accessevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import net.logstash.logback.layout.parser.AbstractJsonPatternParser;
+import net.logstash.logback.composite.AbstractPatternJsonProvider;
+import net.logstash.logback.composite.AbstractPatternJsonProviderTest;
+import net.logstash.logback.pattern.AbstractJsonPatternParser;
+import ch.qos.logback.access.spi.IAccessEvent;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public class LoggingEventJsonPatternLayoutTestImpl extends AbstractJsonPatternLayoutTest<ILoggingEvent> {
+public class AccessEventPatternJsonProviderTest extends AbstractPatternJsonProviderTest<IAccessEvent> {
+    
     @Override
-    protected LoggingEventJsonPatternLayout createLayout() {
-        return new LoggingEventJsonPatternLayout() {
+    protected AbstractPatternJsonProvider<IAccessEvent> createProvider() {
+        return new AccessEventPatternJsonProvider() {
             @Override
-            protected AbstractJsonPatternParser<ILoggingEvent> createParser() {
+            protected AbstractJsonPatternParser<IAccessEvent> createParser() {
                 // The base class needs to hook into the parser for some assertions
                 return decorateParser(super.createParser());
             }

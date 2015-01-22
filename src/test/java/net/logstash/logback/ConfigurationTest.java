@@ -26,6 +26,7 @@ import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
@@ -52,7 +53,7 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(16, providers.size());
+        Assert.assertEquals(17, providers.size());
         
         verifyCommonProviders(providers);
     }
@@ -61,7 +62,7 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(17, providers.size());
+        Assert.assertEquals(18, providers.size());
         
         verifyCommonProviders(providers);
         
@@ -129,6 +130,10 @@ public class ConfigurationTest {
         
         Assert.assertNotNull(getInstance(providers, TagsJsonProvider.class));
         Assert.assertNotNull(getInstance(providers, LogstashMarkersJsonProvider.class));
+        
+        LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
+        Assert.assertEquals("{\"name1\":\"value\",\"relativeTime\":\"#asLong(%relative)\"}", patternProvider.getPattern());
+        Assert.assertNotNull(patternProvider);
     }
     
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {

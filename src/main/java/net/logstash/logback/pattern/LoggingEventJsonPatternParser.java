@@ -11,23 +11,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.layout;
+package net.logstash.logback.pattern;
 
-import ch.qos.logback.access.spi.IAccessEvent;
-import net.logstash.logback.layout.parser.AbstractJsonPatternParser;
+import com.fasterxml.jackson.core.JsonFactory;
+
+import ch.qos.logback.classic.PatternLayout;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.pattern.PatternLayoutBase;
+import ch.qos.logback.core.spi.ContextAware;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public class AccessEventJsonPatternLayoutTestImpl extends AbstractJsonPatternLayoutTest<IAccessEvent> {
-    @Override
-    protected AccessEventJsonPatternLayout createLayout() {
-        return new AccessEventJsonPatternLayout() {
-            @Override
-            protected AbstractJsonPatternParser<IAccessEvent> createParser() {
-                // The base class needs to hook into the parser for some assertions
-                return decorateParser(super.createParser());
-            }
-        };
+public class LoggingEventJsonPatternParser extends AbstractJsonPatternParser<ILoggingEvent> {
+
+    public LoggingEventJsonPatternParser(final ContextAware contextAware, final JsonFactory jsonFactory) {
+        super(contextAware, jsonFactory);
     }
+
+    @Override
+    protected PatternLayoutBase<ILoggingEvent> createLayout() {
+        return new PatternLayout();
+    }
+
 }

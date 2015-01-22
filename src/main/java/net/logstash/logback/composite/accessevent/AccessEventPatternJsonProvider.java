@@ -11,22 +11,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder;
+package net.logstash.logback.composite.accessevent;
 
+import net.logstash.logback.composite.AbstractPatternJsonProvider;
+import net.logstash.logback.pattern.AbstractJsonPatternParser;
+import net.logstash.logback.pattern.AccessEventJsonPatternParser;
 import ch.qos.logback.access.spi.IAccessEvent;
-import net.logstash.logback.layout.AbstractJsonPatternLayout;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public class AccessEventJsonPatternLayoutEncoderTest extends AbstractJsonPatternLayoutEncoderTest<IAccessEvent> {
+public class AccessEventPatternJsonProvider extends AbstractPatternJsonProvider<IAccessEvent> {
+
     @Override
-    protected AbstractJsonPatternLayoutEncoder<IAccessEvent> createEncoder() {
-        return new AccessEventJsonPatternLayoutEncoder() {
-            @Override
-            protected AbstractJsonPatternLayout<IAccessEvent> createLayout() {
-                return decorateLayout(super.createLayout());
-            }
-        };
+    protected AbstractJsonPatternParser<IAccessEvent> createParser() {
+        return new AccessEventJsonPatternParser(this, this.jsonFactory);
     }
+
 }

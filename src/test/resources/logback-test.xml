@@ -47,6 +47,9 @@
             </throwableConverter>
             <includeMdcKeyName>included</includeMdcKeyName>
             <customFields>{"name":"value"}</customFields>
+            <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
+                <pattern>{"name1":"value","relativeTime":"#asLong(%relative)"}</pattern>
+            </provider>
         </encoder>
     </appender>
     <appender name="loggingEventCompositeJsonEncoderAppender" class="ch.qos.logback.core.ConsoleAppender">
@@ -90,6 +93,9 @@
                 </globalCustomFields>
                 <tags/>
                 <logstashMarkers/>
+                <pattern>
+                    <pattern>{"name1":"value","relativeTime":"#asLong(%relative)"}</pattern>
+                </pattern>
                 <provider class="net.logstash.logback.TestJsonProvider"/>
             </providers>
         </encoder>

@@ -11,18 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder;
+package net.logstash.logback.composite;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import net.logstash.logback.layout.AbstractJsonPatternLayout;
-import net.logstash.logback.layout.LoggingEventJsonPatternLayout;
+import com.fasterxml.jackson.core.JsonFactory;
 
-/**
- * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
- */
-public class LoggingEventJsonPatternLayoutEncoder extends AbstractJsonPatternLayoutEncoder<ILoggingEvent> {
-    @Override
-    protected AbstractJsonPatternLayout<ILoggingEvent> createLayout() {
-        return new LoggingEventJsonPatternLayout();
-    }
+public interface JsonFactoryAware {
+    void setJsonFactory(JsonFactory jsonFactory);
 }

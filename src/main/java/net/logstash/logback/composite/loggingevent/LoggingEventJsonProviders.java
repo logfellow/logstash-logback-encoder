@@ -81,5 +81,8 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addLogstashMarkers(LogstashMarkersJsonProvider provider) {
         addProvider(provider);
     }
+    public void addPattern(LoggingEventPatternJsonProvider provider) {
+        addProvider(provider);
+    }
     
 }

@@ -13,10 +13,10 @@
  */
 package net.logstash.logback.composite.accessevent;
 
-import ch.qos.logback.access.spi.IAccessEvent;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import ch.qos.logback.access.spi.IAccessEvent;
 
 /**
  * Used to make it make it more convenient to create well-known
@@ -81,5 +81,9 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addContext(ContextJsonProvider<IAccessEvent> provider) {
         addProvider(provider);
     }
+    public void addPattern(AccessEventPatternJsonProvider provider) {
+        addProvider(provider);
+    }
+    
 
 }

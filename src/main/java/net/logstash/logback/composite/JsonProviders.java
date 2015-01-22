@@ -21,6 +21,7 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 public class JsonProviders<Event extends DeferredProcessingAware> {
     
@@ -68,8 +69,16 @@ public class JsonProviders<Event extends DeferredProcessingAware> {
         }
     }
     
+    public void setJsonFactory(MappingJsonFactory jsonFactory) {
+        for (JsonProvider<Event> jsonProvider : jsonProviders) {
+            if (jsonProvider instanceof JsonFactoryAware) {
+                ((JsonFactoryAware) jsonProvider).setJsonFactory(jsonFactory);
+            }
+        }
+    }
+    
     public List<JsonProvider<Event>> getProviders() {
         return new ArrayList<JsonProvider<Event>>(jsonProviders);
     }
-    
+
 }

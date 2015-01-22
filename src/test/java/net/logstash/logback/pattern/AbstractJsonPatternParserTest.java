@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.layout.parser;
+package net.logstash.logback.pattern;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
@@ -37,20 +37,20 @@ import static org.mockito.BDDMockito.given;
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 @RunWith(MockitoJUnitRunner.class)
-public abstract class AbstractJsonPatternParserTest<E> {
+public abstract class AbstractJsonPatternParserTest<Event> {
 
     @Mock
     protected ContextAware contextAware;
 
-    private JsonFactory jsonFactory;
+    protected JsonFactory jsonFactory;
 
     private JsonGenerator jsonGenerator;
 
     private StringWriter buffer = new StringWriter();
 
-    private E event;
+    private Event event;
 
-    private AbstractJsonPatternParser<E> parser;
+    private AbstractJsonPatternParser<Event> parser;
 
     @Mock
     private Context context;
@@ -68,9 +68,9 @@ public abstract class AbstractJsonPatternParserTest<E> {
         parser = createParser();
     }
 
-    abstract protected E createEvent();
+    abstract protected Event createEvent();
 
-    abstract protected AbstractJsonPatternParser<E> createParser();
+    abstract protected AbstractJsonPatternParser<Event> createParser();
 
     private Map<String, Object> parseJson(final String text) throws IOException {
         return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() { });
@@ -95,7 +95,7 @@ public abstract class AbstractJsonPatternParserTest<E> {
         assertThat(actualResult, equalTo(expectedResult));
     }
 
-    private String process(final String patternJson) throws IOException {NodeWriter<E> root = parser.parse(jsonFactory , patternJson);
+    private String process(final String patternJson) throws IOException {NodeWriter<Event> root = parser.parse(patternJson);
         assertThat(root, notNullValue());
 
         root.write(jsonGenerator, event);
@@ -250,19 +250,6 @@ public abstract class AbstractJsonPatternParserTest<E> {
                 + "}";
 
         verifyWithoutDefaultFields(pattern, expected);
-    }
-
-    @Test
-    public void shouldGenerateDefaultFields() throws IOException {
-
-        String patternJson = "{}";
-
-        Map<String, Object> actualResult = parseJson(process(patternJson));
-
-        assertThat(actualResult, allOf(
-                hasKey("@timestamp"),
-                hasEntry("@version", (Object) 1)
-        ));
     }
 
     @Test

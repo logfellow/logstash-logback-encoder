@@ -11,19 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.layout.parser;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-
-import java.io.IOException;
+package net.logstash.logback.pattern;
 
 /**
- * Writes a JSON pattern node into JSON generator supplied.
+ * Computes a value given an event.
  *
- * @param <E> - type of the event (ILoggingEvent, IAccessEvent)
+ * @param <T> - type of the computed value
+ * @param <Event> - type of the event (ILoggingEvent, IAccessEvent)
  *
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public interface NodeWriter<E> {
-    void write(JsonGenerator generator, E event) throws IOException;
+public interface ValueGetter<T, Event> {
+    T getValue(Event event);
 }

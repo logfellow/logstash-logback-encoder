@@ -11,15 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.layout.parser;
+package net.logstash.logback.pattern;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.mockito.BDDMockito.given;
 
@@ -27,21 +30,25 @@ import static org.mockito.BDDMockito.given;
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 @RunWith(MockitoJUnitRunner.class)
-public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserTest<IAccessEvent>{
+public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParserTest<ILoggingEvent>{
 
     @Mock
-    private IAccessEvent event;
+    private ILoggingEvent event;
+
+    private Map<String, String> mdc = new HashMap<String, String>();
 
     @Override
-    protected IAccessEvent createEvent() {
-        given(event.getMethod()).willReturn("PUT");
-        given(event.getAttribute("MISSING")).willReturn("-"); // Just like logback itself does for non-existent attrs
+    protected ILoggingEvent createEvent() {
+        mdc.put("key1", "value1");
+        mdc.put("key2", "value2");
+        given(event.getMDCPropertyMap()).willReturn(mdc);
+        given(event.getLevel()).willReturn(Level.DEBUG);
         return event;
     }
 
     @Override
-    protected AbstractJsonPatternParser<IAccessEvent> createParser() {
-        return new AccessEventJsonPatternParser(contextAware);
+    protected AbstractJsonPatternParser<ILoggingEvent> createParser() {
+        return new LoggingEventJsonPatternParser(contextAware, jsonFactory);
     }
 
     @Test
@@ -49,30 +56,28 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
 
         String pattern = ""
                 + "{\n"
-                + "    \"level\": \"%requestMethod\"\n"
+                + "    \"level\": \"%level\"\n"
                 + "}";
 
         String expected = ""
                 + "{\n"
-                + "    \"level\": \"PUT\"\n"
+                + "    \"level\": \"DEBUG\"\n"
                 + "}";
 
         verifyWithoutDefaultFields(pattern, expected);
     }
 
     @Test
-    public void noNaOperationShouldNullifySingleDash() throws IOException {
+    public void shouldAllowIndividualMdcItemsToBeIncludedUsingConverter() throws IOException {
 
         String pattern = ""
                 + "{\n"
-                + "    \"cookie1\": \"%requestAttribute{MISSING}\",\n"
-                + "    \"cookie2\": \"#nullNA{%requestAttribute{MISSING}}\"\n"
+                + "    \"mdc.key1\": \"%mdc{key1}\"\n"
                 + "}";
 
         String expected = ""
                 + "{\n"
-                + "    \"cookie1\": \"-\",\n"
-                + "    \"cookie2\": null\n"
+                + "    \"mdc.key1\": \"value1\"\n"
                 + "}";
 
         verifyWithoutDefaultFields(pattern, expected);
