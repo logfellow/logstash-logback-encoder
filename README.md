@@ -1,10 +1,13 @@
-# Logback JSON encoder for Logstash
+# Logback JSON encoder
 
-Provides a logback encoder, logback layout, and several logback appenders
-for outputting log messages in logstash's JSON format.
+Provides an encoder, layout, and several appenders to log from [logback](http://logback.qos.ch/) in JSON format.
 
+Supports both regular logging events and access events (provided by [logback-access](http://logback.qos.ch/access.html)).
+
+Originally written to support output in [logstash](http://logstash.net/)'s JSON format, but has evolved into a highly-configurable, general-purpose, JSON logging mechanism.  The structured of the JSON output, and the data it contains, is fully configurable.
 
 ## Including it in your project
+
 Maven style:
 
 ```xml
@@ -14,51 +17,81 @@ Maven style:
   <version>3.6</version>
 </dependency>
 ```
+
+If you get `ClassNotFoundException`/`NoClassDefFoundError`/`NoSuchMethodError` at runtime, then ensure the required dependencies (and appropriate versions) as specified in the pom file from the maven repository exist on the runtime classpath.  Specifically, the following need to be available on the runtime classpath:
+
+* jackson-databind / jackson-core / jackson-annotations
+* logback-classic / logback-core / logback-access
+* slf4j-api
+
+Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
+
 ## Usage
 
-Two output appenders are provided:
-* Syslog UDP Socket ([`LogstashSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashSocketAppender.java))
-* TCP Socket ([`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java))
+To log using JSON format, you must configure logback to use either:
 
-Other logback appenders (such as `RollingFileAppender`) can use the
-[`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) or
-[`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java)
-to format log messages.
+* an appender provided by the logstash-logback-encoder library, OR
+* an appender provided by logback (or another library) with an encoder or layout provided by the logstash-logback-encoder library
+
+Throughout this document:
+
+* _LoggingEvent_ refers to standard logback events logged through a `Logger`, and
+* _AccessEvent_ refers to events logged through [logback-access](http://logback.qos.ch/access.html).
+
+The appenders, encoders, and layouts provided by the logstash-logback-encoder library are as follows:
+
+| Format        | Protocol   | Function | LoggingEvent | AccessEvent
+|---------------|------------|----------| ------------ | -----------
+| Logstash JSON | Syslog/UDP | Appender | [`LogstashSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashSocketAppender.java) | n/a
+| Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
+| Logstash JSON | TCP/SSL    | Appender | [`SSLLogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/SSLLogstashTcpSocketAppender.java) | n/a
+| Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
+| Logstash JSON | any        | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
+| General JSON  | any        | Encoder  | [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java) | [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)
+| General JSON  | any        | Layout   | [`LoggingEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/layout/LoggingEventCompositeJsonLayout.java) | [`AccessEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonLayout.java)
+
+These encoders/layouts can generally be used by any logback appender (such as `RollingFileAppender`).
+
+The general _composite_ JSON encoders/layouts can be used to output any JSON format/data by configuring them with various JSON _providers_.  The Logstash encoders/layouts are really just extensions of the general composite JSON encoders/layouts with a pre-defined set of providers.
+
+The logstash encoders/layouts are easier to configure if you want to use the standard output format.  Use the composite encoders/layouts if you want to heavily customize the output.
+
+
 
 ### Syslog UDP Socket Appender
 
-To output logstash compatible JSON to a syslog channel, use the `LogstashSocketAppender` in your `logback.xml` like this:
+To output JSON for LoggingEvents to a syslog/UDP channel, use the `LogstashSocketAppender` in your `logback.xml` like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-    <syslogHost>MyAwsomeSyslogServer</syslogHost>
+    <host>MyAwesomeSyslogServer</host>
+    <!-- port is optional (default value shown) -->
+    <port>514</port>
   </appender>
   <root level="all">
     <appender-ref ref="stash" />
   </root>
 </configuration>
 ```
+Internally, the `LogstashSocketAppender` uses a `LogstashLayout` to perform the JSON formatting.   Therefore, by default, the output will be logstash-compatible.  You can further customize the JSON output of `LogstashSocketAppender` just like you can with a `LogstashLayout` as described in later sections.
 
-Then use the `syslog` input in logstash like this:
+There currently is no way to log AccessEvents over syslog/UDP.
 
+To receive syslog/UDP input in logstash, configure a [`syslog`](www.logstash.net/docs/latest/inputs/syslog) or [`udp`](www.logstash.net/docs/latest/inputs/udp) input with the [`json`](www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 ```
 input {
   syslog {
-    type => "your-log-type"
     codec => "json"
   }
 }
 ```
-
-You can also use the `udp` input, which provides threading.
  
 ### TCP Socket Appender
 
-Use the `LogstashEncoder` along with the `LogstashTcpSocketAppender` to log over TCP.
-See the next section for an example of how to use the encoder with a file appender.
+To output JSON for LoggingEvents over TCP use the `LogstashEncoder` along with the `LogstashTcpSocketAppender` or `SSLLogstashTcpSocketAppender`.
 
-Example appender configuration in `logback.xml`:
+Example logging appender configuration in `logback.xml`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -78,7 +111,26 @@ Example appender configuration in `logback.xml`:
 </configuration>
 ```
 
-Example logstash configuration to read `LogstashTcpSocketAppender` messages:
+To output JSON for AccessEvents over TCP, use the `LogstashAccessEncoder` along with the `LogstashTcpSocketAppender`.  An SSL appender is not currently available for AccessEvents.
+
+Example access appender in `logback-access.xml`
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+      <!-- remoteHost and port are optional (default values shown) -->
+      <remoteHost>127.0.0.1</remoteHost>
+      <port>4560</port>
+  
+      <!-- encoder is required -->
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+
+  <appender-ref ref="stash" />
+</configuration>
+```
+
+To receive TCP input in logstash, configure a [`tcp`](www.logstash.net/docs/latest/inputs/tcp) input with the [`json`](www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 
 ```
 input {
@@ -91,10 +143,9 @@ input {
 
 ### Encoder / Layout
 
-You can use the [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) or
-[`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) with other logback appenders.
+You can use the any encoders/layouts provided by the logstash-logback-encoder library with other logback appenders.
 
-For example, to output logstash compatible JSON to a file, use the `LogstashEncoder` with the `RollingFileAppender` in your `logback.xml` like this:
+For example, to output LoggingEvents to a file, use the `LogstashEncoder` with the `RollingFileAppender` in your `logback.xml` like this:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -116,12 +167,24 @@ For example, to output logstash compatible JSON to a file, use the `LogstashEnco
 </configuration>
 ```
 
-Then use the `file` input in logstash like this:
+To log AccessEvents to a file, configure your `logback-access.xml` like this:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>/some/path/to/your/file.log</file>
+    <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+  </appender>
+
+  <appender-ref ref="stash" />
+</configuration>
+```
+
+To receive file input in logstash, configure a [`file`](www.logstash.net/docs/latest/inputs/file) input in logstash's configuration like this:
 
 ```
 input {
   file {
-    type => "your-log-type"
     path => "/some/path/to/your/file.log"
     codec => "json"
   }
@@ -129,13 +192,13 @@ input {
 ```
 
 
-## Fields
+## LoggingEvent Fields
 
-The fields included in the logstash event are described in the sections below.
+The fields included in the JSON output by default for LoggingEvents written by the `LogstashEncoder`, `LogstashLayout`, and the logstash appenders are as follows...
 
 ### Standard Fields
 
-These fields will appear in every log event unless otherwise noted.
+These fields will appear in every LoggingEvent unless otherwise noted.
 The field names listed here are the default field names.
 The field names can be customized (see below).
 
@@ -151,10 +214,10 @@ The field names can be customized (see below).
 | `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.
 | `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.)
 
-#### MDC fields
+### MDC fields
 
 By default, each entry in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)
-will appear as a field in the log event.
+will appear as a field in the LoggingEvent.
 
 This can be fully disabled by specifying `<includeMdc>false</includeMdc>`,
 in the encoder/layout/appender configuration.
@@ -180,14 +243,14 @@ When key names are specified for inclusion, then all other fields will be exclud
 When key names are specified for exclusion, then all other fields will be included.
 It is a configuration error to specify both included and excluded key names.
 
-#### Context fields
+### Context fields
 
 By default, each property of Logback's Context (`ch.qos.logback.core.Context`)
-will appear as a field in the log event.
+will appear as a field in the LoggingEvent.
 This can be disabled by specifying `<includeContext>false</includeContext>`
 in the encoder/layout/appender configuration.
 
-#### Caller Info Fields
+### Caller Info Fields
 The encoder/layout/appender do not contain caller info by default. 
 This can be costly to calculate and should be switched off for busy production environments.
 
@@ -215,61 +278,16 @@ When switched on, the following fields will be included in the log event:
 | `caller_file_name`   | Name of the file that logged the event
 | `caller_line_number` | Line number of the file where the event was logged
 
-### Customizing Standard Field Names
-
-The standard field names above can be customized by using the `fieldNames`
-configuration element in the encoder or appender configuration
-
-A shortened version of the field names can be configured like this:
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
-</encoder>
-```
-See [`ShortenedFieldNames`](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java)
-for complete list of shortened names. 
-
-If you want to customize individual field names, you can do so like this:
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <fieldNames>
-    <logger>logger</logger>
-    <thread>thread</logger>
-    ...
-  </fieldNames>
-</encoder>
-```
-
-See [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
-for all the field names that can be customized.
-
-Prevent a field from being output by setting the field name to `[ignore]`.
-
-Log the caller info, MDC properties, and context properties
-in sub-objects within the JSON event by specifying field
-names for `caller`, `mdc`, and `context`, respectively.
- 
-### Customizing Logger Name Field Length
-
-You can shorten the logger name field length similar to the normal pattern style of "%logger{36}".  Examples of how it is shortened
-can be found here: http://logback.qos.ch/manual/layouts.html#conversionWord
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
-</encoder>
-```
-
 ### Custom Fields
 
-In addition to the fields above, you can add other fields to the log event either globally, or on an event-by-event basis.
+In addition to the fields above, you can add other fields to the LoggingEvent either globally, or on an event-by-event basis.
 
 #### Global Custom Fields
 
-Add custom fields that will appear in every json event like this : 
+Add custom fields that will appear in every LoggingEvent like this : 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <customFields>{"appname":"damnGoodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+  <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
 </encoder>
 ```
 
@@ -277,13 +295,13 @@ OR
 
 ```xml
 <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-  <customFields>{"appname":"damnGoodWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+  <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
 </appender>
 ```
 
 #### Event-specific Custom Fields
 
-When logging a message, you can specify additional fields to add to the json event by using the markers provided by 
+When logging a message, you can specify additional fields to add to the LoggingEvent by using the markers provided by 
 [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java).
 
 For example:
@@ -340,6 +358,94 @@ logger.info(appendFields(myobject), "log message");
 
 See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.
 
+
+## AccessEvent Fields
+
+The fields included in the JSON output by default for AccessEvents written by the `LogstashAccessEncoder`, `LogstashAccessLayout`, and the logstash access appenders are as follows...
+
+### Standard Fields
+
+These fields will appear in every AccessEvent unless otherwise noted.
+The field names listed here are the default field names.
+The field names can be customized (see below).
+
+| Field         | Description
+|---------------|------------
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See below for customizing the timezone.
+| `@version`    | Logstash format version (e.g. 1)
+| `@message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
+| `@fields.method` | HTTP method
+| `@fields.protocol` | HTTP protocol
+| `@fields.status_code` | HTTP status code
+| `@fields.requested_url` | Request URL
+| `@fields.requested_uri` | Request URI
+| `@fields.remote_host` | Remote host
+| `@fields.HOSTNAME` | another field for remote host (not sure why this is here honestly)
+| `@fields.remote_user` | Remote user
+| `@fields.content_length` | Content length
+| `@fields.elapsed_time` | Elapsed time in millis
+
+### Header Fields
+
+Request and response headers are not logged by default, but can be enabled by specifying a field name for them, like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <fieldNames>
+    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
+    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+  </fieldNames>
+</encoder>
+```
+
+See _Customizing Standard Field Names_ for more details.
+
+
+## Customizing Standard Field Names
+
+The standard field names above for LoggingEvents and AccessEvents can be customized by using the `fieldNames`configuration element in the encoder or appender configuration.
+
+For example:
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <fieldNames>
+    <timestamp>time</timestamp>
+    <message>msg</message>
+    ...
+  </fieldNames>
+</encoder>
+```
+Prevent a field from being output by setting the field name to `[ignore]`.
+
+For LoggingEvents, see [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
+for all the field names that can be customized.  Additionally, a separate set of [shortened field names](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java) can be configured like this:
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
+</encoder>
+```
+
+For LoggingEvents, log the caller info, MDC properties, and context properties
+in sub-objects within the JSON event by specifying field
+names for `caller`, `mdc`, and `context`, respectively.
+
+For AccessEvents, see [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
+for all the field names that can be customized
+ 
+## Customizing TimeZone
+
+By default, timestamps are logged in the default TimeZone of the host Java platform.
+You can change the timezone like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timeZone>UTC</timeZone>
+</encoder>
+```
+
+The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
+
+
 ## Customizing JSON Factory and Generator
 
 The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by creating
@@ -366,27 +472,25 @@ and then specify your decorator in the logback.xml file like this:
 </encoder>
 ```
 
-## Customizing TimeZone
+## Customizing Logger Name Length
 
-By default, timestamps are logged in the default TimeZone of the host Java platform.
-You can change the timezone like this:
+For LoggingEvents, you can shorten the logger name field length similar to the normal pattern style of `%logger{36}`.
+Examples of how it is shortened can be found [here](http://logback.qos.ch/manual/layouts.html#conversionWord)
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <timeZone>UTC</timeZone>
+  <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
 </encoder>
 ```
 
-The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
-
 ## Customizing Stack Traces
 
-By default, stack traces are formatted using logback's `ExtendedThrowableProxyConverter`.
+For LoggingEvents, stack traces are formatted using logback's `ExtendedThrowableProxyConverter` by default.
 However, you can configure the encoder to use any `ThrowableHandlingConverter`
 to format stacktraces.
 
 A powerful [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
-is included within logstash-logback-encoder to format stacktraces by:
+is included in the logstash-logback-encoder library to format stacktraces by:
 
 * Limiting the number of stackTraceElements per throwable (applies to each individual throwable.  e.g. caused-bys and suppressed)
 * Limiting the total length in characters of the trace
@@ -414,169 +518,313 @@ For example:
 [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
 can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
 
-## Logback access logs
-For logback access logs, use it in your `logback-access.xml` like this:
+## Composite Encoder/Layout
+
+If you want greater flexibility in the JSON format and data included in LoggingEvents and AccessEvents, use the [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java)  and  [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)  (or the corresponding layouts).
+
+These encoders/layouts are composed of one or more JSON _providers_ that contribute to the JSON output.  No providers are configured by default in the composite encoders/layouts.  You must add the ones you want.
+
+For example:
 
 ```xml
-<appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
-  <file>/some/path/to/your/file.log</file>
-  <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
-</appender>
-
-<appender-ref ref="stash" />
-```
-
-or if you want to log directly into logstash,
-
-```xml
-<appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-  <remoteHost>........</remoteHost>
-  <port>.....</port>
-  <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
-</appender>
-
-<appender-ref ref="stash" />
-```
-
-The default field names used for access logs are different than those documented above.
-See [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
-for all the field names used for access logs.
-
-By default, the request and response headers are not logged. If you want to include them, you need to configure the encoder like that :
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
-  <fieldNames>
-    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
-    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
-  </fieldNames>
-</encoder>
-```
-
-## Using PatternLayout-based JSON encoders
-In addition to the pair of encoder ([`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java)
-and [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java))
-shown in all the examples above, there is
-a pair of alternative encoders ([`LoggingEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventJsonPatternLayoutEncoder.java)
-and [`AccessEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventJsonPatternLayoutEncoder.java))
-that allow you to customize JSON being that is send to logstash even more.
-
-Effectively you are providing a template of JSON to be send to the logstash server and encoder just populates it with values.
-Every value in the template is treated as a pattern for logback's standard PatternLayout so it can be a combination
-of literal strings (for some constants) and various conversion specifiers (like %d for date).
-Only the fields you explicitly included into pattern will be logged.
-
-Note that "@version" and "@timestamp" fields are added automatically so they do not have to be specified in the format pattern.
-If, however, you include them in the format then your definition will be used instead.
-
-This example
-```xml
-<encoder class="net.logstash.logback.encoder.LoggingEventJsonPatternLayoutEncoder">
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    <mdc/>
     <pattern>
-        { "level": "%p" }
+      <pattern>
+        {
+          "timestamp": "%date{ISO8601}"
+          "myCustomField": "fieldValue",
+          "relative": "#asLong{%relative}"
+        }
+      </pattern>
     </pattern>
+    <stackTrace>
+      <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+        <maxLength>2048</maxLength>
+        <shortenedClassNameLength>20</shortenedClassNameLength>
+        <exclude>sun\.reflect\..*\.invoke.*</exclude>
+        <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+        <evaluator class="myorg.MyCustomEvaluator"/>
+        <rootCauseFirst>true</rootCauseFirst>
+      </throwableConverter>
+    </stackTrace>
+  </providers>
 </encoder>
 ```
-Will produce something like
+
+
+The logstash-logback-encoder library contains many providers out-of-the-box,
+and you can even plug-in your own.
+Each provider has its own configuration options to further customize it. 
+
+For LoggingEvents, the available providers and their configuration properties (defaults in parenthesis) are as follows:
+
+<table>
+  <tbody>
+    <tr>
+      <th>Provider</th>
+      <th>Description/Properties</th>
+      <th>Example Output</th>
+    </tr>
+    <tr>
+      <td><tt>timestamp</tt></td>
+      <td><p>Event timestamp</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
+          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)</li>
+          <li><tt>timeZone</tt> - Timezone (local timezone)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>version</tt></td>
+      <td><p>Logstash JSON format version</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
+          <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>message</tt></td>
+      <td><p>Formatted log event message</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>loggerName</tt></td>
+      <td><p>Name of the logger that logged the message</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>logger_name</tt>)</li>          
+          <li><tt>shortenedLoggerNameLength</tt> - Length to which the name will be attempted to be abbreviated (no abbreviation)</li>          
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>threadName</tt></td>
+      <td><p>Name of the thread from which the event was logged</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>thread_name</tt>)</li>          
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>logLevel</tt></td>
+      <td><p>Logger level text (INFO, WARN, etc)</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>level</tt>)</li>          
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>logLevelValue</tt></td>
+      <td><p>Logger level numerical value </p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>level_value</tt>)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>callerData</tt></td>
+      <td><p>Outputs data about from where the logger was called (class/method/file/line)
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+          <li><tt>classFieldName</tt> - Field name for class name (<tt>caller_class_name</tt>)</li>
+          <li><tt>methodFieldName</tt> - Field name for method name (<tt>caller_method_name</tt>)</li>
+          <li><tt>fileFieldName</tt> - Field name for file name (<tt>caller_file_name</tt>)</li>
+          <li><tt>lineFieldName</tt> - Field name for lin number (<tt>caller_line_number</tt>)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>stackTrace</tt></td>
+      <td><p>Stacktrace of any throwable logged with the event.  Stackframes are separated by newline chars.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
+          <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>context</tt></td>
+      <td><p>Outputs entries from logback's context</p>
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>mdc</tt></td>
+      <td>
+        <p>Outputs entries from the Mapped Diagnostic Context (MDC).
+           Will include all entries by default.
+           When key names are specified for inclusion, then all other fields will be excluded.
+           When key names are specified for exclusion, then all other fields will be included.
+           It is a configuration error to specify both included and excluded key names.
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+          <li><tt>includeMdcKeyName</tt> - Name of keys to include (all)</li>
+          <li><tt>excludeMdcKeyName</tt> - Name of keys to include (none)</li>
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>tags</tt></td>
+      <td><p>Outputs logback markers as a comma separated list</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>tags</tt>)</li>          
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>logstashMarkers</tt></td>
+      <td><p>Used to output Logstash Markers as specified in <em>Event-specific Custom Fields</em></p>
+      </td>
+      <td></td>
+    </tr>
+    <tr>
+      <td><tt>pattern</tt></td>
+      <td>
+        <p>Outputs fields from a configured JSON Object string,
+           while substituting patterns supported by logback's <tt>PatternLayout</tt>.
+        </p>
+        <p>
+           See <em>Pattern JSON Provider</em>.
+        </p>
+        <ul>
+          <li><tt>pattern</tt> - JSON object string (no default)</li>          
+        </ul>
+      </td>
+      <td></td>
+    </tr>
+  </tbody>
+</table>
+
+### Pattern JSON Provider
+
+When used with a composite JSON encoder/layout, the `pattern` JSON provider can be used to
+define a template of JSON for the event.  The encoder/layout will populate values within the template.
+Every value in the template is treated as a pattern for logback's standard `PatternLayout` so it can be a combination
+of literal strings (for some constants) and various conversion specifiers (like `%d` for date).
+
+This example...
+
+```xml
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    <timestamp/>
+    <version/>
+    <pattern>
+        { "level": "%level" }
+    </pattern>
+  </providers>
+</encoder>
 ```
-{"@time":"...", "@version": 1, "level": "DEBUG"}
+... will produce something like...
+
+```
+{
+  "@timestamp":"...",
+  "@version": 1,
+  "level": "DEBUG"
+}
 ```
 
 The real power comes from the fact that there are lots of standard conversion specifiers so you
-can customise what is logged and how. For example, you could log a single specific value from MDC with "%X{mykey}"
-or, for access logs, you could log a single request header with "%i{User-Agent}".
+can customise what is logged and how. For example, you could log a single specific value from MDC with `%mdc{mykey}`.
+Or, for access logs, you could log a single request header with `%i{User-Agent}`.
 
-You can use nested objects and arrays in your pattern which provides you the same functionality as custom fields feature
-of other logstash appenders.
+You can use nested objects and arrays in your pattern.
 
-<b>Important note</b>: if you use a null, number or a boolean constant in a pattern, it will keep its type in the
-resulting JSON. However only the text values are searched for conversion patterns.
-And, as these patterns are sent through PatternLayout, the result is always a string
-even for something which you may feel should be a number - like for %b (bytes sent, in access logs).
+If you use a null, number, or a boolean constant in a pattern, it will keep its type in the
+resulting JSON. However, only the text values are searched for conversion patterns.
+And, as these patterns are sent through `PatternLayout`, the result is always a string
+even for something which you may feel should be a number - like for `%b` (bytes sent, in access logs).
 
 You can either deal with the type conversion on the logstash side or you may use special operations provided by this encoder.
 The operations are:
 
-* #asLong{...} - evaluates pattern in curly braces and then converts resulting string to a long (or a null if conversion fails).
-* #asDouble{...} - evaluates pattern in curly braces and then converts resulting string to a double (or a null if conversion fails).
+* `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a long (or a null if conversion fails).
+* `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a double (or a null if conversion fails).
 
-So this example
+So this example...
+
 ```xml
 <pattern>
-    {
+  {
     "bytes_sent_str": "%b",
     "bytes_sent_long": "#asLong{%b}"
-    }
+  }
 </pattern>
 ```
-Will produce something like
+...will produce something like...
+
 ```
-{"@time":"...", "@version": 1, "bytes_sent_str": "1024", "bytes_sent_long": 1024}
+{
+  "bytes_sent_str": "1024",
+  "bytes_sent_long": 1024
+}
 ```
 
-So value that is sent for bytes_sent_long is a number even though in your pattern it is a quoted text.
+The value that is sent for `bytes_sent_long` is a number even though in your pattern it is a quoted text.
 
-There are two different PatternLayouts just like there are two different encoders for logstash.
-And these layouts support different set of conversion patterns
+#### LoggingEvent patterns
 
-### LoggingEventJsonPatternLayoutEncoder
+For LoggingEvents, patterns from logback-classic's
+[`PatternLayout`](http://logback.qos.ch/manual/layouts.html#conversionWord) are supported.
 
-[`LoggingEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventJsonPatternLayoutEncoder.java)
-uses PatternLayouts from logback-classic - http://logback.qos.ch/xref/ch/qos/logback/classic/PatternLayout.html
-
-For the help with supported conversions - see http://logback.qos.ch/manual/layouts.html#conversionWord
+For example:
 
 ```xml
-<encoder class="net.logstash.logback.encoder.LoggingEventJsonPatternLayoutEncoder">
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    <timestamp/>
     <pattern>
         {
         "custom_constant": "123",
         "tags": ["one", "two"],
-
         "logger": "%logger",
         "level": "%level",
         "thread": "%thread",
-        "message": "%m",
+        "message": "%message",
 ...
         }
     </pattern>
+  </providers>
 </encoder>
 ```
 
-Note that LogstashLoggingAccessEncoder does not support stack trace formatters supported by LogstashLayout so
-you cannot abbreviate class names in the stack trace. You still can limit stack length though with the
-standard conversion pattern of %ex{10} for 10 first lines.
+#### AccessEvent patterns
 
-There is also a special operation that can be used with this encoder:
-* #mdc - if you use it as a value, that value will be replaced with a nested object containing all
-the values from MDC
+For AccessEvents, patterns from logback-access's
+[`PatternLayout`](http://logback.qos.ch/xref/ch/qos/logback/access/PatternLayout.html) are supported.
 
-If, instead, you want your MDC values on the top level, you will have to pick them individually with something like
+For example:  
 
 ```xml
-<pattern>
-    {
-    "mdckey1": "%X{key1}",
-    "mdckey2": "%X{key2}"
-    }
-</pattern>
-```
-
-There is no way to include all the values from MDC into the top level of the resulting JSON object.
-
-
-### AccessEventJsonPatternLayoutEncoder
-
-[`AccessEventJsonPatternLayoutEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventJsonPatternLayoutEncoder.java)
-uses PatternLayouts from logback-access - http://logback.qos.ch/xref/ch/qos/logback/access/PatternLayout.html
-
-```xml
-<encoder class="net.logstash.logback.encoder.AccessEventJsonPatternLayoutEncoder">
+<encoder class="net.logstash.logback.encoder.AccessEventCompositeJsonEncoder">
+  <providers>
     <pattern>
         {
         "custom_constant": "123",
         "tags": ["one", "two"],
-
         "remote_ip": "%a",
         "status_code": "%s",
         "elapsed_time": "%D",
@@ -587,35 +835,42 @@ uses PatternLayouts from logback-access - http://logback.qos.ch/xref/ch/qos/logb
 ...
         }
     </pattern>
+  </providers>
 </encoder>
 ```
 
-Note that PatternLayout for access logs does not support MDC. If your web application uses MDC to track
-any request details, you will need a filter to copy that data from MDC into request attributes at the end of request.
-And then request attributes can actually be logged with "%requestAttribute{name}".
-Also note that the latest Logback (1.1.2 at the moment of writing), does not support deferred processing of
-request attributes. And because `LogstashTcpSocketAppender` defers processing of the event to a background thread,
+Note that the latest Logback (1.1.2 at the moment of writing), does not support deferred processing of
+request attributes. And because `LogstashAccessTcpSocketAppender` defers processing of the event to a background thread,
 you won't be able to use "%requestAttribute{name}" with TCP appender until this issue is fixed (or you build yourself
 a custom logback). See http://jira.qos.ch/browse/LOGBACK-1033
 
-There is also a special operation that can be used with this encoder:
-* #nullNA{...} - if the pattern in curly braces evaluates to a dash ("-"), it will be replaced with a null value.
-You may want to use it because many of the PatternLayout conversion specifiers from logback-access will evaluate to "-"
+There is also a special operation that can be used with this AccessEvents:
+
+* `#nullNA{...}` - if the pattern in curly braces evaluates to a dash ("-"), it will be replaced with a null value.
+
+You may want to use it because many of the `PatternLayout` conversion specifiers from logback-access will evaluate to "-"
 for non-existent value (for example for a cookie, header or a request attribute).
 
-So the following pattern
+So the following pattern...
+
 ```xml
 <pattern>
-    {
+  {
     "default_cookie": "%requestCookie{MISSING}",
     "filtered_cookie": "#nullNA{%requestCookie{MISSING}}"
-    }
+  }
 </pattern>
 ```
 
-will produce
-{"@time":"...", "@version": 1, "default_cookie": "-", "filtered_cookie": null}
+...will produce...
 
+```
+{
+  "default_cookie": "-",
+  "filtered_cookie": null
+}
+```
 
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
+
