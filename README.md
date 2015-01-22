@@ -4,7 +4,7 @@ Provides an encoder, layout, and several appenders to log from [logback](http://
 
 Supports both regular logging events and access events (provided by [logback-access](http://logback.qos.ch/access.html)).
 
-Originally written to support output in [logstash](http://logstash.net/)'s JSON format, but has evolved into a highly-configurable, general-purpose, JSON logging mechanism.  The structured of the JSON output, and the data it contains, is fully configurable.
+Originally written to support output in [logstash](http://logstash.net/)'s JSON format, but has evolved into a highly-configurable, general-purpose, JSON logging mechanism.  The structure of the JSON output, and the data it contains, is fully configurable.
 
 ## Including it in your project
 
@@ -60,7 +60,8 @@ The logstash encoders/layouts are easier to configure if you want to use the sta
 
 ### Syslog UDP Socket Appender
 
-To output JSON for LoggingEvents to a syslog/UDP channel, use the `LogstashSocketAppender` in your `logback.xml` like this:
+To output JSON for LoggingEvents to a syslog/UDP channel,
+use the `LogstashSocketAppender` in your `logback.xml` like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -78,7 +79,7 @@ Internally, the `LogstashSocketAppender` uses a `LogstashLayout` to perform the 
 
 There currently is no way to log AccessEvents over syslog/UDP.
 
-To receive syslog/UDP input in logstash, configure a [`syslog`](www.logstash.net/docs/latest/inputs/syslog) or [`udp`](www.logstash.net/docs/latest/inputs/udp) input with the [`json`](www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
+To receive syslog/UDP input in logstash, configure a [`syslog`](http://www.logstash.net/docs/latest/inputs/syslog) or [`udp`](http://www.logstash.net/docs/latest/inputs/udp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 ```
 input {
   syslog {
@@ -89,7 +90,8 @@ input {
  
 ### TCP Socket Appender
 
-To output JSON for LoggingEvents over TCP use the `LogstashEncoder` along with the `LogstashTcpSocketAppender` or `SSLLogstashTcpSocketAppender`.
+To output JSON for LoggingEvents over TCP, use the `LogstashEncoder`
+along with the `LogstashTcpSocketAppender` or `SSLLogstashTcpSocketAppender`.
 
 Example logging appender configuration in `logback.xml`:
 
@@ -111,7 +113,9 @@ Example logging appender configuration in `logback.xml`:
 </configuration>
 ```
 
-To output JSON for AccessEvents over TCP, use the `LogstashAccessEncoder` along with the `LogstashTcpSocketAppender`.  An SSL appender is not currently available for AccessEvents.
+To output JSON for AccessEvents over TCP, use the `LogstashAccessEncoder`
+along with the `LogstashTcpSocketAppender`.
+An SSL appender is not currently available for AccessEvents.
 
 Example access appender in `logback-access.xml`
 ```xml
@@ -130,7 +134,7 @@ Example access appender in `logback-access.xml`
 </configuration>
 ```
 
-To receive TCP input in logstash, configure a [`tcp`](www.logstash.net/docs/latest/inputs/tcp) input with the [`json`](www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
+To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 
 ```
 input {
@@ -143,7 +147,7 @@ input {
 
 ### Encoder / Layout
 
-You can use the any encoders/layouts provided by the logstash-logback-encoder library with other logback appenders.
+You can use any of the encoders/layouts provided by the logstash-logback-encoder library with other logback appenders.
 
 For example, to output LoggingEvents to a file, use the `LogstashEncoder` with the `RollingFileAppender` in your `logback.xml` like this:
 
@@ -180,7 +184,7 @@ To log AccessEvents to a file, configure your `logback-access.xml` like this:
 </configuration>
 ```
 
-To receive file input in logstash, configure a [`file`](www.logstash.net/docs/latest/inputs/file) input in logstash's configuration like this:
+To receive file input in logstash, configure a [`file`](http://www.logstash.net/docs/latest/inputs/file) input in logstash's configuration like this:
 
 ```
 input {
@@ -566,7 +570,6 @@ For LoggingEvents, the available providers and their configuration properties (d
     <tr>
       <th>Provider</th>
       <th>Description/Properties</th>
-      <th>Example Output</th>
     </tr>
     <tr>
       <td><tt>timestamp</tt></td>
@@ -577,7 +580,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>version</tt></td>
@@ -587,7 +589,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>message</tt></td>
@@ -596,7 +597,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>loggerName</tt></td>
@@ -606,7 +606,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>shortenedLoggerNameLength</tt> - Length to which the name will be attempted to be abbreviated (no abbreviation)</li>          
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>threadName</tt></td>
@@ -615,7 +614,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Output field name (<tt>thread_name</tt>)</li>          
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>logLevel</tt></td>
@@ -624,7 +622,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Output field name (<tt>level</tt>)</li>          
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>logLevelValue</tt></td>
@@ -633,7 +630,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Output field name (<tt>level_value</tt>)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>callerData</tt></td>
@@ -646,7 +642,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>lineFieldName</tt> - Field name for lin number (<tt>caller_line_number</tt>)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>stackTrace</tt></td>
@@ -656,7 +651,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>context</tt></td>
@@ -665,7 +659,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>mdc</tt></td>
@@ -682,7 +675,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>excludeMdcKeyName</tt> - Name of keys to include (none)</li>
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>tags</tt></td>
@@ -691,13 +683,11 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Output field name (<tt>tags</tt>)</li>          
         </ul>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>logstashMarkers</tt></td>
       <td><p>Used to output Logstash Markers as specified in <em>Event-specific Custom Fields</em></p>
       </td>
-      <td></td>
     </tr>
     <tr>
       <td><tt>pattern</tt></td>
@@ -712,7 +702,6 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>pattern</tt> - JSON object string (no default)</li>          
         </ul>
       </td>
-      <td></td>
     </tr>
   </tbody>
 </table>
