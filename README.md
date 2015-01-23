@@ -1,6 +1,6 @@
 # Logback JSON encoder
 
-Provides an encoder, layout, and several appenders to log from [logback](http://logback.qos.ch/) in JSON format.
+Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON format.
 
 Supports both regular _LoggingEvents_ (logged through a `Logger`) and _AccessEvents_ (logged via [logback-access](http://logback.qos.ch/access.html)).
 
@@ -912,18 +912,28 @@ For AccessEvents, the available providers and their configuration properties (de
 ### Pattern JSON Provider
 
 When used with a composite JSON encoder/layout, the `pattern` JSON provider can be used to
-define a template of JSON for the event.  The encoder/layout will populate values within the template.
+define a template for a portion of the logged JSON output.
+The encoder/layout will populate values within the template.
 Every value in the template is treated as a pattern for logback's standard `PatternLayout` so it can be a combination
 of literal strings (for some constants) and various conversion specifiers (like `%d` for date).
+
+The pattern string (configured within the pattern provider) must be a JSON Object.
+The contents of the JSON object are included within the logged JSON output.
 
 This example...
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
   <providers>
+    <!-- provides the timestamp -->
     <timestamp/>
+    
+    <!-- provides the version -->
     <version/>
+    
+    <!-- provides the fields in the configured pattern -->
     <pattern>
+      <!-- the pattern that defines what to include -->
       <pattern>
         { "level": "%level" }
       </pattern>
