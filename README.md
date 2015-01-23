@@ -124,8 +124,8 @@ input {
 <a name="tcp"/>
 ### TCP Appenders
 
-To output JSON for LoggingEvents over TCP, use the `LogstashEncoder`
-along with the `LogstashTcpSocketAppender` or `SSLLogstashTcpSocketAppender`.
+To output JSON for LoggingEvents over TCP, use a `LogstashTcpSocketAppender` or `SSLLogstashTcpSocketAppender`,
+with a `LogstashEncoder` or `LoggingEventCompositeJsonEncoder`.
 
 Example logging appender configuration in `logback.xml`:
 
@@ -147,8 +147,10 @@ Example logging appender configuration in `logback.xml`:
 </configuration>
 ```
 
-To output JSON for AccessEvents over TCP, use the `LogstashAccessEncoder`
-along with the `LogstashTcpSocketAppender`.
+
+To output JSON for AccessEvents over TCP, use a `LogstashTcpSocketAppender`,
+with a `LogstashAccessEncoder` or `AccessEventCompositeJsonEncoder`.
+
 An SSL appender is not currently available for AccessEvents.
 
 Example access appender in `logback-access.xml`
