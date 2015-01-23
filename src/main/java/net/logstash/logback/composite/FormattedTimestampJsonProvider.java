@@ -24,6 +24,9 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Writes a formatted timestamp field.
+ */
 public abstract class FormattedTimestampJsonProvider<Event extends DeferredProcessingAware, FieldNames extends LogstashCommonFieldNames> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<FieldNames> {
     
     public static final String FIELD_TIMESTAMP = "@timestamp";

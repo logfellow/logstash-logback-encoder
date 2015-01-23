@@ -19,6 +19,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
 
+/**
+ * A {@link CompositeJsonFormatter} for {@link ILoggingEvent}s.
+ */
 public class LoggingEventCompositeJsonFormatter extends CompositeJsonFormatter<ILoggingEvent> {
 
     public LoggingEventCompositeJsonFormatter(ContextAware declaredOrigin) {
@@ -26,6 +29,10 @@ public class LoggingEventCompositeJsonFormatter extends CompositeJsonFormatter<I
         setProviders(new LoggingEventJsonProviders());
     }
     
+    /*
+     * Overridden to set the DefaultClass so that the classname is not
+     * needed in xml configuration.
+     */
     @Override
     @DefaultClass(LoggingEventJsonProviders.class)
     public void setProviders(JsonProviders<ILoggingEvent> jsonProviders) {

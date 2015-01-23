@@ -17,6 +17,8 @@ import java.io.IOException;
 
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.NodeWriter;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -24,11 +26,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * Transforms an string containing patterns understood by PatternLayouts into JSON output.
- * Delegates most of the work to the AbstractJsonPatternParser that is to
+ * Delegates most of the work to the {@link AbstractJsonPatternParser} that is to
  * parse the pattern specified.
- * Subclasses must implement <code>createParser</code> method so it returns parser valid for a specified event class.
+ * Subclasses must implement {@link #createParser()} method so it returns parser valid for a specified event class.
  *
- * @param <Event> - type of the event (ILoggingEvent, IAccessEvent)
+ * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  *
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */

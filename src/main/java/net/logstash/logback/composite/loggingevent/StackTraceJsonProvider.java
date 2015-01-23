@@ -32,6 +32,12 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
 
     /**
      * Used to format throwables as Strings.
+     * 
+     * Uses an {@link ExtendedThrowableProxyConverter} from logstash by default.
+     * 
+     * Consider using a
+     * {@link net.logstash.logback.stacktrace.ShortenedThrowableConverter ShortenedThrowableConverter}
+     * for more customization options. 
      */
     private ThrowableHandlingConverter throwableConverter = new ExtendedThrowableProxyConverter();
     

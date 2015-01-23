@@ -13,10 +13,20 @@
  */
 package net.logstash.logback.composite;
 
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
+/**
+ * A {@link JsonProvider} that has a configurable field name.
+ * 
+ * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
+ */
 public abstract class AbstractFieldJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> {
     
+    /**
+     * The field name used in the generated JSON when this provider writes its output.
+     */
     private String fieldName;
     
     public String getFieldName() {

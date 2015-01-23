@@ -19,8 +19,18 @@ import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
+/**
+ * Writes a numerical version field.
+ * This is intended to be the logstash JSON format version.
+ * 
+ * By default, the version is {@value #DEFAULT_VERSION}.
+ *
+ * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
+ */
 public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<LogstashCommonFieldNames> {
     
     public static final String FIELD_VERSION = "@version";

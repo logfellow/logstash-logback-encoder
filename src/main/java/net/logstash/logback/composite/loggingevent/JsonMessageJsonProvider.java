@@ -23,6 +23,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.marker.Markers;
 
+/**
+ * Provides logic for deprecated functionality. 
+ * 
+ * @deprecated Use the {@link LogstashMarkersJsonProvider}, and log events with {@link Markers} instead.
+ */
 @Deprecated
 public class JsonMessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
 

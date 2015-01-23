@@ -17,15 +17,16 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
+import net.logstash.logback.composite.AbstractJsonProvider;
+import net.logstash.logback.composite.JsonFactoryAware;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
-import net.logstash.logback.composite.AbstractJsonProvider;
-
-public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> {
+public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> implements JsonFactoryAware {
     
     /**
      * The un-parsed custom fields string to use to initialize customFields
@@ -37,6 +38,8 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
      * When non-null, the fields in this JsonNode will be embedded in the logstash json.
      */
     private JsonNode customFieldsNode;
+    
+    private JsonFactory jsonFactory;
 
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
@@ -63,9 +66,9 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     }
     
     private void initializeCustomFields() {
-        if (this.customFields != null) {
+        if (this.customFields != null && jsonFactory != null) {
             try {
-                this.customFieldsNode = new MappingJsonFactory()
+                this.customFieldsNode = this.jsonFactory
                     .createParser(customFields).readValueAsTree();
             } catch (IOException e) {
                 addError("Failed to parse custom fields [" + customFields + "]", e);
@@ -92,5 +95,8 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
         this.customFieldsNode = customFields;
     }
     
-
+    @Override
+    public void setJsonFactory(JsonFactory jsonFactory) {
+        this.jsonFactory = jsonFactory;
+    }
 }

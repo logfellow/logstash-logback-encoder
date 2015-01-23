@@ -22,6 +22,8 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.NullJsonFactoryDecorator;
 import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
@@ -34,6 +36,16 @@ import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
+/**
+ * Formats logstash Events as JSON using {@link JsonProvider}s.
+ * <p>
+ * 
+ * The {@link CompositeJsonFormatter} starts the JSON object ('{'),
+ * then delegates writing the contents of the object to the {@link JsonProvider}s,
+ * and then ends the JSON object ('}').
+ *
+ * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
+ */
 public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAware>
         extends ContextAwareBase implements LifeCycle {
 
@@ -68,6 +80,9 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
      */
     private JsonGeneratorDecorator jsonGeneratorDecorator = new NullJsonGeneratorDecorator();
     
+    /**
+     * The providers that are used to populate the output JSON object.
+     */
     private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
     
     private volatile boolean started;

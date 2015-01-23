@@ -15,16 +15,37 @@ package net.logstash.logback.composite;
 
 import java.io.IOException;
 
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Contributes to the JSON output being written for the given Event.
+ * 
+ * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
+ */
 public interface JsonProvider<Event extends DeferredProcessingAware> extends LifeCycle, ContextAware {
     
+    /**
+     * Writes information about the event, 
+     * to the given generator.
+     * 
+     * When called, the generator is assumed to be within a JSON object context
+     * (i.e. this provider should write fields and their values to the generator).
+     * 
+     * Upon return, the generator should be within the same JSON object context.
+     */
     void writeTo(JsonGenerator generator, Event event) throws IOException;
     
+    /**
+     * Gives the provider a chance to perform more deferred processing
+     * (in addition to what is already provided by
+     * {@link DeferredProcessingAware#prepareForDeferredProcessing()}). 
+     */
     void prepareForDeferredProcessing(Event event);
     
 }

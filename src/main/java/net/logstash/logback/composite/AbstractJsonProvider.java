@@ -13,10 +13,17 @@
  */
 package net.logstash.logback.composite;
 
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 
+/**
+ * Base {@link JsonProvider} that provides default implementations for standard methods.
+ *
+ * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
+ */
 public abstract class AbstractJsonProvider<Event extends DeferredProcessingAware> extends ContextAwareBase implements JsonProvider<Event> {
 
     private volatile boolean started;

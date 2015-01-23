@@ -17,10 +17,22 @@ import java.io.IOException;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Writes properties from the {@link Context} into the JSON event.
+ * 
+ * If the fieldName is set, then the properties will be written 
+ * to that field as a subobject.
+ * Otherwise, the properties are written inline. 
+ *
+ * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
+ */
 public class ContextJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<LogstashCommonFieldNames> {
 
     @Override

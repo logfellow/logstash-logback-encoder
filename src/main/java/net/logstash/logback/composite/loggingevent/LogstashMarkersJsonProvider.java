@@ -17,7 +17,9 @@ import java.io.IOException;
 import java.util.Iterator;
 
 import net.logstash.logback.composite.AbstractJsonProvider;
+import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.marker.LogstashMarker;
+import net.logstash.logback.marker.Markers;
 
 import org.slf4j.Marker;
 
@@ -25,6 +27,10 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * A {@link JsonProvider} that processes {@link LogstashMarker}s
+ * (generally created via {@link Markers}).
+ */
 public class LogstashMarkersJsonProvider extends AbstractJsonProvider<ILoggingEvent> {
 
     @Override

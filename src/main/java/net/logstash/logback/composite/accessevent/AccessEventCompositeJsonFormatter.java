@@ -19,6 +19,9 @@ import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
 
+/**
+ * A {@link CompositeJsonFormatter} for {@link IAccessEvent}s.
+ */
 public class AccessEventCompositeJsonFormatter extends CompositeJsonFormatter<IAccessEvent> {
     
     public AccessEventCompositeJsonFormatter(ContextAware declaredOrigin) {
@@ -26,6 +29,10 @@ public class AccessEventCompositeJsonFormatter extends CompositeJsonFormatter<IA
         setProviders(new AccessEventJsonProviders());
     }
     
+    /*
+     * Overridden to set the DefaultClass so that the classname is not
+     * needed in xml configuration.
+     */
     @Override
     @DefaultClass(AccessEventJsonProviders.class)
     public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {

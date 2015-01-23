@@ -48,18 +48,23 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *     with key names in {@link #excludeMdcKeyNames} will be included.</li>
  * </ol>
  * 
- *  It is a configuration error for both {@link #includeMdcKeyNames}
- *  and {@link #excludeMdcKeyNames} to be not empty.
+ * It is a configuration error for both {@link #includeMdcKeyNames}
+ * and {@link #excludeMdcKeyNames} to be not empty.
+ * <p>
+ *   
+ * If the fieldName is set, then the properties will be written 
+ * to that field as a subobject.
+ * Otherwise, the properties are written inline. 
  */
 public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
     /**
-     * See {@link #includeMdc}.
+     * See {@link MdcJsonProvider}.
      */
     private List<String> includeMdcKeyNames = new ArrayList<String>();
     
     /**
-     * See {@link #includeMdc}.
+     * See {@link MdcJsonProvider}.
      */
     private List<String> excludeMdcKeyNames = new ArrayList<String>();
     

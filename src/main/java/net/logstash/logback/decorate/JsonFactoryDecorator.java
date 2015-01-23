@@ -13,15 +13,13 @@
  */
 package net.logstash.logback.decorate;
 
-import net.logstash.logback.LogstashAccessFormatter;
-import net.logstash.logback.LogstashFormatter;
+import net.logstash.logback.composite.CompositeJsonFormatter;
 
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
- * Decorates the {@link MappingJsonFactory} used by the
- * {@link LogstashFormatter}
- * or {@link LogstashAccessFormatter}.
+ * Decorates the {@link MappingJsonFactory} used by a
+ * {@link CompositeJsonFormatter}.
  * <p>
  * This allows you to customize the factory used by the formatters.
  * <p>

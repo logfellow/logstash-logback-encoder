@@ -19,6 +19,7 @@ import java.util.Iterator;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+import net.logstash.logback.marker.LogstashMarker;
 
 import org.slf4j.Marker;
 
@@ -26,6 +27,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Writes {@link Marker} names as an array to the 'tags' field.
+ * 
+ * Does not write any special {@link LogstashMarker}s
+ * (Those are handled by {@link LogstashMarkersJsonProvider}).
+ */
 public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
     public static final String FIELD_TAGS = "tags";

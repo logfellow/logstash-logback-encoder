@@ -721,7 +721,9 @@ This example...
     <timestamp/>
     <version/>
     <pattern>
+      <pattern>
         { "level": "%level" }
+      </pattern>
     </pattern>
   </providers>
 </encoder>
@@ -786,6 +788,7 @@ For example:
   <providers>
     <timestamp/>
     <pattern>
+      <pattern>
         {
         "custom_constant": "123",
         "tags": ["one", "two"],
@@ -795,6 +798,7 @@ For example:
         "message": "%message",
 ...
         }
+      </pattern>
     </pattern>
   </providers>
 </encoder>
@@ -811,6 +815,7 @@ For example:
 <encoder class="net.logstash.logback.encoder.AccessEventCompositeJsonEncoder">
   <providers>
     <pattern>
+      <pattern>
         {
         "custom_constant": "123",
         "tags": ["one", "two"],
@@ -823,6 +828,7 @@ For example:
         "session": "%requestCookie{JSESSIONID}",
 ...
         }
+      </pattern>
     </pattern>
   </providers>
 </encoder>
