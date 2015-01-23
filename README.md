@@ -29,7 +29,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Customizing JSON Factory and Generator](#custom_factory)
 * [Customizing Logger Name Length](#custom_logger_name)
 * [Customizing Stack Traces](#custom_stacktrace)
-* [Composite Encoder/Layout](#composite)
+* [Composite Encoder/Layout](#composite_encoder)
   * [Providers for LoggingEvents](#providers_loggingevents)
   * [Providers for AccessEvents](#providers_accessevents)
   * [Pattern JSON Provider](#provider_pattern)
@@ -86,7 +86,7 @@ The Logstash encoders/layouts are really just extensions of the general
 composite JSON encoders/layouts with a pre-defined set of providers.
 
 The logstash encoders/layouts are easier to configure if you want to use the standard output format.
-Use the [composite encoders/layouts](#composite) if you want to heavily customize the output.
+Use the [composite encoders/layouts](#composite_encoder) if you want to heavily customize the output.
 
 
 
@@ -240,7 +240,7 @@ The following sections describe the fields included in the JSON output by defaul
 * `LogstashLayout`, and
 * the logstash appenders
 
-If you are using the [composite encoders/layouts](#composite), then the fields written will
+If you are using the [composite encoders/layouts](#composite_encoder), then the fields written will
 vary by the providers you configure.
 
 <a name="loggingevent_standard"/>
@@ -422,7 +422,7 @@ The following sections describe the fields included in the JSON output by defaul
 * `LogstashAccessLayout`, and
 * the logstash access appenders.
 
-If you are using the [composite encoders/layouts](#composite), then the fields written will
+If you are using the [composite encoders/layouts](#composite_encoder), then the fields written will
 vary by the providers you configure.
 
 
@@ -588,7 +588,7 @@ For example:
 [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
 can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
 
-<a name="composite"/>
+<a name="composite_encoder"/>
 ## Composite Encoder/Layout
 
 If you want greater flexibility in the JSON format and data included in LoggingEvents and AccessEvents, use the [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java)  and  [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)  (or the corresponding layouts).
