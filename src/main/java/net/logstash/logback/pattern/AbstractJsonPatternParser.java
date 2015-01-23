@@ -241,18 +241,31 @@ public abstract class AbstractJsonPatternParser<Event> {
 
     protected static class ObjectWriter<Event> implements NodeWriter<Event> {
 
-        private final List<FieldWriter<Event>> items;
-
-        public ObjectWriter(final List<FieldWriter<Event>> items) {
-            this.items = items;
+        private final ChildrenWriter<Event> childrenWriter;
+        
+        public ObjectWriter(ChildrenWriter<Event> childrenWriter) {
+            this.childrenWriter = childrenWriter;
         }
 
         public void write(JsonGenerator generator, Event event) throws IOException {
             generator.writeStartObject();
+            this.childrenWriter.write(generator, event);
+            generator.writeEndObject();
+        }
+    }
+
+    protected static class ChildrenWriter<Event> implements NodeWriter<Event> {
+
+        private final List<FieldWriter<Event>> items;
+
+        public ChildrenWriter(final List<FieldWriter<Event>> items) {
+            this.items = items;
+        }
+
+        public void write(JsonGenerator generator, Event event) throws IOException {
             for (FieldWriter<Event> item : items) {
                 item.write(generator, event);
             }
-            generator.writeEndObject();
         }
     }
 
@@ -320,6 +333,10 @@ public abstract class AbstractJsonPatternParser<Event> {
 
     private ObjectWriter<Event> parseObject(JsonNode node) {
 
+        return new ObjectWriter<Event>(parseChildren(node));
+    }
+
+    private ChildrenWriter<Event> parseChildren(JsonNode node) {
         List<FieldWriter<Event>> children = new ArrayList<FieldWriter<Event>>();
         for (Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields(); nodeFields.hasNext(); ) {
             Map.Entry<String, JsonNode> field = nodeFields.next();
@@ -334,8 +351,7 @@ public abstract class AbstractJsonPatternParser<Event> {
                 children.add(new DelegatingObjectFieldWriter<Event>(key, parseValue(value)));
             }
         }
-
-        return new ObjectWriter<Event>(children);
+        return new ChildrenWriter<Event>(children);
     }
 
     public NodeWriter<Event> parse(String pattern) {
@@ -363,6 +379,6 @@ public abstract class AbstractJsonPatternParser<Event> {
             return null;
         }
 
-        return parseObject(node);
+        return parseChildren(node);
     }
 }

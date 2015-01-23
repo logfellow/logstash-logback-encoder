@@ -57,7 +57,7 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
                 + "    \"level\": \"PUT\"\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
     @Test
@@ -75,6 +75,6 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
                 + "    \"cookie2\": null\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 }

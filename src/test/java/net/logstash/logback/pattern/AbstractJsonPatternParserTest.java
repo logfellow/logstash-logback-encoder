@@ -76,18 +76,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
         return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() { });
     }
 
-    protected void verifyWithoutDefaultFields(String patternJson, String expectedJson) throws IOException {
-
-        Map<String, Object> actualResult = parseJson(process(patternJson));
-        Map<String, Object> expectedResult = parseJson(expectedJson);
-
-        actualResult.remove("@timestamp");
-        actualResult.remove("@version");
-
-        assertThat(actualResult, equalTo(expectedResult));
-    }
-
-    protected void verifyAllFields(String patternJson, String expectedJson) throws IOException {
+    protected void verifyFields(String patternJson, String expectedJson) throws IOException {
 
         Map<String, Object> actualResult = parseJson(process(patternJson));
         Map<String, Object> expectedResult = parseJson(expectedJson);
@@ -95,10 +84,13 @@ public abstract class AbstractJsonPatternParserTest<Event> {
         assertThat(actualResult, equalTo(expectedResult));
     }
 
-    private String process(final String patternJson) throws IOException {NodeWriter<Event> root = parser.parse(patternJson);
+    private String process(final String patternJson) throws IOException {
+        NodeWriter<Event> root = parser.parse(patternJson);
         assertThat(root, notNullValue());
-
+        
+        jsonGenerator.writeStartObject();
         root.write(jsonGenerator, event);
+        jsonGenerator.writeEndObject();
         jsonGenerator.flush();
 
         return buffer.toString();
@@ -125,7 +117,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"bool\": false\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
     @Test
@@ -151,7 +143,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    ]\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
     @Test
@@ -177,7 +169,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    }\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
     @Test
@@ -193,7 +185,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key\": 555\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
     @Test
@@ -209,7 +201,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key\": 0.5\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
     @Test
@@ -229,7 +221,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key3\": null\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
     @Test
@@ -249,24 +241,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key3\": \"#something\"\n"
                 + "}";
 
-        verifyWithoutDefaultFields(pattern, expected);
+        verifyFields(pattern, expected);
     }
 
-    @Test
-    public void shouldAllowOverridingDefaultFields() throws IOException {
-
-        String pattern = ""
-                + "{\n"
-                + "    \"@timestamp\": \"end of times\",\n"
-                + "    \"@version\": 0\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "    \"@timestamp\": \"end of times\",\n"
-                + "    \"@version\": 0\n"
-                + "}";
-
-        verifyAllFields(pattern, expected);
-    }
 }
