@@ -13,7 +13,11 @@
  */
 package net.logstash.logback;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.Map;
 
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
@@ -34,32 +38,50 @@ import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
+import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.read.ListAppender;
 
 public class ConfigurationTest {
     
-    private static Logger LOGGER = (Logger) LoggerFactory.getLogger(ConfigurationTest.class);
+    private static final Logger LOGGER = (Logger) LoggerFactory.getLogger(ConfigurationTest.class);
+    
+    private final ListAppender<ILoggingEvent> listAppender = (ListAppender<ILoggingEvent>) LOGGER.getAppender("listAppender");
+    
+    private final JsonFactory jsonFactory = new MappingJsonFactory();
+
+    @Before
+    public void setup() {
+        listAppender.list.clear();
+    }
     
     @Test
-    public void testLogstashEncoderAppender() {
+    public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
         Assert.assertEquals(17, providers.size());
         
         verifyCommonProviders(providers);
+        
+        verifyOutput(encoder);
     }
 
     @Test
-    public void testLoggingEventCompositeJsonEncoderAppender() {
+    public void testLoggingEventCompositeJsonEncoderAppender() throws UnsupportedEncodingException, IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
         Assert.assertEquals(18, providers.size());
@@ -67,6 +89,8 @@ public class ConfigurationTest {
         verifyCommonProviders(providers);
         
         Assert.assertNotNull(getInstance(providers, TestJsonProvider.class));
+        
+        verifyOutput(encoder);
     }
 
     private void verifyCommonProviders(List<JsonProvider<ILoggingEvent>> providers) {
@@ -126,13 +150,13 @@ public class ConfigurationTest {
         
         GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsJsonProvider = getInstance(providers, GlobalCustomFieldsJsonProvider.class);
         Assert.assertNotNull(globalCustomFieldsJsonProvider);
-        Assert.assertEquals("{\"name\":\"value\"}", globalCustomFieldsJsonProvider.getCustomFields());
+        Assert.assertEquals("{\"customName\":\"customValue\"}", globalCustomFieldsJsonProvider.getCustomFields());
         
         Assert.assertNotNull(getInstance(providers, TagsJsonProvider.class));
         Assert.assertNotNull(getInstance(providers, LogstashMarkersJsonProvider.class));
         
         LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
-        Assert.assertEquals("{\"name1\":\"value\",\"relativeTime\":\"#asLong(%relative)\"}", patternProvider.getPattern());
+        Assert.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
         Assert.assertNotNull(patternProvider);
     }
     
@@ -145,10 +169,35 @@ public class ConfigurationTest {
         return null;
     }
 
+    private void verifyOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException, UnsupportedEncodingException {
+        LOGGER.info(Markers.append("markerFieldName", "markerFieldValue"), "message", new Throwable());
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        encoder.init(outputStream);
+        encoder.doEncode(listAppender.list.get(0));
+        
+        Map<String, Object> output = parseJson(outputStream.toString("UTF-8"));
+        Assert.assertNotNull(output.get("@timestamp"));
+        Assert.assertEquals(1, output.get("@version"));
+        Assert.assertEquals("message", output.get("customMessage"));
+        Assert.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
+        Assert.assertNotNull(output.get("thread_name"));
+        Assert.assertEquals("INFO", output.get("level"));
+        Assert.assertEquals(20000, output.get("level_value"));
+        Assert.assertNotNull(output.get("caller"));
+        Assert.assertTrue(((String) output.get("stack_trace")).contains("n.l.logback.ConfigurationTest.verifyOutput"));
+        Assert.assertEquals("customValue", output.get("customName"));
+        Assert.assertEquals("patternValue", output.get("patternName"));
+        Assert.assertEquals("markerFieldValue", output.get("markerFieldName"));
+        Assert.assertTrue(output.get("relativeTime") instanceof Number);
+    }
+
     @SuppressWarnings("unchecked")
     private <T extends Encoder<ILoggingEvent>> T getEncoder(String appenderName) {
         OutputStreamAppender<ILoggingEvent> appender = (OutputStreamAppender<ILoggingEvent>) LOGGER.getAppender(appenderName);
         return (T) appender.getEncoder();
     }
 
+    private Map<String, Object> parseJson(final String text) throws IOException {
+        return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() { });
+    }
 }

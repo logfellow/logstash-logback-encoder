@@ -46,9 +46,9 @@
                 <exclude>excluded</exclude>
             </throwableConverter>
             <includeMdcKeyName>included</includeMdcKeyName>
-            <customFields>{"name":"value"}</customFields>
+            <customFields>{"customName":"customValue"}</customFields>
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
-                <pattern>{"name1":"value","relativeTime":"#asLong(%relative)"}</pattern>
+                <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
             </provider>
         </encoder>
     </appender>
@@ -89,22 +89,24 @@
                 </mdc>
                 <contextMap/>
                 <globalCustomFields>
-                    <customFields>{"name":"value"}</customFields>
+                    <customFields>{"customName":"customValue"}</customFields>
                 </globalCustomFields>
                 <tags/>
                 <logstashMarkers/>
                 <pattern>
-                    <pattern>{"name1":"value","relativeTime":"#asLong(%relative)"}</pattern>
+                    <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
                 </pattern>
                 <provider class="net.logstash.logback.TestJsonProvider"/>
             </providers>
         </encoder>
     </appender>
+    <appender name="listAppender" class="ch.qos.logback.core.read.ListAppender"/>
     <logger name="net.logstash.logback.encoder.LogstashEncoderTest" level="DEBUG">
         <appender-ref ref="stash" />
     </logger>
     <logger name="net.logstash.logback.ConfigurationTest" level="DEBUG">
         <appender-ref ref="loggingEventCompositeJsonEncoderAppender" />
         <appender-ref ref="logstashEncoderAppender" />
+        <appender-ref ref="listAppender" />
     </logger>
 </configuration>

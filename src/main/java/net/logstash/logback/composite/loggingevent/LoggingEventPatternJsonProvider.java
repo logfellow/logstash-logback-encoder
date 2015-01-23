@@ -23,10 +23,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  */
 public class LoggingEventPatternJsonProvider extends AbstractPatternJsonProvider<ILoggingEvent> {
     
-    public LoggingEventPatternJsonProvider() {
-        super();
-    }
-
     @Override
     protected AbstractJsonPatternParser<ILoggingEvent> createParser() {
         return new LoggingEventJsonPatternParser(this, this.jsonFactory);
