@@ -42,10 +42,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * For example:
  * 
  * <pre>
- * {@code
  * {
- *     @timestamp : "2014-07-09T19:05:29.629-07:00",
- *     @version : 1,
  *     name1 : "value1",
  *     name2 : 5,
  *     name3 : [1, 2, 3],

@@ -57,29 +57,27 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     /**
      * The field names to use when writing the access event fields
      */
-    protected LogstashAccessFieldNames fieldNames;
+    protected LogstashAccessFieldNames fieldNames = new LogstashAccessFieldNames();
     
-    private AccessEventFormattedTimestampJsonProvider timestampProvider = new AccessEventFormattedTimestampJsonProvider();
-    private LogstashVersionJsonProvider<IAccessEvent> versionProvider = new LogstashVersionJsonProvider<IAccessEvent>();
-    private AccessMessageJsonProvider messageProvider = new AccessMessageJsonProvider();
-    private MethodJsonProvider methodProvider = new MethodJsonProvider();
-    private ProtocolJsonProvider protocolProvider = new ProtocolJsonProvider();
-    private StatusCodeJsonProvider statusCodeProvider = new StatusCodeJsonProvider();
-    private RequestedUrlJsonProvider requestedUrlProvider = new RequestedUrlJsonProvider();
-    private RequestedUriJsonProvider requestedUriProvider = new RequestedUriJsonProvider();
-    private RemoteHostJsonProvider remoteHostProvider = new RemoteHostJsonProvider();
-    private HostnameJsonProvider hostnameProvider = new HostnameJsonProvider();
-    private RemoteUserJsonProvider remoteUserProvider = new RemoteUserJsonProvider();
-    private ContentLengthJsonProvider contentLengthProvider = new ContentLengthJsonProvider();
-    private ElapsedTimeJsonProvider elapsedTimeProvider = new ElapsedTimeJsonProvider();
-    private RequestHeadersJsonProvider requestHeadersProvider = new RequestHeadersJsonProvider();
-    private ResponseHeadersJsonProvider responseHeadersProvider = new ResponseHeadersJsonProvider();
-    private ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
+    private final AccessEventFormattedTimestampJsonProvider timestampProvider = new AccessEventFormattedTimestampJsonProvider();
+    private final LogstashVersionJsonProvider<IAccessEvent> versionProvider = new LogstashVersionJsonProvider<IAccessEvent>();
+    private final AccessMessageJsonProvider messageProvider = new AccessMessageJsonProvider();
+    private final MethodJsonProvider methodProvider = new MethodJsonProvider();
+    private final ProtocolJsonProvider protocolProvider = new ProtocolJsonProvider();
+    private final StatusCodeJsonProvider statusCodeProvider = new StatusCodeJsonProvider();
+    private final RequestedUrlJsonProvider requestedUrlProvider = new RequestedUrlJsonProvider();
+    private final RequestedUriJsonProvider requestedUriProvider = new RequestedUriJsonProvider();
+    private final RemoteHostJsonProvider remoteHostProvider = new RemoteHostJsonProvider();
+    private final HostnameJsonProvider hostnameProvider = new HostnameJsonProvider();
+    private final RemoteUserJsonProvider remoteUserProvider = new RemoteUserJsonProvider();
+    private final ContentLengthJsonProvider contentLengthProvider = new ContentLengthJsonProvider();
+    private final ElapsedTimeJsonProvider elapsedTimeProvider = new ElapsedTimeJsonProvider();
+    private final RequestHeadersJsonProvider requestHeadersProvider = new RequestHeadersJsonProvider();
+    private final ResponseHeadersJsonProvider responseHeadersProvider = new ResponseHeadersJsonProvider();
+    private final ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
     
     public LogstashAccessFormatter(ContextAware declaredOrigin) {
         super(declaredOrigin);
-        
-        this.fieldNames = new LogstashAccessFieldNames();
         
         getProviders().addTimestamp(this.timestampProvider);
         getProviders().addVersion(this.versionProvider);

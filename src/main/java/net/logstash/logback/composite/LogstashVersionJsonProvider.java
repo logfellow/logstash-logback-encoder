@@ -35,7 +35,7 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
     
     public static final String FIELD_VERSION = "@version";
     
-    public static int DEFAULT_VERSION = 1;
+    public static final int DEFAULT_VERSION = 1;
     
     private int version = DEFAULT_VERSION;
     

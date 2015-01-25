@@ -73,27 +73,27 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
      */
     protected LogstashFieldNames fieldNames;
     
-    private LoggingEventFormattedTimestampJsonProvider timestampProvider = new LoggingEventFormattedTimestampJsonProvider();
-    private LogstashVersionJsonProvider<ILoggingEvent> versionProvider = new LogstashVersionJsonProvider<ILoggingEvent>();
-    private MessageJsonProvider messageProvider = new MessageJsonProvider();
-    private LoggerNameJsonProvider loggerNameProvider = new LoggerNameJsonProvider();
-    private ThreadNameJsonProvider threadNameProvider = new ThreadNameJsonProvider();
-    private LogLevelJsonProvider logLevelProvider = new LogLevelJsonProvider();
-    private LogLevelValueJsonProvider logLevelValueProvider = new LogLevelValueJsonProvider();
+    private final LoggingEventFormattedTimestampJsonProvider timestampProvider = new LoggingEventFormattedTimestampJsonProvider();
+    private final LogstashVersionJsonProvider<ILoggingEvent> versionProvider = new LogstashVersionJsonProvider<ILoggingEvent>();
+    private final MessageJsonProvider messageProvider = new MessageJsonProvider();
+    private final LoggerNameJsonProvider loggerNameProvider = new LoggerNameJsonProvider();
+    private final ThreadNameJsonProvider threadNameProvider = new ThreadNameJsonProvider();
+    private final LogLevelJsonProvider logLevelProvider = new LogLevelJsonProvider();
+    private final LogLevelValueJsonProvider logLevelValueProvider = new LogLevelValueJsonProvider();
     
     /**
      * When not null, the caller information is included in the logged data.
      * Note: calculating the caller data is an expensive operation.
      */
     private CallerDataJsonProvider callerDataProvider;
-    private StackTraceJsonProvider stackTraceProvider = new StackTraceJsonProvider();
+    private final StackTraceJsonProvider stackTraceProvider = new StackTraceJsonProvider();
     private ContextJsonProvider<ILoggingEvent> contextProvider = new ContextJsonProvider<ILoggingEvent>();
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendArray(String, Object...)} marker
      *             with fieldName = "json_message" and objects = an array of arguments instead.
      */
     @Deprecated
-    private JsonMessageJsonProvider jsonMessageProvider = new JsonMessageJsonProvider();
+    private final JsonMessageJsonProvider jsonMessageProvider = new JsonMessageJsonProvider();
     /**
      * When not null, {@link MDC} properties will be included according
      * to the logic in {@link MdcJsonProvider}.
@@ -107,8 +107,8 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     @Deprecated
     private ContextMapJsonProvider contextMapProvider;
     private GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsProvider;
-    private TagsJsonProvider tagsProvider = new TagsJsonProvider();
-    private LogstashMarkersJsonProvider logstashMarkersProvider = new LogstashMarkersJsonProvider();
+    private final TagsJsonProvider tagsProvider = new TagsJsonProvider();
+    private final LogstashMarkersJsonProvider logstashMarkersProvider = new LogstashMarkersJsonProvider();
     
     public LogstashFormatter(ContextAware declaredOrigin) {
         this(declaredOrigin, false);
