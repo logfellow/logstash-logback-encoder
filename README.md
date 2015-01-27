@@ -1,3 +1,8 @@
+>:warning: This document applies to the next version under development.
+>
+>&nbsp; &nbsp; &nbsp; See [here for documentation on the latest released version](tree/logstash-logback-encoder-3.6). 
+
+
 # Logback JSON encoder
 
 Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON format.
@@ -46,7 +51,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>3.6</version>
+  <version>4.0-SNAPSHOT</version>
 </dependency>
 ```
 
