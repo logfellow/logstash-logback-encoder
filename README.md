@@ -1,6 +1,6 @@
->:warning: This document applies to the next version under development.
+> :warning: This document applies to the next version under development.
 >
->&nbsp; &nbsp; &nbsp; See [here for documentation on the latest released version](tree/logstash-logback-encoder-3.6). 
+> &nbsp; &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-3.6). 
 
 
 # Logback JSON encoder
