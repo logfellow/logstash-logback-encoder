@@ -59,6 +59,7 @@ public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> i
         }
     }
     
+    @SuppressWarnings("deprecation")
     private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) throws IOException {
         if (!marker.getName().equals(JsonMessageJsonProvider.JSON_MARKER_NAME)
                 && !LogstashMarkersJsonProvider.isLogstashMarker(marker)) {
