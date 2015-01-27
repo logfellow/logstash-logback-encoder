@@ -13,96 +13,37 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.write;
-
-import java.io.IOException;
-
 import net.logstash.logback.LogstashAccessFormatter;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.CoreConstants;
-import ch.qos.logback.core.encoder.EncoderBase;
 
-public class LogstashAccessEncoder extends EncoderBase<IAccessEvent> {
-    
-    private boolean immediateFlush = true;
-    
-    /**
-     * If true, the caller information is included in the logged data.
-     * Note: calculating the caller data is an expensive operation.
-     */
-    private final LogstashAccessFormatter formatter = new LogstashAccessFormatter(this);
+public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     
     @Override
-    public void doEncode(IAccessEvent event) throws IOException {
-        
-        write(formatter.writeValueAsBytes(event, getContext()), outputStream);
-        write(CoreConstants.LINE_SEPARATOR, outputStream);
-        
-        if (immediateFlush) {
-            outputStream.flush();
-        }
-        
+    protected CompositeJsonFormatter<IAccessEvent> createFormatter() {
+        return new LogstashAccessFormatter(this);
     }
     
     @Override
-    public void start() {
-        super.start();
-        formatter.start();
-    }
-    
-    @Override
-    public void stop() {
-        super.stop();
-        formatter.stop();
-    }
-    
-    @Override
-    public void close() throws IOException {
-        write(LINE_SEPARATOR, outputStream);
-    }
-    
-    public boolean isImmediateFlush() {
-        return immediateFlush;
-    }
-    
-    public void setImmediateFlush(boolean immediateFlush) {
-        this.immediateFlush = immediateFlush;
+    protected LogstashAccessFormatter getFormatter() {
+        return (LogstashAccessFormatter) super.getFormatter();
     }
     
     public LogstashAccessFieldNames getFieldNames() {
-        return formatter.getFieldNames();
+        return getFormatter().getFieldNames();
     }
     
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        formatter.setFieldNames(fieldNames);
-    }
-
-    public JsonFactoryDecorator getJsonFactoryDecorator() {
-        return formatter.getJsonFactoryDecorator();
-    }
-
-    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
-        formatter.setJsonFactoryDecorator(jsonFactoryDecorator);
-    }
-
-    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
-        return formatter.getJsonGeneratorDecorator();
-    }
-
-    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
-        formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
+        getFormatter().setFieldNames(fieldNames);
     }
 
     public String getTimeZone() {
-        return formatter.getTimeZone();
+        return getFormatter().getTimeZone();
     }
 
     public void setTimeZone(String timeZoneId) {
-        formatter.setTimeZone(timeZoneId);
+        getFormatter().setTimeZone(timeZoneId);
     }
 
 }

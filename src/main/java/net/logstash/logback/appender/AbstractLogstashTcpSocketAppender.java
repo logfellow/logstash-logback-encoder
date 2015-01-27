@@ -190,6 +190,7 @@ public abstract class AbstractLogstashTcpSocketAppender<E> extends AppenderBase<
         }
 
         if (errorCount == 0) {
+            encoder.setContext(getContext());
             encoder.start();
             queue = new LinkedBlockingQueue<E>(queueSize);
             peerId = "remote peer " + remoteHost + ":" + port + ": ";

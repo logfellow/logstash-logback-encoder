@@ -13,10 +13,13 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.*;
-import static org.hamcrest.MatcherAssert.*;
-import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.*;
+import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
+import static org.apache.commons.io.IOUtils.closeQuietly;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
@@ -44,7 +47,6 @@ public class LogstashAccessEncoderTest {
         outputStream = new ByteArrayOutputStream();
         encoder = new LogstashAccessEncoder();
         encoder.init(outputStream);
-        encoder.start();
     }
     
     @Test
@@ -56,6 +58,7 @@ public class LogstashAccessEncoderTest {
         
         encoder.getFieldNames().setTimestamp("timestamp");
         
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -88,6 +91,7 @@ public class LogstashAccessEncoderTest {
     public void closePutsSeparatorAtTheEnd() throws Exception {
         IAccessEvent event = mockBasicILoggingEvent();
         
+        encoder.start();
         encoder.doEncode(event);
         encoder.close();
         closeQuietly(outputStream);
@@ -107,6 +111,7 @@ public class LogstashAccessEncoderTest {
         IAccessEvent event = mockBasicILoggingEvent();
         
         encoder.setContext(context);
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         
@@ -122,7 +127,7 @@ public class LogstashAccessEncoderTest {
         
         encoder.getFieldNames().setFieldsRequestHeaders("@fields.request_headers");
         encoder.getFieldNames().setFieldsResponseHeaders("@fields.response_headers");
-        
+        encoder.start();
         encoder.doEncode(event);
         closeQuietly(outputStream);
         

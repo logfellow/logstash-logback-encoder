@@ -29,7 +29,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
     /**
      * Name of the field to append.
      * 
-     * Note that the value of the field is provided by subclasses via {@link #writeFieldValue(JsonGenerator, ObjectMapper)}.
+     * Note that the value of the field is provided by subclasses via {@link #writeFieldValue(JsonGenerator)}.
      */
     private final String fieldName;
     

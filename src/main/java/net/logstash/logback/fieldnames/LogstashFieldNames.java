@@ -13,34 +13,30 @@
  */
 package net.logstash.logback.fieldnames;
 
+import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
+import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
+import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
+
 /**
  * Names of standard fields that appear in the JSON output.
  */
 public class LogstashFieldNames extends LogstashCommonFieldNames {
     
-    public static final String FIELD_LOGGER_NAME = "logger_name";
-    public static final String FIELD_THREAD_NAME = "thread_name";
-    public static final String FIELD_LEVEL = "level";
-    public static final String FIELD_LEVEL_VALUE = "level_value";
-    public static final String FIELD_CALLER_CLASS_NAME = "caller_class_name";
-    public static final String FIELD_CALLER_METHOD_NAME = "caller_method_name";
-    public static final String FIELD_CALLER_FILE_NAME = "caller_file_name";
-    public static final String FIELD_CALLER_LINE_NUMBER = "caller_line_number";
-    public static final String FIELD_STACK_TRACE = "stack_trace";
-    public static final String FIELD_TAGS = "tags";
-
-
-    private String logger = FIELD_LOGGER_NAME;
-    private String thread = FIELD_THREAD_NAME;
-    private String level = FIELD_LEVEL;
-    private String levelValue = FIELD_LEVEL_VALUE;
+    private String logger = LoggerNameJsonProvider.FIELD_LOGGER_NAME;
+    private String thread = ThreadNameJsonProvider.FIELD_THREAD_NAME;
+    private String level = LogLevelJsonProvider.FIELD_LEVEL;
+    private String levelValue = LogLevelValueJsonProvider.FIELD_LEVEL_VALUE;
     private String caller;
-    private String callerClass = FIELD_CALLER_CLASS_NAME;
-    private String callerMethod = FIELD_CALLER_METHOD_NAME;
-    private String callerFile = FIELD_CALLER_FILE_NAME;
-    private String callerLine = FIELD_CALLER_LINE_NUMBER;
-    private String stackTrace = FIELD_STACK_TRACE;
-    private String tags = FIELD_TAGS;
+    private String callerClass = CallerDataJsonProvider.FIELD_CALLER_CLASS_NAME;
+    private String callerMethod = CallerDataJsonProvider.FIELD_CALLER_METHOD_NAME;
+    private String callerFile = CallerDataJsonProvider.FIELD_CALLER_FILE_NAME;
+    private String callerLine = CallerDataJsonProvider.FIELD_CALLER_LINE_NUMBER;
+    private String stackTrace = StackTraceJsonProvider.FIELD_STACK_TRACE;
+    private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
     private String context;
     
