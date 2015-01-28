@@ -17,18 +17,19 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
 /**
- * This class extends {@link net.logstash.logback.appender.LogstashTcpSocketAppender} and overwrites the
- * {@link LogstashTcpSocketAppender#getSocketFactory()} method to return a {@link javax.net.ssl.SSLSocketFactory}
- * instead of a {@link javax.net.SocketFactory} so that the data will be sent SSL-encrypted.
+ * This class extends {@link net.logstash.logback.appender.LogstashTcpSocketAppender} 
+ * to set the {@link SocketFactory} to the {@link javax.net.ssl.SSLSocketFactory#getDefault()},
+ * instead of the {@link javax.net.SocketFactory#getDefault()}.
  *
  * @author <a href="mailto:behar@veliqi.de">Behar Veliqi</a>
  * @since 23 Oct 2014 (creation date)
  */
 public class SSLLogstashTcpSocketAppender extends LogstashTcpSocketAppender {
+    
 
-    @Override
-    protected SocketFactory getSocketFactory() {
-        return SSLSocketFactory.getDefault();
+    public SSLLogstashTcpSocketAppender() {
+        super();
+        setSocketFactory(SSLSocketFactory.getDefault());
     }
 
 }

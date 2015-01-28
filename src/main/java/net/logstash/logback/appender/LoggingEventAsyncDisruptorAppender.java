@@ -18,9 +18,9 @@ import com.lmax.disruptor.RingBuffer;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 /**
- * A {@link AbstractLogstashTcpSocketAppender} for logging {@link ILoggingEvent}s.
+ * A {@link DelegatingAsyncDisruptorAppender} for {@link ILoggingEvent}s.
  */
-public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender<ILoggingEvent> {
+public class LoggingEventAsyncDisruptorAppender extends DelegatingAsyncDisruptorAppender<ILoggingEvent> {
 
     /**
      * Set to true if the caller data should be captured before publishing the event
@@ -28,8 +28,7 @@ public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender
      */
     private boolean includeCallerData;
 
-    @Override
-    protected void prepareForDeferredProcessing(final ILoggingEvent event) {
+    protected void prepareForDeferredProcessing(ILoggingEvent event) {
         super.prepareForDeferredProcessing(event);
         if (includeCallerData) {
             event.getCallerData();

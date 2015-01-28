@@ -16,42 +16,43 @@ package net.logstash.logback.appender;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.ConnectException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 
 import javax.net.SocketFactory;
 
-import ch.qos.logback.core.AppenderBase;
-import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.net.DefaultSocketConnector;
-import ch.qos.logback.core.net.SocketConnector;
+import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.status.ErrorStatus;
 import ch.qos.logback.core.util.CloseUtil;
 import ch.qos.logback.core.util.Duration;
 
+import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.LifecycleAware;
+import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.dsl.Disruptor;
+
 /**
- * This class is a modification of {@link ch.qos.logback.classic.net.SocketAppender}. The queue type and
- * the dispatch method is different than the original version. <br/>
- * The connection thread is going to be closed only if an event with the marker {@link ch.qos.logback.classic.ClassicConstants.FINALIZE_SESSION_MARKER} is sent. <br/>
- * <br/>
- * For example:<br/>
- * <code>logger.info(ClassicConstants.FINALIZE_SESSION_MARKER, "About to end the job");</code>
+ * An {@link AsyncDisruptorAppender} appender that writes
+ * events to a TCP {@link Socket} outputStream.
+ * <p>
+ * 
+ * The behavior is similar to a {@link ch.qos.logback.classic.net.SocketAppender}, except that:
+ * <ul>
+ * <li>it uses a {@link RingBuffer} instead of a {@link BlockingQueue}</li>
+ * <li>it writes using an {@link Encoder} instead of serialization</li>
+ * </ul>
  *
  *
- * @author <a href="mailto:mirko.bernardoni@gmail.com">Mirko Bernardoni</a>
+ * @author <a href="mailto:mirko.bernardoni@gmail.com">Mirko Bernardoni</a> (original, which did not use disruptor)
  * @since 11 Jun 2014 (creation date)
  */
-public abstract class AbstractLogstashTcpSocketAppender<E> extends AppenderBase<E>
-        implements Runnable, SocketConnector.ExceptionHandler {
+public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredProcessingAware>
+        extends AsyncDisruptorAppender<Event> {
 
     /**
      * The default port number of remote logging server (4560).
@@ -69,98 +70,216 @@ public abstract class AbstractLogstashTcpSocketAppender<E> extends AppenderBase<
      * Assuming an average log entry to take 1k, this would result in the application
      * using about 10MB additional memory if the queue is full
      */
-    public static final int DEFAULT_QUEUE_SIZE = 10000;
+    public static final int DEFAULT_QUEUE_SIZE = DEFAULT_RING_BUFFER_SIZE;
 
     /**
      * Default timeout when waiting for the remote server to accept our
      * connection.
      */
-    private static final int DEFAULT_ACCEPT_CONNECTION_DELAY = 5000;
+    public static final int DEFAULT_CONNECTION_TIMEOUT = 5000;
 
+    public static final int DEFAULT_WRITE_BUFFER_SIZE = 8192;
+    
     /**
-     * Default timeout for how long to wait when inserting an event into the
-     * BlockingQueue.
+     * The host to which to connect and send events
      */
-    private static final int DEFAULT_EVENT_DELAY_TIMEOUT = 100;
-
     private String remoteHost;
 
+    /**
+     * The TCP port on the host to which to connect and send events
+     */
     private int port = DEFAULT_PORT;
 
-    private InetAddress address;
+    /**
+     * The resolved remote address.
+     */
+    private InetAddress remoteAddress;
 
-    private Duration reconnectionDelay = new Duration(
-            DEFAULT_RECONNECTION_DELAY);
+    /**
+     * Time period for which to wait after a connection fails,
+     * before attempting to reconnect.
+     * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
+     */
+    private Duration reconnectionDelay = new Duration(DEFAULT_RECONNECTION_DELAY);
 
-    private int acceptConnectionTimeout = DEFAULT_ACCEPT_CONNECTION_DELAY;
-
-    private Duration eventDelayLimit = new Duration(DEFAULT_EVENT_DELAY_TIMEOUT);
-
-    private int queueSize = DEFAULT_QUEUE_SIZE;
-
-    private BlockingQueue<E> queue;
-
+    /**
+     * Socket connection timeout in milliseconds. 
+     */
+    private int acceptConnectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+    
+    /**
+     * Human readable identifier of the client (used for logback status messages) 
+     */
     private String peerId;
 
-    private Future<?> task;
-
-    private Future<Socket> connectorTask;
-
-    private volatile Socket socket;
+    /**
+     * The encoder which is ultimately responsible for writing the event
+     * to the socket's {@link java.io.OutputStream}.
+     */
+    private Encoder<Event> encoder;
+    
+    /**
+     * The number of bytes available in the write buffer.
+     */
+    private int writeBufferSize = DEFAULT_WRITE_BUFFER_SIZE;
+    
+    /**
+     * Used to create client {@link Socket}s to which to communicate.
+     * By default, it is the system default SocketFactory.
+     */
+    private SocketFactory socketFactory = SocketFactory.getDefault();
 
     /**
-     * It is the encoder which is ultimately responsible for writing the event
-     * to an {@link java.io.OutputStream}.
+     * Event handler responsible for performing the TCP transmission.
      */
-    protected Encoder<E> encoder;
+    private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
+        
+        /**
+         * Max number of consecutive failed connection attempts for which
+         * logback status messages will be logged.
+         * 
+         * After this many failed attempts, reconnection will still
+         * be attempted, but failures will not be logged again
+         * (until after the connection is successful, and then fails again.)
+         */
+        private static final int MAX_REPEAT_CONNECTION_ERROR_LOG = 5;
+        
+        /**
+         * Number of times we try to write an event before it is discarded.
+         * Between each attempt, the socket will be reconnected.
+         */
+        private static final int MAX_REPEAT_WRITE_ATTEMPTS = 5;
 
-    /**
-     * @return the encoder
-     */
-    public Encoder<E> getEncoder() {
-        return encoder;
-    }
-
-    /**
-     * @param encoder
-     *            the encoder to set
-     */
-    public void setEncoder(Encoder<E> encoder) {
-        this.encoder = encoder;
-    }
-
-    protected void encoderInit(OutputStream outputStream) {
-        if (encoder != null && outputStream != null) {
-            try {
-                encoder.init(outputStream);
-            } catch (IOException ioe) {
-                this.started = false;
-                addStatus(new ErrorStatus(
-                        "Failed to initialize encoder for appender named ["
-                                + name + "].", this, ioe));
+        /**
+         * True when this event handler is started.
+         * It will be started by the {@link Disruptor}.
+         */
+        private volatile boolean started;
+        
+        private volatile Socket socket;
+        private volatile OutputStream outputStream;
+        
+        @Override
+        public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
+            
+            for (int i = 0; i < MAX_REPEAT_WRITE_ATTEMPTS; i++) {
+                if (!started) {
+                    return;
+                }
+                try {
+                    encoder.doEncode(logEvent.event);
+                    if (endOfBatch) {
+                        outputStream.flush();
+                    }
+                    break;
+                } catch (SocketException e) {
+                    addWarn(peerId + "unable to send event: " + e.getMessage(), e);
+                    reopenSocket();
+                } catch (IOException e) {
+                    addWarn(peerId + "unable to send event: " + e.getMessage(), e);
+                }
             }
         }
-    }
 
-    protected void encoderClose(OutputStream outputStream) {
-        if (encoder != null && outputStream != null) {
+        @Override
+        public void onStart() {
+            /*
+             * Set started = true before attempting to openSocket,
+             * because openSocket checks the started state.
+             */
+            started = true;
+            openSocket();
+        }
+        
+        @Override
+        public void onShutdown() {
+            started = false;
+            closeEncoder();
+            closeSocket();
+        }
+        
+        private synchronized void reopenSocket() {
+            closeSocket();
+            openSocket();
+        }
+
+        /**
+         * Repeatedly tries to open a socket until it is successful,
+         * or the hander is stopped, or the handler thread is interrupted.
+         * 
+         * If the socket is non-null when this method returns,
+         * then it should be able to be used to send.
+         */
+        private synchronized void openSocket() {
+            try {
+                int errorCount = 0;
+                while (socket == null && started && !Thread.currentThread().isInterrupted()) {
+                    long startTime = System.currentTimeMillis();
+                    try {
+                        socket = socketFactory.createSocket();
+                        socket.connect(new InetSocketAddress(remoteAddress, port), acceptConnectionTimeout);
+                        outputStream = new BufferedOutputStream(socket.getOutputStream(), writeBufferSize);
+                        
+                        encoder.init(outputStream);
+                        
+                        addInfo(peerId + "connection established.");
+                        
+                    } catch (IOException e) {
+                        
+                        closeSocket();
+                        /*
+                         * If the connection timed out, then take the elapsed time into account
+                         * when calculating time to sleep
+                         */
+                        long sleepTime = reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime);
+                        
+                        /*
+                         * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
+                         */
+                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG) {
+                            addWarn(peerId + "connection failed. Waiting " + sleepTime + "ms before attempting reconnection.", e);
+                        }
+                        
+                        if (sleepTime > 0) {
+                            Thread.sleep(sleepTime);
+                        }
+                    } 
+                }
+            } catch (InterruptedException e) {
+                addWarn(peerId + "connection interrupted");
+            }
+        }
+        
+        private synchronized void closeSocket() {
+            CloseUtil.closeQuietly(outputStream);
+            outputStream = null;
+            
+            CloseUtil.closeQuietly(socket);
+            socket = null;
+        }
+        
+        private void closeEncoder() {
             try {
                 encoder.close();
             } catch (IOException ioe) {
-                this.started = false;
                 addStatus(new ErrorStatus(
-                        "Failed to write footer for appender named [" + name
-                                + "].", this, ioe));
+                        "Failed to close encoder for appender named [" + name + "].", this, ioe));
             }
+            
+            encoder.stop();
         }
+
     }
 
-    /**
-     * {@inheritDoc}
-     */
+    public AbstractLogstashTcpSocketAppender() {
+        super();
+        setEventHandler(new TcpSendingEventHandler());
+    }
+
     public void start() {
-        if (isStarted())
+        if (isStarted()) {
             return;
+        }
         int errorCount = 0;
         if (encoder == null) {
             errorCount++;
@@ -168,21 +287,17 @@ public abstract class AbstractLogstashTcpSocketAppender<E> extends AppenderBase<
         }
         if (port <= 0) {
             errorCount++;
-            addError("No port was configured for appender "
-                    + name
-                    + ". For more information, please visit http://logback.qos.ch/codes.html#socket_no_port");
+            addError("No port was configured for appender " + name + ".");
         }
 
         if (remoteHost == null) {
             errorCount++;
-            addError("No remote host was configured for appender "
-                    + name
-                    + ". For more information, please visit http://logback.qos.ch/codes.html#socket_no_host");
+            addError("No remote host was configured for appender " + name + ".");
         }
 
         if (errorCount == 0) {
             try {
-                address = InetAddress.getByName(remoteHost);
+                remoteAddress = InetAddress.getByName(remoteHost);
             } catch (UnknownHostException ex) {
                 addError("unknown host: " + remoteHost);
                 errorCount++;
@@ -190,282 +305,101 @@ public abstract class AbstractLogstashTcpSocketAppender<E> extends AppenderBase<
         }
 
         if (errorCount == 0) {
+            
+            if (getThreadNamePrefix() == DEFAULT_THREAD_NAME_PREFIX) {
+                setThreadNamePrefix(DEFAULT_THREAD_NAME_PREFIX + remoteHost + ":" + port + "-");
+            }
             encoder.setContext(getContext());
-            encoder.start();
-            queue = new LinkedBlockingQueue<E>(queueSize);
-            peerId = "remote peer " + remoteHost + ":" + port + ": ";
-            task = getContext().getExecutorService().submit(this);
+            if (!encoder.isStarted()) {
+                encoder.start();
+            }
+            peerId = "Log destination " + remoteHost + ":" + port + ": ";
             super.start();
         }
     }
 
+    public Encoder<Event> getEncoder() {
+        return encoder;
+    }
+
+    public void setEncoder(Encoder<Event> encoder) {
+        this.encoder = encoder;
+    }
+    
+    public SocketFactory getSocketFactory() {
+        return socketFactory;
+    }
+    
     /**
-     * {@inheritDoc}
+     * Used to create client {@link Socket}s to which to communicate.
+     * By default, it is the system default SocketFactory.
      */
-    @Override
-    public void stop() {
-        if (!isStarted())
-            return;
-        CloseUtil.closeQuietly(socket);
-        task.cancel(true);
-        if (connectorTask != null)
-            connectorTask.cancel(true);
-        super.stop();
-    }
-
-    protected abstract void prepareForDeferredProcessing(E event);
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    protected void append(E event) {
-        if (event == null || !isStarted())
-            return;
-
-        try {
-            prepareForDeferredProcessing(event);
-
-            final boolean inserted = queue.offer(event,
-                    eventDelayLimit.getMilliseconds(), TimeUnit.MILLISECONDS);
-            if (!inserted) {
-                addInfo("Dropping event due to timeout limit of ["
-                        + eventDelayLimit + "] being exceeded");
-            }
-        } catch (InterruptedException e) {
-            addError("Interrupted while appending event to SocketAppender", e);
-        }
+    public void setSocketFactory(SocketFactory socketFactory) {
+        this.socketFactory = socketFactory;
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public final void run() {
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
-                SocketConnector connector = createConnector(address, port, 0,
-                        reconnectionDelay.getMilliseconds());
-
-                connectorTask = activateConnector(connector);
-                if (connectorTask == null)
-                    break;
-
-                socket = waitForConnectorToReturnASocket();
-                if (socket == null)
-                    break;
-                dispatchEvents();
-            }
-        } catch (InterruptedException ex) {
-            assert true; // ok... we'll exit now
-        }
-        addInfo("shutting down");
-    }
-
-    private SocketConnector createConnector(InetAddress address, int port,
-            int initialDelay, long retryDelay) {
-        SocketConnector connector = newConnector(address, port, initialDelay,
-                retryDelay);
-        connector.setExceptionHandler(this);
-        connector.setSocketFactory(getSocketFactory());
-        return connector;
-    }
-
-    private Future<Socket> activateConnector(SocketConnector connector) {
-        try {
-            return getContext().getExecutorService().submit(connector);
-        } catch (RejectedExecutionException ex) {
-            return null;
-        }
-    }
-
-    private Socket waitForConnectorToReturnASocket()
-            throws InterruptedException {
-        try {
-            Socket s = connectorTask.get();
-            connectorTask = null;
-            return s;
-        } catch (ExecutionException e) {
-            return null;
-        }
-    }
-
-    /**
-     * Inifinte loop that send the messages from the queue to the remote host
-     *
-     * @throws InterruptedException
-     */
-    private void dispatchEvents() throws InterruptedException {
-        OutputStream outputStream = null;
-        try {
-            socket.setSoTimeout(acceptConnectionTimeout);
-            outputStream = new BufferedOutputStream(socket.getOutputStream());
-            encoderInit(outputStream);
-            socket.setSoTimeout(0);
-            addInfo(peerId + "connection established");
-            int counter = 0;
-            while (true) {
-                E event = queue.take();
-                this.encoder.doEncode(event);
-                outputStream.flush();
-                if (++counter >= CoreConstants.OOS_RESET_FREQUENCY) {
-                    // Failing to reset the object output stream every now and
-                    // then creates a serious memory leak.
-                    outputStream.flush();
-                    counter = 0;
-                }
-            }
-        } catch (IOException ex) {
-            addInfo(peerId + "connection failed: " + ex);
-        } finally {
-            if (outputStream != null) {
-                encoderClose(outputStream);
-            }
-            CloseUtil.closeQuietly(socket);
-            socket = null;
-            addInfo(peerId + "connection closed");
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void connectionFailed(SocketConnector connector, Exception ex) {
-        if (ex instanceof InterruptedException) {
-            addInfo("connector interrupted");
-        } else if (ex instanceof ConnectException) {
-            addInfo(peerId + "connection refused");
-        } else {
-            addInfo(peerId + ex);
-        }
-    }
-
-    /**
-     * Creates a new {@link ch.qos.logback.core.net.SocketConnector}.
-     * <p>
-     * The default implementation creates an instance of {@link ch.qos.logback.core.net.DefaultSocketConnector}. A subclass may override to provide a different {@link ch.qos.logback.core.net.SocketConnector} implementation.
-     *
-     * @param address
-     *            target remote address
-     * @param port
-     *            target remote port
-     * @param initialDelay
-     *            delay before the first connection attempt
-     * @param retryDelay
-     *            delay before a reconnection attempt
-     * @return socket connector
-     */
-    protected SocketConnector newConnector(InetAddress address, int port,
-            long initialDelay, long retryDelay) {
-        return new DefaultSocketConnector(address, port, initialDelay,
-                retryDelay);
-    }
-
-    /**
-     * Gets the default {@link javax.net.SocketFactory} for the platform.
-     * <p>
-     * Subclasses may override to provide a custom socket factory.
-     */
-    protected SocketFactory getSocketFactory() {
-        return SocketFactory.getDefault();
-    }
-
-    /**
-     * The <b>RemoteHost</b> property takes the name of of the host where a
-     * corresponding server is running.
+     * The host to which to connect and send events
      */
     public void setRemoteHost(String host) {
         remoteHost = host;
     }
 
-    /**
-     * Returns value of the <b>RemoteHost</b> property.
-     */
     public String getRemoteHost() {
         return remoteHost;
     }
 
     /**
-     * The <b>Port</b> property takes a positive integer representing the port
-     * where the server is waiting for connections.
+     * The TCP port on the host to which to connect and send events
      */
     public void setPort(int port) {
         this.port = port;
     }
 
-    /**
-     * Returns value of the <b>Port</b> property.
-     */
     public int getPort() {
         return port;
     }
 
     /**
-     * The <b>reconnectionDelay</b> property takes a positive {@link ch.qos.logback.core.util.Duration} value representing the time to wait between each failed connection
-     * attempt to the server. The default value of this option is to 30 seconds.
-     * 
-     * <p>
-     * Setting this option to zero turns off reconnection capability.
+     * Time period for which to wait after a connection fails,
+     * before attempting to reconnect.
+     * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
      */
     public void setReconnectionDelay(Duration delay) {
+        if (delay == null || delay.getMilliseconds() <= 0) {
+            throw new IllegalArgumentException("reconnectionDelay must be > 0");
+        }
         this.reconnectionDelay = delay;
     }
-    
-    /**
-     * Returns value of the <b>reconnectionDelay</b> property.
-     */
+
     public Duration getReconnectionDelay() {
         return reconnectionDelay;
     }
-    
+
     /**
-     * The <b>eventDelayLimit</b> takes a non-negative integer representing the
-     * number of milliseconds to allow the appender to block if the underlying
-     * BlockingQueue is full. Once this limit is reached, the event is dropped.
-     * 
-     * @param eventDelayLimit
-     *            the event delay limit
-     */
-    public void setEventDelayLimit(Duration eventDelayLimit) {
-        this.eventDelayLimit = eventDelayLimit;
-    }
-    
-    /**
-     * Returns the value of the <b>eventDelayLimit</b> property.
-     */
-    public Duration getEventDelayLimit() {
-        return eventDelayLimit;
-    }
-    
-    /**
-     * Sets the timeout that controls how long we'll wait for the remote peer to
-     * accept our connection attempt.
-     * <p>
-     * This property is configurable primarily to support instrumentation for unit testing.
-     * 
-     * @param acceptConnectionTimeout
-     *            timeout value in milliseconds
+     * Socket connection timeout in milliseconds. 
      */
     void setAcceptConnectionTimeout(int acceptConnectionTimeout) {
         this.acceptConnectionTimeout = acceptConnectionTimeout;
     }
 
     /**
-     * Returns the value of the <b>queueSize</b> property.
+     * Returns the maximum number of events in the queue.
      */
     public int getQueueSize() {
-        return queueSize;
+        return getRingBufferSize();
     }
 
     /**
-     * Sets the maximum number of entries in the queue. Once the queue is full additional entries will be dropped
-     * if in the time given by the <b>eventDelayLimit</b> no space becomes available.
+     * Sets the maximum number of events in the queue. Once the queue is full
+     * additional events will be dropped.
      *
-     * @param queueSize the maximum number of entries in the queue
+     * @param queueSize the maximum number of entries in the queue.
      */
     public void setQueueSize(int queueSize) {
-        if (queue != null) {
-            throw new IllegalStateException("Queue size must be set before initialization");
+        if (queueSize <= 0) {
+            throw new IllegalArgumentException("queueSize must be > 0");
         }
-        this.queueSize = queueSize;
+        setRingBufferSize(queueSize);
     }
 }

@@ -78,6 +78,7 @@ The appenders, encoders, and layouts provided by the logstash-logback-encoder li
 | Logstash JSON | Syslog/UDP | Appender | [`LogstashSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashSocketAppender.java) | n/a
 | Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
 | Logstash JSON | TCP/SSL    | Appender | [`SSLLogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/SSLLogstashTcpSocketAppender.java) | n/a
+| any           | any        | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
 | Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
 | Logstash JSON | any        | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
 | General JSON  | any        | Encoder  | [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java) | [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)
@@ -93,6 +94,10 @@ composite JSON encoders/layouts with a pre-defined set of providers.
 The logstash encoders/layouts are easier to configure if you want to use the standard output format.
 Use the [composite encoders/layouts](#composite_encoder) if you want to heavily customize the output.
 
+The `*AsyncDisruptorAppender` appenders are similar to logback's `AsyncAppender`,
+except that a [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)
+is used as the queuing mechanism, as opposed to a `BlockingQueue`.
+These async appenders can delegate to any other underlying logback appender. 
 
 
 <a name="udp"/>
@@ -174,6 +179,13 @@ Example access appender in `logback-access.xml`
   <appender-ref ref="stash" />
 </configuration>
 ```
+
+Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)).
+All the encoding and TCP communication is delegated to a single writer thread.
+There is no need to wrap the TCP appenders with another asynchronous appender.
+The TCP appenders will never block the logging thread.
+If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
+The TCP appenders will automatically reconnect if the connection breaks.
 
 To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 
