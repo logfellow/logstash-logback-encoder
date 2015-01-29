@@ -29,6 +29,7 @@ import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
 
+import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SegmentedStringWriter;
@@ -96,6 +97,8 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
      * The providers that are used to populate the output JSON object.
      */
     private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
+    
+    private JsonEncoding encoding = JsonEncoding.UTF8;
     
     private volatile boolean started;
     
@@ -174,7 +177,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     }
 
     private JsonGenerator createGenerator(OutputStream outputStream) throws IOException {
-        return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(outputStream));
+        return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(outputStream, encoding));
     }
 
     private JsonGenerator createGenerator(Writer writer) throws IOException {
@@ -213,6 +216,20 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     
     public JsonProviders<Event> getProviders() {
         return jsonProviders;
+    }
+    
+    public String getEncoding() {
+        return encoding.getJavaName();
+    }
+    
+    public void setEncoding(String encodingName) {
+        for (JsonEncoding encoding: JsonEncoding.values()) {
+            if (encoding.getJavaName().equals(encodingName) || encoding.name().equals(encodingName)) {
+                this.encoding = encoding;
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Unknown encoding " + encodingName);
     }
     
     public void setProviders(JsonProviders<Event> jsonProviders) {

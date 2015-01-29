@@ -14,6 +14,7 @@
 package net.logstash.logback.encoder;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
@@ -22,7 +23,6 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
 import org.apache.commons.io.IOUtils;
 
-import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
@@ -32,6 +32,10 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private boolean immediateFlush = true;
     
     private final CompositeJsonFormatter<Event> formatter;
+    
+    private String lineSeparator = System.getProperty("line.separator");
+    
+    private Charset charset;
     
     public CompositeJsonEncoder() {
         super();
@@ -44,19 +48,22 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     public void doEncode(Event event) throws IOException {
         
         formatter.writeEventToOutputStream(event, outputStream);
-        IOUtils.write(CoreConstants.LINE_SEPARATOR, outputStream);
+        if (this.lineSeparator != null) {
+            IOUtils.write(this.lineSeparator, outputStream, charset);
+        }
         
         if (immediateFlush) {
             outputStream.flush();
         }
         
     }
-    
+
     @Override
     public void start() {
         super.start();
         formatter.setContext(getContext());
         formatter.start();
+        charset = Charset.forName(formatter.getEncoding());
     }
     
     @Override
@@ -67,7 +74,6 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     @Override
     public void close() throws IOException {
-        IOUtils.write(CoreConstants.LINE_SEPARATOR, outputStream);
     }
     
     public JsonProviders<Event> getProviders() {
@@ -97,9 +103,53 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     public JsonGeneratorDecorator getJsonGeneratorDecorator() {
         return formatter.getJsonGeneratorDecorator();
     }
+    
+    public String getEncoding() {
+        return formatter.getEncoding();
+    }
+
+    /**
+     * The character encoding to use (default = "<tt>UTF-8</tt>").
+     * Must an encoding supported by {@link com.fasterxml.jackson.core.JsonEncoding}
+     */
+    public void setEncoding(String encodingName) {
+        formatter.setEncoding(encodingName);
+    }
 
     public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
+    }
+    
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+    
+    /**
+     * Sets which lineSeparator to use between events.
+     * <p>
+     * 
+     * The following values have special meaning:
+     * <ul>
+     * <li><tt>null</tt> or empty string = no new line.</li>
+     * <li>"<tt>SYSTEM</tt>" = operating system new line (default).</li>
+     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
+     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * </ul>
+     * <p>
+     * Any other value will be used as given as the lineSeparator.
+     */
+    public void setLineSeparator(String lineSeparator) {
+        if (lineSeparator == null || lineSeparator.isEmpty()) {
+            this.lineSeparator = null;
+        } else if (lineSeparator.equalsIgnoreCase("SYSTEM")) {
+            this.lineSeparator = System.getProperty("line.separator");
+        } else if (lineSeparator.equalsIgnoreCase("UNIX")) {
+            this.lineSeparator = "\n";
+        } else if (lineSeparator.equalsIgnoreCase("WINDOWS")) {
+            this.lineSeparator = "\r\n";
+        } else {
+            this.lineSeparator = lineSeparator;
+        }
     }
 
     protected CompositeJsonFormatter<Event> getFormatter() {
