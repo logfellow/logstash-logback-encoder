@@ -60,7 +60,9 @@ Maven style:
 If you get `ClassNotFoundException`/`NoClassDefFoundError`/`NoSuchMethodError` at runtime, then ensure the required dependencies (and appropriate versions) as specified in the pom file from the maven repository exist on the runtime classpath.  Specifically, the following need to be available on the runtime classpath:
 
 * jackson-databind / jackson-core / jackson-annotations
-* logback-classic / logback-core / logback-access
+* logback-core
+* logback-classic (required for logging _LoggingEvents_)
+* logback-access (required for logging _AccessEvents_)
 * slf4j-api
 
 Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
