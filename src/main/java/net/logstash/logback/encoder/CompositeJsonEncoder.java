@@ -24,7 +24,6 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
 import org.apache.commons.io.IOUtils;
 
-import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
