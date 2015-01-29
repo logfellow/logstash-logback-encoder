@@ -27,6 +27,7 @@ import org.apache.commons.io.IOUtils;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
+import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
@@ -100,6 +101,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         startWrapped(suffix);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     private void startWrapped(Encoder<Event> wrapped) {
         if (wrapped instanceof LayoutWrappingEncoder) {
             /*
@@ -108,7 +110,16 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
              * The charset for other encoders must be configured
              * on the wrapped encoder configuration.
              */
-            ((LayoutWrappingEncoder<Event>) wrapped).setCharset(charset);
+            LayoutWrappingEncoder<Event> layoutWrappedEncoder = (LayoutWrappingEncoder<Event>) wrapped;
+            layoutWrappedEncoder.setCharset(charset);
+            
+            if (layoutWrappedEncoder.getLayout() instanceof PatternLayoutBase) {
+                /*
+                 * Don't ensure exception output (for ILoggingEvents)
+                 * or line separation (for IAccessEvents) 
+                 */
+                ((PatternLayoutBase) layoutWrappedEncoder.getLayout()).setPostCompileProcessor(null);
+            }
         }
         
         if (wrapped != null && !wrapped.isStarted()) {

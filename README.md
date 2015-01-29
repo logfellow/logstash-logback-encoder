@@ -34,6 +34,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Customizing JSON Factory and Generator](#custom_factory)
 * [Customizing Logger Name Length](#custom_logger_name)
 * [Customizing Stack Traces](#custom_stacktrace)
+* [Prefix/Suffix](#prefix_suffix)
 * [Composite Encoder/Layout](#composite_encoder)
   * [Providers for LoggingEvents](#providers_loggingevents)
   * [Providers for AccessEvents](#providers_accessevents)
@@ -607,6 +608,38 @@ For example:
 
 [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
 can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
+
+<a name="prefix_suffix"/>
+## Prefix/Suffix
+
+You can specify a prefix (written before the JSON object) and/or suffix (written after the JSON object),
+which may be required for the log pipeline you are using, such as:
+
+* If you are using the Common Event Expression (CEE) format for syslog, you need to add the `@cee:` prefix.
+* If you are using other syslog destinations, you might need to add the standard syslog headers.
+* If you are using Loggly, you might need to add your customer token.
+
+For example, to add standard syslog headers for syslog over UDP, configure the following:
+
+```xml
+<configuration>
+  <conversionRule conversionWord="syslogStart" converterClass="ch.qos.logback.classic.pattern.SyslogStartConverter"/>
+    
+  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+    <host>MyAwesomeSyslogServer</host>
+    <!-- port is optional (default value shown) -->
+    <port>514</port>
+    <prefix class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="ch.qos.logback.classic.PatternLayout">
+        <pattern>%syslogStart{USER}</pattern>
+      </layout>
+    </prefix>
+  </appender>
+  
+  ...
+</configuration>
+```
+
 
 <a name="composite_encoder"/>
 ## Composite Encoder/Layout
