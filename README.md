@@ -1144,6 +1144,19 @@ If you are having trouble identifying causes of problems (e.g. events are not ge
 then you can enable logback debugging or add a status listener as specified in
 the [logback manual](http://logback.qos.ch/manual/configuration.html#automaticStatusPrinting).
 
+### Profiling
+
+<a href="http://www.yourkit.com/java/profiler/index.jsp"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
+
+Memory usage and performance of logstash-logback-encoder have been improved
+by addressing issues discovered with the help of the
+[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp). 
+
+YourKit, LLC has graciously donated a free license of the
+[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp)
+to this open source project.
+
+
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
 
