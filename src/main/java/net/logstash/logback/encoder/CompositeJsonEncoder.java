@@ -14,6 +14,7 @@
 package net.logstash.logback.encoder;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
@@ -23,6 +24,8 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
 import org.apache.commons.io.IOUtils;
 
+import ch.qos.logback.core.CoreConstants;
+import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
@@ -30,6 +33,9 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         extends EncoderBase<Event> {
     
     private boolean immediateFlush = true;
+    
+    private Encoder<Event> prefix;
+    private Encoder<Event> suffix;
     
     private final CompositeJsonFormatter<Event> formatter;
     
@@ -43,11 +49,31 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     }
     
     protected abstract CompositeJsonFormatter<Event> createFormatter();
+    
+    @Override
+    public void init(OutputStream os) throws IOException {
+        
+        initWrapped(prefix, os);
+        super.init(os);
+        initWrapped(suffix, os);
+        
+    }
+
+    private void initWrapped(Encoder<Event> wrapped, OutputStream os) throws IOException {
+        if (wrapped != null) {
+            wrapped.init(os);
+        }
+    }
 
     @Override
     public void doEncode(Event event) throws IOException {
         
+        doEncodeWrapped(prefix, event);
+        
         formatter.writeEventToOutputStream(event, outputStream);
+
+        doEncodeWrapped(suffix, event);
+        
         if (this.lineSeparator != null) {
             IOUtils.write(this.lineSeparator, outputStream, charset);
         }
@@ -58,22 +84,52 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         
     }
 
+    private void doEncodeWrapped(Encoder<Event> wrapped, Event event) throws IOException {
+        if (wrapped != null) {
+            wrapped.doEncode(event);
+        }
+    }
+    
     @Override
     public void start() {
         super.start();
         formatter.setContext(getContext());
         formatter.start();
         charset = Charset.forName(formatter.getEncoding());
+        startWrapped(prefix);
+        startWrapped(suffix);
+    }
+
+    private void startWrapped(Encoder<Event> wrapped) {
+        if (wrapped != null && !wrapped.isStarted()) {
+            wrapped.start();
+        }
     }
     
     @Override
     public void stop() {
         super.stop();
         formatter.stop();
+        stopWrapped(prefix);
+        stopWrapped(suffix);
+    }
+    
+    private void stopWrapped(Encoder<Event> wrapped) {
+        if (wrapped != null && !wrapped.isStarted()) {
+            wrapped.stop();
+        }
     }
     
     @Override
     public void close() throws IOException {
+        closeWrapped(prefix);
+        closeWrapped(suffix);
+    }
+    
+    private void closeWrapped(Encoder<Event> wrapped) throws IOException {
+        if (wrapped != null && !wrapped.isStarted()) {
+            wrapped.close();
+        }
     }
     
     public JsonProviders<Event> getProviders() {
@@ -154,6 +210,20 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     protected CompositeJsonFormatter<Event> getFormatter() {
         return formatter;
+    }
+    
+    public Encoder<Event> getPrefix() {
+        return prefix;
+    }
+    public void setPrefix(Encoder<Event> prefix) {
+        this.prefix = prefix;
+    }
+    
+    public Encoder<Event> getSuffix() {
+        return suffix;
+    }
+    public void setSuffix(Encoder<Event> suffix) {
+        this.suffix = suffix;
     }
 
 }
