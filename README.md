@@ -40,6 +40,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [Pattern JSON Provider](#provider_pattern)
     * [LoggingEvent patterns](#provider_pattern_loggingevent)
     * [AccessEvent patterns](#provider_pattern_accessevent)
+* [Debugging](#debugging)
 
 
 <a name="including"/>
@@ -1097,6 +1098,18 @@ So the following pattern...
   "filtered_cookie": null
 }
 ```
+<a name="debugging"/>
+## Debugging
+
+During execution, the encoders/appenders/layouts provided in logstash-logback-encoder
+will add logback status messages to the logback `StatusManager`.
+
+By default, logback only shows WARN/ERROR status messages on the console during configuration.
+No messages are output during actual operation (even if they are WARN/ERROR).
+
+If you are having trouble identifying causes of problems (e.g. events are not getting delivered),
+then you can enable logback debugging or add a status listener as specified in
+the [logback manual](http://logback.qos.ch/manual/configuration.html#automaticStatusPrinting).
 
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
