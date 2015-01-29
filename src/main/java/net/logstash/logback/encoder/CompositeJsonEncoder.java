@@ -27,6 +27,7 @@ import org.apache.commons.io.IOUtils;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
+import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
@@ -101,6 +102,16 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     }
 
     private void startWrapped(Encoder<Event> wrapped) {
+        if (wrapped instanceof LayoutWrappingEncoder) {
+            /*
+             * Convenience hack to ensure the same charset is used in most cases.
+             * 
+             * The charset for other encoders must be configured
+             * on the wrapped encoder configuration.
+             */
+            ((LayoutWrappingEncoder<Event>) wrapped).setCharset(charset);
+        }
+        
         if (wrapped != null && !wrapped.isStarted()) {
             wrapped.start();
         }
