@@ -179,6 +179,20 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
         logstashLayout.setThrowableConverter(throwableConverter);
     }
+    
+    public Layout<ILoggingEvent> getPrefix() {
+        return logstashLayout.getPrefix();
+    }
+    public void setPrefix(Layout<ILoggingEvent> prefix) {
+        logstashLayout.setPrefix(prefix);
+    }
+
+    public Layout<ILoggingEvent> getSuffix() {
+        return logstashLayout.getSuffix();
+    }
+    public void setSuffix(Layout<ILoggingEvent> suffix) {
+        logstashLayout.setSuffix(suffix);
+    }
 
     @Override
     public SyslogOutputStream createOutputStream() throws UnknownHostException, SocketException {

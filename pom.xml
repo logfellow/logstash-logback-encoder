@@ -36,6 +36,7 @@
         <org.hamcrest.version>1.3</org.hamcrest.version>
         <org.mockito.version>1.9.5</org.mockito.version>
         <org.slf4j.version>1.7.6</org.slf4j.version>
+        <com.lmax.disruptor.version>3.3.0</com.lmax.disruptor.version>
     </properties>
 
     <licenses>
@@ -99,6 +100,11 @@
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${commons.lang.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.lmax</groupId>
+            <artifactId>disruptor</artifactId>
+            <version>${com.lmax.disruptor.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -213,7 +219,7 @@
                         <!-- attach to Logback bundle as fragment -->
                         <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
                         <!-- exclude following imports as required classes are relocated by shade plugin and ignore ch.qos.logback.[core,classic] because this is a fragment and gets them from parent. -->
-                        <Import-Package>!org.apache.commons.*,!com.fasterxml.jackson.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
+                        <Import-Package>!org.apache.commons.*,!com.lmax.disruptor.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
@@ -286,6 +292,10 @@
                             <relocation>
                                 <pattern>org.apache.commons.io</pattern>
                                 <shadedPattern>${project.groupId}.encoder.org.apache.commons.io</shadedPattern>
+                            </relocation>
+                            <relocation>
+                                <pattern>com.lmax.disruptor</pattern>
+                                <shadedPattern>${project.groupId}.encoder.com.lmax.disruptor</shadedPattern>
                             </relocation>
                         </relocations>
                     </configuration>

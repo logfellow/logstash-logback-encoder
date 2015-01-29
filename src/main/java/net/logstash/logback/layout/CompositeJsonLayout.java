@@ -19,12 +19,17 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
+import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
     
     private boolean immediateFlush = true;
+    
+    private Layout<Event> prefix;
+    private Layout<Event> suffix;
     
     private final CompositeJsonFormatter<Event> formatter;
     
@@ -36,12 +41,38 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     protected abstract CompositeJsonFormatter<Event> createFormatter();
 
     public String doLayout(Event event) {
+        final String result;
         try {
-            return formatter.writeEventAsString(event);
+            result = formatter.writeEventAsString(event);
         } catch (IOException e) {
             addWarn("Error formatting logging event", e);
             return null;
         }
+        
+        if (prefix == null && suffix == null) {
+            return result;
+        }
+        
+        String prefixResult = doLayoutWrapped(prefix, event);
+        String suffixResult = doLayoutWrapped(suffix, event);
+        
+        int size = result.length()
+                + prefixResult == null ? 0 : prefixResult.length()
+                + suffixResult == null ? 0 : suffixResult.length();
+        
+        StringBuilder stringBuilder = new StringBuilder(size);
+        if (prefixResult != null) {
+            stringBuilder.append(prefixResult);
+        }
+        stringBuilder.append(result);
+        if (suffixResult != null) {
+            stringBuilder.append(suffixResult);
+        }
+        return stringBuilder.toString();
+    }
+
+    private String doLayoutWrapped(Layout<Event> wrapped, Event event) {
+        return wrapped == null ? null : wrapped.doLayout(event);
     }
     
     @Override
@@ -49,12 +80,28 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         super.start();
         formatter.setContext(getContext());
         formatter.start();
+        startWrapped(prefix);
+        startWrapped(suffix);
+    }
+
+    private void startWrapped(Layout<Event> wrapped) {
+        if (wrapped != null && !wrapped.isStarted()) {
+            wrapped.start();
+        }
     }
     
     @Override
     public void stop() {
         super.stop();
         formatter.stop();
+        stopWrapped(prefix);
+        stopWrapped(suffix);
+    }
+    
+    private void stopWrapped(Layout<Event> wrapped) {
+        if (wrapped != null && !wrapped.isStarted()) {
+            wrapped.stop();
+        }
     }
     
     public JsonProviders<Event> getProviders() {
@@ -91,6 +138,20 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
 
     protected CompositeJsonFormatter<Event> getFormatter() {
         return formatter;
+    }
+    
+    public Layout<Event> getPrefix() {
+        return prefix;
+    }
+    public void setPrefix(Layout<Event> prefix) {
+        this.prefix = prefix;
+    }
+    
+    public Layout<Event> getSuffix() {
+        return suffix;
+    }
+    public void setSuffix(Layout<Event> suffix) {
+        this.suffix = suffix;
     }
 
 }

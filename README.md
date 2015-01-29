@@ -34,12 +34,14 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Customizing JSON Factory and Generator](#custom_factory)
 * [Customizing Logger Name Length](#custom_logger_name)
 * [Customizing Stack Traces](#custom_stacktrace)
+* [Prefix/Suffix](#prefix_suffix)
 * [Composite Encoder/Layout](#composite_encoder)
   * [Providers for LoggingEvents](#providers_loggingevents)
   * [Providers for AccessEvents](#providers_accessevents)
   * [Pattern JSON Provider](#provider_pattern)
     * [LoggingEvent patterns](#provider_pattern_loggingevent)
     * [AccessEvent patterns](#provider_pattern_accessevent)
+* [Debugging](#debugging)
 
 
 <a name="including"/>
@@ -78,6 +80,7 @@ The appenders, encoders, and layouts provided by the logstash-logback-encoder li
 | Logstash JSON | Syslog/UDP | Appender | [`LogstashSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashSocketAppender.java) | n/a
 | Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
 | Logstash JSON | TCP/SSL    | Appender | [`SSLLogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/SSLLogstashTcpSocketAppender.java) | n/a
+| any           | any        | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
 | Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
 | Logstash JSON | any        | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
 | General JSON  | any        | Encoder  | [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java) | [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)
@@ -93,6 +96,10 @@ composite JSON encoders/layouts with a pre-defined set of providers.
 The logstash encoders/layouts are easier to configure if you want to use the standard output format.
 Use the [composite encoders/layouts](#composite_encoder) if you want to heavily customize the output.
 
+The `*AsyncDisruptorAppender` appenders are similar to logback's `AsyncAppender`,
+except that a [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)
+is used as the queuing mechanism, as opposed to a `BlockingQueue`.
+These async appenders can delegate to any other underlying logback appender. 
 
 
 <a name="udp"/>
@@ -174,6 +181,13 @@ Example access appender in `logback-access.xml`
   <appender-ref ref="stash" />
 </configuration>
 ```
+
+Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)).
+All the encoding and TCP communication is delegated to a single writer thread.
+There is no need to wrap the TCP appenders with another asynchronous appender.
+The TCP appenders will never block the logging thread.
+If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
+The TCP appenders will automatically reconnect if the connection breaks.
 
 To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 
@@ -594,6 +608,38 @@ For example:
 
 [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
 can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
+
+<a name="prefix_suffix"/>
+## Prefix/Suffix
+
+You can specify a prefix (written before the JSON object) and/or suffix (written after the JSON object),
+which may be required for the log pipeline you are using, such as:
+
+* If you are using the Common Event Expression (CEE) format for syslog, you need to add the `@cee:` prefix.
+* If you are using other syslog destinations, you might need to add the standard syslog headers.
+* If you are using Loggly, you might need to add your customer token.
+
+For example, to add standard syslog headers for syslog over UDP, configure the following:
+
+```xml
+<configuration>
+  <conversionRule conversionWord="syslogStart" converterClass="ch.qos.logback.classic.pattern.SyslogStartConverter"/>
+    
+  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+    <host>MyAwesomeSyslogServer</host>
+    <!-- port is optional (default value shown) -->
+    <port>514</port>
+    <prefix class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+      <layout class="ch.qos.logback.classic.PatternLayout">
+        <pattern>%syslogStart{USER}</pattern>
+      </layout>
+    </prefix>
+  </appender>
+  
+  ...
+</configuration>
+```
+
 
 <a name="composite_encoder"/>
 ## Composite Encoder/Layout
@@ -1085,6 +1131,18 @@ So the following pattern...
   "filtered_cookie": null
 }
 ```
+<a name="debugging"/>
+## Debugging
+
+During execution, the encoders/appenders/layouts provided in logstash-logback-encoder
+will add logback status messages to the logback `StatusManager`.
+
+By default, logback only shows WARN/ERROR status messages on the console during configuration.
+No messages are output during actual operation (even if they are WARN/ERROR).
+
+If you are having trouble identifying causes of problems (e.g. events are not getting delivered),
+then you can enable logback debugging or add a status listener as specified in
+the [logback manual](http://logback.qos.ch/manual/configuration.html#automaticStatusPrinting).
 
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
