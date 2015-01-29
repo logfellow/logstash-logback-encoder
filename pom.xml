@@ -66,18 +66,25 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>${ch.qos.logback.version}</version>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${ch.qos.logback.version}</version>
+            <!--
+               Required for logging regular ILoggingEvents with a Logger.
+               Not needed if only logging IAccessEvents for access logs. 
+            -->
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-access</artifactId>
             <version>${ch.qos.logback.version}</version>
+            <!--
+               Required for logging IAccessEvents for access logs. 
+               Not needed if only logging regular ILoggingEvents with a Logger.
+            -->
             <optional>true</optional>
         </dependency>
         <dependency>
