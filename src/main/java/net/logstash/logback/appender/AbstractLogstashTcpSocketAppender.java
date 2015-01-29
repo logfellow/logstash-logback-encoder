@@ -383,23 +383,34 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         this.acceptConnectionTimeout = acceptConnectionTimeout;
     }
 
+    public int getWriteBufferSize() {
+        return writeBufferSize;
+    }
+    
+    /**
+     * The number of bytes available in the write buffer.
+     */
+   public void setWriteBufferSize(int writeBufferSize) {
+        this.writeBufferSize = writeBufferSize;
+    }
+    
     /**
      * Returns the maximum number of events in the queue.
      */
     public int getQueueSize() {
         return getRingBufferSize();
     }
-
+    
     /**
      * Sets the maximum number of events in the queue. Once the queue is full
      * additional events will be dropped.
+     * 
+     * <p>
+     * Must be a positive power of 2.
      *
      * @param queueSize the maximum number of entries in the queue.
      */
     public void setQueueSize(int queueSize) {
-        if (queueSize <= 0) {
-            throw new IllegalArgumentException("queueSize must be > 0");
-        }
         setRingBufferSize(queueSize);
     }
 }

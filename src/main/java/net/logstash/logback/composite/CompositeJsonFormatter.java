@@ -62,11 +62,23 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     };
     
     /**
-     * The jsonFactory provided by {@link #jsonFactoryProvider}.
-     * This will only non-null when the formatter is started.
+     * Used to create the necessary {@link JsonGenerator}s for generating JSON.
      */
     private MappingJsonFactory jsonFactory = (MappingJsonFactory) new MappingJsonFactory()
-        .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+        .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII)
+        /*
+         * When generators are flushed, don't flush the underlying outputStream.
+         * 
+         * This allows some streaming optimizations when using an encoder.
+         * 
+         * The encoder generally determines when the stream should be flushed
+         * by an 'immediateFlush' property.
+         * 
+         * The 'immediateFlush' property of the encoder can be set to false
+         * when the appender performs the flushes at appropriate times
+         * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
+         */
+        .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
 
     /**
      * Decorates the {@link #jsonFactory}.
@@ -119,6 +131,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
 
         try {
             writeEventToOutputStream(event, outputStream);
+            outputStream.flush();
             return outputStream.toByteArray();
         } finally {
             outputStream.release();
@@ -128,6 +141,12 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     public void writeEventToOutputStream(Event event, OutputStream outputStream) throws IOException {
         JsonGenerator generator = createGenerator(outputStream);
         writeEventToGenerator(generator, event);
+        /*
+         * Do not flush the outputStream.
+         * 
+         * Allow something higher in the stack (e.g. the encoder/appender)
+         * to determine appropriate times to flush.
+         */
     }
 
     public String writeEventAsString(Event event) throws IOException {
@@ -135,6 +154,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
 
         JsonGenerator generator = createGenerator(writer);
         writeEventToGenerator(generator, event);
+        writer.flush();
         return writer.getAndClear();
     }
 

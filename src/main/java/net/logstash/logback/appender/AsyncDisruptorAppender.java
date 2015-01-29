@@ -72,7 +72,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public static final ProducerType DEFAULT_PRODUCER_TYPE = ProducerType.MULTI;
     public static final SleepingWaitStrategy DEFAULT_WAIT_STRATEGY = new SleepingWaitStrategy();
     public static final String DEFAULT_THREAD_NAME_PREFIX = "logback-async-disruptor-appender-";
-    public static final int DEFAULT_DROPPED_WARN_FREQUENCY = 100;
+    public static final int DEFAULT_DROPPED_WARN_FREQUENCY = 1000;
     
     /**
      * The size of the {@link RingBuffer}.
@@ -80,6 +80,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * If the handler thread is not as fast as the producing threads,
      * then the {@link RingBuffer} will eventually fill up,
      * at which point events will be dropped.
+     * <p>
+     * Must be a positive power of 2.
      */
     private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
     
@@ -284,13 +286,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         if (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
             long consecutiveDropped = this.consecutiveDroppedCount.incrementAndGet();
             if ((consecutiveDropped) % this.droppedWarnFrequency == 1) {
-                addWarn("Dropped " + consecutiveDropped + " events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+                addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
             }
         } else {
             long consecutiveDropped = this.consecutiveDroppedCount.get();
-            if (consecutiveDropped != 0) {
-                addWarn("Dropped " + consecutiveDropped + " events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
-                this.consecutiveDroppedCount.set(0L);
+            if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
+                addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
             }
         }
     }
@@ -310,9 +311,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return ringBufferSize;
     }
     public void setRingBufferSize(int ringBufferSize) {
-        if (ringBufferSize <= 0) {
-            throw new IllegalArgumentException("ringBufferSize must be > 0");
-        }
         this.ringBufferSize = ringBufferSize;
     }
 
