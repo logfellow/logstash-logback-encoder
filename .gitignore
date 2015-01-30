@@ -1,6 +1,7 @@
 .classpath
 .project
 .settings/
+.*.md.html
 
 dependency-reduced-pom.xml
 
