@@ -94,10 +94,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private ProducerType producerType = DEFAULT_PRODUCER_TYPE;
     
     /**
-     * The {@link WaitStrategy} to use when publishing events to
-     * the ringBuffer.  This is never really used right now,
-     * since this appender always uses <tt>tryPublishEvent</tt>
-     * instead of <tt>publishEvent</tt>
+     * The {@link WaitStrategy} to used by the RingBuffer
+     * when pulling events to be processed by {@link #eventHandler}.
      */
     private WaitStrategy waitStrategy = DEFAULT_WAIT_STRATEGY;
     
@@ -162,7 +160,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         /**
          * The logback event.
          */
-        public Event event;
+        public volatile Event event;
     }
     
     /**
