@@ -21,7 +21,7 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
-import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
@@ -85,6 +85,20 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     }
 
     private void startWrapped(Layout<Event> wrapped) {
+        if (wrapped instanceof PatternLayoutBase) {
+            /*
+             * Don't ensure exception output (for ILoggingEvents)
+             * or line separation (for IAccessEvents) 
+             */
+            PatternLayoutBase<Event> layout = (PatternLayoutBase<Event>) wrapped;
+            layout.setPostCompileProcessor(null);
+            /*
+             * The pattern will be re-parsed during start.
+             * Needed so that the pattern is re-parsed without
+             * the postCompileProcessor.
+             */
+            layout.start();
+        }
         if (wrapped != null && !wrapped.isStarted()) {
             wrapped.start();
         }

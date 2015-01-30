@@ -118,7 +118,14 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
                  * Don't ensure exception output (for ILoggingEvents)
                  * or line separation (for IAccessEvents) 
                  */
-                ((PatternLayoutBase) layoutWrappedEncoder.getLayout()).setPostCompileProcessor(null);
+                PatternLayoutBase layout = (PatternLayoutBase) layoutWrappedEncoder.getLayout();
+                layout.setPostCompileProcessor(null);
+                /*
+                 * The pattern will be re-parsed during start.
+                 * Needed so that the pattern is re-parsed without
+                 * the postCompileProcessor.
+                 */
+                layout.start();
             }
         }
         
