@@ -53,7 +53,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>4.0</version>
+  <version>4.1-SNAPSHOT</version>
 </dependency>
 ```
 
