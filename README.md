@@ -122,7 +122,23 @@ use the `LogstashSocketAppender` in your `logback.xml` like this:
   </root>
 </configuration>
 ```
-Internally, the `LogstashSocketAppender` uses a `LogstashLayout` to perform the JSON formatting.   Therefore, by default, the output will be logstash-compatible.  You can further customize the JSON output of `LogstashSocketAppender` just like you can with a `LogstashLayout` as described in later sections.
+Internally, the `LogstashSocketAppender` uses a `LogstashLayout` to perform the JSON formatting.
+Therefore, by default, the output will be logstash-compatible.
+
+You can further customize the JSON output of `LogstashSocketAppender`
+just like you can with a `LogstashLayout` or `LogstashEncoder` as described in later sections.
+It is not necessary to configure a `<layout>` or `<encoder>` sub-element
+within the `<appender>` element in the logback configuration.
+All the properties of `LogstashLayout` or `LogstashEncoder` can be set at the `<appender>` level.
+For example, to configure [global custom fields](#loggingevent_custom_global), you can specify
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+    <host>MyAwesomeSyslogServer</host>
+    <!-- port is optional (default value shown) -->
+    <port>514</port>
+    <customFields>{"appname":"myWebservice"}</customFields>
+  </appender>
+```
 
 There currently is no way to log AccessEvents over syslog/UDP.
 
@@ -184,9 +200,14 @@ Example access appender in `logback-access.xml`
 </configuration>
 ```
 
+Unlike the [UDP appender](#udp), an encoder must be configured for the TCP appenders.
+You can use a `Logstash*Encoder`, `*EventCompositeJsonEncoder`, or any other logback encoder.
+All of the output formatting options are configured at the encoder level. 
+
 Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)).
 All the encoding and TCP communication is delegated to a single writer thread.
-There is no need to wrap the TCP appenders with another asynchronous appender.
+There is no need to wrap the TCP appenders with another asynchronous appender
+(such as `AsyncAppender` or `LoggingEventAsyncDisruptorAppender`).
 The TCP appenders will never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
 The TCP appenders will automatically reconnect if the connection breaks.
@@ -207,7 +228,8 @@ input {
 
 You can use any of the encoders/layouts provided by the logstash-logback-encoder library with other logback appenders.
 
-For example, to output LoggingEvents to a file, use the `LogstashEncoder` with the `RollingFileAppender` in your `logback.xml` like this:
+For example, to output LoggingEvents to a file, use the `LogstashEncoder`
+with the `RollingFileAppender` in your `logback.xml` like this:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -241,6 +263,10 @@ To log AccessEvents to a file, configure your `logback-access.xml` like this:
   <appender-ref ref="stash" />
 </configuration>
 ```
+
+The `LogstashLayout` and `LogstashAccessLayout` can be configured the same way as
+the `LogstashEncoder` and `LogstashAccessEncoder`.  All the other examples
+in this document use encoders, but the same options apply to the layouts as well.
 
 To receive file input in logstash, configure a [`file`](http://www.logstash.net/docs/latest/inputs/file) input in logstash's configuration like this:
 
@@ -335,14 +361,6 @@ To switch it on, add the `includeCallerInfo` property to the configuration.
 </encoder>
 ```
 
-OR
-
-```xml
-<appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-  <includeCallerInfo>true</includeCallerInfo>
-</appender>
-```
-
 When switched on, the following fields will be included in the log event:
 
 | Field                | Description
@@ -365,14 +383,6 @@ Add custom fields that will appear in every LoggingEvent like this :
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
 </encoder>
-```
-
-OR
-
-```xml
-<appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
-  <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
-</appender>
 ```
 
 <a name="loggingevent_custom_event"/>
