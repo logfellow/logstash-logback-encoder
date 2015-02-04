@@ -17,6 +17,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Usage](#usage)
   * [UDP Appender](#udp)
   * [TCP Appenders](#tcp)
+    * [SSL](#ssl)
   * [Encoders / Layouts](#encoder)
 * [LoggingEvent Fields](#loggingevent_fields)
   * [Standard Fields](#loggingevent_standard)
@@ -81,7 +82,6 @@ The appenders, encoders, and layouts provided by the logstash-logback-encoder li
 |---------------|------------|----------| ------------ | -----------
 | Logstash JSON | Syslog/UDP | Appender | [`LogstashSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashSocketAppender.java) | n/a
 | Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
-| Logstash JSON | TCP/SSL    | Appender | [`SSLLogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/SSLLogstashTcpSocketAppender.java) | n/a
 | any           | any        | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
 | Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
 | Logstash JSON | any        | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
@@ -154,7 +154,7 @@ input {
 <a name="tcp"/>
 ### TCP Appenders
 
-To output JSON for LoggingEvents over TCP, use a `LogstashTcpSocketAppender` or `SSLLogstashTcpSocketAppender`,
+To output JSON for LoggingEvents over TCP, use a `LogstashTcpSocketAppender`
 with a `LogstashEncoder` or `LoggingEventCompositeJsonEncoder`.
 
 Example logging appender configuration in `logback.xml`:
@@ -178,10 +178,8 @@ Example logging appender configuration in `logback.xml`:
 ```
 
 
-To output JSON for AccessEvents over TCP, use a `LogstashTcpSocketAppender`,
+To output JSON for AccessEvents over TCP, use a `LogstashAccessTcpSocketAppender`
 with a `LogstashAccessEncoder` or `AccessEventCompositeJsonEncoder`.
-
-An SSL appender is not currently available for AccessEvents.
 
 Example access appender in `logback-access.xml`
 ```xml
@@ -212,7 +210,8 @@ The TCP appenders will never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
 The TCP appenders will automatically reconnect if the connection breaks.
 
-To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
+To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
+input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 
 ```
 input {
@@ -222,6 +221,59 @@ input {
     }
 }
 ```
+
+<a name="ssl"/>
+#### SSL
+
+To use SSL, add an `<ssl>` sub-element within the `<appender>` element for the `LogstashTcpSocketAppender`
+or `LogstashAccessTcpSocketAppender`.
+
+See the [logback manual](http://logback.qos.ch/manual/usingSSL.html) for how to configure SSL.
+SSL for the `Logstash*TcpSocketAppender`s are configured the same way as logback's `SSLSocketAppender`.
+
+For example, to enable SSL using the JVM's default keystore/truststore, do the following:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <!-- remoteHost and port are optional (default values shown) -->
+      <remoteHost>127.0.0.1</remoteHost>
+      <port>4560</port>
+  
+      <!-- encoder is required -->
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+      
+      <!-- Enable SSL using the JVM's default keystore/truststore -->
+      <ssl/>
+  </appender>
+```
+
+To use a different truststore, do the following:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+      <!-- remoteHost and port are optional (default values shown) -->
+      <remoteHost>127.0.0.1</remoteHost>
+      <port>4560</port>
+  
+      <!-- encoder is required -->
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+      
+      <!-- Enable SSL and use a different truststore -->
+      <ssl>
+          <trustStore>
+              <location>classpath:server.truststore</location>
+              <password>${server.truststore.password}</password>
+          </trustStore>
+      </ssl>
+  </appender>
+```
+
+All the customizations that [logback](http://logback.qos.ch/manual/usingSSL.html) offers
+(such as configuring cipher specs, protocols, algorithms, providers, etc.)
+are supported by the `Logback*TcpSocketAppender`s.
+
+See the logstash documentation for the [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input
+for how to configure it to use SSL. 
 
 <a name="encoder"/>
 ### Encoders / Layouts

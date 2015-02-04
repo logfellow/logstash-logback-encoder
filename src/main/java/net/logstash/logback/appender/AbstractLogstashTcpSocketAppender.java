@@ -24,8 +24,15 @@ import java.net.UnknownHostException;
 import java.util.concurrent.BlockingQueue;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
+import ch.qos.logback.core.net.ssl.SSLConfigurableSocket;
+import ch.qos.logback.core.net.ssl.SSLConfiguration;
+import ch.qos.logback.core.net.ssl.SSLParametersConfiguration;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.status.ErrorStatus;
 import ch.qos.logback.core.util.CloseUtil;
@@ -46,7 +53,11 @@ import com.lmax.disruptor.dsl.Disruptor;
  * <li>it uses a {@link RingBuffer} instead of a {@link BlockingQueue}</li>
  * <li>it writes using an {@link Encoder} instead of serialization</li>
  * </ul>
- *
+ * <p>
+ * 
+ * In addition, SSL can be enabled by setting the SSL configuration via {@link #setSsl(SSLConfiguration)}. 
+ * See <a href="http://logback.qos.ch/manual/usingSSL.html>the logback manual</a>
+ * for details on how to configure client-side SSL.
  *
  * @author <a href="mailto:mirko.bernardoni@gmail.com">Mirko Bernardoni</a> (original, which did not use disruptor)
  * @since 11 Jun 2014 (creation date)
@@ -125,9 +136,26 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     
     /**
      * Used to create client {@link Socket}s to which to communicate.
-     * By default, it is the system default SocketFactory.
+     * 
+     * If set prior to startup, it will be used.
+     * <p>
+     * 
+     * If not set prior to startup, and {@link #sslConfiguration} is null,
+     * then the default socket factory ({@link SocketFactory#getDefault()}) will be used.
+     * <p>
+     * 
+     * If not set prior to startup, and {@link #sslConfiguration} is not null,
+     * then a socket factory created from the
+     * {@link SSLConfiguration#createContext(ch.qos.logback.core.spi.ContextAware)} will be used.
      */
-    private SocketFactory socketFactory = SocketFactory.getDefault();
+    private SocketFactory socketFactory;
+    
+    /**
+     * Set this to non-null to use SSL.
+     * See <a href="http://logback.qos.ch/manual/usingSSL.html> the logback manual</a>
+     * for details on how to configure SSL for a client.
+     */
+    private SSLConfiguration sslConfiguration;
 
     /**
      * Event handler responsible for performing the TCP transmission.
@@ -270,6 +298,32 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
 
     }
+    
+    /**
+     * An extension of logback's {@link ConfigurableSSLSocketFactory}
+     * that supports creating unconnected sockets
+     * (via {@link UnconnectedConfigurableSSLSocketFactory#createSocket()})
+     * so that a custom connection timeout can be used when connecting. 
+     */
+    private static class UnconnectedConfigurableSSLSocketFactory extends ConfigurableSSLSocketFactory {
+
+        private final SSLParametersConfiguration parameters;
+        private final SSLSocketFactory delegate;
+
+        public UnconnectedConfigurableSSLSocketFactory(SSLParametersConfiguration parameters, SSLSocketFactory delegate) {
+            super(parameters, delegate);
+            this.parameters = parameters;
+            this.delegate = delegate;
+        }
+        
+        @Override
+        public Socket createSocket() throws IOException {
+            SSLSocket socket = (SSLSocket) delegate.createSocket();
+            parameters.configure(new SSLConfigurableSocket(socket));
+            return socket;
+        }
+        
+    }
 
     public AbstractLogstashTcpSocketAppender() {
         super();
@@ -301,6 +355,26 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             } catch (UnknownHostException ex) {
                 addError("unknown host: " + remoteHost);
                 errorCount++;
+            }
+        }
+        
+        if (errorCount == 0 && socketFactory == null) {
+            if (sslConfiguration == null) {
+                socketFactory = SocketFactory.getDefault();
+            } else {
+                
+                try {
+                    SSLContext sslContext = getSsl().createContext(this);
+                    SSLParametersConfiguration parameters = getSsl().getParameters();
+                    parameters.setContext(getContext());
+                    
+                    socketFactory = new UnconnectedConfigurableSSLSocketFactory(
+                            parameters, 
+                            sslContext.getSocketFactory());
+                } catch (Exception e) {
+                    addError("Unable to create ssl context", e);
+                    errorCount++;
+                }
             }
         }
 
@@ -412,5 +486,17 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     public void setQueueSize(int queueSize) {
         setRingBufferSize(queueSize);
+    }
+    
+    public SSLConfiguration getSsl() {
+        return sslConfiguration;
+    }
+    /**
+     * Set this to non-null to use SSL.
+     * See <a href="http://logback.qos.ch/manual/usingSSL.html> the logback manual</a>
+     * for details on how to configure SSL for a client.
+     */
+   public void setSsl(SSLConfiguration sslConfiguration) {
+        this.sslConfiguration = sslConfiguration;
     }
 }
