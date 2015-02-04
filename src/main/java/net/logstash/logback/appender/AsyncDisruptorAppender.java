@@ -59,11 +59,26 @@ import com.lmax.disruptor.dsl.ProducerType;
  * 
  * A single handler thread will be used to handle the actual handling of the event.
  * <p>
+ * 
  * Subclasses are required to set the {@link #eventHandler} to define
  * the logic that executes in the handler thread.
  * For example, {@link DelegatingAsyncDisruptorAppender} for will delegate
  * appending of the event to another appender in the handler thread.
- *
+ * <p>
+ * 
+ * By default, child threads created by this appender will be daemon threads,
+ * and therefore allow the JVM to exit gracefully without
+ * needing to explicitly shut down the appender.
+ * Note that in this case, it is possible for appended log events to not
+ * be handled (if the child thread has not had a chance to process them yet).
+ * 
+ * By setting {@link #setDaemon(boolean)} to false, you can change this behavior.
+ * When false, child threads created by this appender will not be daemon threads,
+ * and therefore will prevent the JVM from shutting down
+ * until the appender is explicitly shut down.
+ * Set this to false if you want to ensure that every log event
+ * prior to shutdown is handled.
+ * 
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
 public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware> extends UnsynchronizedAppenderBase<Event> {
@@ -103,11 +118,32 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Used as a prefix by the {@link WorkerThreadFactory} to set the
      * handler thread name.
      * Defaults to {@value #DEFAULT_THREAD_NAME_PREFIX}.
+     * <p>
      * 
      * If you change the {@link #threadFactory}, then this
      * value may not be honored.
      */
     private String threadNamePrefix = DEFAULT_THREAD_NAME_PREFIX;
+    
+    /**
+     * When true, child threads created by this appender will be daemon threads,
+     * and therefore allow the JVM to exit gracefully without
+     * needing to explicitly shut down the appender.
+     * Note that in this case, it is possible for log events to not
+     * be handled.
+     * <p>
+     * 
+     * When false, child threads created by this appender will not be daemon threads,
+     * and therefore will prevent the JVM from shutting down
+     * until the appender is explicitly shut down.
+     * Set this to false if you want to ensure that every log event
+     * prior to shutdown is handled.
+     * <p>
+     * 
+     * If you change the {@link #threadFactory}, then this
+     * value may not be honored.
+     */
+    private boolean useDaemonThread = true;
     
     /**
      * For every droppedWarnFrequency consecutive dropped events, log a warning.
@@ -186,6 +222,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
             t.setName(threadNamePrefix + threadNumber.getAndIncrement());
+            t.setDaemon(useDaemonThread);
             return t;
         }
     }
@@ -345,6 +382,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
     protected void setEventHandler(EventHandler<LogEvent<Event>> eventHandler) {
         this.eventHandler = eventHandler;
+    }
+    
+    public boolean isDaemon() {
+        return useDaemonThread;
+    }
+    public void setDaemon(boolean useDaemonThread) {
+        this.useDaemonThread = useDaemonThread;
     }
     
 }
