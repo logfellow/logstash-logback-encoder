@@ -13,9 +13,7 @@
  */
 package net.logstash.logback.marker;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -47,29 +45,29 @@ public class MapEntriesAppendingMarkerTest {
         generator.writeEndObject();
         generator.flush();
         
-        assertThat(writer.toString(), is("{\"myField\":\"value\"}"));
+        assertThat(writer.toString()).isEqualTo("{\"myField\":\"value\"}");
     }
     
     @Test
     public void testEquals() {
         Map<String, String> map = new HashMap<String, String>();
         
-        assertThat(Markers.appendEntries(map), is(Markers.appendEntries(map)));
+        assertThat(Markers.appendEntries(map)).isEqualTo(Markers.appendEntries(map));
         
         Map<String, String> map2 = new HashMap<String, String>();
         map2.put("foo", "bar");
-        assertThat(Markers.appendEntries(map), not(is(Markers.appendEntries(map2))));
+        assertThat(Markers.appendEntries(map)).isNotEqualTo(Markers.appendEntries(map2));
     }
     
     @Test
     public void testHashCode() {
         Map<String, String> map = new HashMap<String, String>();
         
-        assertThat(Markers.appendEntries(map).hashCode(), is(Markers.appendEntries(map).hashCode()));
+        assertThat(Markers.appendEntries(map).hashCode()).isEqualTo(Markers.appendEntries(map).hashCode());
         
         Map<String, String> map2 = new HashMap<String, String>();
         map2.put("foo", "bar");
-        assertThat(Markers.appendEntries(map).hashCode(), not(is(Markers.appendEntries(map2).hashCode())));
+        assertThat(Markers.appendEntries(map).hashCode()).isNotEqualTo(Markers.appendEntries(map2).hashCode());
     }
     
 }

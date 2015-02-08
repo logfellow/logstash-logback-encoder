@@ -15,10 +15,12 @@ package net.logstash.logback.pattern;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -29,8 +31,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
 /**
@@ -81,12 +82,12 @@ public abstract class AbstractJsonPatternParserTest<Event> {
         Map<String, Object> actualResult = parseJson(process(patternJson));
         Map<String, Object> expectedResult = parseJson(expectedJson);
 
-        assertThat(actualResult, equalTo(expectedResult));
+        assertThat(actualResult).isEqualTo(expectedResult);
     }
 
     private String process(final String patternJson) throws IOException {
         NodeWriter<Event> root = parser.parse(patternJson);
-        assertThat(root, notNullValue());
+        assertThat(root).isNotNull();
         
         jsonGenerator.writeStartObject();
         root.write(jsonGenerator, event);
