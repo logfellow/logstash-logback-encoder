@@ -18,6 +18,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [UDP Appender](#udp)
   * [TCP Appenders](#tcp)
     * [SSL](#ssl)
+  * [Async Appenders](#async)
   * [Encoders / Layouts](#encoder)
 * [LoggingEvent Fields](#loggingevent_fields)
   * [Standard Fields](#loggingevent_standard)
@@ -206,8 +207,13 @@ Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBu
 All the encoding and TCP communication is delegated to a single writer thread.
 There is no need to wrap the TCP appenders with another asynchronous appender
 (such as `AsyncAppender` or `LoggingEventAsyncDisruptorAppender`).
+
+All the configuration parameters (except for sub-appender) of the [async appenders](#async)
+are valid for TCP appenders.  For example, `waitStrategyType` and `ringBufferSize`. 
+
 The TCP appenders will never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
+
 The TCP appenders will automatically reconnect if the connection breaks.
 
 To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
@@ -274,6 +280,106 @@ are supported by the `Logback*TcpSocketAppender`s.
 
 See the logstash documentation for the [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input
 for how to configure it to use SSL. 
+
+<a name="async"/>
+### Async Appenders
+
+The `*AsyncDisruptorAppender` appenders are similar to logback's `AsyncAppender`,
+except that a [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)
+is used as the queuing mechanism, as opposed to a `BlockingQueue`.
+These async appenders can delegate to any other underlying logback appender.
+
+For example:
+
+```xml
+  <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
+    <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
+       ...
+    </appender>
+  </appender>
+``` 
+
+The async appenders will never block the logging thread.
+If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
+
+By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BlockingWaitStrategy.html)
+is used by the worker thread spawned by this appender.
+The `BlockingWaitStrategy` minimizes CPU utilization, but results in slower latency and throughput.
+If you need faster latency and throughput (at the expense of higher CPU utilization), consider
+a different wait strategy offered by the disruptor, such as `SleepingWaitStrategy`.
+
+The wait strategy can be configured on the async appender using the `waitStrategyType` parameter, like this:
+```xml
+  <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
+    <waitStrategyType>sleeping</waitStrategyType>
+    <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
+       ...
+    </appender>
+  </appender>
+```
+
+The supported wait strategies are as follows:
+
+<table>
+  <tbody>
+    <tr>
+      <th>Wait Strategy</th>
+      <th>Parameters</th>
+      <th>Implementation</th>
+    </tr>
+    <tr>
+      <td><tt>blocking</tt></td>
+      <td>none</td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BlockingWaitStrategy.html"><tt>BlockingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><tt>busySpin</tt></td>
+      <td>none</td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BusySpinWaitStrategy.html"><tt>BusySpinWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><tt>liteBlocking</tt></td>
+      <td>none</td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/LiteBlockingWaitStrategy.html"><tt>LiteBlockingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><tt>sleeping</tt></td>
+      <td>none</td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/SleepingWaitStrategy.html"><tt>SleepingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><tt>yielding</tt></td>
+      <td>none</td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/YieldingWaitStrategy.html"><tt>YieldingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><tt>phasedBackoff{spinTime,yieldTime,timeUnit,fallbackStrategy}</tt><br/>e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
+      <td>
+        <ol>
+          <li><tt>spinTime</tt> - Time to spin before yielding</li>
+          <li><tt>yieldTime</tt> - Time to yield before falling back to the <tt>fallbackStrategy</tt></li>
+          <li><tt>timeUnit</tt> - Units of time for spin and yield timeouts. String name of a <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><tt>TimeUnit</tt></a> value (e.g. <tt>seconds</tt>)</li>
+          <li><tt>fallbackStrategy</tt> - String name of the wait strategy to fallback to after the timeouts have elapsed</li>
+        </ol>
+      </td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/PhasedBackoffWaitStrategy.html"><tt>PhasedBackoffWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><tt>timeoutBlocking{timeout,timeUnit}</tt><br/>e.g.<br/><tt>timeoutBlocking{1,minutes}<</tt></td>
+      <td>
+        <ol>
+          <li><tt>timeout</tt> - Time to block before throwing an exception</li>
+          <li><tt>timeUnit</tt> - Units of time for timeout. String name of a <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><tt>TimeUnit</tt></a> value (e.g. <tt>seconds</tt>)</li>
+        </ol>
+      </td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/TimeoutBlockingWaitStrategy.html"><tt>TimeoutBlockingWaitStrategy</tt></a></td>
+    </tr>
+  </tbody>
+</table>
+
+See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
+for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
+
 
 <a name="encoder"/>
 ### Encoders / Layouts

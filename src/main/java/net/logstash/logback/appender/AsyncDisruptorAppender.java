@@ -27,10 +27,12 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
+import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.EventTranslatorOneArg;
 import com.lmax.disruptor.ExceptionHandler;
+import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.WaitStrategy;
@@ -85,7 +87,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     
     public static final int DEFAULT_RING_BUFFER_SIZE = 8192;
     public static final ProducerType DEFAULT_PRODUCER_TYPE = ProducerType.MULTI;
-    public static final SleepingWaitStrategy DEFAULT_WAIT_STRATEGY = new SleepingWaitStrategy();
+    public static final WaitStrategy DEFAULT_WAIT_STRATEGY = new BlockingWaitStrategy();
     public static final String DEFAULT_THREAD_NAME_PREFIX = "logback-async-disruptor-appender-";
     public static final int DEFAULT_DROPPED_WARN_FREQUENCY = 1000;
     
@@ -111,6 +113,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     /**
      * The {@link WaitStrategy} to used by the RingBuffer
      * when pulling events to be processed by {@link #eventHandler}.
+     * <p>
+     * By default, a {@link BlockingWaitStrategy} is used, which is the most
+     * CPU conservative, but results in a higher latency.
+     * If you need lower latency (at the cost of higher CPU usage),
+     * consider using a {@link SleepingWaitStrategy} or a {@link PhasedBackoffWaitStrategy}.
      */
     private WaitStrategy waitStrategy = DEFAULT_WAIT_STRATEGY;
     
@@ -361,6 +368,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
     public void setWaitStrategy(WaitStrategy waitStrategy) {
         this.waitStrategy = waitStrategy;
+    }
+    
+    public void setWaitStrategyType(String waitStrategyType) {
+        setWaitStrategy(WaitStrategyFactory.createWaitStrategyFromString(waitStrategyType));
     }
     
     public ThreadFactory getThreadFactory() {
