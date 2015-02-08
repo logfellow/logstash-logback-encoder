@@ -24,7 +24,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
-    private static final StackTraceElement DEFAULT_CALLER_DATA = new StackTraceElement("", "", "", 0);
 
     public static final String FIELD_CALLER_CLASS_NAME = "caller_class_name";
     public static final String FIELD_CALLER_METHOD_NAME = "caller_method_name";
@@ -39,6 +38,9 @@ public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         StackTraceElement callerData = extractCallerData(event);
+        if (callerData == null) {
+            return;
+        }
         if (getFieldName() != null) {
             generator.writeObjectFieldStart(getFieldName());
         }
@@ -59,7 +61,7 @@ public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
         final StackTraceElement[] ste = event.getCallerData();
         if (ste == null || ste.length == 0) {
-            return DEFAULT_CALLER_DATA;
+            return null;
         }
         return ste[0];
     }

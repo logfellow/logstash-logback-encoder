@@ -13,9 +13,10 @@
  */
 package net.logstash.logback.appender;
 
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyBoolean;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
+import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -94,6 +95,35 @@ public class AsyncDisruptorAppenderTest {
         Assert.assertEquals(event1, captor.getValue().event);
         
         verify(event1).prepareForDeferredProcessing();
+    }
+
+    @Test
+    public void testThreadDaemon() throws Exception {
+        
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+            }
+        };
+        
+        appender.setDaemon(true);
+        assertThat(appender.getThreadFactory().newThread(runnable).isDaemon()).isTrue();
+        
+        appender.setDaemon(false);
+        assertThat(appender.getThreadFactory().newThread(runnable).isDaemon()).isFalse();
+    }
+
+    @Test
+    public void testThreadName() throws Exception {
+        
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+            }
+        };
+        
+        appender.setThreadNamePrefix("threadNamePrefix");
+        assertThat(appender.getThreadFactory().newThread(runnable).getName()).startsWith("threadNamePrefix");
     }
 
     @SuppressWarnings("unchecked")
