@@ -353,7 +353,14 @@ The supported wait strategies are as follows:
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/YieldingWaitStrategy.html"><tt>YieldingWaitStrategy</tt></a></td>
     </tr>
     <tr>
-      <td><tt>phasedBackoff{spinTime,yieldTime,timeUnit,fallbackStrategy}</tt><br/>e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
+      <td><pre>phasedBackoff{
+  <em>spinTime</em>,
+  <em>yieldTime</em>,
+  <em>timeUnit</em>,
+  <em>fallbackStrategy</em>
+}
+</pre>
+e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
       <td>
         <ol>
           <li><tt>spinTime</tt> - Time to spin before yielding</li>
@@ -365,7 +372,11 @@ The supported wait strategies are as follows:
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/PhasedBackoffWaitStrategy.html"><tt>PhasedBackoffWaitStrategy</tt></a></td>
     </tr>
     <tr>
-      <td><tt>timeoutBlocking{timeout,timeUnit}</tt><br/>e.g.<br/><tt>timeoutBlocking{1,minutes}<</tt></td>
+      <td><pre>timeoutBlocking{
+  <em>timeout</em>,
+  <em>timeUnit</em>
+}
+</pre>e.g.<br/><tt>timeoutBlocking{1,minutes}<</tt></td>
       <td>
         <ol>
           <li><tt>timeout</tt> - Time to block before throwing an exception</li>
