@@ -13,6 +13,8 @@
  */
 package net.logstash.logback.appender;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
@@ -29,6 +31,10 @@ import com.lmax.disruptor.YieldingWaitStrategy;
  */
 public class WaitStrategyFactory {
     
+    private static final char PARAM_END_CHAR = '}';
+    private static final char PARAM_START_CHAR = '{';
+    private static final char PARAM_SEPARATOR_CHAR = ',';
+
     /**
      * Creates a {@link WaitStrategy} from a string.
      * <p>
@@ -77,52 +83,112 @@ public class WaitStrategyFactory {
             return new YieldingWaitStrategy();
         }
         if (waitStrategyType.startsWith("phasedbackoff")) {
-            Object[] params = parseParams(waitStrategyType, Long.class, Long.class, TimeUnit.class, WaitStrategy.class);
-            return new PhasedBackoffWaitStrategy((Long) params[0], (Long) params[1], (TimeUnit) params[2], (WaitStrategy) params[3]);
+            List<Object> params = parseParams(waitStrategyType,
+                    Long.class,
+                    Long.class,
+                    TimeUnit.class,
+                    WaitStrategy.class);
+            return new PhasedBackoffWaitStrategy(
+                    (Long) params.get(0),
+                    (Long) params.get(1),
+                    (TimeUnit) params.get(2),
+                    (WaitStrategy) params.get(3));
         }
         if (waitStrategyType.startsWith("timeoutblocking")) {
-            Object[] params = parseParams(waitStrategyType, Long.class, TimeUnit.class);
-            return new TimeoutBlockingWaitStrategy((Long) params[0], (TimeUnit) params[1]);
+            List<Object> params = parseParams(waitStrategyType,
+                    Long.class,
+                    TimeUnit.class);
+            return new TimeoutBlockingWaitStrategy(
+                    (Long) params.get(0),
+                    (TimeUnit) params.get(1));
         }
         
         throw new IllegalArgumentException("Unknown wait strategy type: " + waitStrategyType);
         
     }
 
-    private static Object[] parseParams(String waitStrategyType, Class<?>... paramTypes) {
-        int startIndex = waitStrategyType.indexOf('{');
+    private static List<Object> parseParams(String waitStrategyType, Class<?>... paramTypes) {
+        String paramsString = extractParamsString(waitStrategyType, paramTypes);
+        
+        List<Object> params = new ArrayList<Object>(paramTypes.length);
+        
+        int startIndex = 0;
+        for (int i = 0; i < paramTypes.length && startIndex < paramsString.length(); i++) {
+            int endIndex = findParamEndIndex(paramsString, startIndex);
+            String paramString = paramsString.substring(startIndex, endIndex).trim();
+            startIndex = endIndex + 1;
+            
+            if (Long.class.equals(paramTypes[i])) {
+                params.add(Long.valueOf(paramString));
+            } else if (TimeUnit.class.equals(paramTypes[i])) {
+                params.add(TimeUnit.valueOf(paramString.toUpperCase()));
+            } else if (WaitStrategy.class.equals(paramTypes[i])) {
+                params.add(createWaitStrategyFromString(paramString));
+            } else {
+                throw new IllegalArgumentException("Unknown paramType " + paramTypes[i]);
+            }
+            
+        }
+        if (params.size() != paramTypes.length) {
+            throw new IllegalArgumentException(String.format("%d parameters must be provided for waitStrategyType %s. %d were provided.", paramTypes.length, waitStrategyType, params.size()));
+        }
+        
+        return params;
+    }
+
+    /**
+     * Extracts the parameters string (i.e. the part between the curly braces) from the waitStrategyType string.
+     * 
+     * @throws IllegalArgumentException if no param string was found, or it is invalid.
+     */
+    private static String extractParamsString(String waitStrategyType, Class<?>... paramTypes) {
+        int startIndex = waitStrategyType.indexOf(PARAM_START_CHAR);
         if (startIndex == -1) {
             throw new IllegalArgumentException(
-                    String.format("%d parameters must be provided for waitStrategyType %s."
-                            + " None were provided."
-                            + " To provide parameters, add a comma separated value list within curly braces ({}) to the end of the waitStrategyType string.",
-                            paramTypes.length,
-                            waitStrategyType));
+                String.format("%d parameters must be provided for waitStrategyType %s."
+                    + " None were provided."
+                    + " To provide parameters, add a comma separated value list within curly braces ({}) to the end of the waitStrategyType string.",
+                    paramTypes.length,
+                    waitStrategyType));
         }
-        int endIndex = waitStrategyType.lastIndexOf('}');
+        int endIndex = waitStrategyType.lastIndexOf(PARAM_END_CHAR);
         if (endIndex == -1) {
             throw new IllegalArgumentException(String.format("Parameters of %s must end with '}'", waitStrategyType));
         }
         
-        String[] paramStrings = waitStrategyType.substring(startIndex + 1, endIndex).split(",");
-        if (paramStrings.length != paramTypes.length) {
-            throw new IllegalArgumentException(String.format("%d parameters must be provided for waitStrategyType %s. Only %d were provided.", paramTypes.length, waitStrategyType, paramStrings.length));
-        }
-        
-        Object[] params = new Object[paramStrings.length];
-        for (int i = 0; i < paramTypes.length; i++) {
-            if (Long.class.equals(paramTypes[i])) {
-                params[i] = Long.valueOf(paramStrings[i].trim());
-            } else if (TimeUnit.class.equals(paramTypes[i])) {
-                params[i] = TimeUnit.valueOf(paramStrings[i].trim().toUpperCase());
-            } else if (WaitStrategy.class.equals(paramTypes[i])) {
-                params[i] = createWaitStrategyFromString(paramStrings[i].trim());
-            } else {
-                throw new IllegalArgumentException("Unknown paramType " + paramTypes[i]);
+        return waitStrategyType.substring(startIndex + 1, endIndex);
+    }
+
+    /**
+     * Finds the end character index of the parameter within the paramsString that starts at startIndex.
+     * 
+     * Takes into account nesting of parameters.
+     * 
+     * @param paramsString
+     * @param startIndex index within paramsString to start looking
+     * @return index at which the parameter string ends (e.g. the next comma, or paramsString length if no comma found)
+     * 
+     * @throws IllegalArgumentException if the parameter is not well formed
+     */
+    private static int findParamEndIndex(String paramsString, int startIndex) {
+        int nestLevel = 0;
+        for (int c = startIndex; c < paramsString.length(); c++) {
+            char character = paramsString.charAt(c);
+            if (character == PARAM_START_CHAR) {
+                nestLevel++;
+            } else if (character == PARAM_END_CHAR) {
+                nestLevel--;
+                if (nestLevel < 0) {
+                    throw new IllegalArgumentException(String.format("Unbalanced '}' at character position %d in %s", c, paramsString)); 
+                }
+            } else if (character == PARAM_SEPARATOR_CHAR && nestLevel == 0) {
+                return c;
             }
         }
-        
-        return params;
+        if (nestLevel != 0) {
+            throw new IllegalArgumentException(String.format("Unbalanced '{' in %s", paramsString)); 
+        }
+        return paramsString.length();
     }
 
 }

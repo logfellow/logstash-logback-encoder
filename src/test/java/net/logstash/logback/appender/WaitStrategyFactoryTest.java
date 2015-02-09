@@ -119,10 +119,21 @@ public class WaitStrategyFactoryTest {
     public void testCreatePhasedBackoff_unparsableParam() {
         WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{hello,1,SECONDS,blocking}");
     }
-
+    
+    @Test
     public void testCreatePhasedBackoff_nested() {
         PhasedBackoffWaitStrategy waitStrategy = (PhasedBackoffWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}}");
         assertThat(Whitebox.getInternalState(waitStrategy, "fallbackStrategy")).isInstanceOf(PhasedBackoffWaitStrategy.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreatePhasedBackoff_nested_invalidStart() {
+        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCreatePhasedBackoff_nested_invalidEnd() {
+        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}}}");
     }
 
     @Test
