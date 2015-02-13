@@ -19,11 +19,9 @@ import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -259,8 +257,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * has elasped since the last event was sent,
          * then the event handler will send the {@link AbstractLogstashTcpSocketAppender#keepAliveMessage}
          * to the socket outputstream.
-         * 
-         * @author pclay
          *
          */
         private class KeepAliveRunnable implements Runnable {
@@ -281,8 +277,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     scheduleKeepAlive(lastSent);
                 }
             }
-
-        };
+        }
         
         @Override
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
@@ -314,11 +309,16 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     }
                     lastSentTimestamp = currentTime;
                     break;
-                } catch (SocketException e) {
+                } catch (Exception e) {
                     addWarn(peerId + "unable to send event: " + e.getMessage(), e);
+                    /*
+                     * Need to re-open the socket in case of IOExceptions.
+                     * 
+                     * Reopening the socket probably won't help other exceptions
+                     * (like NullPointerExceptions),
+                     * but we're doing so anyway, just in case.
+                     */
                     reopenSocket();
-                } catch (IOException e) {
-                    addWarn(peerId + "unable to send event: " + e.getMessage(), e);
                 }
             }
         }
@@ -360,42 +360,52 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
-            try {
-                int errorCount = 0;
-                while (socket == null && started && !Thread.currentThread().isInterrupted()) {
-                    long startTime = System.currentTimeMillis();
-                    try {
-                        socket = socketFactory.createSocket();
-                        socket.connect(new InetSocketAddress(remoteAddress, port), acceptConnectionTimeout);
-                        outputStream = new BufferedOutputStream(socket.getOutputStream(), writeBufferSize);
-                        
-                        encoder.init(outputStream);
-                        
-                        addInfo(peerId + "connection established.");
-                        
-                    } catch (IOException e) {
-                        
-                        closeSocket();
-                        /*
-                         * If the connection timed out, then take the elapsed time into account
-                         * when calculating time to sleep
-                         */
-                        long sleepTime = reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime);
-                        
-                        /*
-                         * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
-                         */
-                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG) {
-                            addWarn(peerId + "connection failed. Waiting " + sleepTime + "ms before attempting reconnection.", e);
-                        }
-                        
-                        if (sleepTime > 0) {
+            int errorCount = 0;
+            while (started && !Thread.currentThread().isInterrupted()) {
+                long startTime = System.currentTimeMillis();
+                Socket tempSocket = null;
+                OutputStream tempOutputStream = null;
+                try {
+                    tempSocket = socketFactory.createSocket();
+                    tempSocket.connect(new InetSocketAddress(remoteAddress, port), acceptConnectionTimeout);
+                    tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
+                    
+                    encoder.init(tempOutputStream);
+                    
+                    addInfo(peerId + "connection established.");
+                    
+                    this.socket = tempSocket;
+                    this.outputStream = tempOutputStream;
+                    return;
+                    
+                } catch (Exception e) {
+                    
+                    CloseUtil.closeQuietly(tempOutputStream);
+                    CloseUtil.closeQuietly(tempSocket);
+                    
+                    /*
+                     * If the connection timed out, then take the elapsed time into account
+                     * when calculating time to sleep
+                     */
+                    long sleepTime = reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime);
+                    
+                    /*
+                     * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
+                     */
+                    if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG) {
+                        addWarn(peerId + "connection failed. Waiting " + sleepTime + "ms before attempting reconnection.", e);
+                    }
+                    
+                    if (sleepTime > 0) {
+                        try {
                             Thread.sleep(sleepTime);
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            addWarn(peerId + "connection interrupted. Will no longer attempt reconnection");
+                            return;
                         }
-                    } 
-                }
-            } catch (InterruptedException e) {
-                addWarn(peerId + "connection interrupted");
+                    }
+                } 
             }
         }
         
