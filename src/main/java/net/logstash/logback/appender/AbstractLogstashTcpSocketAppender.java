@@ -105,11 +105,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private int port = DEFAULT_PORT;
 
     /**
-     * The resolved remote address.
-     */
-    private InetAddress remoteAddress;
-
-    /**
      * Time period for which to wait after a connection fails,
      * before attempting to reconnect.
      * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
@@ -367,7 +362,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 OutputStream tempOutputStream = null;
                 try {
                     tempSocket = socketFactory.createSocket();
-                    tempSocket.connect(new InetSocketAddress(remoteAddress, port), acceptConnectionTimeout);
+                    tempSocket.connect(new InetSocketAddress(remoteHost, port), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
                     
                     encoder.init(tempOutputStream);
@@ -507,7 +502,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         if (errorCount == 0) {
             try {
-                remoteAddress = InetAddress.getByName(remoteHost);
+                InetAddress.getByName(remoteHost);
             } catch (UnknownHostException ex) {
                 addError("unknown host: " + remoteHost);
                 errorCount++;
