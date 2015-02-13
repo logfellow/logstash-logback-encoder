@@ -21,13 +21,18 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import net.logstash.logback.encoder.SeparatorParser;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
 import ch.qos.logback.core.net.ssl.SSLConfigurableSocket;
@@ -156,7 +161,34 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * for details on how to configure SSL for a client.
      */
     private SSLConfiguration sslConfiguration;
-
+    
+    /**
+     * If this duration elapses without an event being sent,
+     * then the {@link #keepAliveMessage} will be sent to the socket in
+     * order to keep the connection alive.
+     * 
+     * When null (the default), no keepAlive messages will be sent.
+     */
+    private Duration keepAliveDuration;
+    
+    /**
+     * Message to send for keeping the connection alive
+     * if {@link #keepAliveDuration} is non-null.
+     */
+    private String keepAliveMessage = System.lineSeparator();
+    
+    /**
+     * The charset to use when writing the {@link #keepAliveMessage}.
+     * Defaults to UTF-8.
+     */
+    private Charset keepAliveCharset = Charset.forName("UTF-8");
+    
+    /**
+     * The {@link #keepAliveMessage} translated to bytes using the {@link #keepAliveCharset}.
+     * Populated at startup time.
+     */
+    private byte[] keepAliveBytes;
+    
     /**
      * Event handler responsible for performing the TCP transmission.
      */
@@ -184,8 +216,73 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          */
         private volatile boolean started;
         
+        /**
+         * The destination socket to which to send events.
+         */
         private volatile Socket socket;
+        
+        /**
+         * The destination output stream to which to send events.
+         * This is a buffered wrapper of the socket output stream.
+         */
         private volatile OutputStream outputStream;
+        
+        /**
+         * Time at which the last event was sent.
+         * Used to calculate if a keep alive message
+         * needs to be scheduled/sent.
+         */
+        private volatile long lastSentTimestamp;
+        
+        /**
+         * Future for the currently scheduled {@link #keepAliveRunnable}.
+         */
+        private ScheduledFuture<?> keepAliveFuture;
+        
+        /**
+         * See {@link KeepAliveRunnable}.
+         * Initialized on startup if keep alive is enabled.
+         */
+        private KeepAliveRunnable keepAliveRunnable;
+        
+        /**
+         * When run, if the {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
+         * has elasped since the last event was sent,
+         * then this runnable will publish a keepAlive event to the ringBuffer.
+         * <p>
+         * The runnable will reschedule itself to execute in the future
+         * after the calculated {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
+         * from the last sent event using {@link TcpSendingEventHandler#scheduleKeepAlive(long)}.
+         * 
+         * When the keepAlive event is processed by the event handler,
+         * if the {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
+         * has elasped since the last event was sent,
+         * then the event handler will send the {@link AbstractLogstashTcpSocketAppender#keepAliveMessage}
+         * to the socket outputstream.
+         * 
+         * @author pclay
+         *
+         */
+        private class KeepAliveRunnable implements Runnable {
+
+            @Override
+            public void run() {
+                long lastSent = lastSentTimestamp;
+                long currentTime = System.currentTimeMillis();
+                if (hasKeepAliveDurationElapsed(lastSent, currentTime)) {
+                    /*
+                     * Publish a keep alive message to the RingBuffer.
+                     * 
+                     * A null event indicates that this is a keep alive message. 
+                     */
+                    getDisruptor().getRingBuffer().publishEvent(getEventTranslator(), null);
+                    scheduleKeepAlive(currentTime);
+                } else {
+                    scheduleKeepAlive(lastSent);
+                }
+            }
+
+        };
         
         @Override
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
@@ -195,10 +292,27 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     return;
                 }
                 try {
-                    encoder.doEncode(logEvent.event);
+                    long currentTime = System.currentTimeMillis();
+                    /*
+                     * A null event indicates that this is a keep alive message. 
+                     */
+                    if (logEvent.event != null) {
+                        /*
+                         * This is a standard (non-keepAlive) event.
+                         * Therefore, we need to send the event.
+                         */
+                        encoder.doEncode(logEvent.event);
+                    } else if (hasKeepAliveDurationElapsed(lastSentTimestamp, currentTime)){
+                        /*
+                         * This is a keep alive event, and the keepAliveDuration has passed,
+                         * Therefore, we need to send the keepAliveMessage.
+                         */
+                        outputStream.write(keepAliveBytes);
+                    }
                     if (endOfBatch) {
                         outputStream.flush();
                     }
+                    lastSentTimestamp = currentTime;
                     break;
                 } catch (SocketException e) {
                     addWarn(peerId + "unable to send event: " + e.getMessage(), e);
@@ -209,6 +323,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
 
+        private boolean hasKeepAliveDurationElapsed(long lastSent, long currentTime) {
+            return isKeepAliveEnabled()
+                    && lastSent + keepAliveDuration.getMilliseconds() < currentTime;
+        }
+
         @Override
         public void onStart() {
             /*
@@ -217,11 +336,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
              */
             started = true;
             openSocket();
+            scheduleKeepAlive(System.currentTimeMillis());
         }
         
         @Override
         public void onShutdown() {
             started = false;
+            unscheduleKeepAlive();
             closeEncoder();
             closeSocket();
         }
@@ -296,7 +417,32 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             
             encoder.stop();
         }
-
+        
+        private synchronized void scheduleKeepAlive(long basedOnTime) {
+            if (isKeepAliveEnabled() && !Thread.currentThread().isInterrupted()) {
+                if (keepAliveRunnable == null) {
+                    keepAliveRunnable = new KeepAliveRunnable();
+                }
+                long delay = keepAliveDuration.getMilliseconds() - (System.currentTimeMillis() - basedOnTime);
+                keepAliveFuture = getExecutorService().schedule(
+                    keepAliveRunnable,
+                    delay,
+                    TimeUnit.MILLISECONDS);
+            }
+        }
+        private synchronized void unscheduleKeepAlive() {
+            if (keepAliveFuture != null) {
+                keepAliveFuture.cancel(true);
+                try {
+                    keepAliveFuture.get();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    // ignore
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+        }
     }
     
     /**
@@ -377,6 +523,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
             }
         }
+        
+        if (keepAliveMessage != null && keepAliveCharset != null) {
+            keepAliveBytes = keepAliveMessage.getBytes(keepAliveCharset);
+        }
 
         if (errorCount == 0) {
             
@@ -388,6 +538,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 encoder.start();
             }
             peerId = "Log destination " + remoteHost + ":" + port + ": ";
+            
+            if (keepAliveDuration != null) {
+                setThreadPoolCoreSize(getThreadPoolCoreSize() + 1);
+            }
             super.start();
         }
     }
@@ -496,7 +650,60 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * See <a href="http://logback.qos.ch/manual/usingSSL.html> the logback manual</a>
      * for details on how to configure SSL for a client.
      */
-   public void setSsl(SSLConfiguration sslConfiguration) {
+    public void setSsl(SSLConfiguration sslConfiguration) {
         this.sslConfiguration = sslConfiguration;
     }
+    
+    public Duration getKeepAliveDuration() {
+        return keepAliveDuration;
+    }
+    /**
+     * If this duration elapses without an event being sent,
+     * then the {@link #keepAliveMessage} will be sent to the socket in
+     * order to keep the connection alive.
+     * 
+     * When null, no keepAlive messages will be sent.
+     */
+    public void setKeepAliveDuration(Duration keepAliveDuration) {
+        this.keepAliveDuration = keepAliveDuration;
+    }
+    
+    public String getKeepAliveMessage() {
+        return keepAliveMessage;
+    }
+    /**
+     * Message to send for keeping the connection alive
+     * if {@link #keepAliveDuration} is non-null.
+     * 
+     * The following values have special meaning:
+     * <ul>
+     * <li><tt>null</tt> or empty string = no keep alive.</li>
+     * <li>"<tt>SYSTEM</tt>" = operating system new line (default).</li>
+     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
+     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * </ul>
+     * <p>
+     * Any other value will be used as-is.
+     */
+    public void setKeepAliveMessage(String keepAliveMessage) {
+        this.keepAliveMessage = SeparatorParser.parseSeparator(keepAliveMessage);
+    }
+    
+    public boolean isKeepAliveEnabled() {
+        return this.keepAliveDuration != null
+                && this.keepAliveMessage != null;
+    }
+    
+    public Charset getKeepAliveCharset() {
+        return keepAliveCharset;
+    }
+    
+    /**
+     * The charset to use when writing the {@link #keepAliveMessage}.
+     * Defaults to UTF-8.
+     */
+   public void setKeepAliveCharset(String keepAliveCharset) {
+        this.keepAliveCharset = Charset.forName(keepAliveCharset);
+    }
+    
 }

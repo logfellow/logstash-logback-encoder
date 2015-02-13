@@ -215,6 +215,23 @@ The TCP appenders will never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
 
 The TCP appenders will automatically reconnect if the connection breaks.
+However, events may be lost before Java's socket realizes the connection has broken.
+
+If events occur infrequently, and the connection breaks consistently due to a server-side idle timeout,
+then you can enable keep alive functionality by configuring a `keepAliveDuration` like this:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      ...
+      <keepAliveDuration>5 minutes</keepAliveDuration>
+  </appender>
+```
+
+When the `keepAliveDuration` is set, then a keep alive message will be sent
+if an event has not occurred for the length of the duration.
+The keep alive message defaults to the system's line separator,
+but can be changed by setting the `keepAliveMessage` property.
+
 
 To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
 input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:

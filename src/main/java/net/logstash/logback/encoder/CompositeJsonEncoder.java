@@ -223,17 +223,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * Any other value will be used as given as the lineSeparator.
      */
     public void setLineSeparator(String lineSeparator) {
-        if (lineSeparator == null || lineSeparator.isEmpty()) {
-            this.lineSeparator = null;
-        } else if (lineSeparator.equalsIgnoreCase("SYSTEM")) {
-            this.lineSeparator = System.getProperty("line.separator");
-        } else if (lineSeparator.equalsIgnoreCase("UNIX")) {
-            this.lineSeparator = "\n";
-        } else if (lineSeparator.equalsIgnoreCase("WINDOWS")) {
-            this.lineSeparator = "\r\n";
-        } else {
-            this.lineSeparator = lineSeparator;
-        }
+        this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
     }
 
     protected CompositeJsonFormatter<Event> getFormatter() {

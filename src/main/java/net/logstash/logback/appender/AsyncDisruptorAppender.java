@@ -14,8 +14,8 @@
 package net.logstash.logback.appender;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -164,9 +164,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private ThreadFactory threadFactory = new WorkerThreadFactory();
     
     /**
-     * The {@link ExecutorService} used to execute the handler task.
+     * The {@link ScheduledExecutorService} used to execute the handler task.
      */
-    private ExecutorService executorService;
+    private ScheduledExecutorService executorService;
+    
+    /**
+     * Size of the thread pool to create.
+     */
+    private int threadPoolCoreSize = 1;
     
     /**
      * The {@link Disruptor} containing the {@link RingBuffer} onto
@@ -178,7 +183,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Sets the {@link LogEvent#event} to the logback Event.
      * Used when publishing events to the {@link RingBuffer}. 
      */
-    private final EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<Event>();
+    private EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<Event>();
     
     /**
      * Used by the handler thread to process the event.
@@ -194,12 +199,17 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     /**
      * Consecutive number of dropped events.
      */
-    private final AtomicLong consecutiveDroppedCount = new AtomicLong(); 
+    private final AtomicLong consecutiveDroppedCount = new AtomicLong();
+    
+    /**
+     * The {@link EventFactory} used to create {@link LogEvent}s for the RingBuffer.
+     */
+    private LogEventFactory<Event> eventFactory = new LogEventFactory<Event>();
     
     /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
      */
-    protected static final class LogEvent<Event> {
+    protected static class LogEvent<Event> {
         /**
          * The logback event.
          */
@@ -210,7 +220,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Factory for creating the initial {@link LogEvent}s to populate
      * the {@link RingBuffer}.
      */
-    private static final class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
+    private static class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
 
         @Override
         public LogEvent<Event> newInstance() {
@@ -238,7 +248,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Sets the {@link LogEvent#event} to the logback Event.
      * Used when publishing events to the {@link RingBuffer}. 
      */
-    private static class LogEventTranslator<Event> implements EventTranslatorOneArg<LogEvent<Event>, Event> {
+    protected static class LogEventTranslator<Event> implements EventTranslatorOneArg<LogEvent<Event>, Event> {
 
         @Override
         public void translateTo(LogEvent<Event> logEvent, long sequence, Event event) {
@@ -278,10 +288,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             return;
         }
         
-        this.executorService = Executors.newCachedThreadPool(this.threadFactory);
+        this.executorService = Executors.newScheduledThreadPool(
+                getThreadPoolCoreSize(),
+                this.threadFactory);
         
         this.disruptor = new Disruptor<LogEvent<Event>>(
-                new LogEventFactory<Event>(),
+                this.eventFactory,
                 this.ringBufferSize,
                 this.executorService,
                 this.producerType,
@@ -340,6 +352,33 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     protected void prepareForDeferredProcessing(Event event) {
         event.prepareForDeferredProcessing();
+    }
+    
+    protected void setEventFactory(LogEventFactory<Event> eventFactory) {
+        this.eventFactory = eventFactory;
+    }
+    
+    protected EventTranslatorOneArg<LogEvent<Event>, Event> getEventTranslator() {
+        return eventTranslator;
+    }
+    
+    protected void setEventTranslator(EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator) {
+        this.eventTranslator = eventTranslator;
+    }
+    
+    protected ScheduledExecutorService getExecutorService() {
+        return executorService;
+    }
+
+    protected Disruptor<LogEvent<Event>> getDisruptor() {
+        return disruptor;
+    }
+    
+    protected int getThreadPoolCoreSize() {
+        return threadPoolCoreSize;
+    }
+    protected void setThreadPoolCoreSize(int threadPoolCoreSize) {
+        this.threadPoolCoreSize = threadPoolCoreSize;
     }
     
     public String getThreadNamePrefix() {
