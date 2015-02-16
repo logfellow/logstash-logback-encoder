@@ -59,7 +59,7 @@ import com.lmax.disruptor.dsl.Disruptor;
  * <p>
  * 
  * In addition, SSL can be enabled by setting the SSL configuration via {@link #setSsl(SSLConfiguration)}. 
- * See <a href="http://logback.qos.ch/manual/usingSSL.html>the logback manual</a>
+ * See <a href="http://logback.qos.ch/manual/usingSSL.html">the logback manual</a>
  * for details on how to configure client-side SSL.
  *
  * @author <a href="mailto:mirko.bernardoni@gmail.com">Mirko Bernardoni</a> (original, which did not use disruptor)
@@ -150,7 +150,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     
     /**
      * Set this to non-null to use SSL.
-     * See <a href="http://logback.qos.ch/manual/usingSSL.html> the logback manual</a>
+     * See <a href="http://logback.qos.ch/manual/usingSSL.html"> the logback manual</a>
      * for details on how to configure SSL for a client.
      */
     private SSLConfiguration sslConfiguration;
@@ -652,7 +652,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
     /**
      * Set this to non-null to use SSL.
-     * See <a href="http://logback.qos.ch/manual/usingSSL.html> the logback manual</a>
+     * See <a href="http://logback.qos.ch/manual/usingSSL.html"> the logback manual</a>
      * for details on how to configure SSL for a client.
      */
     public void setSsl(SSLConfiguration sslConfiguration) {
