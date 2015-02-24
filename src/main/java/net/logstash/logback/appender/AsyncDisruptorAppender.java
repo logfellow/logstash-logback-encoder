@@ -35,6 +35,7 @@ import com.lmax.disruptor.ExceptionHandler;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
+import com.lmax.disruptor.TimeoutException;
 import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -320,7 +321,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          * Don't allow any more events to be appended.
          */
         super.stop();
-        this.disruptor.shutdown();
+        try {
+            this.disruptor.shutdown(1, TimeUnit.MINUTES);
+        } catch (TimeoutException e) {
+            addWarn("Some queued events have not been logged due to requested shutdown");
+        }
         
         this.executorService.shutdown();
         

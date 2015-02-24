@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -183,6 +184,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private byte[] keepAliveBytes;
     
     /**
+     * Used to signal the socket reconnect thread that the shutdown has occurred.
+     * The latch will be non-zero when started, and zero when shutdown.  
+     */
+    private volatile CountDownLatch shutdownLatch;
+    
+    /**
      * Event handler responsible for performing the TCP transmission.
      */
     private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
@@ -203,12 +210,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          */
         private static final int MAX_REPEAT_WRITE_ATTEMPTS = 5;
 
-        /**
-         * True when this event handler is started.
-         * It will be started by the {@link Disruptor}.
-         */
-        private volatile boolean started;
-        
         /**
          * The destination socket to which to send events.
          */
@@ -278,7 +279,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
             
             for (int i = 0; i < MAX_REPEAT_WRITE_ATTEMPTS; i++) {
-                if (!started) {
+                if (this.socket == null) {
+                    /*
+                     * socket could be null if reconnect failed due to shutdown in progress.
+                     */
                     return;
                 }
                 try {
@@ -325,18 +329,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         @Override
         public void onStart() {
-            /*
-             * Set started = true before attempting to openSocket,
-             * because openSocket checks the started state.
-             */
-            started = true;
             openSocket();
             scheduleKeepAlive(System.currentTimeMillis());
         }
         
         @Override
         public void onShutdown() {
-            started = false;
             unscheduleKeepAlive();
             closeEncoder();
             closeSocket();
@@ -356,7 +354,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          */
         private synchronized void openSocket() {
             int errorCount = 0;
-            while (started && !Thread.currentThread().isInterrupted()) {
+            while (isStarted() && !Thread.currentThread().isInterrupted()) {
                 long startTime = System.currentTimeMillis();
                 Socket tempSocket = null;
                 OutputStream tempOutputStream = null;
@@ -393,17 +391,16 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     
                     if (sleepTime > 0) {
                         try {
-                            Thread.sleep(sleepTime);
+                            shutdownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
                         } catch (InterruptedException ie) {
                             Thread.currentThread().interrupt();
                             addWarn(peerId + "connection interrupted. Will no longer attempt reconnection");
-                            return;
                         }
                     }
                 } 
             }
         }
-        
+
         private synchronized void closeSocket() {
             CloseUtil.closeQuietly(outputStream);
             outputStream = null;
@@ -480,8 +477,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         super();
         setEventHandler(new TcpSendingEventHandler());
     }
-
-    public void start() {
+    
+    @Override
+    public synchronized boolean isStarted() {
+        CountDownLatch latch = this.shutdownLatch;
+        return latch != null && latch.getCount() != 0;
+    }
+    
+    public synchronized void start() {
         if (isStarted()) {
             return;
         }
@@ -547,8 +550,21 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             if (keepAliveDuration != null) {
                 setThreadPoolCoreSize(getThreadPoolCoreSize() + 1);
             }
+            this.shutdownLatch = new CountDownLatch(1);
             super.start();
         }
+    }
+    
+    @Override
+    public synchronized void stop() {
+        if (!isStarted()) {
+            return;
+        }
+        /*
+         * Stop waiting to reconnect (if reconnect logic is currently waiting)
+         */
+        this.shutdownLatch.countDown();
+        super.stop();
     }
 
     public Encoder<Event> getEncoder() {
