@@ -233,13 +233,13 @@ but can be changed by setting the `keepAliveMessage` property.
 
 
 To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
-input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
+input with the [`json_lines`](http://www.logstash.net/docs/latest/codecs/json_lines) codec in logstash's configuration like this:
 
 ```
 input {
     tcp {
         port => 4560
-        codec => json
+        codec => json_lines
     }
 }
 ```
