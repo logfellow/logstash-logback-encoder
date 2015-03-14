@@ -314,7 +314,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     
     @Override
     public void stop() {
-        if (!isStarted()) {
+        /*
+         * Check super.isStarted() instead of isStarted() because subclasses
+         * might override isStarted() to perform other comparisons that we don't
+         * want to check here.  Those should be checked by subclasses
+         * prior to calling super.stop()
+         */
+        if (!super.isStarted()) {
             return;
         }
         /*
