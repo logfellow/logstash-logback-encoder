@@ -45,7 +45,6 @@ import ch.qos.logback.core.util.Duration;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.RingBuffer;
-import com.lmax.disruptor.dsl.Disruptor;
 
 /**
  * An {@link AsyncDisruptorAppender} appender that writes
@@ -360,6 +359,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 OutputStream tempOutputStream = null;
                 try {
                     tempSocket = socketFactory.createSocket();
+                    /*
+                     * Set the SO_TIMEOUT so that SSL handshakes will timeout if they take too long.
+                     * 
+                     * Note that SO_TIMEOUT only applies to reads (which occur during the handshake process).
+                     */
+                    tempSocket.setSoTimeout(acceptConnectionTimeout);
                     tempSocket.connect(new InetSocketAddress(remoteHost, port), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
                     
@@ -479,7 +484,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
     
     @Override
-    public synchronized boolean isStarted() {
+    public boolean isStarted() {
         CountDownLatch latch = this.shutdownLatch;
         return latch != null && latch.getCount() != 0;
     }
