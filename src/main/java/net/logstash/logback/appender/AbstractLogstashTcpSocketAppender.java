@@ -168,7 +168,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Message to send for keeping the connection alive
      * if {@link #keepAliveDuration} is non-null.
      */
-    private String keepAliveMessage = System.lineSeparator();
+    private String keepAliveMessage = System.getProperty("line.separator");
     
     /**
      * The charset to use when writing the {@link #keepAliveMessage}.
