@@ -385,7 +385,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * If the connection timed out, then take the elapsed time into account
                      * when calculating time to sleep
                      */
-                    long sleepTime = reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime);
+                    long sleepTime = Math.max(0, reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime));
                     
                     /*
                      * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
