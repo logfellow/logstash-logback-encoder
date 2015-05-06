@@ -854,7 +854,7 @@ For example:
     <pattern>
       <pattern>
         {
-          "timestamp": "%date{ISO8601}"
+          "timestamp": "%date{ISO8601}",
           "myCustomField": "fieldValue",
           "relative": "#asLong{%relative}"
         }
