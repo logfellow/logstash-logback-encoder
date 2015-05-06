@@ -159,17 +159,33 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         }
     }
     
-    public boolean isIncludeCallerInfo() {
+    public boolean isIncludeCallerData() {
         return callerDataProvider != null;
     }
     
-    public void setIncludeCallerInfo(boolean includeCallerInfo) {
-        if (isIncludeCallerInfo() != includeCallerInfo) {
+    public void setIncludeCallerData(boolean includeCallerData) {
+        if (isIncludeCallerData() != includeCallerData) {
             getProviders().removeProvider(callerDataProvider);
-            if (includeCallerInfo) {
+            if (includeCallerData) {
                 getProviders().addCallerData(callerDataProvider = new CallerDataJsonProvider());
             }
         }
+    }
+
+    /**
+     * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses)
+     */
+    @Deprecated
+    public boolean isIncludeCallerInfo() {
+        return isIncludeCallerData();
+    }
+    
+    /**
+     * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
+     */
+    @Deprecated
+    public void setIncludeCallerInfo(boolean includeCallerInfo) {
+        setIncludeCallerData(includeCallerInfo);
     }
     
     public void setCustomFieldsFromString(String customFields) {

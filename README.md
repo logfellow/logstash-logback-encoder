@@ -539,12 +539,15 @@ in the encoder/layout/appender configuration.
 The encoder/layout/appender do not contain caller info by default. 
 This can be costly to calculate and should be switched off for busy production environments.
 
-To switch it on, add the `includeCallerInfo` property to the configuration.
+To switch it on, add the `includeCallerData` property to the configuration.
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <includeCallerInfo>true</includeCallerInfo>
+  <includeCallerData>true</includeCallerData>
 </encoder>
 ```
+If the encoder is included inside an asynchronous appender, such as
+`AsyncAppender`, `LoggingEventAsyncDisruptorAppender`, or `LogstashTcpSocketAppender`, then
+`includeCallerData` must be set to true on the appender as well.
 
 When switched on, the following fields will be included in the log event:
 
@@ -554,6 +557,7 @@ When switched on, the following fields will be included in the log event:
 | `caller_method_name` | Name of the method that logged the event
 | `caller_file_name`   | Name of the file that logged the event
 | `caller_line_number` | Line number of the file where the event was logged
+
 
 <a name="loggingevent_custom"/>
 ### Custom Fields

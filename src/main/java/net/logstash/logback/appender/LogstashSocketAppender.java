@@ -84,10 +84,26 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         return logstashLayout.getCustomFields().toString();
     }
     
+    public boolean isIncludeCallerData() {
+        return logstashLayout.isIncludeCallerData();
+    }
+    
+    public void setIncludeCallerData(boolean includeCallerData) {
+        logstashLayout.setIncludeCallerData(includeCallerData);
+    }
+    
+    /**
+     * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses) 
+     */
+    @Deprecated
     public boolean isIncludeCallerInfo() {
         return logstashLayout.isIncludeCallerInfo();
     }
     
+    /**
+     * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
+     */
+    @Deprecated
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         logstashLayout.setIncludeCallerInfo(includeCallerInfo);
     }

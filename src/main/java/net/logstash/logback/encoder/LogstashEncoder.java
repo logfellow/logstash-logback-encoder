@@ -40,10 +40,26 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().addProvider(provider);
     }
     
+    public boolean isIncludeCallerData() {
+        return getFormatter().isIncludeCallerData();
+    }
+    
+    public void setIncludeCallerData(boolean includeCallerData) {
+        getFormatter().setIncludeCallerData(includeCallerData);
+    }
+    
+    /**
+     * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses)
+     */
+    @Deprecated
     public boolean isIncludeCallerInfo() {
         return getFormatter().isIncludeCallerInfo();
     }
     
+    /**
+     * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
+     */
+    @Deprecated
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         getFormatter().setIncludeCallerInfo(includeCallerInfo);
     }
