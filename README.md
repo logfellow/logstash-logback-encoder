@@ -529,8 +529,8 @@ It is a configuration error to specify both included and excluded key names.
 <a name="loggingevent_context"/>
 ### Context fields
 
-By default, each property of Logback's Context (`ch.qos.logback.core.Context`)
-will appear as a field in the LoggingEvent.
+By default, each property of Logback's Context (`ch.qos.logback.core.Context`), such as `HOSTNAME`,
+will appear as a field in the LoggingEvent. 
 This can be disabled by specifying `<includeContext>false</includeContext>`
 in the encoder/layout/appender configuration.
 
@@ -706,7 +706,7 @@ For example:
 Prevent a field from being output by setting the field name to `[ignore]`.
 
 For LoggingEvents, see [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
-for all the field names that can be customized.  Additionally, a separate set of [shortened field names](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java) can be configured like this:
+for all the field names that can be customized (each field in that class is the name of the xml element that you would use to specify the field name).  Additionally, a separate set of [shortened field names](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java) can be configured like this:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
