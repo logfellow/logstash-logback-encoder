@@ -26,6 +26,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
+import org.slf4j.Marker;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -54,7 +55,7 @@ public class LogstashMarkersJsonProviderTest {
     public void test() throws IOException {
         
         when(outerMarker.hasReferences()).thenReturn(true);
-        when(outerMarker.iterator()).thenReturn(Collections.singleton(innerMarker).iterator());
+        when(outerMarker.iterator()).thenReturn(Collections.<Marker>singleton(innerMarker).iterator());
         
         when(event.getMarker()).thenReturn(outerMarker);
         

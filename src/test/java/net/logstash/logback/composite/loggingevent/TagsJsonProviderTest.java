@@ -63,7 +63,7 @@ public class TagsJsonProviderTest {
     @Before
     public void setup() {
         when(marker1.hasReferences()).thenReturn(true);
-        when(marker1.iterator()).thenReturn(Collections.singleton(marker2).iterator());
+        when(marker1.iterator()).thenReturn(Collections.<Marker>singleton(marker2).iterator());
         
         when(marker2.hasReferences()).thenReturn(true);
         when(marker2.iterator()).thenReturn(Collections.singleton(marker3).iterator());
