@@ -24,6 +24,7 @@ import ch.qos.logback.core.LayoutBase;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
+
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
     
     private boolean immediateFlush = true;
@@ -57,8 +58,8 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         String suffixResult = doLayoutWrapped(suffix, event);
         
         int size = result.length()
-                + prefixResult == null ? 0 : prefixResult.length()
-                + suffixResult == null ? 0 : suffixResult.length();
+                + (prefixResult == null ? 0 : prefixResult.length())
+                + (suffixResult == null ? 0 : suffixResult.length());
         
         StringBuilder stringBuilder = new StringBuilder(size);
         if (prefixResult != null) {
