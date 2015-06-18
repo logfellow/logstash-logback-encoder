@@ -167,7 +167,10 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         if (isIncludeCallerData() != includeCallerData) {
             getProviders().removeProvider(callerDataProvider);
             if (includeCallerData) {
-                getProviders().addCallerData(callerDataProvider = new CallerDataJsonProvider());
+                callerDataProvider = new CallerDataJsonProvider();
+                getProviders().addCallerData(callerDataProvider);
+            } else {
+                callerDataProvider = null;
             }
         }
     }
@@ -234,7 +237,10 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         if (isIncludeMdc() != includeMdc) {
             getProviders().removeProvider(mdcProvider);
             if (includeMdc) {
-                getProviders().addMdc(mdcProvider = new MdcJsonProvider());
+                mdcProvider = new MdcJsonProvider();
+                getProviders().addMdc(mdcProvider);
+            } else {
+                mdcProvider = null;
             }
         }
     }
@@ -279,7 +285,10 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         if (isIncludeContext() != includeContext) {
             getProviders().removeProvider(contextProvider);
             if (includeContext) {
-                getProviders().addContext(contextProvider = new ContextJsonProvider<ILoggingEvent>());
+                contextProvider = new ContextJsonProvider<ILoggingEvent>();
+                getProviders().addContext(contextProvider);
+            } else {
+                contextProvider = null;
             }
         }
     }
@@ -308,7 +317,10 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         if (isEnableContextMap() != enableContextMap) {
             getProviders().removeProvider(contextMapProvider);
             if (enableContextMap) {
-                getProviders().addContextMap(contextMapProvider = new ContextMapJsonProvider());
+                contextMapProvider = new ContextMapJsonProvider();
+                getProviders().addContextMap(contextMapProvider);
+            } else {
+                contextMapProvider = null;
             }
         }
     }
