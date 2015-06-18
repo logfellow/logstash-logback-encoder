@@ -244,6 +244,8 @@ input {
 }
 ```
 
+In order to guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+
 <a name="ssl"/>
 #### SSL
 
@@ -406,6 +408,8 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
 for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
+
+In order to guarantee that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender), you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
 
 <a name="encoder"/>
