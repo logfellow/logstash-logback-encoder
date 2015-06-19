@@ -42,6 +42,9 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addMessage(MessageJsonProvider provider) {
         addProvider(provider);
     }
+    public void addRawMessage(RawMessageJsonProvider provider) {
+        addProvider(provider);
+    }
     public void addLoggerName(LoggerNameJsonProvider provider) {
         addProvider(provider);
     }

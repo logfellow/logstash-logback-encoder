@@ -60,6 +60,9 @@
                 <message>
                     <fieldName>customMessage</fieldName>
                 </message>
+                <rawMessage>
+                    <fieldName>customRawMessage</fieldName>
+                </rawMessage>
                 <loggerName>
                     <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
                 </loggerName>
