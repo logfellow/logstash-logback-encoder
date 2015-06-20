@@ -927,6 +927,14 @@ For LoggingEvents, the available providers and their configuration properties (d
       </td>
     </tr>
     <tr>
+      <td><tt>rawMessage</tt></td>
+      <td><p>Raw log event message, as opposed to formatted log where parameters are resolved</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>raw_message</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>loggerName</tt></td>
       <td><p>Name of the logger that logged the message</p>
         <ul>

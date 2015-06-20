@@ -34,6 +34,7 @@
                 <callerMethod>method</callerMethod>
                 <callerFile>file</callerFile>
                 <callerLine>line</callerLine>
+                <rawMessage>customRawMessage</rawMessage>
             </fieldNames>
             <includeCallerInfo>true</includeCallerInfo>
             <enableContextMap>true</enableContextMap>
@@ -50,6 +51,7 @@
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
                 <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
             </provider>
+            <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider"/>
         </encoder>
     </appender>
     <appender name="loggingEventCompositeJsonEncoderAppender" class="ch.qos.logback.core.ConsoleAppender">
@@ -60,6 +62,9 @@
                 <message>
                     <fieldName>customMessage</fieldName>
                 </message>
+                <rawMessage>
+                    <fieldName>customRawMessage</fieldName>
+                </rawMessage>
                 <loggerName>
                     <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
                 </loggerName>
