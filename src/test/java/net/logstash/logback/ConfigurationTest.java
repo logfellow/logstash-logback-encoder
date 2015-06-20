@@ -52,6 +52,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.read.ListAppender;
+
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
@@ -73,11 +74,11 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(17, providers.size());
+        Assert.assertEquals(18, providers.size());
 
         verifyCommonProviders(providers);
 
-        verifyLogstachEncoderOutput(encoder);
+        verifyOutput(encoder);
     }
 
     @Test
@@ -87,11 +88,10 @@ public class ConfigurationTest {
         Assert.assertEquals(19, providers.size());
 
         verifyCommonProviders(providers);
-        verifyExtendedProviders(providers);
 
         Assert.assertNotNull(getInstance(providers, TestJsonProvider.class));
 
-        verifyLoggingEventCompositeOutput(encoder);
+        verifyOutput(encoder);
     }
 
 
@@ -160,9 +160,7 @@ public class ConfigurationTest {
         LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
         Assert.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
         Assert.assertNotNull(patternProvider);
-    }
-
-    private void verifyExtendedProviders(List<JsonProvider<ILoggingEvent>> providers) {
+        
         RawMessageJsonProvider rawMessageJsonProvider = getInstance(providers, RawMessageJsonProvider.class);
         Assert.assertNotNull(rawMessageJsonProvider);
         Assert.assertEquals("customRawMessage", rawMessageJsonProvider.getFieldName());
@@ -177,30 +175,7 @@ public class ConfigurationTest {
         return null;
     }
 
-    private void verifyLogstachEncoderOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException, UnsupportedEncodingException {
-        LOGGER.info(Markers.append("markerFieldName", "markerFieldValue"), "message", new Throwable());
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        encoder.init(outputStream);
-        encoder.doEncode(listAppender.list.get(0));
-
-        Map<String, Object> output = parseJson(outputStream.toString("UTF-8"));
-        Assert.assertNotNull(output.get("@timestamp"));
-        Assert.assertEquals(1, output.get("@version"));
-        Assert.assertEquals("message", output.get("customMessage"));
-        Assert.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
-        Assert.assertNotNull(output.get("thread_name"));
-        Assert.assertEquals("INFO", output.get("level"));
-        Assert.assertEquals(20000, output.get("level_value"));
-        Assert.assertNotNull(output.get("caller"));
-        Assert.assertTrue(((String) output.get("stack_trace")).contains("n.l.logback.ConfigurationTest.verifyLogstachEncoderOutput"));
-        Assert.assertEquals("customValue", output.get("customName"));
-        Assert.assertEquals("patternValue", output.get("patternName"));
-        Assert.assertEquals("markerFieldValue", output.get("markerFieldName"));
-        Assert.assertTrue(output.get("relativeTime") instanceof Number);
-    }
-
-
-    private void verifyLoggingEventCompositeOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException, UnsupportedEncodingException {
+    private void verifyOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException, UnsupportedEncodingException {
         LOGGER.info(Markers.append("markerFieldName", "markerFieldValue"), "message {}", "arg", new Throwable());
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         encoder.init(outputStream);
@@ -216,7 +191,7 @@ public class ConfigurationTest {
         Assert.assertEquals("INFO", output.get("level"));
         Assert.assertEquals(20000, output.get("level_value"));
         Assert.assertNotNull(output.get("caller"));
-        Assert.assertTrue(((String) output.get("stack_trace")).contains("n.l.logback.ConfigurationTest.verifyLoggingEventCompositeOutput"));
+        Assert.assertTrue(((String) output.get("stack_trace")).contains("n.l.logback.ConfigurationTest.verifyOutput"));
         Assert.assertEquals("customValue", output.get("customName"));
         Assert.assertEquals("patternValue", output.get("patternName"));
         Assert.assertEquals("markerFieldValue", output.get("markerFieldName"));
