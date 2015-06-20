@@ -13,6 +13,7 @@
 * Matthias Kiefer (kiefermat)
 * Ben Kirwin (bkirwi)
 * Łukasz Klich (kleewho)
+* Nicolas Labrot (nithril)
 * David MacDonald (dmacdonald2013)
 * Tim Meighen (tmeighen)
 * Ryan O'Keeffe (danielredoak)
