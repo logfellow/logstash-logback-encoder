@@ -582,9 +582,10 @@ Add custom fields that will appear in every LoggingEvent like this :
 #### Event-specific Custom Fields
 
 When logging a message, you can specify additional fields to add to the LoggingEvent by using the markers provided by 
-[`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java).
+[`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) or by the named arguments provided by 
+[`NamedArguments`](/src/main/java/net/logstash/logback/argument/NamedArguments.java).
 
-For example:
+For example using `Markers`:
 
 ```java
 import static net.logstash.logback.marker.Markers.*
@@ -636,7 +637,46 @@ logger.info(appendFields(myobject), "log message");
 
 ```
 
+For example using `NamedArguments`:
+
+```java
+import static net.logstash.logback.argument.NamedArguments.*
+
+/*
+ * Add "name":"value" to the json event with the event message equals to `log message value`
+ */
+logger.info("log message {}", value("name", "value"));
+
+/*
+ * Add "name":"value" to the json event with the event message equals to `log message name=value`
+ */
+logger.info("log message {}", keyValue("name", "value"));
+
+/*
+ * Add "name":"value" to the json event with the event message equals to `log message name=[value]`
+ */
+logger.info("log message {}", keyValue("name", "value" , "{0}=[{1}]"));
+
+
+/*
+ * The value can be any object that can be serialized by Jackson's ObjectMapper
+ * The formatting of the argument into the event message follow the same rule that logback (formatting of an array or if not an array `toString()` is called) 
+ *
+ * Add "foo":{...} to the json event with the event message equals to `log message <result of foo.toString()>`
+ */
+Foo foo  = new Foo();
+logger.info("log message {}" , value("foo" , foo));
+
+/*
+ * In order to normalize field object name, helper could be created  
+ * `foo(Foo)` calls `value("foo" , foo)`
+ */
+logger.info("log message {}", foo(foo));
+
+```
+
 See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.
+
 
 
 <a name="accessevent_fields"/>
@@ -1039,6 +1079,23 @@ For LoggingEvents, the available providers and their configuration properties (d
         </ul>
       </td>
     </tr>
+    <tr>
+      <td><tt>arguments</tt></td>
+      <td>
+        <p>Outputs fields from the event arguments array. 
+        </p>
+        <p>
+            See <a href="#loggingevent_custom_event">Event-specific Custom Fields</a>
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+          <li><tt>includeArgumentWithNoKey</tt> - Include arguments that are not an instance 
+          of <a href="/src/main/java/net/logstash/logback/argument/NamedArgument.java"><tt>NamedArgument</tt></a>.
+          Object field name will be <tt>argumentWithNoKeyPrefix</tt> prepend to the argument index</li>
+          <li><tt>argumentWithNoKeyPrefix</tt> - Object field name prefix</li>
+        </ul>
+      </td>
+    </tr>    
   </tbody>
 </table>
 

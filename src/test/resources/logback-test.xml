@@ -52,6 +52,10 @@
                 <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
             </provider>
             <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider">
+                <includeArgumentWithNoKey>true</includeArgumentWithNoKey>
+                <argumentWithNoKeyPrefix>prefix</argumentWithNoKeyPrefix>
+            </provider>
         </encoder>
     </appender>
     <appender name="loggingEventCompositeJsonEncoderAppender" class="ch.qos.logback.core.ConsoleAppender">
@@ -102,6 +106,10 @@
                     <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
                 </pattern>
                 <provider class="net.logstash.logback.TestJsonProvider"/>
+                <arguments>
+                    <includeArgumentWithNoKey>true</includeArgumentWithNoKey>
+                    <argumentWithNoKeyPrefix>prefix</argumentWithNoKeyPrefix>
+                </arguments>
             </providers>
         </encoder>
     </appender>

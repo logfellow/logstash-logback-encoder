@@ -15,13 +15,14 @@ package net.logstash.logback;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.Map;
 
+import net.logstash.logback.argument.NamedArguments;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.ContextMapJsonProvider;
 import net.logstash.logback.composite.loggingevent.GlobalCustomFieldsJsonProvider;
@@ -74,7 +75,7 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(18, providers.size());
+        Assert.assertEquals(19, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -82,10 +83,10 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void testLoggingEventCompositeJsonEncoderAppender() throws UnsupportedEncodingException, IOException {
+    public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(19, providers.size());
+        Assert.assertEquals(20, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -160,10 +161,13 @@ public class ConfigurationTest {
         LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
         Assert.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
         Assert.assertNotNull(patternProvider);
-        
+
         RawMessageJsonProvider rawMessageJsonProvider = getInstance(providers, RawMessageJsonProvider.class);
         Assert.assertNotNull(rawMessageJsonProvider);
         Assert.assertEquals("customRawMessage", rawMessageJsonProvider.getFieldName());
+
+        ArgumentsJsonProvider argumentsJsonProvider = getInstance(providers, ArgumentsJsonProvider.class);
+        Assert.assertNotNull(argumentsJsonProvider);
     }
 
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {
@@ -175,8 +179,11 @@ public class ConfigurationTest {
         return null;
     }
 
-    private void verifyOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException, UnsupportedEncodingException {
-        LOGGER.info(Markers.append("markerFieldName", "markerFieldValue"), "message {}", "arg", new Throwable());
+    private void verifyOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException {
+        LOGGER.info(Markers.append("markerFieldName", "markerFieldValue"), "message {} {} {} {}",
+                new Object[]{"arg", NamedArguments.keyValue("k1", "v1") , NamedArguments.keyValue("k2", "v2", "{0}=[{1}]"),
+                        NamedArguments.value("k3", "v3"), new Throwable()});
+
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         encoder.init(outputStream);
         encoder.doEncode(listAppender.list.get(0));
@@ -184,8 +191,8 @@ public class ConfigurationTest {
         Map<String, Object> output = parseJson(outputStream.toString("UTF-8"));
         Assert.assertNotNull(output.get("@timestamp"));
         Assert.assertEquals(1, output.get("@version"));
-        Assert.assertEquals("message arg", output.get("customMessage"));
-        Assert.assertEquals("message {}", output.get("customRawMessage"));
+        Assert.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));
+        Assert.assertEquals("message {} {} {} {}", output.get("customRawMessage"));
         Assert.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
         Assert.assertNotNull(output.get("thread_name"));
         Assert.assertEquals("INFO", output.get("level"));
@@ -196,8 +203,11 @@ public class ConfigurationTest {
         Assert.assertEquals("patternValue", output.get("patternName"));
         Assert.assertEquals("markerFieldValue", output.get("markerFieldName"));
         Assert.assertTrue(output.get("relativeTime") instanceof Number);
+        Assert.assertEquals("arg", output.get("prefix1"));
+        Assert.assertEquals("v1", output.get("k1"));
+        Assert.assertEquals("v2", output.get("k2"));
+        Assert.assertEquals("v3", output.get("k3"));
     }
-
 
     @SuppressWarnings("unchecked")
     private <T extends Encoder<ILoggingEvent>> T getEncoder(String appenderName) {

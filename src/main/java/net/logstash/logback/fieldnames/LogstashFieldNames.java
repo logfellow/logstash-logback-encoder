@@ -41,6 +41,7 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String mdc;
     private String context;
     private String rawMessage = RawMessageJsonProvider.FIELD_RAW_MESSAGE;
+    private String arguments;
     
     public String getLogger() {
         return logger;
@@ -173,5 +174,13 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
 
     public void setRawMessage(String rawMessage) {
         this.rawMessage = rawMessage;
+    }
+
+    public String getArguments() {
+        return arguments;
+    }
+
+    public void setArguments(String arguments) {
+        this.arguments = arguments;
     }
 }
