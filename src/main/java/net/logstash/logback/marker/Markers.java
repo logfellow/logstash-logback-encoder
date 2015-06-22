@@ -15,6 +15,8 @@ package net.logstash.logback.marker;
 
 import java.util.Map;
 
+import org.slf4j.Marker;
+
 /**
  * Convenience class for constructing various {@link LogstashMarker}s used to add
  * fields into the logstash event.
@@ -41,35 +43,35 @@ public class Markers {
     /**
      * @see MapEntriesAppendingMarker
      */
-    public static MapEntriesAppendingMarker appendEntries(Map<?, ?> map) {
+    public static LogstashMarker appendEntries(Map<?, ?> map) {
         return new MapEntriesAppendingMarker(map);
     }
     
     /**
      * @see ObjectFieldsAppendingMarker
      */
-    public static ObjectFieldsAppendingMarker appendFields(Object object) {
+    public static LogstashMarker appendFields(Object object) {
         return new ObjectFieldsAppendingMarker(object);
     }
     
     /**
      * @see ObjectAppendingMarker
      */
-    public static ObjectAppendingMarker append(String fieldName, Object object) {
+    public static LogstashMarker append(String fieldName, Object object) {
         return new ObjectAppendingMarker(fieldName, object);
     }
     
     /**
      * @see ObjectAppendingMarker
      */
-    public static ObjectAppendingMarker appendArray(String fieldName, Object... objects) {
+    public static LogstashMarker appendArray(String fieldName, Object... objects) {
         return new ObjectAppendingMarker(fieldName, objects);
     }
     
     /**
      * @see RawJsonAppendingMarker
      */
-    public static RawJsonAppendingMarker appendRaw(String fieldName, String rawJsonValue) {
+    public static LogstashMarker appendRaw(String fieldName, String rawJsonValue) {
         return new RawJsonAppendingMarker(fieldName, rawJsonValue);
     }
     

@@ -14,9 +14,16 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import net.logstash.logback.argument.StructuredArgument;
+import net.logstash.logback.argument.StructuredArguments;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
+
 import org.apache.commons.lang.ObjectUtils;
+import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -29,11 +36,20 @@ import com.fasterxml.jackson.databind.ser.ResolvableSerializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 
 /**
- * A marker that "unwraps" the given object into the logstash event.
- * i.e. The fields of the object are written inline into the logstash event
+ * A {@link Marker} OR {@link StructuredArgument} that 
+ * that "unwraps" the given object into the logstash event.
+ * <p>
+ * 
+ * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}),
+ * the fields of the object are written inline into the JSON event
  * similar to how the {@link com.fasterxml.jackson.annotation.JsonUnwrapped} annotation works.
  * <p>
- * For example, if the object is:
+ * 
+ * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
+ * {@link StructuredArguments#toString(Object)} is used to convert the object to a string.
+ * <p>
+ * 
+ * For example, if the message is "mymessage {}", and the object argument is:
  * 
  * <pre>
  * {
@@ -46,25 +62,24 @@ import com.fasterxml.jackson.databind.util.NameTransformer;
  * }
  * </pre>
  * <p>
- * Then the name1, name2, name3, name4 fields will be added to the json for the logstash event.
+ * Then the message, name1, name2, name3, name4 fields will be added to the json for the logstash event.
  * <p>
  * For example:
  * 
  * <pre>
  * {
- *     name1 : "value1",
- *     name2 : 5,
- *     name3 : [1, 2, 3],
- *     name4 : {
- *         name5 : 6
- *     }
+ *     "message" : "mymessage objectsToStringValue",
+ *     "name1" : "value1",
+ *     "name2" : 5,
+ *     "name3" : [1, 2, 3],
+ *     "name4" : { "name5" : 6 }
  * }
  * </pre>
  * 
  * Note that if the object cannot be unwrapped, then nothing will be written.
  */
 @SuppressWarnings("serial")
-public class ObjectFieldsAppendingMarker extends LogstashMarker {
+public class ObjectFieldsAppendingMarker extends LogstashMarker implements StructuredArgument {
     
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "OBJECT_FIELDS";
     
@@ -93,6 +108,11 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker {
                 serializer.serialize(object, generator, getSerializerProvider(mapper));
             }
         }
+    }
+    
+    @Override
+    public String toString() {
+        return StructuredArguments.toString(object);
     }
     
     /**

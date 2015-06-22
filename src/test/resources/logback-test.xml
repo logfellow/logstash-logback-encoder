@@ -53,8 +53,8 @@
             </provider>
             <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider"/>
             <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider">
-                <includeArgumentWithNoKey>true</includeArgumentWithNoKey>
-                <argumentWithNoKeyPrefix>prefix</argumentWithNoKeyPrefix>
+                <includeNonStructuredArguments>true</includeNonStructuredArguments>
+                <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
             </provider>
         </encoder>
     </appender>
@@ -107,8 +107,8 @@
                 </pattern>
                 <provider class="net.logstash.logback.TestJsonProvider"/>
                 <arguments>
-                    <includeArgumentWithNoKey>true</includeArgumentWithNoKey>
-                    <argumentWithNoKeyPrefix>prefix</argumentWithNoKeyPrefix>
+	                <includeNonStructuredArguments>true</includeNonStructuredArguments>
+	                <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
                 </arguments>
             </providers>
         </encoder>

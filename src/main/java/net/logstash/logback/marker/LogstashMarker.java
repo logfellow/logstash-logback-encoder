@@ -19,7 +19,6 @@ import org.slf4j.Marker;
 import org.slf4j.helpers.LogstashBasicMarker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A {@link Marker} that is known and understood by the logstash logback encoder.

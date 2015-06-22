@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import net.logstash.logback.argument.NamedArguments;
+import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
@@ -181,8 +181,13 @@ public class ConfigurationTest {
 
     private void verifyOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException {
         LOGGER.info(Markers.append("markerFieldName", "markerFieldValue"), "message {} {} {} {}",
-                new Object[]{"arg", NamedArguments.keyValue("k1", "v1") , NamedArguments.keyValue("k2", "v2", "{0}=[{1}]"),
-                        NamedArguments.value("k3", "v3"), new Throwable()});
+                new Object[] {
+                    "arg",
+                    StructuredArguments.keyValue("k1", "v1"),
+                    StructuredArguments.keyValue("k2", "v2", "{0}=[{1}]"),
+                    StructuredArguments.value("k3", "v3"),
+                    new Throwable()
+                });
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         encoder.init(outputStream);
@@ -203,7 +208,7 @@ public class ConfigurationTest {
         Assert.assertEquals("patternValue", output.get("patternName"));
         Assert.assertEquals("markerFieldValue", output.get("markerFieldName"));
         Assert.assertTrue(output.get("relativeTime") instanceof Number);
-        Assert.assertEquals("arg", output.get("prefix1"));
+        Assert.assertEquals("arg", output.get("prefix0"));
         Assert.assertEquals("v1", output.get("k1"));
         Assert.assertEquals("v2", output.get("k2"));
         Assert.assertEquals("v3", output.get("k3"));

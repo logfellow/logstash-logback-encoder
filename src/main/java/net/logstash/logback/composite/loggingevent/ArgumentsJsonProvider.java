@@ -15,7 +15,7 @@ package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
 
-import net.logstash.logback.argument.NamedArgument;
+import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
@@ -24,27 +24,26 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
- * Include event {@link ILoggingEvent#getArgumentArray()} in the JSON output
- *
+ * Include the logging event's {@link ILoggingEvent#getArgumentArray()} in the JSON output.
  * <p>
- *     Arguments that are an instance of {@link NamedArgument} will be outputted as JSON object.
- *     {@link NamedArgument#getKey()} as the fieldname and {@link NamedArgument#getValue()} as the value.
  *
- *     Other arguments will be omitted until {@link #includeArgumentWithNoKey} is set. They will be included
- *     in the JSON output as JSON object.
- *     {@link #argumentWithNoKeyPrefix} prepend to the argument index as the field name and the argument as the value.
- *
+ * Arguments that are an instance of {@link StructuredArgument} will be output
+ * as specified by {@link StructuredArgument#writeTo(JsonGenerator)}.
+ * <p>
+ * 
+ * Non-{@link StructuredArgument}s will be omitted unless {@link #includeNonStructuredArguments} is true.
+ * When true, they will be included in the JSON output as separate fields
+ * whose names are {@link #nonStructuredArgumentsFieldPrefix} plus the argument index.
+ * (For example, "arg0").
  * </p>
  *
- * If the fieldName is set, then the properties will be written
- * to that field as a subobject.
- * Otherwise, the properties are written inline.
- *
+ * If the fieldName is non-null, then the arguments will be written to that field as a subobject.
+ * Otherwise, the arguments are written inline.
  */
 public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
-    private boolean includeArgumentWithNoKey;
-    private String argumentWithNoKeyPrefix = "arg";
+    private boolean includeNonStructuredArguments;
+    private String nonStructuredArgumentsFieldPrefix = "arg";
 
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
@@ -55,35 +54,30 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
             return;
         }
 
-        boolean hasKv = false;
+        boolean hasWrittenFieldName = false;
+        
+        for (int argIndex = 0; argIndex < args.length; argIndex++) {
 
-        for (int argIte = 0; argIte < args.length; argIte++) {
+            Object arg = args[argIndex];
 
-            Object arg = args[argIte];
-
-            String key = null;
-            Object value = null;
-
-            if (arg instanceof NamedArgument) {
-                NamedArgument namedArgument = (NamedArgument) arg;
-                key = namedArgument.getKey();
-                value = namedArgument.getValue();
-            } else if (includeArgumentWithNoKey) {
-                key = argumentWithNoKeyPrefix + (argIte+1);
-                value = arg;
-            }
-
-            if (key != null) {
-                //Only write an object field if there is a match and the fieldName is set
-                if (!hasKv && getFieldName() != null) {
+            if (arg instanceof StructuredArgument) {
+                if (!hasWrittenFieldName && getFieldName() != null) {
                     generator.writeObjectFieldStart(getFieldName());
+                    hasWrittenFieldName = true;
                 }
-                hasKv = true;
-                generator.writeObjectField(key, value);
+                StructuredArgument structuredArgument = (StructuredArgument) arg;
+                structuredArgument.writeTo(generator);
+            } else if (includeNonStructuredArguments) {
+                if (!hasWrittenFieldName && getFieldName() != null) {
+                    generator.writeObjectFieldStart(getFieldName());
+                    hasWrittenFieldName = true;
+                }
+                String fieldName = nonStructuredArgumentsFieldPrefix + argIndex;
+                generator.writeObjectField(fieldName, arg);
             }
         }
 
-        if (hasKv && getFieldName() != null) {
+        if (hasWrittenFieldName) {
             generator.writeEndObject();
         }
     }
@@ -93,20 +87,19 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
         setFieldName(fieldNames.getArguments());
     }
 
-
-    public boolean isIncludeArgumentWithNoKey() {
-        return includeArgumentWithNoKey;
+    public boolean isIncludeNonStructuredArguments() {
+        return includeNonStructuredArguments;
     }
 
-    public void setIncludeArgumentWithNoKey(boolean includeArgumentWithNoKey) {
-        this.includeArgumentWithNoKey = includeArgumentWithNoKey;
+    public void setIncludeNonStructuredArguments(boolean includeArgumentWithNoKey) {
+        this.includeNonStructuredArguments = includeArgumentWithNoKey;
     }
 
-    public String getArgumentWithNoKeyPrefix() {
-        return argumentWithNoKeyPrefix;
+    public String getNonStructuredArgumentsFieldPrefix() {
+        return nonStructuredArgumentsFieldPrefix;
     }
 
-    public void setArgumentWithNoKeyPrefix(String argumentWithNoKeyPrefix) {
-        this.argumentWithNoKeyPrefix = argumentWithNoKeyPrefix;
+    public void setNonStructuredArgumentsFieldPrefix(String argumentWithNoKeyPrefix) {
+        this.nonStructuredArgumentsFieldPrefix = argumentWithNoKeyPrefix;
     }
 }

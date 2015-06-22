@@ -39,7 +39,7 @@ public class MapEntriesAppendingMarkerTest {
         StringWriter writer = new StringWriter();
         JsonGenerator generator = FACTORY.createGenerator(writer);
         
-        MapEntriesAppendingMarker marker = Markers.appendEntries(map);
+        LogstashMarker marker = Markers.appendEntries(map);
         generator.writeStartObject();
         marker.writeTo(generator);
         generator.writeEndObject();

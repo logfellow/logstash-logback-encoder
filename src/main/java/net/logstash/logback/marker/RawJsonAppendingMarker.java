@@ -15,15 +15,31 @@ package net.logstash.logback.marker;
 
 import java.io.IOException;
 
+import net.logstash.logback.argument.StructuredArgument;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
+
 import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.Validate;
+import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
- * A marker that writes a raw json value to the logstash json event
+ * A {@link Marker} OR {@link StructuredArgument} that 
+ * writes a raw json value to the logstash json event
  * under a given field name.
  * <p>
- * The raw string is written verbatim without any modifications, but assuming it must constitute a single legal JSON value (number, string, boolean, null, Array or List)
+ * 
+ * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}),
+ * the raw string is written verbatim without any modifications,
+ * but assuming it must constitute a single legal JSON value (number, string, boolean, null, Array or List)
+ * <p>
+ * 
+ * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
+ * the raw string is written as the field value.
+ * Note that using {@link RawJsonAppendingMarker} as a {@link StructuredArgument} is not very common.
+ * <p>
  */
 @SuppressWarnings("serial")
 public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
@@ -37,15 +53,24 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
     
     public RawJsonAppendingMarker(String fieldName, String rawJson) {
         super(MARKER_NAME, fieldName);
-        if (rawJson == null) {
-            throw new IllegalArgumentException("rawJson must not be null");
-        }
+        Validate.notNull(rawJson, "rawJson must not be null");
+        this.rawJson = rawJson;
+    }
+    
+    public RawJsonAppendingMarker(String fieldName, String rawJson, String messageFormatPattern) {
+        super(MARKER_NAME, fieldName, messageFormatPattern);
+        Validate.notNull(rawJson, "rawJson must not be null");
         this.rawJson = rawJson;
     }
     
     @Override
     protected void writeFieldValue(JsonGenerator generator) throws IOException {
         generator.writeRawValue(rawJson);
+    }
+    
+    @Override
+    protected Object getFieldValue() {
+        return rawJson;
     }
     
     @Override

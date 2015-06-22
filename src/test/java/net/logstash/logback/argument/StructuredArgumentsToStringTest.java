@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized;
 import org.slf4j.helpers.MessageFormatter;
 
 @RunWith(Parameterized.class)
-public class NamedArgumentsToStringTest {
+public class StructuredArgumentsToStringTest {
 
     private static  class BuguyToString {
         @Override
@@ -55,8 +55,8 @@ public class NamedArgumentsToStringTest {
 
     @Test
     public void testToString() throws Exception {
-        Assert.assertEquals(expected, NamedArguments.toString(arg));
-        Assert.assertEquals(MessageFormatter.format("{}", arg).getMessage() , NamedArguments.toString(arg));
+        Assert.assertEquals(expected, StructuredArguments.toString(arg));
+        Assert.assertEquals(MessageFormatter.format("{}", arg).getMessage() , StructuredArguments.toString(arg));
     }
 
 }

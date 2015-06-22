@@ -581,27 +581,145 @@ Add custom fields that will appear in every LoggingEvent like this :
 <a name="loggingevent_custom_event"/>
 #### Event-specific Custom Fields
 
-When logging a message, you can specify additional fields to add to the LoggingEvent by using the markers provided by 
-[`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) or by the named arguments provided by 
-[`NamedArguments`](/src/main/java/net/logstash/logback/argument/NamedArguments.java).
+When logging a message, you can add additional fields to the JSON output by using
 
-For example using `Markers`:
+* _structured arguments_ provided by
+  [`StructuredArguments`](/src/main/java/net/logstash/logback/argument/StructuredArguments.java), OR
+* _markers_ provided by
+  [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java)
+
+The difference between the two is that
+* `StructuredArguments` are included in a the log event's formatted message
+(when the message has a parameter for the argument) _AND_ in the JSON output.
+  * `StructuredArguments` will only be included in the JSON output if using
+    [composite encoders/layouts](#composite_encoder) with the `arguments` provider.
+* `Markers` are only written to the JSON output, and _NEVER_ to the log event's formatted message.
+  * `Markers` will be included in the JSON output if using `LogstashEncoder/Layout`
+    or if using [composite encoders/layouts](#composite_encoder) with the `logstashMarkers` provider.
+
+
+You can use `StructuredArguments` even if the message does not contain a parameter
+for the argument.  However, in this case, the argument will only be written to the JSON output
+and not the formatted message (which is effectively the same behavior that the Markers provide).
+In general, you should use `StructuredArguments`, unless you have a static analyzer
+that flags parameter count / argument count mismatches.
+
+Both `StructuredArguments` and `Markers` require constructing additional objects.
+Therefore, it is best practice to surround the log lines with `logger.isXXXEnabled()`,
+to avoid the object construction if the log level is disabled.
+
+Examples using `StructuredArguments`:
+
+```java
+import static net.logstash.logback.argument.StructuredArguments.*
+
+/*
+ * Add "name":"value" to the JSON output,
+ * but only add the value to the formatted message.
+ *
+ * The formatted message will be `log message value`
+ */
+logger.info("log message {}", value("name", "value"));
+
+/*
+ * Add "name":"value" to the JSON output,
+ * and add name=value to the formatted message.
+ *
+ * The formatted message will be `log message name=value`
+ */
+logger.info("log message {}", keyValue("name", "value"));
+
+/*
+ * Add "name":"value" ONLY to the JSON output.
+ *
+ * Since there is no parameter for the argument,
+ * the formatted message will NOT contain the key/value.
+ *
+ * If this looks funny to you or to static analyzers,
+ * consider using Markers instead.
+ */
+logger.info("log message", keyValue("name", "value"));
+
+/*
+ * Add multiple key value pairs to both JSON and formatted message
+ */
+logger.info("log message {} {}", keyValue("name1", "value1"), keyValue("name2", "value2")));
+
+/*
+ * Add "name":"value" to the JSON output and
+ * add name=[value] to the formatted message using a custom format.
+ */
+logger.info("log message {}", keyValue("name", "value", "{0}=[{1}]"));
+
+/*
+ * In the JSON output, values will be serialized by Jackson's ObjectMapper.
+ * In the formatted message, values will follow the same behavior as logback
+ * (formatting of an array or if not an array `toString()` is called). 
+ *
+ * Add "foo":{...} to the JSON output and add `foo.toString()` to the formatted message:
+ *
+ * The formatted message will be `log message <result of foo.toString()>`
+ */
+Foo foo  = new Foo();
+logger.info("log message {}", value("foo", foo));
+
+/*
+ * Add "name1":"value1","name2":"value2" to the JSON output by using a Map,
+ * and add `myMap.toString()` to the formatted message.
+ *
+ * Note the values can be any object that can be serialized by Jackson's ObjectMapper
+ * (e.g. other Maps, JsonNodes, numbers, arrays, etc)
+ */
+Map myMap = new HashMap();
+myMap.put("name1", "value1");
+myMap.put("name2", "value2");
+logger.info("log message {}", entries(myMap));
+
+/*
+ * Add "array":[1,2,3] to the JSON output,
+ * and array=[1,2,3] to the formatted message.
+ */
+logger.info("log message {}", array("array", 1, 2, 3));
+
+/*
+ * Add fields of any object that can be unwrapped by Jackson's UnwrappableBeanSerializer to the JSON output.
+ * i.e. The fields of an object can be written directly into the JSON output.
+ * This is similar to the @JsonUnwrapped annotation.
+ *
+ * The formatted message will contain `myobject.toString()`
+ */
+logger.info("log message {}", fields(myobject));
+
+/*
+ * In order to normalize a field object name, static helper methods can be created.
+ * For example, `foo(Foo)` calls `value("foo" , foo)`
+ */
+logger.info("log message {}", foo(foo));
+
+```
+
+Abbreviated convenience methods are available for all the structured argument types.
+For example, instead of `keyValue(key, value)`, you can use `kv(key, value)`.
+
+
+
+Examples using `Markers`:
 
 ```java
 import static net.logstash.logback.marker.Markers.*
 
 /*
- * Add "name":"value" to the json event.
+ * Add "name":"value" to the JSON output.
  */
 logger.info(append("name", "value"), "log message");
 
 /*
- * Add "name1":"value1","name2":"value2" to the json event by using multiple markers.
+ * Add "name1":"value1","name2":"value2" to the JSON output by using multiple markers.
  */
 logger.info(append("name1", "value1").and(append("name2", "value2")), "log message");
 
 /*
- * Add "name1":"value1","name2":"value2" to the json event by using a map.
+ * Add "name1":"value1","name2":"value2" to the JSON output by using a map.
  *
  * Note the values can be any object that can be serialized by Jackson's ObjectMapper
  * (e.g. other Maps, JsonNodes, numbers, arrays, etc)
@@ -612,12 +730,12 @@ myMap.put("name2", "value2");
 logger.info(appendEntries(myMap), "log message");
 
 /*
- * Add "array":[1,2,3] to the json event
+ * Add "array":[1,2,3] to the JSON output
  */
 logger.info(appendArray("array", 1, 2, 3), "log message");
 
 /*
- * Add "array":[1,2,3] to the json event by using raw json.
+ * Add "array":[1,2,3] to the JSON output by using raw json.
  * This allows you to use your own json seralization routine to construct the json output
  */
 logger.info(appendRaw("array", "[1,2,3]"), "log message");
@@ -637,43 +755,6 @@ logger.info(appendFields(myobject), "log message");
 
 ```
 
-For example using `NamedArguments`:
-
-```java
-import static net.logstash.logback.argument.NamedArguments.*
-
-/*
- * Add "name":"value" to the json event with the event message equals to `log message value`
- */
-logger.info("log message {}", value("name", "value"));
-
-/*
- * Add "name":"value" to the json event with the event message equals to `log message name=value`
- */
-logger.info("log message {}", keyValue("name", "value"));
-
-/*
- * Add "name":"value" to the json event with the event message equals to `log message name=[value]`
- */
-logger.info("log message {}", keyValue("name", "value" , "{0}=[{1}]"));
-
-
-/*
- * The value can be any object that can be serialized by Jackson's ObjectMapper
- * The formatting of the argument into the event message follow the same rule that logback (formatting of an array or if not an array `toString()` is called) 
- *
- * Add "foo":{...} to the json event with the event message equals to `log message <result of foo.toString()>`
- */
-Foo foo  = new Foo();
-logger.info("log message {}" , value("foo" , foo));
-
-/*
- * In order to normalize field object name, helper could be created  
- * `foo(Foo)` calls `value("foo" , foo)`
- */
-logger.info("log message {}", foo(foo));
-
-```
 
 See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.
 
@@ -1089,10 +1170,11 @@ For LoggingEvents, the available providers and their configuration properties (d
         </p>
         <ul>
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
-          <li><tt>includeArgumentWithNoKey</tt> - Include arguments that are not an instance 
-          of <a href="/src/main/java/net/logstash/logback/argument/NamedArgument.java"><tt>NamedArgument</tt></a>.
-          Object field name will be <tt>argumentWithNoKeyPrefix</tt> prepend to the argument index</li>
-          <li><tt>argumentWithNoKeyPrefix</tt> - Object field name prefix</li>
+          <li><tt>includeNonStructuredArguments</tt> - Include arguments that are not an instance 
+          of <a href="/src/main/java/net/logstash/logback/argument/StructuredArgument.java"><tt>StructuredArgument</tt></a>.
+          (default=false)
+          Object field name will be <tt>nonStructuredArgumentsFieldPrefix</tt> prepend to the argument index</li>
+          <li><tt>nonStructuredArgumentsFieldPrefix</tt> - Object field name prefix (default=arg)</li>
         </ul>
       </td>
     </tr>    
