@@ -17,10 +17,8 @@ import java.io.IOException;
 
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
-import net.logstash.logback.composite.FieldNamesAware;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
+
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
@@ -40,7 +38,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * If the fieldName is non-null, then the arguments will be written to that field as a subobject.
  * Otherwise, the arguments are written inline.
  */
-public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
+public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
 
     private boolean includeNonStructuredArguments;
     private String nonStructuredArgumentsFieldPrefix = "arg";
@@ -80,11 +78,6 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
         if (hasWrittenFieldName) {
             generator.writeEndObject();
         }
-    }
-
-    @Override
-    public void setFieldNames(LogstashFieldNames fieldNames) {
-        setFieldName(fieldNames.getArguments());
     }
 
     public boolean isIncludeNonStructuredArguments() {

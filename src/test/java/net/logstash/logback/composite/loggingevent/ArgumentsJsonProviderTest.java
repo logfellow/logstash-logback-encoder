@@ -132,34 +132,6 @@ public class ArgumentsJsonProviderTest {
                 + "}");
     }
 
-    @Test
-    public void testWrappedUsingFieldNames() throws IOException {
-        LogstashFieldNames fieldNames = new LogstashFieldNames();
-        fieldNames.setArguments("args");
-
-        provider.setFieldNames(fieldNames);
-
-        generator.writeStartObject();
-        provider.writeTo(generator, event);
-        generator.writeEndObject();
-        
-        generator.flush();
-        
-        assertThat(writer.toString()).isEqualTo(
-                "{"
-                    + "\"args\":{"
-                        + "\"k0\":\"v0\","
-                        + "\"k1\":\"v1\","
-                        + "\"k2\":\"v2\","
-                        + "\"k3\":[\"v3a\",\"v3b\"],"
-                        + "\"k4\":\"v4\","
-                        + "\"k5\":\"v5\","
-                        + "\"k6\":\"v6\","
-                        + "\"k7\":\"v7\""
-                    + "}"
-                + "}");
-    }
-
 
     @Test
     public void testIncludeNonStructuredArguments() throws IOException {

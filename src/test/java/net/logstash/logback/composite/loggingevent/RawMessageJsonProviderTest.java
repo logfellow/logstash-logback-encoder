@@ -61,18 +61,4 @@ public class RawMessageJsonProviderTest {
         verify(generator).writeStringField("newFieldName", "raw_message");
     }
 
-    @Test
-    public void testFieldNames() throws IOException {
-        LogstashFieldNames fieldNames = new LogstashFieldNames();
-        fieldNames.setRawMessage("newFieldName");
-        
-        provider.setFieldNames(fieldNames);
-        
-        when(event.getMessage()).thenReturn("raw_message");
-        
-        provider.writeTo(generator, event);
-        
-        verify(generator).writeStringField("newFieldName", "raw_message");
-    }
-
 }
