@@ -15,8 +15,6 @@ package net.logstash.logback.marker;
 
 import java.util.Map;
 
-import org.slf4j.Marker;
-
 /**
  * Convenience class for constructing various {@link LogstashMarker}s used to add
  * fields into the logstash event.

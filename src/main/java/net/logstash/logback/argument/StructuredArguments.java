@@ -34,12 +34,12 @@ import ch.qos.logback.core.status.WarnStatus;
 public class StructuredArguments {
     
     /**
-     * The default message format for writing key value pairs to the log message.
+     * The default message format used when writing key value pairs to the log message.
      */
-    public static final String DEFAULT_MESSAGE_FORMAT_PATTERN = "{0}={1}";
+    public static final String DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN = "{0}={1}";
     
     /**
-     * The a message format pattern that will only write
+     * A message format pattern that will only write
      * the argument value to a log message (i.e. it won't write the key).
      */
     public static final String VALUE_ONLY_MESSAGE_FORMAT_PATTERN = "{1}";
@@ -49,16 +49,16 @@ public class StructuredArguments {
 
     /**
      * Convenience method for calling {@link #keyValue(String, Object, String)}
-     * using the {@link #DEFAULT_MESSAGE_FORMAT_PATTERN}.
+     * using the {@link #DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN}.
      * <p>
      * Basically, adds "key":"value" to the JSON event AND
      * name=value to the formatted message.
      *  
      * @see ObjectAppendingMarker
-     * @see #DEFAULT_MESSAGE_FORMAT_PATTERN
+     * @see #DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN
      */
     public static StructuredArgument keyValue(String key, Object value) {
-        return keyValue(key, value, DEFAULT_MESSAGE_FORMAT_PATTERN);
+        return keyValue(key, value, DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN);
     }
 
     /**

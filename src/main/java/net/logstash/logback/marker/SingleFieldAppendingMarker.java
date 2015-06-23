@@ -14,7 +14,6 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.argument.StructuredArguments;
@@ -66,18 +65,8 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
      */
     private final String messageFormatPattern;
     
-    /**
-     * Need to use a different {@link MessageFormat} per thread
-     * (according to the {@link MessageFormat} documentation). 
-     */
-    private final ThreadLocal<MessageFormat> messageFormatLocal = new ThreadLocal<MessageFormat>() {
-        protected MessageFormat initialValue() {
-            return new MessageFormat(messageFormatPattern);
-        }
-    };
-    
     public SingleFieldAppendingMarker(String markerName, String fieldName) {
-        this(markerName, fieldName, StructuredArguments.DEFAULT_MESSAGE_FORMAT_PATTERN);
+        this(markerName, fieldName, StructuredArguments.DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN);
     }
     
     public SingleFieldAppendingMarker(String markerName, String fieldName, String messageFormatPattern) {
@@ -112,9 +101,22 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
     @Override
     public String toString() {
         final String fieldValueString = StructuredArguments.toString(getFieldValue());
-        return StructuredArguments.VALUE_ONLY_MESSAGE_FORMAT_PATTERN.equals(messageFormatPattern)
-                ? fieldValueString
-                : messageFormatLocal.get().format(new Object[] {getFieldName(), fieldValueString});
+        /*
+         * Optimize for commonly used messageFormatPattern
+         */
+        if (StructuredArguments.VALUE_ONLY_MESSAGE_FORMAT_PATTERN.equals(messageFormatPattern)) {
+            return fieldValueString;
+        }
+        if (StructuredArguments.DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN.equals(messageFormatPattern)) {
+            return getFieldName()
+                    + "="
+                    + fieldValueString;
+        }
+        /*
+         * Custom messageFormatPattern
+         */
+        return MessageFormatCache.INSTANCE.getMessageFormat(this.messageFormatPattern)
+                .format(new Object[] {getFieldName(), fieldValueString});
     }
 
     /**
