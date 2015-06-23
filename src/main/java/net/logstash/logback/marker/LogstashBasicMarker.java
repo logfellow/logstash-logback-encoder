@@ -14,23 +14,62 @@
 package net.logstash.logback.marker;
 
 import org.slf4j.Marker;
-import org.slf4j.helpers.BasicMarker;
 
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-/**
- * Re-implement the logic in {@link BasicMarker} in an extensible way.
+/* Copy of {@link org.slf4j.helpers.BasicMarker} from slf4j-api v1.7.12,
+ * with a minor change to make the constructor public,
+ * so that it can be extended in other packages.
+ * <p>
+ * slf4j-api, {@link org.slf4j.helpers.BasicMarker}, and the portions
+ * of this class that have been copied from BasicMarker are provided under
+ * the MIT License copied here:
+ * 
+ * Copyright (c) 2004-2011 QOS.ch
+ * All rights reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
  */
+/**
+ * A simple implementation of the {@link Marker} interface.
+ *
+ * @author Ceki G&uuml;lc&uuml;
+ * @author Joern Huxhorn
+*/
 @SuppressWarnings("serial")
 public class LogstashBasicMarker implements Marker {
 
     private final String name;
     private List<Marker> refereceList;
 
+    /*
+     * BEGIN Modification in logstash-logback-encoder to make this constructor public
+     */
     public LogstashBasicMarker(String name) {
+    /*
+     * END Modification in logstash-logback-encoder to make this constructor public
+     */
         if (name == null) {
             throw new IllegalArgumentException("A marker name cannot be null");
         }
