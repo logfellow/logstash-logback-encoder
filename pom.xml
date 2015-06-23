@@ -43,6 +43,14 @@
             <name>Apache License, Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.slf4j.org/license.html</url>
+            <comments>
+                The portion of LogstashBasicMarker.java that has been copied from 
+                org.slf4j.helpers.BasicMarker is released under the MIT License.
+            </comments>
+        </license>
     </licenses>
 
     <developers>
