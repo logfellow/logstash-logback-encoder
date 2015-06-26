@@ -36,7 +36,7 @@ public class RawJsonAppendingMarkerTest {
         StringWriter writer = new StringWriter();
         JsonGenerator generator = FACTORY.createGenerator(writer);
         
-        RawJsonAppendingMarker marker = Markers.appendRaw("rawJson", rawJson);
+        LogstashMarker marker = Markers.appendRaw("rawJson", rawJson);
         generator.writeStartObject();
         marker.writeTo(generator);
         generator.writeEndObject();

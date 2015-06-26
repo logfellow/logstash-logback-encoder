@@ -13,19 +13,20 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.IOException;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.io.IOException;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public class RawMessageJsonProviderTest {
     
@@ -53,20 +54,6 @@ public class RawMessageJsonProviderTest {
     @Test
     public void testFieldName() throws IOException {
         provider.setFieldName("newFieldName");
-        
-        when(event.getMessage()).thenReturn("raw_message");
-        
-        provider.writeTo(generator, event);
-        
-        verify(generator).writeStringField("newFieldName", "raw_message");
-    }
-
-    @Test
-    public void testFieldNames() throws IOException {
-        LogstashFieldNames fieldNames = new LogstashFieldNames();
-        fieldNames.setRawMessage("newFieldName");
-        
-        provider.setFieldNames(fieldNames);
         
         when(event.getMessage()).thenReturn("raw_message");
         

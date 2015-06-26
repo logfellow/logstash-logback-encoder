@@ -15,14 +15,38 @@ package net.logstash.logback.marker;
 
 import java.io.IOException;
 
+import net.logstash.logback.argument.StructuredArgument;
+import net.logstash.logback.argument.StructuredArguments;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
+
+import org.apache.commons.lang.Validate;
+import org.slf4j.Marker;
+
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * A marker that appends a single field into the logstash json event.
+ * A {@link Marker} OR {@link StructuredArgument} that appends
+ * a single field into the JSON event.
+ * <p>
+ * 
+ * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}):
+ * <ul>
+ * <li>Field names are written via {@link #writeFieldName(JsonGenerator)},
+ *     which just uses {@link #fieldName} is used as the field name</li>
+ * <li>Values are written via {@link #writeFieldValue(JsonGenerator)},
+ *     which subclasses must override</li>
+ * </ul>
+ * <p>
+ * 
+ * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
+ * the {@link #messageFormatPattern} is used to construct the string output.
+ * {@link #getFieldName()} will be substituted in {0} in the {@link #messageFormatPattern}. 
+ * {@link #getFieldValue()} will be substituted in {1} in the {@link #messageFormatPattern}.
+ * Subclasses must override {@link #getFieldValue()} to provide the field value to include.  
  */
 @SuppressWarnings("serial")
-public abstract class SingleFieldAppendingMarker extends LogstashMarker {
+public abstract class SingleFieldAppendingMarker extends LogstashMarker implements StructuredArgument{
     
     public static final String MARKER_NAME_PREFIX = LogstashMarker.MARKER_NAME_PREFIX + "APPEND_";
     
@@ -32,13 +56,25 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
      * Note that the value of the field is provided by subclasses via {@link #writeFieldValue(JsonGenerator)}.
      */
     private final String fieldName;
+
+    /**
+     * Pattern to use when appending the field/value in {@link #toString()}.
+     * <p>
+     * {@link #getFieldName()} will be substituted in {0}. 
+     * {@link #getFieldValue()} will be substituted in {1}. 
+     */
+    private final String messageFormatPattern;
     
     public SingleFieldAppendingMarker(String markerName, String fieldName) {
+        this(markerName, fieldName, StructuredArguments.DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN);
+    }
+    
+    public SingleFieldAppendingMarker(String markerName, String fieldName, String messageFormatPattern) {
         super(markerName);
-        if (fieldName == null) {
-            throw new IllegalArgumentException("fieldName must not be null");
-        }
+        Validate.notNull(fieldName, "fieldName must not be null");
+        Validate.notNull(messageFormatPattern, "messageFormatPattern must not be null");
         this.fieldName = fieldName;
+        this.messageFormatPattern = messageFormatPattern;
     }
     
     public String getFieldName() {
@@ -62,6 +98,32 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker {
      */
     protected abstract void writeFieldValue(JsonGenerator generator) throws IOException;
     
+    @Override
+    public String toString() {
+        final String fieldValueString = StructuredArguments.toString(getFieldValue());
+        /*
+         * Optimize for commonly used messageFormatPattern
+         */
+        if (StructuredArguments.VALUE_ONLY_MESSAGE_FORMAT_PATTERN.equals(messageFormatPattern)) {
+            return fieldValueString;
+        }
+        if (StructuredArguments.DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN.equals(messageFormatPattern)) {
+            return getFieldName()
+                    + "="
+                    + fieldValueString;
+        }
+        /*
+         * Custom messageFormatPattern
+         */
+        return MessageFormatCache.INSTANCE.getMessageFormat(this.messageFormatPattern)
+                .format(new Object[] {getFieldName(), fieldValueString});
+    }
+
+    /**
+     * Return the value that should be included in the output of {@link #toString()}. 
+     */
+    protected abstract Object getFieldValue();
+
     @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {

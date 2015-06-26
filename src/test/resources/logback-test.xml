@@ -34,7 +34,6 @@
                 <callerMethod>method</callerMethod>
                 <callerFile>file</callerFile>
                 <callerLine>line</callerLine>
-                <rawMessage>customRawMessage</rawMessage>
             </fieldNames>
             <includeCallerInfo>true</includeCallerInfo>
             <enableContextMap>true</enableContextMap>
@@ -51,7 +50,13 @@
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
                 <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
             </provider>
-            <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider">
+                <fieldName>customRawMessage</fieldName>
+            </provider>
+            <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider">
+                <includeNonStructuredArguments>true</includeNonStructuredArguments>
+                <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
+            </provider>
         </encoder>
     </appender>
     <appender name="loggingEventCompositeJsonEncoderAppender" class="ch.qos.logback.core.ConsoleAppender">
@@ -102,6 +107,10 @@
                     <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
                 </pattern>
                 <provider class="net.logstash.logback.TestJsonProvider"/>
+                <arguments>
+	                <includeNonStructuredArguments>true</includeNonStructuredArguments>
+	                <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
+                </arguments>
             </providers>
         </encoder>
     </appender>

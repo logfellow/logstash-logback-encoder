@@ -17,7 +17,6 @@ import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
-import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
@@ -40,7 +39,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
     private String context;
-    private String rawMessage = RawMessageJsonProvider.FIELD_RAW_MESSAGE;
     
     public String getLogger() {
         return logger;
@@ -167,11 +165,4 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
         this.context = context;
     }
 
-    public String getRawMessage() {
-        return rawMessage;
-    }
-
-    public void setRawMessage(String rawMessage) {
-        this.rawMessage = rawMessage;
-    }
 }

@@ -15,21 +15,57 @@ package net.logstash.logback.marker;
 
 import java.io.IOException;
 
+import net.logstash.logback.argument.StructuredArgument;
+import net.logstash.logback.argument.StructuredArguments;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
+
 import org.apache.commons.lang.ObjectUtils;
+import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * A marker that converts an Object into an appropriate JSON type (number, string, object, array)
- * and writes it to the logstash json event under a given fieldName.
+ * A {@link Marker} OR {@link StructuredArgument} that 
+ * writes an object under a given fieldName in the log event output.
  * <p>
  * 
- * For example, to append a string field, use a String object as the object. To append a numeric field, use a Number object as the object. To append an array field, use an array as the object. To
- * append an object field, use some other Object as the object.
+ * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}),
+ * the object will be converted into an appropriate JSON type
+ * (number, string, object, array) and written to the JSON event under a given fieldName.
  * <p>
  * 
- * An {@link ObjectMapper} is used to convert/write the value, so as long as the {@link ObjectMapper} can convert the object, you're good.
+ * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
+ * as specified in {@link SingleFieldAppendingMarker}, the {@link SingleFieldAppendingMarker#messageFormatPattern}
+ * is used to construct the string to include in the event's formatted message.
+ * {@link StructuredArguments#toString(Object)} will be used to convert the value to a string,
+ * prior to being substituted into the messageFormatPattern.
+ * <p>
+ *
+ * An {@link ObjectMapper} is used to convert/write the value when writing to JSON,
+ * so as long as the {@link ObjectMapper} can convert the object, you're good.
+ * For example, to append a string field, use a String object as the object.
+ * To append a numeric field, use a Number object as the object.
+ * To append an array field, use an array as the object.
+ * To append an object field, use some other Object as the object.
+ * <p>
+ * 
+ * Example:
+ * <p>
+ * 
+ * <pre>
+ * logger.info("My Message {}", StructuredArguments.keyValue("key", "value"));
+ * </pre>
+ * 
+ * results in the following log event output:
+ * 
+ * <pre>
+ * {
+ *     "message" : "My Message key=value",
+ *     "key"     : "value"
+ * }
+ * <p>
  * 
  */
 @SuppressWarnings("serial")
@@ -48,9 +84,19 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
         this.object = object;
     }
     
+    public ObjectAppendingMarker(String fieldName, Object object, String messageFormatPattern) {
+        super(MARKER_NAME, fieldName, messageFormatPattern);
+        this.object = object;
+    }
+    
     @Override
     protected void writeFieldValue(JsonGenerator generator) throws IOException {
         generator.writeObject(object);
+    }
+    
+    @Override
+    protected Object getFieldValue() {
+        return StructuredArguments.toString(object);
     }
     
     @Override

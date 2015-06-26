@@ -87,5 +87,8 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addPattern(LoggingEventPatternJsonProvider provider) {
         addProvider(provider);
     }
+    public void addArguments(ArgumentsJsonProvider provider) {
+        addProvider(provider);
+    }
     
 }

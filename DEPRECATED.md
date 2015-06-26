@@ -87,8 +87,8 @@ The *new* preferred way of doing this is by using the **Event-specific Custom Fi
 For example:
 
 ```java
-import static net.logstash.logback.marker.Markers.*
+import static net.logstash.logback.argument.StructuredArguments.*
 
-logger.info(append("duration", duration), "Service started in {} seconds", duration/1000);
+logger.info("Service started in {} ms", value("duration", duration));
 ```
 

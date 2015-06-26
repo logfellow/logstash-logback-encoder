@@ -16,17 +16,33 @@ package net.logstash.logback.marker;
 import java.io.IOException;
 import java.util.Map;
 
+import net.logstash.logback.argument.StructuredArgument;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
+
 import org.apache.commons.lang.ObjectUtils;
+import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * A marker that appends the entries from a map into the logstash json event.
- * The keys are converted to a {@link String} via {@link Object#toString()}, and used as the field names.
- * The values are converted using an {@link ObjectMapper}.
+ * A {@link Marker} OR {@link StructuredArgument} that appends entries
+ * from a {@link Map} into the logging event output.
  * <p>
- * For example, if the map contains is
+ * 
+ * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}):
+ * <ul>
+ * <li>Keys are converted to a {@link String} via {@link String#valueOf(Object)}, and used as field names.</li>
+ * <li>Values are converted using an {@link ObjectMapper}.</li>
+ * </ul>
+ * <p>
+ * 
+ * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
+ * {@link String#valueOf(Object)} is used to convert the map to a string.
+ * <p>
+ * 
+ * For example, if the message is "mymessage {}", and map argument contains is
  * 
  * <pre>
  * {@code
@@ -37,25 +53,24 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * }
  * </pre>
  * <p>
- * Then the name1, name2, name3, name4 fields will be added to the json for the logstash event.
+ * Then the message, name1, name2, name3, name4 fields will be added to the json for the logstash event.
  * <p>
  * For example:
  * 
  * <pre>
  * {
- *     name1 : "value1",
- *     name2 : 5,
- *     name3 : [1, 2, 3],
- *     name4 : {
- *         name5 : 6
- *     }
+ *     "message" : "mymessage [name1=value1,name2=5,name3=[b...,name4=[name5=6]]",
+ *     "name1"   : "value1",
+ *     "name2"   : 5,
+ *     "name3"   : [1, 2, 3],
+ *     "name4"   : { "name5" : 6 }
  * }
  * <p>
  * 
  * </pre>
  */
 @SuppressWarnings("serial")
-public class MapEntriesAppendingMarker extends LogstashMarker {
+public class MapEntriesAppendingMarker extends LogstashMarker implements StructuredArgument {
     
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "MAP_FIELDS";
     
@@ -73,12 +88,17 @@ public class MapEntriesAppendingMarker extends LogstashMarker {
     public void writeTo(JsonGenerator generator) throws IOException {
         if (map != null) {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-                generator.writeFieldName(entry.getKey().toString());
+                generator.writeFieldName(String.valueOf(entry.getKey()));
                 generator.writeObject(entry.getValue());
             }
         }
     }
     
+    @Override
+    public String toString() {
+        return String.valueOf(map);
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {

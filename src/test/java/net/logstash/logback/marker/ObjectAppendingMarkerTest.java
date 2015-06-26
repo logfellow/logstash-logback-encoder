@@ -52,7 +52,7 @@ public class ObjectAppendingMarkerTest {
         StringWriter writer = new StringWriter();
         JsonGenerator generator = FACTORY.createGenerator(writer);
         
-        ObjectAppendingMarker marker = Markers.append("myObject", myObject);
+        LogstashMarker marker = Markers.append("myObject", myObject);
         generator.writeStartObject();
         marker.writeTo(generator);
         generator.writeEndObject();
