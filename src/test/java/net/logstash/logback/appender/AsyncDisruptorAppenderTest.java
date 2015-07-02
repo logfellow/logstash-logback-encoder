@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 
@@ -84,6 +85,17 @@ public class AsyncDisruptorAppenderTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testEventHandlerCalled() throws Exception {
+        final AtomicReference<Object> capturedEvent = new AtomicReference<Object>();
+        
+        doAnswer(new Answer<Void>() {
+
+            @Override
+            public Void answer(InvocationOnMock invocation) throws Throwable {
+                capturedEvent.set(invocation.getArgumentAt(0, LogEvent.class).event);
+                return null;
+            }
+        }).when(eventHandler).onEvent(any(LogEvent.class), anyLong(), eq(true));
+        
         appender.start();
         
         appender.append(event1);
@@ -91,8 +103,11 @@ public class AsyncDisruptorAppenderTest {
         @SuppressWarnings("rawtypes")
         ArgumentCaptor<LogEvent> captor = ArgumentCaptor.forClass(LogEvent.class);
         verify(eventHandler, timeout(VERIFICATION_TIMEOUT)).onEvent(captor.capture(), anyLong(), eq(true));
-        
-        Assert.assertEquals(event1, captor.getValue().event);
+
+        // When eventHandler is invoked, the event should be event1
+        Assert.assertEquals(event1, capturedEvent.get());
+        // The event should be set back to null after invocation
+        Assert.assertNull(captor.getValue().event);
         
         verify(event1).prepareForDeferredProcessing();
     }

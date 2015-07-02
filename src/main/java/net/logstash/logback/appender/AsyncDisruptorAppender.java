@@ -32,6 +32,7 @@ import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.EventTranslatorOneArg;
 import com.lmax.disruptor.ExceptionHandler;
+import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
@@ -280,6 +281,47 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             addError("Unable shutdown disruptor", ex);
         }
     }
+
+    /**
+     * Clears the event after a delegate event handler has processed the event,
+     * so that the event can be garbage collected.
+     */
+    private static class EventClearingEventHandler<Event> implements EventHandler<LogEvent<Event>>, LifecycleAware {
+        
+        private final EventHandler<LogEvent<Event>> delegate;
+        
+        public EventClearingEventHandler(EventHandler<LogEvent<Event>> delegate) {
+            super();
+            this.delegate = delegate;
+        }
+
+        @Override
+        public void onEvent(LogEvent<Event> event, long sequence, boolean endOfBatch) throws Exception {
+            try {
+                delegate.onEvent(event, sequence, endOfBatch);
+            } finally {
+                /*
+                 * Clear the event so that it can be garbage collected.
+                 */
+                event.event = null;
+            }
+        }
+
+        @Override
+        public void onStart() {
+            if (delegate instanceof LifecycleAware) {
+                ((LifecycleAware) delegate).onStart();
+            }
+        }
+
+        @Override
+        public void onShutdown() {
+            if (delegate instanceof LifecycleAware) {
+                ((LifecycleAware) delegate).onShutdown();
+            }
+        }
+        
+    }
     
     @SuppressWarnings("unchecked")
     @Override
@@ -306,7 +348,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          */
         this.disruptor.handleExceptionsWith(this.exceptionHandler);
         
-        this.disruptor.handleEventsWith(this.eventHandler);
+        this.disruptor.handleEventsWith(new EventClearingEventHandler<Event>(this.eventHandler));
         
         this.disruptor.start();
         super.start();
