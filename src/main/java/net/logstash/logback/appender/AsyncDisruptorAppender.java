@@ -14,8 +14,8 @@
 package net.logstash.logback.appender;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -168,7 +168,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     /**
      * The {@link ScheduledExecutorService} used to execute the handler task.
      */
-    private ScheduledExecutorService executorService;
+    private ScheduledThreadPoolExecutor executorService;
     
     /**
      * Size of the thread pool to create.
@@ -196,7 +196,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Defines what happens when there is an exception during
      * {@link RingBuffer} processing.
      */
-    private ExceptionHandler exceptionHandler = new LogEventExceptionHandler();
+    private ExceptionHandler<LogEvent<Event>> exceptionHandler = new LogEventExceptionHandler();
     
     /**
      * Consecutive number of dropped events.
@@ -264,10 +264,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * 
      * Currently, just logs to the logback context. 
      */
-    private class LogEventExceptionHandler implements ExceptionHandler {
+    private class LogEventExceptionHandler implements ExceptionHandler<LogEvent<Event>> {
 
         @Override
-        public void handleEventException(Throwable ex, long sequence, Object event) {
+        public void handleEventException(Throwable ex, long sequence, LogEvent<Event> event) {
             addError("Unable to process event: " + ex.getMessage(), ex);
         }
 
@@ -331,9 +331,27 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             return;
         }
         
-        this.executorService = Executors.newScheduledThreadPool(
+        this.executorService = new ScheduledThreadPoolExecutor(
                 getThreadPoolCoreSize(),
                 this.threadFactory);
+        
+        /*
+         * ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy was added in 1.7.
+         * 
+         * Don't try to invoke it if running on a JVM less than 1.7
+         * 
+         * If running on less than 1.7, then shutdown will wait for all tasks
+         * to complete (even if they are cancelled), or the max wait timeout,
+         * whichever comes first.
+         */
+        if (isRemoveOnCancelPolicyPossible()) {
+            /*
+             * This ensures that cancelled tasks
+             * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
+             * do not hold up shutdown.
+             */
+            this.executorService.setRemoveOnCancelPolicy(true);
+        }
         
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
@@ -407,6 +425,17 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         event.prepareForDeferredProcessing();
     }
     
+    private boolean isRemoveOnCancelPolicyPossible() {
+        try {
+            ScheduledThreadPoolExecutor.class.getMethod("setRemoveOnCancelPolicy", Boolean.TYPE);
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        } catch (SecurityException e) {
+            return false;
+        }
+    }
+
     protected void setEventFactory(LogEventFactory<Event> eventFactory) {
         this.eventFactory = eventFactory;
     }

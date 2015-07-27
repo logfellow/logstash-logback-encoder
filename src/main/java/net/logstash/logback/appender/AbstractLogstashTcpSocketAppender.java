@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -431,10 +432,17 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     keepAliveRunnable = new KeepAliveRunnable();
                 }
                 long delay = keepAliveDuration.getMilliseconds() - (System.currentTimeMillis() - basedOnTime);
-                keepAliveFuture = getExecutorService().schedule(
-                    keepAliveRunnable,
-                    delay,
-                    TimeUnit.MILLISECONDS);
+                try {
+                    keepAliveFuture = getExecutorService().schedule(
+                        keepAliveRunnable,
+                        delay,
+                        TimeUnit.MILLISECONDS);
+                } catch (RejectedExecutionException e) {
+                    /*
+                     * if scheduling failed, it means that the appender is shutting down.
+                     */
+                    keepAliveFuture = null;
+                }
             }
         }
         private synchronized void unscheduleKeepAlive() {

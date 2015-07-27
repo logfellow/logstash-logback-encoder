@@ -35,7 +35,7 @@
         <junit.version>4.12</junit.version>
         <org.assertj.version>2.1.0</org.assertj.version>
         <org.mockito.version>1.10.19</org.mockito.version>
-        <com.lmax.disruptor.version>3.3.0</com.lmax.disruptor.version>
+        <com.lmax.disruptor.version>3.3.2</com.lmax.disruptor.version>
     </properties>
 
     <licenses>
