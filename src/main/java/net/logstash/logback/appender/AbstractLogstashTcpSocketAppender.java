@@ -32,6 +32,8 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import org.apache.commons.lang.StringUtils;
+
 import net.logstash.logback.encoder.SeparatorParser;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
@@ -80,6 +82,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public static final int DEFAULT_RECONNECTION_DELAY = 30000;
 
     /**
+     * The default reconnection to primary server delay (60000 milliseconds or 60 seconds)
+     */
+    public static final int DEFAULT_RECONNECTION_PRIMARY_DELAY = 60000;
+    
+    /**
      * Default size of the queue used to hold logging events that are destined
      * for the remote peer.
      * Assuming an average log entry to take 1k, this would result in the application
@@ -106,12 +113,30 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private int port = DEFAULT_PORT;
 
     /**
+     * Comma separated list of host addresses
+     */
+    private String hostAddresses;
+    
+    /**
+     * Array with the host/port information sorted by preference
+     */
+    private HostInfo[] hostInfo;
+    
+    /**
      * Time period for which to wait after a connection fails,
      * before attempting to reconnect.
      * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
      */
     private Duration reconnectionDelay = new Duration(DEFAULT_RECONNECTION_DELAY);
 
+    /**
+     * Time period to wait before attempting to reconnect to primary server
+     * when multiple servers are specified. Only happens when the appender
+     * is currently connected to a secondary.
+     * Default is {@value #DEFAULT_RECONNECTION_PRIMARY_DELAY} milliseconds.
+     */
+    private Duration reconnectionToPrimaryDelay = new Duration(DEFAULT_RECONNECTION_PRIMARY_DELAY);
+    
     /**
      * Socket connection timeout in milliseconds. 
      */
@@ -229,6 +254,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         private volatile long lastSentTimestamp;
         
         /**
+         * Time at which the current connection should be automatically closed
+         * to force an attempt to reconnect to the primary server
+         */
+        private volatile long connectionTTL = Long.MAX_VALUE;
+        
+        /**
          * Future for the currently scheduled {@link #keepAliveRunnable}.
          */
         private ScheduledFuture<?> keepAliveFuture;
@@ -307,6 +338,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         outputStream.flush();
                     }
                     lastSentTimestamp = currentTime;
+                    
+                    /*
+                     * Should we close the current connection?
+                     */
+                    if( connectionTTL <= currentTime ) {
+                    	addInfo(peerId + "closing connection and attempt to reconnect to primary server.");
+                    	outputStream.flush();
+                    	reopenSocket();
+                    }
                     break;
                 } catch (Exception e) {
                     addWarn(peerId + "unable to send event: " + e.getMessage(), e);
@@ -353,20 +393,26 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
+        	int hostIndex = 0; 
             int errorCount = 0;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
                 long startTime = System.currentTimeMillis();
                 Socket tempSocket = null;
                 OutputStream tempOutputStream = null;
                 try {
-                    tempSocket = socketFactory.createSocket();
+                	/*
+                	 * Choose next server and update peerId (for status message)
+                	 */
+                    peerId = "Log destination " + hostInfo[hostIndex] + ": ";
+                    
                     /*
                      * Set the SO_TIMEOUT so that SSL handshakes will timeout if they take too long.
                      * 
                      * Note that SO_TIMEOUT only applies to reads (which occur during the handshake process).
                      */
+                    tempSocket = socketFactory.createSocket();
                     tempSocket.setSoTimeout(acceptConnectionTimeout);
-                    tempSocket.connect(new InetSocketAddress(remoteHost, port), acceptConnectionTimeout);
+                    tempSocket.connect(new InetSocketAddress(hostInfo[hostIndex].host, hostInfo[hostIndex].port), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
                     
                     encoder.init(tempOutputStream);
@@ -375,6 +421,18 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     
                     this.socket = tempSocket;
                     this.outputStream = tempOutputStream;
+                    
+                    /*
+                     * If connected to a secondary, remember when the connection should be closed to
+                     * force attempt to reconnect to primary
+                     */
+                    if( hostIndex != 0 ) {
+                    	connectionTTL = startTime + reconnectionToPrimaryDelay.getMilliseconds();
+                    }
+                    else {
+                    	connectionTTL = Long.MAX_VALUE;
+                    }
+                    
                     return;
                     
                 } catch (Exception e) {
@@ -383,27 +441,43 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     CloseUtil.closeQuietly(tempSocket);
                     
                     /*
-                     * If the connection timed out, then take the elapsed time into account
-                     * when calculating time to sleep
+                     * Retry immediately with next available host if any. Otherwise, sleep and retry with master
                      */
-                    long sleepTime = Math.max(0, reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime));
+                    hostIndex++;
+                    if( hostIndex >= hostInfo.length ) {
+                    	hostIndex = 0;
                     
-                    /*
-                     * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
-                     */
-                    if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG) {
-                        addWarn(peerId + "connection failed. Waiting " + sleepTime + "ms before attempting reconnection.", e);
+	                    /*
+	                     * If the connection timed out, then take the elapsed time into account
+	                     * when calculating time to sleep
+	                     */
+	                    long sleepTime = Math.max(0, reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime));
+	                    
+	                    /*
+	                     * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
+	                     */
+	                    if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * hostInfo.length) {
+	                        addWarn(peerId + "connection failed. Waiting " + sleepTime + "ms before attempting reconnection.", e);
+	                    }
+	                    
+	                    if (sleepTime > 0) {
+	                        try {
+	                            shutdownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
+	                        } catch (InterruptedException ie) {
+	                            Thread.currentThread().interrupt();
+	                            addWarn(peerId + "connection interrupted. Will no longer attempt reconnection");
+	                        }
+	                    }
                     }
-                    
-                    if (sleepTime > 0) {
-                        try {
-                            shutdownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            addWarn(peerId + "connection interrupted. Will no longer attempt reconnection");
-                        }
+                    else {
+	                    /*
+	                     * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
+	                     */
+	                    if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * hostInfo.length) {
+	                    	addWarn(peerId + "connection failed. Retry with next server.", e);
+	                    }
                     }
-                } 
+                }
             }
         }
 
@@ -486,6 +560,24 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         
     }
 
+    /**
+     * An immutable representation of a host and port
+     */
+    private static class HostInfo {
+    	private String host;
+    	private int port;
+    	
+    	public HostInfo(String host, int port) {
+    		this.host = host;
+    		this.port = port;
+    	}
+    	
+    	public String toString() {
+    		return host+":"+port;
+    	}
+    }
+    
+    
     public AbstractLogstashTcpSocketAppender() {
         super();
         setEventHandler(new TcpSendingEventHandler());
@@ -496,7 +588,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         CountDownLatch latch = this.shutdownLatch;
         return latch != null && latch.getCount() != 0;
     }
-    
+        
     public synchronized void start() {
         if (isStarted()) {
             return;
@@ -506,23 +598,79 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             errorCount++;
             addError("No encoder was configured for appender " + name + ".");
         }
-        if (port <= 0) {
-            errorCount++;
-            addError("No port was configured for appender " + name + ".");
+        
+        if( hostAddresses != null && remoteHost != null ) {
+        	errorCount++;
+        	addError("Use 'remoteHost' or 'remoteAddresses' but not both");
         }
-
-        if (remoteHost == null) {
-            errorCount++;
-            addError("No remote host was configured for appender " + name + ".");
-        }
-
-        if (errorCount == 0) {
-            try {
-                InetAddress.getByName(remoteHost);
-            } catch (UnknownHostException ex) {
-                addError("unknown host: " + remoteHost);
-                errorCount++;
-            }
+        else {
+	        if( hostAddresses != null ) {
+	        	String[] hostAndPorts = StringUtils.split(hostAddresses, ",");
+	        	
+	        	hostInfo = new HostInfo[hostAndPorts.length];
+	        	int hostIndex = 0;
+	        	
+	        	for(String hostAndPort: hostAndPorts) {
+	        		String[] parts = StringUtils.split(hostAndPort,':');
+	        		
+	        		if( parts.length != 2 ) {
+	        			errorCount++;
+	        			addError("Invalid hostAddress '"+hostAndPort+"': unparseable value (expected format 'host:port')");
+	        			continue;
+	            	}
+	        		
+	        		String host = StringUtils.trim(parts[0]);
+	                try {
+	                    InetAddress.getByName(host);
+	                } catch (UnknownHostException ex) {
+	                    addError("Invalid hostAddress '"+hostAndPort+"': host unkown (was '"+host+"')");
+	                    errorCount++;
+	                    continue;
+	                }
+	                
+	                int port = 0;
+	                try {
+	                	port = Integer.parseInt(StringUtils.trim(parts[1]));
+	                }
+	                catch(NumberFormatException e) {
+	                	 addError("Invalid hostAddress '"+hostAndPort+"': unparseable port (was '"+parts[1]+"')");
+	                     errorCount++;
+	                     continue;
+	                }
+	        		if( port <= 0 ) {
+						addError("Invalid hostAddress '"+hostAndPort+"': port must be greater than 0 (was "+port+")");
+						errorCount++;
+						continue;
+	                }
+	                
+	                hostInfo[hostIndex] = new HostInfo(host, port);
+	                hostIndex++;
+	        	}
+	        	
+	        	if( port > 0 || remoteHost != null ) {
+	        		addWarn("'hostAddresses' specified: ignoring 'port' and 'remoteHost' parameters");
+	        	}
+	        }
+	        else {
+		        if (port <= 0) {
+		            errorCount++;
+		            addError("No port was configured for appender " + name + ".");
+		        }
+		
+		        if (remoteHost == null) {
+		            errorCount++;
+		            addError("No remote host was configured for appender " + name + ".");
+		        }
+	
+		        if (errorCount == 0) {
+		        	try {
+		        		InetAddress.getByName(remoteHost);
+		        	} catch (UnknownHostException ex) {
+		        		addError("unknown host: " + remoteHost);
+		        		errorCount++;
+		        	}
+		        }
+	        }
         }
         
         if (errorCount == 0 && socketFactory == null) {
@@ -558,7 +706,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             if (!encoder.isStarted()) {
                 encoder.start();
             }
-            peerId = "Log destination " + remoteHost + ":" + port + ": ";
             
             if (keepAliveDuration != null) {
                 setThreadPoolCoreSize(getThreadPoolCoreSize() + 1);
@@ -610,7 +757,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public String getRemoteHost() {
         return remoteHost;
     }
-
+    
     /**
      * The TCP port on the host to which to connect and send events
      */
@@ -621,9 +768,17 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public int getPort() {
         return port;
     }
+    
+    public void setHostAddresses(String hostAddresses) {
+		this.hostAddresses = hostAddresses;
+	}
+    
+    public String getHostAddresses() {
+		return hostAddresses;
+	}
 
     /**
-     * Time period for which to wait after a connection fails,
+     * Time period for which to wait after failing to connect to all servers,
      * before attempting to reconnect.
      * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
      */
@@ -638,6 +793,21 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         return reconnectionDelay;
     }
 
+    /**
+     * Time period for which to wait before attempting to reconnect to the primary server.
+     * Default is {@value #DEFAULT_RECONNECTION_PRIMARY_DELAY} milliseconds.
+     */
+    public void setReconnectionToPrimaryDelay(Duration delay) {
+    	if (delay == null || delay.getMilliseconds() <= 0) {
+            throw new IllegalArgumentException("reconnectionToMasterDelay must be > 0");
+        }
+        this.reconnectionToPrimaryDelay = delay;
+	}
+    
+    public Duration getReconnectionToPrimaryDelay() {
+		return reconnectionToPrimaryDelay;
+	}
+    
     /**
      * Socket connection timeout in milliseconds. 
      */
