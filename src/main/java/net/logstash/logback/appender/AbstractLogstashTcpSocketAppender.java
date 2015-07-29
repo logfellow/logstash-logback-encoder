@@ -665,6 +665,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 		        if (errorCount == 0) {
 		        	try {
 		        		InetAddress.getByName(remoteHost);
+		        		this.hostInfo = new HostInfo[] { new HostInfo(remoteHost, port) };
 		        	} catch (UnknownHostException ex) {
 		        		addError("unknown host: " + remoteHost);
 		        		errorCount++;
