@@ -87,10 +87,7 @@ public class LogstashTcpSocketAppenderTest {
     
     @Before
     public void setup() throws IOException {
-        appender.setRemoteHost("localhost");
-        appender.setPort(10000);
         when(context.getStatusManager()).thenReturn(statusManager);
-        
         when(socket.getOutputStream()).thenReturn(outputStream);
     }
     
@@ -101,7 +98,7 @@ public class LogstashTcpSocketAppenderTest {
     
     @Test
     public void testEncoderCalled() throws Exception {
-        
+        appender.addDestination("localhost:10000");
         appender.setIncludeCallerData(true);
         
         when(socketFactory.createSocket()).thenReturn(socket);
@@ -122,7 +119,7 @@ public class LogstashTcpSocketAppenderTest {
 
     @Test
     public void testReconnectOnOpen() throws Exception {
-        
+        appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
         
         when(socketFactory.createSocket())
@@ -142,7 +139,7 @@ public class LogstashTcpSocketAppenderTest {
 
     @Test
     public void testReconnectOnWrite() throws Exception {
-        
+        appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
         
         when(socketFactory.createSocket()).thenReturn(socket);
@@ -171,8 +168,8 @@ public class LogstashTcpSocketAppenderTest {
      */
     @Test
     public void testConnectOnPrimary() throws Exception {
-        appender.setRemoteHost(null);
-        appender.setHostAddresses("localhost:10000, localhost:10001");
+        appender.addDestination("localhost:10000");
+        appender.addDestination("localhost:10001");
 
         when(socketFactory.createSocket()).thenReturn(socket);
 
@@ -197,8 +194,8 @@ public class LogstashTcpSocketAppenderTest {
      */
     @Test
     public void testReconnectToSecondaryOnOpen() throws Exception {
-        appender.setRemoteHost(null);
-        appender.setHostAddresses("localhost:10000, localhost:10001");
+        appender.addDestination("localhost:10000");
+        appender.addDestination("localhost:10001");
 
         when(socketFactory.createSocket())
             .thenReturn(socket);
@@ -234,8 +231,8 @@ public class LogstashTcpSocketAppenderTest {
      */
     @Test
     public void testReconnectToSecondaryOnWrite() throws Exception {
-        appender.setRemoteHost(null);
-        appender.setHostAddresses("localhost:10000, localhost:10001");
+        appender.addDestination("localhost:10000");
+        appender.addDestination("localhost:10001");
 
         when(socketFactory.createSocket())
             .thenReturn(socket);
@@ -281,9 +278,8 @@ public class LogstashTcpSocketAppenderTest {
      */
     @Test
     public void testReconnectToPrimaryWhileOnSecondary() throws Exception {
-        
-        appender.setRemoteHost(null);
-        appender.setHostAddresses("localhost:10000, localhost:10001");
+        appender.addDestination("localhost:10000");
+        appender.addDestination("localhost:10001");
         appender.setReattemptPrimaryConnectionDelay(Duration.buildByMilliseconds(100));
         
         when(socketFactory.createSocket())
@@ -334,8 +330,8 @@ public class LogstashTcpSocketAppenderTest {
     @Test
     public void testReconnectWaitWhenExhausted() throws Exception {
         
-        appender.setRemoteHost(null);
-        appender.setHostAddresses("localhost:10000, localhost:10001");
+        appender.addDestination("localhost:10000");
+        appender.addDestination("localhost:10001");
         appender.setReconnectionDelay(Duration.buildByMilliseconds(100));
         
         when(socketFactory.createSocket())
@@ -377,8 +373,7 @@ public class LogstashTcpSocketAppenderTest {
     @Test
     public void testKeepAlive() throws Exception {
 
-        appender.setRemoteHost("localhost");
-        appender.setPort(10000);
+        appender.addDestination("localhost");
 
         when(socketFactory.createSocket())
             .thenReturn(socket);
@@ -415,8 +410,8 @@ public class LogstashTcpSocketAppenderTest {
     @Test
     public void testReconnectToSecondaryOnKeepAlive() throws Exception {
 
-        appender.setRemoteHost(null);
-        appender.setHostAddresses("localhost:10000, localhost:10001");
+        appender.addDestination("localhost:10000");
+        appender.addDestination("localhost:10001");
 
         // Schedule keep alive message every 100ms
         appender.setKeepAliveMessage("UNIX");
@@ -457,6 +452,101 @@ public class LogstashTcpSocketAppenderTest {
         inOrder.verify(socket).connect(host("localhost", 10001), anyInt());
     }
     
+    
+    /**
+     * At least one valid destination must be configured. 
+     * The appender refuses to start in case of error.
+     */
+    @Test
+    public void testDestination_None() throws Exception {
+        appender.start();
+        Assert.assertFalse(appender.isStarted());
+    }
+    
+    
+    /**
+     * Specify destinations using both <remoteHost>/<port> and <destination>.
+     * Only one scheme can be used - make sure the appender refuses to start.
+     */
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testDestination_MixedType() throws Exception {
+        appender.setRemoteHost("localhost");
+        appender.setPort(10000);
+        appender.addDestination("localhost:10001");
+        
+        appender.start();
+        Assert.assertFalse(appender.isStarted());
+    }
+    
+    
+    /**
+     * Validate destination with a single host
+     */
+    @Test
+    public void testDestination_SingleInvalid() throws Exception {
+        /* Unparseable port */
+        try {
+            appender.addDestination("localhost:a");
+            Assert.fail("IllegalArgumentException should have been thrown (port is not numeric)");
+        }
+        catch(IllegalArgumentException e) {
+            // Ok
+        }
+        
+        /* Negative port*/
+        try {
+            appender.addDestination("localhost:-1");
+            Assert.fail("IllegalArgumentException should have been thrown (port must be > 0)");
+        }
+        catch(IllegalArgumentException e) {
+            // Ok
+        }
+        
+        /* port set to ZERO*/
+        try {
+            appender.addDestination("localhost:0");
+            Assert.fail("IllegalArgumentException should have been thrown (port must be > 0)");
+        }
+        catch(IllegalArgumentException e) {
+            // Ok
+        }
+    }
+    
+    
+    /**
+     * Validate destination when multiple hosts are specified in a single 
+     * {@link #addDestination(String)} statement
+     */
+    @Test
+    public void testDestination_MultipleInvalid() throws Exception {
+        /* Unparseable port */
+        try {
+            appender.addDestination("localhost:10000, localhost:a");
+            Assert.fail("IllegalArgumentException should have been thrown (port is not numeric)");
+        }
+        catch(IllegalArgumentException e) {
+            // Ok
+        }
+        
+        /* Negative port*/
+        try {
+            appender.addDestination("localhost:10000, localhost:-1");
+            Assert.fail("IllegalArgumentException should have been thrown (port must be > 0)");
+        }
+        catch(IllegalArgumentException e) {
+            // Ok
+        }
+        
+        /* port set to ZERO*/
+        try {
+            appender.addDestination("localhost:10000, localhost:0");
+            Assert.fail("IllegalArgumentException should have been thrown (port must be > 0)");
+        }
+        catch(IllegalArgumentException e) {
+            // Ok
+        }
+    }
     
     private SocketAddress host(final String host, final int port) {
     	return argThat(hasHostAndPort(host, port));

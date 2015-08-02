@@ -21,6 +21,9 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.RejectedExecutionException;
@@ -107,16 +110,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * The TCP port on the host to which to connect and send events
      */
     private int port = DEFAULT_PORT;
-
-    /**
-     * Comma separated list of host addresses
-     */
-    private String hostAddresses;
     
     /**
      * Array with the host/port information sorted by preference
      */
-    private HostInfo[] hostInfo;
+    private List<HostInfo> destinations = new ArrayList<>(2);
     
     /**
      * Time period for which to wait after a connection fails,
@@ -341,9 +339,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Should we close the current connection?
                      */
                     if( shouldCloseConnection(currentTime) ) {
-                    	addInfo(peerId + "closing connection and attempt to reconnect to primary server.");
-                    	outputStream.flush();
-                    	reopenSocket();
+                        addInfo(peerId + "closing connection and attempt to reconnect to primary server.");
+                        outputStream.flush();
+                        reopenSocket();
                     }
                     break;
                 } catch (Exception e) {
@@ -366,15 +364,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
 
         private boolean shouldCloseConnection(long currentTime) {
-        	return secondaryConnectionTTL <= currentTime;
-        }
-
-        private HostInfo getHost(int hostIndex) {
-        	return hostInfo[hostIndex];
-        }
-
-        private boolean isPrimaryHost(int hostIndex) {
-        	return hostIndex == 0;
+            return secondaryConnectionTTL <= currentTime;
         }
 
         @Override
@@ -403,7 +393,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
-        	int hostIndex = 0; 
+            int hostIndex = 0; 
             int errorCount = 0;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
                 long startTime = System.currentTimeMillis();
@@ -413,7 +403,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * Choose next server and update peerId (for status message)
                      */
-                    HostInfo currentHost = getHost(hostIndex);
+                    HostInfo currentHost = getDestinations().get(hostIndex);
                     peerId = "Log destination " + currentHost + ": ";
                     
                     /*
@@ -437,11 +427,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * If connected to a secondary, remember when the connection should be closed to
                      * force attempt to reconnect to primary
                      */
-                    if( reattemptPrimaryConnectionDelay != null && !isPrimaryHost(hostIndex) ) {
-                    	secondaryConnectionTTL = startTime + reattemptPrimaryConnectionDelay.getMilliseconds();
+                    if( reattemptPrimaryConnectionDelay != null && hostIndex!=0 ) {
+                        secondaryConnectionTTL = startTime + reattemptPrimaryConnectionDelay.getMilliseconds();
                     }
                     else {
-                    	secondaryConnectionTTL = Long.MAX_VALUE;
+                        secondaryConnectionTTL = Long.MAX_VALUE;
                     }
                     
                     return;
@@ -455,7 +445,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Retry immediately with next available host if any. Otherwise, sleep and retry with primary
                      */
                     hostIndex++;
-                    if( hostIndex >= hostInfo.length ) {
+                    if( hostIndex >= destinations.size() ) {
                         hostIndex = 0;
                         
                         /*
@@ -467,7 +457,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         /*
                          * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
                          */
-                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * hostInfo.length) {
+                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
                             addWarn(peerId + "connection failed. Waiting " + sleepTime + "ms before attempting reconnection.", e);
                         }
                         
@@ -476,7 +466,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                                 shutdownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
                             } catch (InterruptedException ie) {
                                 Thread.currentThread().interrupt();
-                                addWarn(peerId + "connection interrupted. Will no longer attempt reconnection");
+                                addWarn(peerId + "connection interrupted. Will no longer attempt reconnection.");
                             }
                         }
                     }
@@ -484,8 +474,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         /*
                          * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
                          */
-                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * hostInfo.length) {
-                            addWarn(peerId + "connection failed. Retry with next server ("+hostInfo[hostIndex]+")", e);
+                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
+                            addWarn(peerId + "connection failed. Retry with next server ("+getDestinations().get(hostIndex)+").", e);
                         }
                     }
                 }
@@ -610,83 +600,39 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             addError("No encoder was configured for appender " + name + ".");
         }
         
-        if( hostAddresses != null && remoteHost != null ) {
-        	errorCount++;
-        	addError("Use 'remoteHost' or 'remoteAddresses' but not both");
+        /*
+         * Destinations can be configured via <remoteHost>/<port> OR <destination> but not both!
+         */
+        if( destinations.size() > 0 && remoteHost != null ) {
+            errorCount++;
+            addError("Use '<remoteHost>/<port>' or '<destination>' but not both");
         }
-        else {
-            if( hostAddresses != null ) {
-                String[] hostAndPorts = StringUtils.split(hostAddresses, ",");
-
-                hostInfo = new HostInfo[hostAndPorts.length];
-                int hostIndex = 0;
-
-                for(String hostAndPort: hostAndPorts) {
-                    String[] parts = StringUtils.split(hostAndPort,':');
-
-                    if( parts.length > 2 ) {
-                        errorCount++;
-                        addError("Invalid hostAddress '"+hostAndPort+"': unparseable value (expected format 'host:port')");
-                        continue;
-                    }
-
-                    String host = StringUtils.trim(parts[0]);
-                    try {
-                        InetAddress.getByName(host);
-                    } catch (UnknownHostException ex) {
-                        addError("Invalid hostAddress '"+hostAndPort+"': host unknown (was '"+host+"')");
-                        errorCount++;
-                        continue;
-                    }
-
-                    int port = DEFAULT_PORT;
-                    if( parts.length == 2 ) {
-                        try {
-                            port = Integer.parseInt(StringUtils.trim(parts[1]));
-                        }
-                        catch(NumberFormatException e) {
-                            addError("Invalid hostAddress '"+hostAndPort+"': unparseable port (was '"+parts[1]+"')");
-                            errorCount++;
-                            continue;
-                        }
-                    }
-                    if( port <= 0 ) {
-                        addError("Invalid hostAddress '"+hostAndPort+"': port must be greater than 0 (was "+port+")");
-                        errorCount++;
-                        continue;
-                    }
-
-                    hostInfo[hostIndex] = new HostInfo(host, port);
-                    hostIndex++;
-                }
-
-                if( remoteHost != null ) {
-                    addWarn("'hostAddresses' specified: ignoring 'port' and 'remoteHost' parameters");
-                }
+        
+        /*
+         * Handle destination specified using <remoteHost>/<port>
+         */
+        if( remoteHost != null ) {
+            addWarn("<remoteHost>/<port> are DEPRECATED, please use <destination> instead");
+            try {
+                addDestination(remoteHost, port);
             }
-            else {
-                if (port <= 0) {
-                    errorCount++;
-                    addError("No port was configured for appender " + name + ".");
-                }
-
-                if (remoteHost == null) {
-                    errorCount++;
-                    addError("No remote host was configured for appender " + name + ".");
-                }
-
-                if (errorCount == 0) {
-                    try {
-                        InetAddress.getByName(remoteHost);
-                        this.hostInfo = new HostInfo[] { new HostInfo(remoteHost, port) };
-                    } catch (UnknownHostException ex) {
-                        addError("unknown host: " + remoteHost);
-                        errorCount++;
-                    }
-                }
+            catch(IllegalArgumentException e) {
+                errorCount++;
+                addError(e.getMessage());
             }
         }
         
+        /*
+         * Make sure at least one destination has been specified
+         */
+        if( destinations.size() == 0 ) {
+            errorCount++;
+            addError("No destination was configured. Please use <destination> to add one or more destinations to the appender");
+        }
+        
+        /*
+         * Create socket factory
+         */
         if (errorCount == 0 && socketFactory == null) {
             if (sslConfiguration == null) {
                 socketFactory = SocketFactory.getDefault();
@@ -714,7 +660,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         if (errorCount == 0) {
             
             if (getThreadNamePrefix() == DEFAULT_THREAD_NAME_PREFIX) {
-                setThreadNamePrefix(DEFAULT_THREAD_NAME_PREFIX + remoteHost + ":" + port + "-");	//FIXME what if multiple hosts?
+                setThreadNamePrefix(DEFAULT_THREAD_NAME_PREFIX + remoteHost + ":" + port + "-");    //FIXME what if multiple hosts?
             }
             encoder.setContext(getContext());
             if (!encoder.isStarted()) {
@@ -763,32 +709,93 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * The host to which to connect and send events
+     * 
+     * @deprecated use {@link #addDestination(String, int)} instead
      */
+    @Deprecated
     public void setRemoteHost(String host) {
         remoteHost = host;
     }
 
+    @Deprecated
     public String getRemoteHost() {
         return remoteHost;
     }
     
     /**
      * The TCP port on the host to which to connect and send events
+     * 
+     * @deprecated use {@link #addDestination(String, int)} instead
      */
+    @Deprecated
     public void setPort(int port) {
         this.port = port;
     }
 
+    @Deprecated
     public int getPort() {
         return port;
     }
     
-    public void setHostAddresses(String hostAddresses) {
-		this.hostAddresses = hostAddresses;
-	}
+    /**
+     * 
+     * @param destination
+     */
+    public void addDestination(final String destination) throws IllegalArgumentException {
+        /*
+         * Multiple destinations can be specified on one single line, separated by comma
+         */
+        String[] destinations = StringUtils.split(StringUtils.trimToEmpty(destination), ',');
+        
+        for(String entry: destinations) {
+            String[] parts = StringUtils.split(entry,':');
+
+            if( parts.length > 2 ) {
+                throw new IllegalArgumentException("Invalid destination '"+entry+"': unparseable value (expected format 'host[:port]').");
+            }
+
+            String host = StringUtils.trim(parts[0]);
+
+            int port = DEFAULT_PORT;
+            if( parts.length == 2 ) {
+                try {
+                    port = Integer.parseInt(StringUtils.trim(parts[1]));
+                }
+                catch(NumberFormatException e) {
+                    throw new IllegalArgumentException("Invalid destination '"+entry+"': unparseable port (was '"+parts[1]+"').");
+                }
+            }
+
+            addDestination(host, port);
+        }
+    }
     
-    public String getHostAddresses() {
-        return this.hostAddresses;
+    /**
+     * 
+     * @param host
+     * @param port
+     */
+    public void addDestination(final String host, final int port) throws IllegalArgumentException  {
+        try {
+            InetAddress.getByName(host);
+        } 
+        catch (UnknownHostException ex) {
+            throw new IllegalArgumentException("Invalid destination '"+host+"': host unknown (was '"+host+"').");
+        }
+        
+        if( port <= 0 ) {
+            throw new IllegalArgumentException("Invalid destination '"+host+":"+port+"': port must be greater than 0 (was "+port+").");
+        }
+        
+        destinations.add(new HostInfo(host, port));
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public List<HostInfo> getDestinations() {
+        return Collections.unmodifiableList(destinations);
     }
     
     /**
@@ -813,11 +820,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * an error occur.
      */
     public void setReattemptPrimaryConnectionDelay(Duration delay) {
-    	if (delay != null && delay.getMilliseconds() <= 0) {
+        if (delay != null && delay.getMilliseconds() <= 0) {
             throw new IllegalArgumentException("reattemptPrimaryConnectionDelay must be > 0");
         }
         this.reattemptPrimaryConnectionDelay = delay;
-	}
+    }
     
     public Duration getReattemptPrimaryConnectionDelay() {
         return reattemptPrimaryConnectionDelay;
