@@ -114,7 +114,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Array with the host/port information sorted by preference
      */
-    private List<HostInfo> destinations = new ArrayList<>(2);
+    private List<HostInfo> destinations = new ArrayList<HostInfo>(2);
     
     /**
      * Time period for which to wait after a connection fails,
