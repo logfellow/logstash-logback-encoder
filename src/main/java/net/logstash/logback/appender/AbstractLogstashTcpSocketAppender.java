@@ -736,8 +736,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * The charset to use when writing the {@link #keepAliveMessage}.
      * Defaults to UTF-8.
      */
-   public void setKeepAliveCharset(String keepAliveCharset) {
-        this.keepAliveCharset = Charset.forName(keepAliveCharset);
+   public void setKeepAliveCharset(Charset keepAliveCharset) {
+        this.keepAliveCharset = keepAliveCharset;
     }
     
 }
