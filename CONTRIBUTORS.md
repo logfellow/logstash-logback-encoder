@@ -22,6 +22,7 @@
 * James Pennell (jpennell)
 * Kyle Prager (kyleprager)
 * Neil Prosser (neilprosser)
+* Bertrand Renuart (brenuart)
 * Alex Sherwin (alex-sherwin)
 * Dmitry Sklyut (dsklyut)
 * Behar Veliqi (bveliqi)
