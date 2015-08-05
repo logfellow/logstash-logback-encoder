@@ -279,7 +279,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>2.2</version>
+                    <version>2.4.1</version>
                     <executions>
                         <execution>
                             <goals>
@@ -290,6 +290,7 @@
                     <configuration>
                         <shadedArtifactAttached>false</shadedArtifactAttached>
                         <createDependencyReducedPom>true</createDependencyReducedPom>
+                        <minimizeJar>true</minimizeJar>
                         <artifactSet>
                             <excludes>
                                 <exclude>ch.qos.logback:*</exclude>
