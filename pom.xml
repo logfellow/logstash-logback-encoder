@@ -110,11 +110,6 @@
             <version>${com.fasterxml.jackson.version}</version>
         </dependency>
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons.io.version}</version>
-        </dependency>
-        <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
             <version>${commons.lang.version}</version>
@@ -140,6 +135,12 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${org.mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons.io.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -300,10 +301,6 @@
                             <relocation>
                                 <pattern>org.apache.commons.lang</pattern>
                                 <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang</shadedPattern>
-                            </relocation>
-                            <relocation>
-                                <pattern>org.apache.commons.io</pattern>
-                                <shadedPattern>${project.groupId}.encoder.org.apache.commons.io</shadedPattern>
                             </relocation>
                             <relocation>
                                 <pattern>com.lmax.disruptor</pattern>

@@ -21,9 +21,6 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
-
-import org.apache.commons.io.IOUtils;
-
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
@@ -41,6 +38,8 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private final CompositeJsonFormatter<Event> formatter;
     
     private String lineSeparator = System.getProperty("line.separator");
+    
+    private byte[] lineSeparatorBytes;
     
     private Charset charset;
     
@@ -75,8 +74,8 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
         doEncodeWrapped(suffix, event);
         
-        if (this.lineSeparator != null) {
-            IOUtils.write(this.lineSeparator, outputStream, charset);
+        if (lineSeparatorBytes != null) {
+            outputStream.write(lineSeparatorBytes);
         }
         
         if (immediateFlush) {
@@ -97,6 +96,9 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         formatter.setContext(getContext());
         formatter.start();
         charset = Charset.forName(formatter.getEncoding());
+        lineSeparatorBytes = this.lineSeparator == null
+                ? null
+                : this.lineSeparator.getBytes(charset);
         startWrapped(prefix);
         startWrapped(suffix);
     }
