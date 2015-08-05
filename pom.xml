@@ -36,6 +36,7 @@
         <org.assertj.version>2.1.0</org.assertj.version>
         <org.mockito.version>1.10.19</org.mockito.version>
         <com.lmax.disruptor.version>3.3.2</com.lmax.disruptor.version>
+        <org.codehaus.mojo.animal-sniffer.version>1.14</org.codehaus.mojo.animal-sniffer.version>
     </properties>
 
     <licenses>
@@ -120,6 +121,13 @@
             <version>${com.lmax.disruptor.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>animal-sniffer-annotations</artifactId>
+            <version>${org.codehaus.mojo.animal-sniffer.version}</version>
+            <!-- provided since this is not needed at runtime -->
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
@@ -155,6 +163,27 @@
                     <source>1.6</source>
                     <target>1.6</target>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-maven-plugin</artifactId>
+                <version>${org.codehaus.mojo.animal-sniffer.version}</version>
+                <configuration>
+                    <signature>
+                        <groupId>org.codehaus.mojo.signature</groupId>
+                        <artifactId>java16</artifactId>
+                        <version>1.1</version>
+                    </signature>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>ensure-java-1.6-compatible</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

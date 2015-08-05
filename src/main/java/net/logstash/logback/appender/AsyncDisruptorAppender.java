@@ -21,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -335,23 +337,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 getThreadPoolCoreSize(),
                 this.threadFactory);
         
-        /*
-         * ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy was added in 1.7.
-         * 
-         * Don't try to invoke it if running on a JVM less than 1.7
-         * 
-         * If running on less than 1.7, then shutdown will wait for all tasks
-         * to complete (even if they are cancelled), or the max wait timeout,
-         * whichever comes first.
-         */
-        if (isRemoveOnCancelPolicyPossible()) {
-            /*
-             * This ensures that cancelled tasks
-             * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
-             * do not hold up shutdown.
-             */
-            this.executorService.setRemoveOnCancelPolicy(true);
-        }
+        setRemoveOnCancelPolicy();
         
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
@@ -371,7 +357,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.disruptor.start();
         super.start();
     }
-    
+
     @Override
     public void stop() {
         /*
@@ -423,6 +409,27 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     protected void prepareForDeferredProcessing(Event event) {
         event.prepareForDeferredProcessing();
+    }
+    
+    @IgnoreJRERequirement
+    private void setRemoveOnCancelPolicy() {
+        /*
+         * ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy was added in 1.7.
+         * 
+         * Don't try to invoke it if running on a JVM less than 1.7
+         * 
+         * If running on less than 1.7, then shutdown will wait for all tasks
+         * to complete (even if they are cancelled), or the max wait timeout,
+         * whichever comes first.
+         */
+        if (isRemoveOnCancelPolicyPossible()) {
+            /*
+             * This ensures that cancelled tasks
+             * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
+             * do not hold up shutdown.
+             */
+            this.executorService.setRemoveOnCancelPolicy(true);
+        }
     }
     
     private boolean isRemoveOnCancelPolicyPossible() {
