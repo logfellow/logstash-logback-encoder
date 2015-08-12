@@ -13,6 +13,9 @@
  */
 package net.logstash.logback.appender;
 
+import java.util.Arrays;
+import java.util.Formatter;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -89,10 +92,13 @@ import com.lmax.disruptor.dsl.ProducerType;
  */
 public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware> extends UnsynchronizedAppenderBase<Event> {
     
+    protected static final String APPENDER_NAME_FORMAT = "%1$s";
+    protected static final String THREAD_INDEX_FORMAT = "%2$d";
+    public static final String DEFAULT_THREAD_NAME_FORMAT = "logback-appender-" + APPENDER_NAME_FORMAT + "-" + THREAD_INDEX_FORMAT;
+    
     public static final int DEFAULT_RING_BUFFER_SIZE = 8192;
     public static final ProducerType DEFAULT_PRODUCER_TYPE = ProducerType.MULTI;
     public static final WaitStrategy DEFAULT_WAIT_STRATEGY = new BlockingWaitStrategy();
-    public static final String DEFAULT_THREAD_NAME_PREFIX = "logback-async-disruptor-appender-";
     public static final int DEFAULT_DROPPED_WARN_FREQUENCY = 1000;
     
     /**
@@ -126,15 +132,23 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private WaitStrategy waitStrategy = DEFAULT_WAIT_STRATEGY;
     
     /**
-     * Used as a prefix by the {@link WorkerThreadFactory} to set the
+     * Pattern used by the {@link WorkerThreadFactory} to set the
      * handler thread name.
-     * Defaults to {@value #DEFAULT_THREAD_NAME_PREFIX}.
+     * Defaults to {@value #DEFAULT_THREAD_NAME_FORMAT}.
      * <p>
      * 
      * If you change the {@link #threadFactory}, then this
      * value may not be honored.
+     * <p>
+     * 
+     * The string is a format pattern understood by {@link Formatter#format(String, Object...)}.
+     * {@link Formatter#format(String, Object...)} is used to
+     * construct the actual thread name prefix.
+     * The first argument (%1$s) is the string appender name.
+     * The second argument (%2$d) is the numerical thread index.
+     * Other arguments can be made available by subclasses.
      */
-    private String threadNamePrefix = DEFAULT_THREAD_NAME_PREFIX;
+    private String threadNameFormat = DEFAULT_THREAD_NAME_FORMAT;
     
     /**
      * When true, child threads created by this appender will be daemon threads,
@@ -211,6 +225,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private LogEventFactory<Event> eventFactory = new LogEventFactory<Event>();
     
     /**
+     * Incrementor number used as part of thread names for uniqueness.
+     */
+    private final AtomicInteger threadNumber = new AtomicInteger(1);
+    
+    /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
      */
     protected static class LogEvent<Event> {
@@ -237,12 +256,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      */
     private class WorkerThreadFactory implements ThreadFactory {
         
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-        
         @Override
         public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
-            t.setName(threadNamePrefix + threadNumber.getAndIncrement());
+            t.setName(calculateThreadName());
             t.setDaemon(useDaemonThread);
             return t;
         }
@@ -443,6 +460,16 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         }
     }
 
+    protected String calculateThreadName() {
+        List<Object> threadNameFormatParams = getThreadNameFormatParams();
+        return String.format(threadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));
+    }
+
+    protected List<Object> getThreadNameFormatParams() {
+        return Arrays.<Object>asList(
+            getName(),
+            threadNumber.incrementAndGet());
+    }
     protected void setEventFactory(LogEventFactory<Event> eventFactory) {
         this.eventFactory = eventFactory;
     }
@@ -470,11 +497,55 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.threadPoolCoreSize = threadPoolCoreSize;
     }
     
+    /**
+     * @deprecated use {@link #getThreadNameFormat()}
+     */
+    @Deprecated
     public String getThreadNamePrefix() {
-        return threadNamePrefix;
+        if (this.threadNameFormat != null && this.threadNameFormat.endsWith(THREAD_INDEX_FORMAT)) {
+            /*
+             * Try to return the old-style threadNamePrefix   
+             */
+            return this.threadNameFormat.substring(0, this.threadNameFormat.length() - THREAD_INDEX_FORMAT.length());
+        }
+        /*
+         * Otherwise, just default to return the regular format
+         */
+        return threadNameFormat; 
     }
+    
+    /**
+     * This is the old way to customize thread names.
+     * 
+     * @param threadNamePrefix
+     * @deprecated use {@link #setThreadNameFormat(String)} instead.
+     */
+    @Deprecated
     public void setThreadNamePrefix(String threadNamePrefix) {
-        this.threadNamePrefix = threadNamePrefix;
+        setThreadNameFormat(threadNamePrefix + THREAD_INDEX_FORMAT);
+    }
+    
+    public String getThreadNameFormat() {
+        return threadNameFormat;
+    }
+    /**
+     * Pattern used by the to set the handler thread names.
+     * Defaults to {@value #DEFAULT_THREAD_NAME_FORMAT}.
+     * <p>
+     * 
+     * If you change the {@link #threadFactory}, then this
+     * value may not be honored.
+     * <p>
+     * 
+     * The string is a format pattern understood by {@link Formatter#format(String, Object...)}.
+     * {@link Formatter#format(String, Object...)} is used to
+     * construct the actual thread name prefix.
+     * The first argument (%1$s) is the string appender name.
+     * The second argument (%2$d) is the numerical thread index.
+     * Other arguments can be made available by subclasses.
+     */
+    public void setThreadNameFormat(String threadNameFormat) {
+        this.threadNameFormat = threadNameFormat;
     }
     
     public int getRingBufferSize() {
@@ -529,5 +600,5 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setDaemon(boolean useDaemonThread) {
         this.useDaemonThread = useDaemonThread;
     }
-    
+
 }

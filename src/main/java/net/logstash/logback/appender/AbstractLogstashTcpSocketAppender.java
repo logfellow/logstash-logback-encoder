@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -36,9 +37,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import net.logstash.logback.encoder.SeparatorParser;
-
-import org.apache.commons.lang.StringUtils;
-
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
 import ch.qos.logback.core.net.ssl.SSLConfigurableSocket;
@@ -74,6 +72,10 @@ import com.lmax.disruptor.RingBuffer;
  */
 public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredProcessingAware>
         extends AsyncDisruptorAppender<Event> {
+    
+    protected static final String HOST_NAME_FORMAT = "%3$s";
+    protected static final String PORT_FORMAT = "%4$d";
+    public static final String DEFAULT_THREAD_NAME_FORMAT = "logback-appender-" + APPENDER_NAME_FORMAT + "-" + HOST_NAME_FORMAT + ":" + PORT_FORMAT + "-" + THREAD_INDEX_FORMAT;
     
     /**
      * The default port number of remote logging server (4560).
@@ -117,9 +119,35 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private int port = DEFAULT_PORT;
     
     /**
-     * Array with the host/port information sorted by preference
+     * Destinations to which to attempt to send logs, in order of preference.
+     * <p>
+     * 
+     * The first entry is considered the "primary" destination.
+     * The remaining entries are considered "secondary" destinations.
+     * <p>
+     * 
+     * Logs are only sent to one destination at a time.
+     * 
+     * <p>
+     * Connections are attempted to each destination in order until a connection succeeds.
+     * Logs will be sent to the first destination for which the connection succeeds
+     * until the connection breaks or (if the connection is to a secondary destination)
+     * the {@link #secondaryConnectionTTL} elapses.
      */
-    private List<HostInfo> destinations = new ArrayList<HostInfo>(2);
+    private List<Destination> destinations = new ArrayList<Destination>(2);
+    
+    /**
+     * When connected, this is the index into {@link #destinations}
+     * to the currently connected destination.
+     * <p>
+     * 
+     * When a connection has never been established, the value is the primary index.
+     * <p>
+     * 
+     * When a connection has been established, but lost, the value is the
+     * previously connected index.
+     */
+    private volatile int connectedDestinationIndex = PRIMARY_DESTINATION_INDEX;
     
     /**
      * Time period for which to wait after a connection fails,
@@ -129,11 +157,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private Duration reconnectionDelay = new Duration(DEFAULT_RECONNECTION_DELAY);
 
     /**
-     * Time period for connections to secondary destinations to live
+     * Time period for connections to secondary destinations to be used
      * before attempting to reconnect to primary server.
      * 
      * When the value is null (the default), the feature is disabled:
-     * the appender will stay on the current server until an error occurs.
+     * the appender will stay on the current destination until an error occurs.
      */
     private Duration secondaryConnectionTTL;
     
@@ -287,6 +315,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          *
          */
         private class KeepAliveRunnable implements Runnable {
+            
+            private int previousDestinationIndex = PRIMARY_DESTINATION_INDEX;
 
             @Override
             public void run() {
@@ -303,6 +333,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 } else {
                     scheduleKeepAlive(lastSent);
                 }
+                
+                if (previousDestinationIndex != connectedDestinationIndex) {
+                    /*
+                     * Destination has changed since last keep alive event,
+                     * so update the thread name
+                     */
+                    updateCurrentThreadName();
+                }
+                previousDestinationIndex = connectedDestinationIndex;
             }
         }
 
@@ -342,7 +381,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * Should we close the current connection?
                      */
-                    if( shouldCloseConnection(currentTime) ) {
+                    if (shouldCloseConnection(currentTime)) {
                         addInfo(peerId + "closing connection and attempt to reconnect to primary server.");
                         outputStream.flush();
                         reopenSocket();
@@ -397,7 +436,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
-            int hostIndex = 0; 
+            int destinationIndex = 0;
             int errorCount = 0;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
                 long startTime = System.currentTimeMillis();
@@ -407,8 +446,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * Choose next server and update peerId (for status message)
                      */
-                    HostInfo currentHost = getDestinations().get(hostIndex);
-                    peerId = "Log destination " + currentHost + ": ";
+                    Destination currentDestination = getDestinations().get(destinationIndex);
+                    peerId = "Log destination " + currentDestination + ": ";
                     
                     /*
                      * Set the SO_TIMEOUT so that SSL handshakes will timeout if they take too long.
@@ -417,7 +456,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      */
                     tempSocket = socketFactory.createSocket();
                     tempSocket.setSoTimeout(acceptConnectionTimeout);
-                    tempSocket.connect(new InetSocketAddress(currentHost.host, currentHost.port), acceptConnectionTimeout);
+                    tempSocket.connect(new InetSocketAddress(currentDestination.getHost(), currentDestination.getPort()), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
                     
                     encoder.init(tempOutputStream);
@@ -426,16 +465,25 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     
                     this.socket = tempSocket;
                     this.outputStream = tempOutputStream;
+                    boolean shouldUpdateThreadName = (destinationIndex != connectedDestinationIndex);
+                    connectedDestinationIndex = destinationIndex;
                     
                     /*
                      * If connected to a secondary, remember when the connection should be closed to
                      * force attempt to reconnect to primary
                      */
-                    if (secondaryConnectionTTL != null && hostIndex != PRIMARY_DESTINATION_INDEX) {
+                    if (secondaryConnectionTTL != null && destinationIndex != PRIMARY_DESTINATION_INDEX) {
                         secondaryConnectionExpirationTime = startTime + secondaryConnectionTTL.getMilliseconds();
                     }
                     else {
                         secondaryConnectionExpirationTime = Long.MAX_VALUE;
+                    }
+                    
+                    if (shouldUpdateThreadName) {
+                        /*
+                         * destination has changed, so update the thread name
+                         */
+                        updateCurrentThreadName();
                     }
                     
                     return;
@@ -448,9 +496,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * Retry immediately with next available host if any. Otherwise, sleep and retry with primary
                      */
-                    hostIndex++;
-                    if (hostIndex >= destinations.size()) {
-                        hostIndex = PRIMARY_DESTINATION_INDEX;
+                    destinationIndex++;
+                    if (destinationIndex >= destinations.size()) {
+                        destinationIndex = PRIMARY_DESTINATION_INDEX;
                         
                         /*
                          * If the connection timed out, then take the elapsed time into account
@@ -479,7 +527,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                          * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
                          */
                         if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
-                            addWarn(peerId + "connection failed. Retry with next server ("+getDestinations().get(hostIndex)+").", e);
+                            addWarn(peerId + "connection failed. Trying next server (" + getDestinations().get(destinationIndex) + ").", e);
                         }
                     }
                 }
@@ -565,27 +613,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         
     }
 
-    /**
-     * An immutable representation of a host and port
-     */
-    private static class HostInfo {
-        private final String host;
-        private final int port;
-
-        public HostInfo(String host, int port) {
-            this.host = host;
-            this.port = port;
-        }
-
-        public String toString() {
-            return host+":"+port;
-        }
-    }
-    
-    
     public AbstractLogstashTcpSocketAppender() {
         super();
         setEventHandler(new TcpSendingEventHandler());
+        setThreadNameFormat(DEFAULT_THREAD_NAME_FORMAT);
     }
     
     @Override
@@ -607,7 +638,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         /*
          * Destinations can be configured via <remoteHost>/<port> OR <destination> but not both!
          */
-        if( destinations.size() > 0 && remoteHost != null ) {
+        if (destinations.size() > 0 && remoteHost != null) {
             errorCount++;
             addError("Use '<remoteHost>/<port>' or '<destination>' but not both");
         }
@@ -615,12 +646,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         /*
          * Handle destination specified using <remoteHost>/<port>
          */
-        if( remoteHost != null ) {
-            addWarn("<remoteHost>/<port> are DEPRECATED, please use <destination> instead");
+        if (remoteHost != null) {
+            addWarn("<remoteHost>/<port> are DEPRECATED, use <destination> instead");
             try {
-                addDestination(remoteHost, port);
+                addDestinations(new Destination(remoteHost, port));
             }
-            catch(IllegalArgumentException e) {
+            catch (IllegalArgumentException e) {
                 errorCount++;
                 addError(e.getMessage());
             }
@@ -629,9 +660,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         /*
          * Make sure at least one destination has been specified
          */
-        if( destinations.size() == 0 ) {
+        if (destinations.isEmpty()) {
             errorCount++;
-            addError("No destination was configured. Please use <destination> to add one or more destinations to the appender");
+            addError("No destination was configured. Use <destination> to add one or more destinations to the appender");
         }
         
         /*
@@ -663,9 +694,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         if (errorCount == 0) {
             
-            if (getThreadNamePrefix() == DEFAULT_THREAD_NAME_PREFIX) {
-                setThreadNamePrefix(DEFAULT_THREAD_NAME_PREFIX + remoteHost + ":" + port + "-");    //FIXME what if multiple hosts?
-            }
             encoder.setContext(getContext());
             if (!encoder.isStarted()) {
                 encoder.start();
@@ -714,7 +742,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * The host to which to connect and send events
      * 
-     * @deprecated use {@link #addDestination(String, int)} instead
+     * @deprecated use {@link #addDestination(String)} instead
      */
     @Deprecated
     public void setRemoteHost(String host) {
@@ -729,7 +757,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * The TCP port on the host to which to connect and send events
      * 
-     * @deprecated use {@link #addDestination(String, int)} instead
+     * @deprecated use {@link #addDestination(String)} instead
      */
     @Deprecated
     public void setPort(int port) {
@@ -742,63 +770,68 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
     
     /**
+     * Adds the given destination (or destinations) to the list of potential destinations
+     * to which to send logs.
+     * <p>
+     *  
+     * The string is a comma separated list of destinations in the form of hostName[:portNumber].
+     * <p>
+     * If portNumber is not provided, then the configured {@link #port} will be used,
+     * which defaults to {@value #DEFAULT_PORT}
+     * <p>
      * 
-     * @param destination
+     * For example, "host1.domain.com,host2.domain.com:5560"
      */
     public void addDestination(final String destination) throws IllegalArgumentException {
-        /*
-         * Multiple destinations can be specified on one single line, separated by comma
-         */
-        String[] destinations = StringUtils.split(StringUtils.trimToEmpty(destination), ',');
         
-        for(String entry: destinations) {
-            String[] parts = StringUtils.split(entry,':');
-
-            if( parts.length > 2 ) {
-                throw new IllegalArgumentException("Invalid destination '"+entry+"': unparseable value (expected format 'host[:port]').");
-            }
-
-            String host = StringUtils.trim(parts[0]);
-
-            int port = DEFAULT_PORT;
-            if( parts.length == 2 ) {
-                try {
-                    port = Integer.parseInt(StringUtils.trim(parts[1]));
-                }
-                catch(NumberFormatException e) {
-                    throw new IllegalArgumentException("Invalid destination '"+entry+"': unparseable port (was '"+parts[1]+"').");
-                }
-            }
-
-            addDestination(host, port);
-        }
+        List<Destination> parsedDestinations = DestinationParser.parse(destination, DEFAULT_PORT);
+        
+        addDestinations(parsedDestinations.toArray(new Destination[parsedDestinations.size()]));
     }
     
     /**
-     * 
-     * @param host
-     * @param port
+     * Adds the given destinations to the list of potential destinations.
      */
-    public void addDestination(final String host, final int port) throws IllegalArgumentException  {
-        try {
-            InetAddress.getByName(host);
-        } 
-        catch (UnknownHostException ex) {
-            throw new IllegalArgumentException("Invalid destination '"+host+"': host unknown (was '"+host+"').");
+    public void addDestinations(Destination... destinations) throws IllegalArgumentException  {
+        if (destinations == null) {
+            return;
         }
         
-        if( port <= 0 ) {
-            throw new IllegalArgumentException("Invalid destination '"+host+":"+port+"': port must be greater than 0 (was "+port+").");
+        for (Destination destination : destinations) {
+            try {
+                InetAddress.getByName(destination.getHost());
+            } 
+            catch (UnknownHostException ex) {
+                /*
+                 * Warn, but don't fail startup, so that transient
+                 * DNS problems are allowed to resolve themselves eventually.
+                 */
+                addWarn("Invalid destination '" + destination.getHost() + "': host unknown (was '" + destination.getHost() + "').", ex);
+            }
+            this.destinations.add(destination);
         }
+    }
+    
+    protected void updateCurrentThreadName() {
+        Thread.currentThread().setName(calculateThreadName());
+    }
+    
+    @Override
+    protected List<Object> getThreadNameFormatParams() {
+        List<Object> superThreadNameFormatParams = super.getThreadNameFormatParams();
+        List<Object> threadNameFormatParams = new ArrayList<Object>(superThreadNameFormatParams.size() + 2);
         
-        destinations.add(new HostInfo(host, port));
+        threadNameFormatParams.addAll(superThreadNameFormatParams);
+        Destination currentDestination = this.destinations.get(connectedDestinationIndex);
+        threadNameFormatParams.add(currentDestination.getHost());
+        threadNameFormatParams.add(currentDestination.getPort());
+        return threadNameFormatParams;
     }
     
     /**
-     * 
-     * @return
+     * Return the {@link Destination}s in which to attempt to send logs.
      */
-    public List<HostInfo> getDestinations() {
+    public List<Destination> getDestinations() {
         return Collections.unmodifiableList(destinations);
     }
     
@@ -820,11 +853,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     
 
     /**
-     * Time period for connections to secondary destinations to live
+     * Time period for connections to secondary destinations to be used
      * before attempting to reconnect to primary server.
      * 
      * When the value is null (the default), the feature is disabled:
-     * the appender will stay on the current server until an error occurs.
+     * the appender will stay on the current destination until an error occurs.
      */
     public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
         if (secondaryConnectionTTL != null && secondaryConnectionTTL.getMilliseconds() <= 0) {
@@ -937,5 +970,28 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     public void setKeepAliveCharset(Charset keepAliveCharset) {
         this.keepAliveCharset = keepAliveCharset;
+    }
+    
+    /**
+     * Pattern used by the to set the handler thread name.
+     * Defaults to {@value #DEFAULT_THREAD_NAME_FORMAT}.
+     * <p>
+     * 
+     * If you change the {@link #threadFactory}, then this
+     * value may not be honored.
+     * <p>
+     * 
+     * The string is a format pattern understood by {@link Formatter#format(String, Object...)}.
+     * {@link Formatter#format(String, Object...)} is used to
+     * construct the actual thread name prefix.
+     * The first argument (%1$s) is the string appender name.
+     * The second argument (%2$d) is the numerical thread index.
+     * The third argument (%3$s) is the string hostname of the currently connected destination.
+     * The fourth argument (%4$d) is the numerical port of the currently connected destination.
+     * Other arguments can be made available by subclasses.
+     */
+    @Override
+    public void setThreadNameFormat(String threadNameFormat) {
+        super.setThreadNameFormat(threadNameFormat);
     }
 }

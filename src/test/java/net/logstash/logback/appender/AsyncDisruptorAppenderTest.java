@@ -137,7 +137,7 @@ public class AsyncDisruptorAppenderTest {
             }
         };
         
-        appender.setThreadNamePrefix("threadNamePrefix");
+        appender.setThreadNameFormat("threadNamePrefix");
         assertThat(appender.getThreadFactory().newThread(runnable).getName()).startsWith("threadNamePrefix");
     }
 
