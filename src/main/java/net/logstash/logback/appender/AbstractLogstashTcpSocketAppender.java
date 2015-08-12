@@ -74,7 +74,7 @@ import com.lmax.disruptor.RingBuffer;
  */
 public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredProcessingAware>
         extends AsyncDisruptorAppender<Event> {
-
+    
     /**
      * The default port number of remote logging server (4560).
      */
@@ -102,6 +102,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public static final int DEFAULT_WRITE_BUFFER_SIZE = 8192;
     
     /**
+     * Index into {@link #destinations} of the "primary" destination.
+     */
+    private static final int PRIMARY_DESTINATION_INDEX = 0;
+    
+    /**
      * The host to which to connect and send events
      */
     private String remoteHost;
@@ -124,14 +129,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private Duration reconnectionDelay = new Duration(DEFAULT_RECONNECTION_DELAY);
 
     /**
-     * Time period to wait before attempting to reconnect to primary server
-     * when multiple servers are specified. Only happens when the appender
-     * is currently connected to a secondary.
+     * Time period for connections to secondary destinations to live
+     * before attempting to reconnect to primary server.
      * 
-     * The value is set to null when the feature is disabled: the appender will
-     * stay on the current server until an error occurs.
+     * When the value is null (the default), the feature is disabled:
+     * the appender will stay on the current server until an error occurs.
      */
-    private Duration reattemptPrimaryConnectionDelay = null;
+    private Duration secondaryConnectionTTL;
     
     /**
      * Socket connection timeout in milliseconds. 
@@ -253,7 +257,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * Time at which the current connection should be automatically closed
          * to force an attempt to reconnect to the primary server
          */
-        private volatile long secondaryConnectionTTL = Long.MAX_VALUE;
+        private volatile long secondaryConnectionExpirationTime = Long.MAX_VALUE;
         
         /**
          * Future for the currently scheduled {@link #keepAliveRunnable}.
@@ -364,7 +368,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
 
         private boolean shouldCloseConnection(long currentTime) {
-            return secondaryConnectionTTL <= currentTime;
+            return secondaryConnectionExpirationTime <= currentTime;
         }
 
         @Override
@@ -427,11 +431,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * If connected to a secondary, remember when the connection should be closed to
                      * force attempt to reconnect to primary
                      */
-                    if( reattemptPrimaryConnectionDelay != null && hostIndex!=0 ) {
-                        secondaryConnectionTTL = startTime + reattemptPrimaryConnectionDelay.getMilliseconds();
+                    if (secondaryConnectionTTL != null && hostIndex != PRIMARY_DESTINATION_INDEX) {
+                        secondaryConnectionExpirationTime = startTime + secondaryConnectionTTL.getMilliseconds();
                     }
                     else {
-                        secondaryConnectionTTL = Long.MAX_VALUE;
+                        secondaryConnectionExpirationTime = Long.MAX_VALUE;
                     }
                     
                     return;
@@ -445,8 +449,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Retry immediately with next available host if any. Otherwise, sleep and retry with primary
                      */
                     hostIndex++;
-                    if( hostIndex >= destinations.size() ) {
-                        hostIndex = 0;
+                    if (hostIndex >= destinations.size()) {
+                        hostIndex = PRIMARY_DESTINATION_INDEX;
                         
                         /*
                          * If the connection timed out, then take the elapsed time into account
@@ -813,21 +817,24 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public Duration getReconnectionDelay() {
         return reconnectionDelay;
     }
+    
 
     /**
-     * Time period for which to wait before attempting to reconnect to the primary server.
-     * Default is to stay on the current server, would it be primary or secondary, until 
-     * an error occur.
+     * Time period for connections to secondary destinations to live
+     * before attempting to reconnect to primary server.
+     * 
+     * When the value is null (the default), the feature is disabled:
+     * the appender will stay on the current server until an error occurs.
      */
-    public void setReattemptPrimaryConnectionDelay(Duration delay) {
-        if (delay != null && delay.getMilliseconds() <= 0) {
-            throw new IllegalArgumentException("reattemptPrimaryConnectionDelay must be > 0");
+    public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
+        if (secondaryConnectionTTL != null && secondaryConnectionTTL.getMilliseconds() <= 0) {
+            throw new IllegalArgumentException("secondaryConnectionTTL must be > 0");
         }
-        this.reattemptPrimaryConnectionDelay = delay;
+        this.secondaryConnectionTTL = secondaryConnectionTTL;
     }
     
-    public Duration getReattemptPrimaryConnectionDelay() {
-        return reattemptPrimaryConnectionDelay;
+    public Duration getSecondaryConnectionTTL() {
+        return secondaryConnectionTTL;
     }
 
     /**

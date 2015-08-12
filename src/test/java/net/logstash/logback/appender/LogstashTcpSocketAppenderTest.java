@@ -281,7 +281,7 @@ public class LogstashTcpSocketAppenderTest {
     public void testReconnectToPrimaryWhileOnSecondary() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
-        appender.setReattemptPrimaryConnectionDelay(Duration.buildByMilliseconds(100));
+        appender.setSecondaryConnectionTTL(Duration.buildByMilliseconds(100));
         
         when(socketFactory.createSocket())
             .thenReturn(socket);
@@ -301,7 +301,7 @@ public class LogstashTcpSocketAppenderTest {
         // The appender is supposed to be on the secondary.
         // Wait until after the appender is supposed to reattempt to connect to primary, then
         // send an event (requires some activity to trigger the reconnection process).
-        Thread.sleep(appender.getReattemptPrimaryConnectionDelay().getMilliseconds()+50);
+        Thread.sleep(appender.getSecondaryConnectionTTL().getMilliseconds() + 50);
         appender.append(event1);
 
 
