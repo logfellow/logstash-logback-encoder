@@ -16,6 +16,8 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Usage](#usage)
   * [UDP Appender](#udp)
   * [TCP Appenders](#tcp)
+    * [Keep-alive](#keep_alive)
+    * [Multiple Destinations](#multiple_destinations)
     * [SSL](#ssl)
   * [Async Appenders](#async)
   * [Encoders / Layouts](#encoder)
@@ -163,9 +165,7 @@ Example logging appender configuration in `logback.xml`:
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      <!-- remoteHost and port are optional (default values shown) -->
-      <remoteHost>127.0.0.1</remoteHost>
-      <port>4560</port>
+      <destination>127.0.0.1:4560</destination>
   
       <!-- encoder is required -->
       <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
@@ -186,9 +186,7 @@ Example access appender in `logback-access.xml`
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-      <!-- remoteHost and port are optional (default values shown) -->
-      <remoteHost>127.0.0.1</remoteHost>
-      <port>4560</port>
+      <destination>127.0.0.1:4560</destination>
   
       <!-- encoder is required -->
       <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
@@ -216,6 +214,23 @@ If the RingBuffer is full (e.g. due to slow network, etc), then events will be d
 The TCP appenders will automatically reconnect if the connection breaks.
 However, events may be lost before Java's socket realizes the connection has broken.
 
+To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
+input with the [`json_lines`](http://www.logstash.net/docs/latest/codecs/json_lines) codec in logstash's configuration like this:
+
+```
+input {
+    tcp {
+        port => 4560
+        codec => json_lines
+    }
+}
+```
+
+In order to guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+
+<a name="keep_alive"/>
+#### Keep-alive
+
 If events occur infrequently, and the connection breaks consistently due to a server-side idle timeout,
 then you can enable keep alive functionality by configuring a `keepAliveDuration` like this:
 
@@ -231,20 +246,64 @@ if an event has not occurred for the length of the duration.
 The keep alive message defaults to the system's line separator,
 but can be changed by setting the `keepAliveMessage` property.
 
+<a name="multiple_destinations"/>
+#### Multiple Destinations
 
-To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
-input with the [`json_lines`](http://www.logstash.net/docs/latest/codecs/json_lines) codec in logstash's configuration like this:
-
+The TCP appenders can be configured to try to connect to multiple destinations like this:
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <destination>destination1.domain.com:4560</destination>
+      <destination>destination2.domain.com:4560</destination>
+      <destination>destination3.domain.com:4560</destination>
+  
+      ...
+  </appender>
 ```
-input {
-    tcp {
-        port => 4560
-        codec => json_lines
-    }
-}
+
+or this:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <destination>
+          destination1.domain.com:4560,
+          destination2.domain.com:4560,
+          destination3.domain.com:4560
+      </destination>
+  
+      ...
+  </appender>
 ```
 
-In order to guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+When multiple destinations are configured, the appender will attempt to connect
+to each destination in the order in which they are configured.
+Logs will be sent to the first destination that accepts the connection.
+Logs are only sent to one destination at a time (i.e. not all destinations).
+
+If that connection breaks, then the appender will again attempt to connect
+to the destinations in the order in which they are configured,
+starting at the first destination.
+
+The first destination is considered the _primary_ destination.
+Each additional destination is considered a _secondary_ destination.
+By default, the appender will stay connected to the connected destination
+until it breaks, or until the application is shut down.
+The `secondaryConnectionTTL` can be set to kill connections to _secondary_
+destinations after a specific duration.  This will force the
+the appender to reattempt to connect to the destinations in order again.
+The `secondaryConnectionTTL` value does not affect connections to the
+_primary_ destination.
+
+For example:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      <destination>destination1.domain.com:4560</destination>
+      <destination>destination2.domain.com:4560</destination>
+      <destination>destination3.domain.com:4560</destination>
+  
+      <secondaryConnectionTTL>5 minutes</secondaryConnectionTTL>
+  </appender>
+```
 
 <a name="ssl"/>
 #### SSL
@@ -259,12 +318,7 @@ For example, to enable SSL using the JVM's default keystore/truststore, do the f
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      <!-- remoteHost and port are optional (default values shown) -->
-      <remoteHost>127.0.0.1</remoteHost>
-      <port>4560</port>
-  
-      <!-- encoder is required -->
-      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+      ...
       
       <!-- Enable SSL using the JVM's default keystore/truststore -->
       <ssl/>
@@ -275,12 +329,7 @@ To use a different truststore, do the following:
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-      <!-- remoteHost and port are optional (default values shown) -->
-      <remoteHost>127.0.0.1</remoteHost>
-      <port>4560</port>
-  
-      <!-- encoder is required -->
-      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+      ...
       
       <!-- Enable SSL and use a different truststore -->
       <ssl>
