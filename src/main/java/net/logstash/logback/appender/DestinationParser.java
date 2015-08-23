@@ -13,6 +13,7 @@
  */
 package net.logstash.logback.appender;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -21,7 +22,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 
 /**
- * Constructs {@link Destination}s by parsing {@link String} values.
+ * Constructs {@link InetSocketAddress}es by parsing {@link String} values.
  */
 public class DestinationParser {
     
@@ -30,7 +31,7 @@ public class DestinationParser {
     private static final int PORT_GROUP = 3;
     
     /**
-     * Constructs {@link Destination}s by parsing the given {@link String} value.
+     * Constructs {@link InetSocketAddress}es by parsing the given {@link String} value.
      * <p>
      * The string is a comma separated list of destinations in the form of hostName[:portNumber].
      * <p>
@@ -40,13 +41,13 @@ public class DestinationParser {
      * 
      * If portNumber is not provided, then the given defaultPort will be used.
      */
-    public static List<Destination> parse(String destinations, int defaultPort) {
+    public static List<InetSocketAddress> parse(String destinations, int defaultPort) {
         /*
          * Multiple destinations can be specified on one single line, separated by comma
          */
         String[] destinationStrings = StringUtils.split(StringUtils.trimToEmpty(destinations), ',');
         
-        List<Destination> destinationList = new ArrayList<Destination>(destinationStrings.length);
+        List<InetSocketAddress> destinationList = new ArrayList<InetSocketAddress>(destinationStrings.length);
         
         for (String entry: destinationStrings) {
             
@@ -67,7 +68,7 @@ public class DestinationParser {
                 throw new IllegalArgumentException("Invalid destination '" + entry + "': unparseable port (was '" + portString + "').");
             }
             
-            destinationList.add(new Destination(host, port));
+            destinationList.add(InetSocketAddress.createUnresolved(host, port));
         }
         
         return destinationList;

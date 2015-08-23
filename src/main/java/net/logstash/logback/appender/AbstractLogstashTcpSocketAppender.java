@@ -134,7 +134,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * until the connection breaks or (if the connection is to a secondary destination)
      * the {@link #secondaryConnectionTTL} elapses.
      */
-    private List<Destination> destinations = new ArrayList<Destination>(2);
+    private List<InetSocketAddress> destinations = new ArrayList<InetSocketAddress>(2);
     
     /**
      * When connected, this is the index into {@link #destinations}
@@ -446,7 +446,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * Choose next server and update peerId (for status message)
                      */
-                    Destination currentDestination = getDestinations().get(destinationIndex);
+                    InetSocketAddress currentDestination = getDestinations().get(destinationIndex);
                     peerId = "Log destination " + currentDestination + ": ";
                     
                     /*
@@ -456,7 +456,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      */
                     tempSocket = socketFactory.createSocket();
                     tempSocket.setSoTimeout(acceptConnectionTimeout);
-                    tempSocket.connect(new InetSocketAddress(currentDestination.getHost(), currentDestination.getPort()), acceptConnectionTimeout);
+                    /*
+                     * currentDestination is unresolved, so a new InetSocketAddress
+                     * must be created to resolve the hostname.
+                     */
+                    tempSocket.connect(new InetSocketAddress(currentDestination.getHostString(), currentDestination.getPort()), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
                     
                     encoder.init(tempOutputStream);
@@ -649,7 +653,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         if (remoteHost != null) {
             addWarn("<remoteHost>/<port> are DEPRECATED, use <destination> instead");
             try {
-                addDestinations(new Destination(remoteHost, port));
+                addDestinations(InetSocketAddress.createUnresolved(remoteHost, port));
             }
             catch (IllegalArgumentException e) {
                 errorCount++;
@@ -784,29 +788,29 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     public void addDestination(final String destination) throws IllegalArgumentException {
         
-        List<Destination> parsedDestinations = DestinationParser.parse(destination, DEFAULT_PORT);
+        List<InetSocketAddress> parsedDestinations = DestinationParser.parse(destination, DEFAULT_PORT);
         
-        addDestinations(parsedDestinations.toArray(new Destination[parsedDestinations.size()]));
+        addDestinations(parsedDestinations.toArray(new InetSocketAddress[parsedDestinations.size()]));
     }
     
     /**
      * Adds the given destinations to the list of potential destinations.
      */
-    public void addDestinations(Destination... destinations) throws IllegalArgumentException  {
+    public void addDestinations(InetSocketAddress... destinations) throws IllegalArgumentException  {
         if (destinations == null) {
             return;
         }
         
-        for (Destination destination : destinations) {
+        for (InetSocketAddress destination : destinations) {
             try {
-                InetAddress.getByName(destination.getHost());
+                InetAddress.getByName(destination.getHostString());
             } 
             catch (UnknownHostException ex) {
                 /*
                  * Warn, but don't fail startup, so that transient
                  * DNS problems are allowed to resolve themselves eventually.
                  */
-                addWarn("Invalid destination '" + destination.getHost() + "': host unknown (was '" + destination.getHost() + "').", ex);
+                addWarn("Invalid destination '" + destination.getHostString() + "': host unknown (was '" + destination.getHostString() + "').", ex);
             }
             this.destinations.add(destination);
         }
@@ -822,16 +826,16 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         List<Object> threadNameFormatParams = new ArrayList<Object>(superThreadNameFormatParams.size() + 2);
         
         threadNameFormatParams.addAll(superThreadNameFormatParams);
-        Destination currentDestination = this.destinations.get(connectedDestinationIndex);
-        threadNameFormatParams.add(currentDestination.getHost());
+        InetSocketAddress currentDestination = this.destinations.get(connectedDestinationIndex);
+        threadNameFormatParams.add(currentDestination.getHostString());
         threadNameFormatParams.add(currentDestination.getPort());
         return threadNameFormatParams;
     }
     
     /**
-     * Return the {@link Destination}s in which to attempt to send logs.
+     * Return the destinations in which to attempt to send logs.
      */
-    public List<Destination> getDestinations() {
+    public List<InetSocketAddress> getDestinations() {
         return Collections.unmodifiableList(destinations);
     }
     

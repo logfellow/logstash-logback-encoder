@@ -15,6 +15,7 @@ package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 
 import org.junit.Test;
@@ -23,19 +24,19 @@ public class DestinationParserTest {
     
     @Test
     public void testParse_Single_WithPort() {
-        List<Destination> destinations = DestinationParser.parse(" localhost : 2 ", 1);
+        List<InetSocketAddress> destinations = DestinationParser.parse(" localhost : 2 ", 1);
         
         assertThat(destinations).containsExactly(
-                new Destination("localhost", 2)
+                InetSocketAddress.createUnresolved("localhost", 2)
             );
     }
 
     @Test
     public void testParse_Single_DefaultPort() {
-        List<Destination> destinations = DestinationParser.parse(" localhost ", 1);
+        List<InetSocketAddress> destinations = DestinationParser.parse(" localhost ", 1);
         
         assertThat(destinations).containsExactly(
-                new Destination("localhost", 1)
+                InetSocketAddress.createUnresolved("localhost", 1)
             );
     }
 
@@ -49,19 +50,14 @@ public class DestinationParserTest {
         DestinationParser.parse("localhost:-1", 1);
     }
     
-    @Test(expected=IllegalArgumentException.class)
-    public void testParse_Single_ZeroPort() {
-        DestinationParser.parse("localhost:0", 1);
-    }
-    
     @Test
     public void testParse_Multiple() {
-        List<Destination> destinations = DestinationParser.parse("localhost:2, localhost, localhost : 5 ", 1);
+        List<InetSocketAddress> destinations = DestinationParser.parse("localhost:2, localhost, localhost : 5 ", 1);
         
         assertThat(destinations).containsExactly(
-                new Destination("localhost", 2),
-                new Destination("localhost", 1),
-                new Destination("localhost", 5)
+                InetSocketAddress.createUnresolved("localhost", 2),
+                InetSocketAddress.createUnresolved("localhost", 1),
+                InetSocketAddress.createUnresolved("localhost", 5)
             );
     }
 
@@ -75,8 +71,4 @@ public class DestinationParserTest {
         DestinationParser.parse("localhost:10000, localhost:-1", 1);
     }
     
-    @Test(expected=IllegalArgumentException.class)
-    public void testParse_Multiple_ZeroPort() {
-        DestinationParser.parse("localhost:10000, localhost:0", 1);
-    }
 }
