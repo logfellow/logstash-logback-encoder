@@ -19,6 +19,7 @@ import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
+import java.util.concurrent.Future;
 
 import javax.net.SocketFactory;
 
@@ -60,7 +62,7 @@ public class LogstashTcpSocketAppenderTest {
     private static final int VERIFICATION_TIMEOUT = 1000 * 10;
 
     @InjectMocks
-    private LogstashTcpSocketAppender appender;
+    private LogstashTcpSocketAppender appender = new TestableLogstashTcpSocketAppender();
     
     @Mock
     private Context context;
@@ -85,10 +87,21 @@ public class LogstashTcpSocketAppenderTest {
     
     @Mock
     private Encoder<ILoggingEvent> encoder;
+
+    @Mock
+    private Future<?> readableRunnableFuture;
+    
+    private class TestableLogstashTcpSocketAppender extends LogstashTcpSocketAppender {
+        @Override
+        protected Future<?> scheduleReaderRunnable(Runnable readerRunnable) {
+            return readableRunnableFuture;
+        }
+    }
     
     @Before
     public void setup() throws IOException {
         when(context.getStatusManager()).thenReturn(statusManager);
+        when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);
     }
     
@@ -102,8 +115,6 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10000");
         appender.setIncludeCallerData(true);
         
-        when(socketFactory.createSocket()).thenReturn(socket);
-        
         appender.start();
         
         verify(encoder).start();
@@ -115,7 +126,6 @@ public class LogstashTcpSocketAppenderTest {
         verify(encoder, timeout(VERIFICATION_TIMEOUT)).init(any(OutputStream.class));
         
         verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
-        
     }
 
     @Test
@@ -123,6 +133,7 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
         
+        reset(socketFactory);
         when(socketFactory.createSocket())
             .thenThrow(new SocketTimeoutException())
             .thenReturn(socket);
@@ -143,8 +154,6 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
         
-        when(socketFactory.createSocket()).thenReturn(socket);
-        
         appender.start();
         
         verify(encoder).start();
@@ -156,6 +165,33 @@ public class LogstashTcpSocketAppenderTest {
         verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
         
         verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).doEncode(event1);
+    }
+
+    @Test
+    public void testReconnectOnReadFailure() throws Exception {
+        
+        appender.addDestination("localhost:10000");
+        appender.setReconnectionDelay(new Duration(100));
+        
+        when(readableRunnableFuture.isDone())
+            /*
+             * First return true, so that the reconnect logic is executed 
+             */
+            .thenReturn(true)
+            /*
+             * Then return false so that the event can be written
+             */
+            .thenReturn(false);
+        
+        appender.start();
+        
+        verify(encoder).start();
+        
+        appender.append(event1);
+        
+        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
+        
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
     }
 
 
@@ -171,8 +207,6 @@ public class LogstashTcpSocketAppenderTest {
     public void testConnectOnPrimary() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
-
-        when(socketFactory.createSocket()).thenReturn(socket);
 
         appender.start();
         verify(encoder).start();
@@ -197,9 +231,6 @@ public class LogstashTcpSocketAppenderTest {
     public void testReconnectToSecondaryOnOpen() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
-
-        when(socketFactory.createSocket())
-            .thenReturn(socket);
 
         // Make it failed to connect to primary
         doThrow(SocketTimeoutException.class)
@@ -234,9 +265,6 @@ public class LogstashTcpSocketAppenderTest {
     public void testReconnectToSecondaryOnWrite() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
-
-        when(socketFactory.createSocket())
-            .thenReturn(socket);
 
         // Primary accepts first connection attempt then refuses
         doNothing()
@@ -283,9 +311,6 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10001");
         appender.setSecondaryConnectionTTL(Duration.buildByMilliseconds(100));
         
-        when(socketFactory.createSocket())
-            .thenReturn(socket);
-
         // Primary refuses first connection to force the appender to go on the secondary.
         doThrow(SocketTimeoutException.class)
             .doNothing()
@@ -335,9 +360,6 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10001");
         appender.setReconnectionDelay(Duration.buildByMilliseconds(100));
         
-        when(socketFactory.createSocket())
-            .thenReturn(socket);
-
         // Both hosts refuse the first connection attempt
         doThrow(SocketTimeoutException.class)
             .doNothing()
@@ -375,9 +397,6 @@ public class LogstashTcpSocketAppenderTest {
     public void testKeepAlive() throws Exception {
 
         appender.addDestination("localhost");
-
-        when(socketFactory.createSocket())
-            .thenReturn(socket);
 
         // Schedule keepalive message every 100ms
         appender.setKeepAliveMessage("UNIX");
@@ -417,11 +436,7 @@ public class LogstashTcpSocketAppenderTest {
         // Schedule keep alive message every 100ms
         appender.setKeepAliveMessage("UNIX");
         appender.setKeepAliveDuration(Duration.buildByMilliseconds(100));
-
         
-        when(socketFactory.createSocket())
-            .thenReturn(socket);
-
         // Primary accepts first connection then refuse subsequent attemps
         doNothing()
             .doThrow(SocketTimeoutException.class)
