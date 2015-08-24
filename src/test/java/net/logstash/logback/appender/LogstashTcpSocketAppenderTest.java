@@ -13,6 +13,7 @@
  */
 package net.logstash.logback.appender;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
@@ -20,10 +21,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.net.SocketFactory;
 
@@ -33,7 +37,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.invocation.InvocationOnMock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.stubbing.Answer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
@@ -69,6 +75,9 @@ public class LogstashTcpSocketAppenderTest {
     
     @Mock
     private OutputStream outputStream;
+    
+    @Mock
+    private InputStream inputStream;
     
     @Mock
     private Encoder<ILoggingEvent> encoder;
@@ -118,6 +127,22 @@ public class LogstashTcpSocketAppenderTest {
             .thenThrow(new SocketTimeoutException())
             .thenReturn(socket);
         
+        when(socket.getInputStream()).thenReturn(inputStream);
+        
+        final CountDownLatch latch = new CountDownLatch(1);
+        when(inputStream.read()).thenAnswer(new Answer<Integer>() {
+
+            @Override
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                
+                /*
+                 * Keep from busy spinning
+                 */
+                latch.await();
+                return -1;
+            }
+        });
+
         appender.start();
         
         verify(encoder).start();
@@ -127,6 +152,8 @@ public class LogstashTcpSocketAppenderTest {
         verify(encoder, timeout(VERIFICATION_TIMEOUT)).init(any(OutputStream.class));
         
         verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+        
+        latch.countDown();
     }
 
     @Test
@@ -135,6 +162,21 @@ public class LogstashTcpSocketAppenderTest {
         appender.setReconnectionDelay(new Duration(100));
         
         when(socketFactory.createSocket()).thenReturn(socket);
+        
+        when(socket.getInputStream()).thenReturn(inputStream);
+        
+        final CountDownLatch latch = new CountDownLatch(1);
+        when(inputStream.read()).thenAnswer(new Answer<Integer>() {
+
+            @Override
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                /*
+                 * Keep from busy spinning
+                 */
+                latch.await();
+                return -1;
+            }
+        });
         
         appender.start();
         
@@ -147,6 +189,41 @@ public class LogstashTcpSocketAppenderTest {
         verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
         
         verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).doEncode(event1);
+        
+        latch.countDown();
+    }
+
+    @Test
+    public void testReconnectOnReadFailure() throws Exception {
+        
+        appender.setReconnectionDelay(new Duration(100));
+        
+        when(socketFactory.createSocket()).thenReturn(socket);
+        
+        when(socket.getInputStream()).thenReturn(inputStream);
+        
+        final CountDownLatch latch = new CountDownLatch(1);
+
+        when(inputStream.read()).thenAnswer(new Answer<Integer>() {
+
+            @Override
+            public Integer answer(InvocationOnMock invocation) throws Throwable {
+                latch.countDown();
+                return -1;
+            }
+        });
+        
+        appender.start();
+        
+        verify(encoder).start();
+        
+        assertThat(latch.await(VERIFICATION_TIMEOUT, TimeUnit.MILLISECONDS)).isTrue();
+        
+        appender.append(event1);
+        
+        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
+        
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
     }
 
 }
