@@ -40,6 +40,15 @@ public class DestinationParserTest {
             );
     }
 
+    @Test
+    public void testParse_Single_Unresolvable() {
+        List<InetSocketAddress> destinations = DestinationParser.parse("axfleoguasonteuhaodilaguoehsntuhas", 1);
+        
+        assertThat(destinations).containsExactly(
+                InetSocketAddress.createUnresolved("axfleoguasonteuhaodilaguoehsntuhas", 1)
+            );
+    }
+
     @Test(expected=IllegalArgumentException.class)
     public void testParse_Single_AlphaPort() {
         DestinationParser.parse("localhost:a", 1);
@@ -70,5 +79,11 @@ public class DestinationParserTest {
     public void testParse_Multiple_NegativePort() {
         DestinationParser.parse("localhost:10000, localhost:-1", 1);
     }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testParse_Multiple_Empty() {
+        DestinationParser.parse("localhost:1000, , localhost:1001", 1);
+    }
+    
     
 }
