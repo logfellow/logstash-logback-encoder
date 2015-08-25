@@ -40,6 +40,9 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import net.logstash.logback.encoder.SeparatorParser;
+
+import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
+
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
 import ch.qos.logback.core.net.ssl.SSLConfigurableSocket;
@@ -244,6 +247,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * The latch will be non-zero when started, and zero when shutdown.  
      */
     private volatile CountDownLatch shutdownLatch;
+    
+    /**
+     * @see #isGetHostStringPossible()
+     */
+    private final boolean getHostStringPossible = isGetHostStringPossible();
     
     /**
      * Event handler responsible for performing the TCP transmission.
@@ -525,7 +533,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * currentDestination is unresolved, so a new InetSocketAddress
                      * must be created to resolve the hostname.
                      */
-                    tempSocket.connect(new InetSocketAddress(currentDestination.getHostString(), currentDestination.getPort()), acceptConnectionTimeout);
+                    tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
                     
                     encoder.init(tempOutputStream);
@@ -894,19 +902,53 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         
         for (InetSocketAddress destination : destinations) {
             try {
-                InetAddress.getByName(destination.getHostString());
+                InetAddress.getByName(getHostString(destination));
             } 
             catch (UnknownHostException ex) {
                 /*
                  * Warn, but don't fail startup, so that transient
                  * DNS problems are allowed to resolve themselves eventually.
                  */
-                addWarn("Invalid destination '" + destination.getHostString() + "': host unknown (was '" + destination.getHostString() + "').", ex);
+                addWarn("Invalid destination '" + getHostString(destination) + "': host unknown (was '" + getHostString(destination) + "').", ex);
             }
             this.destinations.add(destination);
         }
     }
+
+    /**
+     * Returns the host string from the given destination,
+     * avoiding a DNS hit if possible.
+     */
+    @IgnoreJRERequirement
+    protected String getHostString(InetSocketAddress destination) {
+        
+        return getHostStringPossible
+                /*
+                 * Avoid the potential DNS hit if possible.
+                 */
+                ? destination.getHostString()
+                /*
+                 * On JRE's less than 1.7, we have to use getHostName(),
+                 * and potentially hit DNS.
+                 */
+                : destination.getHostName();
+    }
     
+    /**
+     * Return true if the {@link InetSocketAddress#getHostString()} method is available.
+     * It was made public in java 1.7, so this will return false on jre's less than 1.7. 
+     */
+    private boolean isGetHostStringPossible() {
+        try {
+            InetSocketAddress.class.getMethod("getHostString");
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        } catch (SecurityException e) {
+            return false;
+        }
+    }
+
     protected void updateCurrentThreadName() {
         Thread.currentThread().setName(calculateThreadName());
     }
@@ -918,7 +960,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         
         threadNameFormatParams.addAll(superThreadNameFormatParams);
         InetSocketAddress currentDestination = this.destinations.get(connectedDestinationIndex);
-        threadNameFormatParams.add(currentDestination.getHostString());
+        threadNameFormatParams.add(getHostString(currentDestination));
         threadNameFormatParams.add(currentDestination.getPort());
         return threadNameFormatParams;
     }
