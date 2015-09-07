@@ -187,6 +187,8 @@ Example access appender in `logback-access.xml`
 <configuration>
   <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
       <destination>127.0.0.1:4560</destination>
+      <!-- Time period for which to wait after a connection fails, before attempting to reconnect. --> 
+      <reconnectionDelay>30000</reconnectionDelay>
   
       <!-- encoder is required -->
       <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
