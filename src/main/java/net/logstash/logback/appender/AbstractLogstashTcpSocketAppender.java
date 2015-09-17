@@ -638,7 +638,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 encoder.close();
             } catch (IOException ioe) {
                 addStatus(new ErrorStatus(
-                        "Failed to close encoder for appender named [" + name + "].", this, ioe));
+                        "Failed to close encoder", this, ioe));
             }
             
             encoder.stop();
@@ -723,7 +723,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         int errorCount = 0;
         if (encoder == null) {
             errorCount++;
-            addError("No encoder was configured for appender " + name + ".");
+            addError("No encoder was configured. Use <encoder> to specify the fully qualified class name of the encoder to use");
         }
         
         /*
