@@ -44,6 +44,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [Pattern JSON Provider](#provider_pattern)
     * [LoggingEvent patterns](#provider_pattern_loggingevent)
     * [AccessEvent patterns](#provider_pattern_accessevent)
+  * [Nested JSON Provider](#provider_nested)
 * [Debugging](#debugging)
 
 
@@ -1473,6 +1474,7 @@ Use the `nestedField` provider to create a sub-object in the JSON event output.
 
 For example...
 
+```
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
   <providers>
     <timestamp/>
