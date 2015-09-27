@@ -41,10 +41,10 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Composite Encoder/Layout](#composite_encoder)
   * [Providers for LoggingEvents](#providers_loggingevents)
   * [Providers for AccessEvents](#providers_accessevents)
+  * [Nested JSON Provider](#provider_nested)
   * [Pattern JSON Provider](#provider_pattern)
     * [LoggingEvent patterns](#provider_pattern_loggingevent)
     * [AccessEvent patterns](#provider_pattern_accessevent)
-  * [Nested JSON Provider](#provider_nested)
 * [Debugging](#debugging)
 
 
@@ -1386,6 +1386,38 @@ For AccessEvents, the available providers and their configuration properties (de
   </tbody>
 </table>
 
+<a name="provider_nested"/>
+### Nested JSON Provider
+
+Use the `nestedField` provider to create a sub-object in the JSON event output.
+
+For example...
+
+```
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    <timestamp/>
+    <nestedField>
+      <fieldName>@fields</fieldName>
+      <providers>
+        <logLevel/>
+      </providers>
+    </nestedField>
+  </providers>
+</encoder>
+```
+
+...will produce something like...
+
+```
+{
+  "@timestamp":"...",
+  "@fields":{
+    "level": "DEBUG"
+  }
+}
+```
+
 <a name="provider_pattern"/>
 ### Pattern JSON Provider
 
@@ -1466,38 +1498,6 @@ So this example...
 ```
 
 The value that is sent for `bytes_sent_long` is a number even though in your pattern it is a quoted text.
-
-<a name="provider_nested"/>
-### Nested JSON Provider
-
-Use the `nestedField` provider to create a sub-object in the JSON event output.
-
-For example...
-
-```
-<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <providers>
-    <timestamp/>
-    <nestedField>
-      <fieldName>@fields</fieldName>
-      <providers>
-        <logLevel/>
-      </providers>
-    </nestedField>
-  </providers>
-</encoder>
-```
-
-...will produce something like...
-
-```
-{
-  "@timestamp":"...",
-  "@fields":{
-    "level": "DEBUG"
-  }
-}
-```
 
 
 <a name="provider_pattern_loggingevent"/>
