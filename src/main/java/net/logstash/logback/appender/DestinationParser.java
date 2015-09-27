@@ -21,6 +21,8 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang.StringUtils;
 
+import ch.qos.logback.core.CoreConstants;
+
 /**
  * Constructs {@link InetSocketAddress}es by parsing {@link String} values.
  */
@@ -42,6 +44,7 @@ public class DestinationParser {
      * If portNumber is not provided, then the given defaultPort will be used.
      */
     public static List<InetSocketAddress> parse(String destinations, int defaultPort) {
+        
         /*
          * Multiple destinations can be specified on one single line, separated by comma
          */
@@ -50,6 +53,14 @@ public class DestinationParser {
         List<InetSocketAddress> destinationList = new ArrayList<InetSocketAddress>(destinationStrings.length);
         
         for (String entry: destinationStrings) {
+            
+            /*
+             * For #134, check to ensure properties are defined when destinations
+             * are set using properties. 
+             */
+            if (entry.contains(CoreConstants.UNDEFINED_PROPERTY_SUFFIX)) {
+                throw new IllegalArgumentException("Invalid destination '" + entry + "': unparseable value (expected format 'host[:port]').");
+            }
             
             Matcher matcher = DESTINATION_PATTERN.matcher(entry);
             if (!matcher.matches()) {

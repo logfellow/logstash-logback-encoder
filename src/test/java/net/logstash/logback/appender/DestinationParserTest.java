@@ -20,6 +20,8 @@ import java.util.List;
 
 import org.junit.Test;
 
+import ch.qos.logback.core.CoreConstants;
+
 public class DestinationParserTest {
     
     @Test
@@ -59,6 +61,11 @@ public class DestinationParserTest {
         DestinationParser.parse("localhost:-1", 1);
     }
     
+    @Test(expected=IllegalArgumentException.class)
+    public void testParse_Single_UndefinedProperty() {
+        DestinationParser.parse("propertyName" + CoreConstants.UNDEFINED_PROPERTY_SUFFIX, 1);
+    }
+
     @Test
     public void testParse_Multiple() {
         List<InetSocketAddress> destinations = DestinationParser.parse("localhost:2, localhost, localhost : 5 ", 1);
@@ -84,6 +91,4 @@ public class DestinationParserTest {
     public void testParse_Multiple_Empty() {
         DestinationParser.parse("localhost:1000, , localhost:1001", 1);
     }
-    
-    
 }
