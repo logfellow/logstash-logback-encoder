@@ -25,6 +25,7 @@ import net.logstash.logback.composite.LogstashVersionJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.ContextMapJsonProvider;
+import net.logstash.logback.composite.loggingevent.ContextNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.loggingevent.JsonMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
@@ -76,7 +77,7 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(19, providers.size());
+        Assert.assertEquals(20, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -87,7 +88,7 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(20, providers.size());
+        Assert.assertEquals(21, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -144,6 +145,7 @@ public class ConfigurationTest {
         Assert.assertEquals("excluded", throwableConverter.getExcludes().get(0));
 
         Assert.assertNotNull(getInstance(providers, ContextJsonProvider.class));
+        Assert.assertNotNull(getInstance(providers, ContextNameJsonProvider.class));
         Assert.assertNotNull(getInstance(providers, JsonMessageJsonProvider.class));
 
         MdcJsonProvider mdcJsonProvider = getInstance(providers, MdcJsonProvider.class);
@@ -206,6 +208,7 @@ public class ConfigurationTest {
         Map<String, Object> nested = (Map<String, Object>) output.get("nested");
         Assert.assertEquals("message {} {} {} {}", nested.get("customRawMessage"));
         Assert.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
+        Assert.assertEquals("testContext", output.get("context"));
         Assert.assertNotNull(output.get("thread_name"));
         Assert.assertEquals("INFO", output.get("level"));
         Assert.assertEquals(20000, output.get("level_value"));

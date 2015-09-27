@@ -1169,6 +1169,14 @@ For LoggingEvents, the available providers and their configuration properties (d
       </td>
     </tr>
     <tr>
+      <td><tt>contextName</tt></td>
+      <td><p>Outputs the name of logback's context</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>context</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>mdc</tt></td>
       <td>
         <p>Outputs entries from the Mapped Diagnostic Context (MDC).

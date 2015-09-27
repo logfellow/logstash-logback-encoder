@@ -66,6 +66,9 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addContext(ContextJsonProvider<ILoggingEvent> provider) {
         addProvider(provider);
     }
+    public void addContextName(ContextNameJsonProvider provider) {
+        addProvider(provider);
+    }
     public void addJsonMessage(JsonMessageJsonProvider provider) {
         addProvider(provider);
     }
