@@ -97,8 +97,9 @@ output any JSON format/data by configuring them with various JSON _providers_.
 The Logstash encoders/layouts are really just extensions of the general
 composite JSON encoders/layouts with a pre-defined set of providers.
 
-The logstash encoders/layouts are easier to configure if you want to use the standard output format.
-Use the [composite encoders/layouts](#composite_encoder) if you want to heavily customize the output.
+The logstash encoders/layouts are easier to configure if you want to use the standard logstash version 1 output format.
+Use the [composite encoders/layouts](#composite_encoder) if you want to heavily customize the output,
+or if you need to use logstash version 0 output.
 
 The `*AsyncDisruptorAppender` appenders are similar to logback's `AsyncAppender`,
 except that a [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)
@@ -1196,6 +1197,18 @@ For LoggingEvents, the available providers and their configuration properties (d
       </td>
     </tr>
     <tr>
+      <td><tt>nestedField</tt></td>
+      <td>
+        <p>Nests a JSON object under the configured fieldName.</p>
+        <p>The nested object is populated by other providers added to this provider.</p>
+        <p>See <a href="#provider_nested">Nested JSON provider</a></p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name</li>
+          <li><tt>providers</tt> - The providers that should populate the nested object.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>pattern</tt></td>
       <td>
         <p>Outputs fields from a configured JSON Object string,
@@ -1344,6 +1357,18 @@ For AccessEvents, the available providers and their configuration properties (de
       </td>
     </tr>
     <tr>
+      <td><tt>nestedField</tt></td>
+      <td>
+        <p>Nests a JSON object under the configured fieldName.</p>
+        <p>The nested object is populated by other providers added to this provider.</p>
+        <p>See <a href="#provider_nested">Nested JSON provider</a></p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name</li>
+          <li><tt>providers</tt> - The providers that should populate the nested object.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>pattern</tt></td>
       <td>
         <p>Outputs fields from a configured JSON Object string,
@@ -1440,6 +1465,38 @@ So this example...
 ```
 
 The value that is sent for `bytes_sent_long` is a number even though in your pattern it is a quoted text.
+
+<a name="provider_nested"/>
+### Nested JSON Provider
+
+Use the `nestedField` provider to create a sub-object in the JSON event output.
+
+For example...
+
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    <timestamp/>
+    <nestedField>
+      <fieldName>@fields</fieldName>
+      <providers>
+        <logLevel/>
+      </providers>
+    </nestedField>
+  </providers>
+</encoder>
+```
+
+...will produce something like...
+
+```
+{
+  "@timestamp":"...",
+  "@fields":{
+    "level": "DEBUG"
+  }
+}
+```
+
 
 <a name="provider_pattern_loggingevent"/>
 #### LoggingEvent patterns

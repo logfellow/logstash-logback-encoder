@@ -90,5 +90,8 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addArguments(ArgumentsJsonProvider provider) {
         addProvider(provider);
     }
+    public void addNestedField(LoggingEventNestedJsonProvider provider) {
+        addProvider(provider);
+    }
     
 }

@@ -50,8 +50,13 @@
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
                 <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
             </provider>
-            <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider">
-                <fieldName>customRawMessage</fieldName>
+            <provider class="net.logstash.logback.composite.loggingevent.LoggingEventNestedJsonProvider">
+                <fieldName>nested</fieldName>
+                <providers>
+		            <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider">
+		                <fieldName>customRawMessage</fieldName>
+		            </provider>
+                </providers>
             </provider>
             <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider">
                 <includeNonStructuredArguments>true</includeNonStructuredArguments>
@@ -67,9 +72,14 @@
                 <message>
                     <fieldName>customMessage</fieldName>
                 </message>
-                <rawMessage>
-                    <fieldName>customRawMessage</fieldName>
-                </rawMessage>
+                <nestedField>
+                    <fieldName>nested</fieldName>
+                    <providers>
+	                <rawMessage>
+	                    <fieldName>customRawMessage</fieldName>
+	                </rawMessage>
+                    </providers>
+                </nestedField>
                 <loggerName>
                     <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
                 </loggerName>

@@ -84,6 +84,9 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addPattern(AccessEventPatternJsonProvider provider) {
         addProvider(provider);
     }
+    public void addNestedField(AccessEventNestedJsonProvider provider) {
+        addProvider(provider);
+    }
     
 
 }

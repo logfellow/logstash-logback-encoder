@@ -31,6 +31,7 @@ import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventNestedJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
@@ -161,8 +162,12 @@ public class ConfigurationTest {
         LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
         Assert.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
         Assert.assertNotNull(patternProvider);
-
-        RawMessageJsonProvider rawMessageJsonProvider = getInstance(providers, RawMessageJsonProvider.class);
+        
+        LoggingEventNestedJsonProvider nestedJsonProvider = getInstance(providers, LoggingEventNestedJsonProvider.class);
+        Assert.assertNotNull(nestedJsonProvider);
+        Assert.assertEquals("nested", nestedJsonProvider.getFieldName());
+        
+        RawMessageJsonProvider rawMessageJsonProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), RawMessageJsonProvider.class);
         Assert.assertNotNull(rawMessageJsonProvider);
         Assert.assertEquals("customRawMessage", rawMessageJsonProvider.getFieldName());
 
@@ -192,12 +197,14 @@ public class ConfigurationTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         encoder.init(outputStream);
         encoder.doEncode(listAppender.list.get(0));
+        
 
         Map<String, Object> output = parseJson(outputStream.toString("UTF-8"));
         Assert.assertNotNull(output.get("@timestamp"));
         Assert.assertEquals(1, output.get("@version"));
         Assert.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));
-        Assert.assertEquals("message {} {} {} {}", output.get("customRawMessage"));
+        Map<String, Object> nested = (Map<String, Object>) output.get("nested");
+        Assert.assertEquals("message {} {} {} {}", nested.get("customRawMessage"));
         Assert.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
         Assert.assertNotNull(output.get("thread_name"));
         Assert.assertEquals("INFO", output.get("level"));
