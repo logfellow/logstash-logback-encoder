@@ -191,7 +191,7 @@ Example access appender in `logback-access.xml`
       <destination>127.0.0.1:4560</destination>
   
       <!-- encoder is required -->
-      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+      <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
   </appender>
 
   <appender-ref ref="stash" />
