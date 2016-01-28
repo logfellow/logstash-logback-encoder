@@ -929,12 +929,25 @@ public class PrettyPrintingDecorator implements JsonGeneratorDecorator {
 
 }
 ```
+or custom object mapping like this:
 
+```java
+public class ISO8601DateDecorator implements JsonFactoryDecorator  {
+
+	@Override
+	public MappingJsonFactory decorate(MappingJsonFactory factory) {
+		ObjectMapper codec = factory.getCodec();
+		codec.setDateFormat(new ISO8601DateFormat());
+		return factory;
+	}
+}
+```
 and then specify your decorator in the logback.xml file like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <jsonGeneratorDecorator class="your.package.PrettyPrintingDecorator"/>
+  <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
 </encoder>
 ```
 
