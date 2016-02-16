@@ -909,7 +909,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                  * Warn, but don't fail startup, so that transient
                  * DNS problems are allowed to resolve themselves eventually.
                  */
-                addWarn("Invalid destination '" + getHostString(destination) + "': host unknown (was '" + getHostString(destination) + "').", ex);
+                addWarn("Invalid destination '" + getHostString(destination) + "': host unknown (was '" + getHostString(destination) + "').");
             }
             this.destinations.add(destination);
         }
