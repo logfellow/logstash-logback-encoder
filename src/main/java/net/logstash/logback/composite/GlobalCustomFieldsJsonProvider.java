@@ -11,14 +11,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import net.logstash.logback.composite.AbstractJsonProvider;
-import net.logstash.logback.composite.JsonFactoryAware;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 import com.fasterxml.jackson.core.JsonFactory;

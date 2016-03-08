@@ -45,5 +45,12 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     public void setTimeZone(String timeZoneId) {
         getFormatter().setTimeZone(timeZoneId);
     }
-
+    
+    public void setCustomFields(String customFields) {
+        getFormatter().setCustomFieldsFromString(customFields);
+    }
+    
+    public String getCustomFields() {
+        return getFormatter().getCustomFields().toString();
+    }
 }
