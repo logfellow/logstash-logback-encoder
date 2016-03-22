@@ -1019,10 +1019,8 @@ For example, to add standard syslog headers for syslog over UDP, configure the f
     <host>MyAwesomeSyslogServer</host>
     <!-- port is optional (default value shown) -->
     <port>514</port>
-    <prefix class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-      <layout class="ch.qos.logback.classic.PatternLayout">
-        <pattern>%syslogStart{USER}</pattern>
-      </layout>
+    <prefix class="ch.qos.logback.classic.PatternLayout">
+      <pattern>%syslogStart{USER}</pattern>
     </prefix>
   </appender>
   
@@ -1030,6 +1028,23 @@ For example, to add standard syslog headers for syslog over UDP, configure the f
 </configuration>
 ```
 
+When using the `LogstashEncoder`, `LogstashAccessEncoder` or a composite encoder, the prefix is an `Encoder`, not a `Layout`, so you will need to wrap the prefix `PatternLayout` in a `LayoutWrappingEncoder` like this:
+
+```xml
+<configuration>
+  ...
+  <appender ...>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      ...
+      <prefix class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+          <pattern>@cee:</pattern>
+        </layout>
+      </prefix>    
+    </encoder>
+  </appender>
+</configuration>
+```
 
 <a name="composite_encoder"/>
 ## Composite Encoder/Layout
