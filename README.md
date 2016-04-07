@@ -314,7 +314,7 @@ For example:
 If connecting fails to all configured destinations, the TCP appender by default will wait
 30 seconds before reattempting to connect.
 
-This can be configured by setting the `reconnectionDelay` field. 
+This amount of time to delay can be changed by setting the `reconnectionDelay` field. 
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
