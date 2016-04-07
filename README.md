@@ -18,6 +18,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [TCP Appenders](#tcp)
     * [Keep-alive](#keep_alive)
     * [Multiple Destinations](#multiple_destinations)
+    * [Reconnection Delay](#reconnection_delay)
     * [SSL](#ssl)
   * [Async Appenders](#async)
   * [Encoders / Layouts](#encoder)
@@ -304,6 +305,21 @@ For example:
       <destination>destination3.domain.com:4560</destination>
   
       <secondaryConnectionTTL>5 minutes</secondaryConnectionTTL>
+  </appender>
+```
+
+<a name="reconnection_delay"/>
+#### Reconnection Delay
+
+If connecting fails to all configured destinations, the TCP appender by default will wait
+30 seconds before reattempting to connect.
+
+This can be configured by setting the `reconnectionDelay` field. 
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      ...
+      <reconnectionDelay>1 second</reconnectionDelay>
   </appender>
 ```
 
