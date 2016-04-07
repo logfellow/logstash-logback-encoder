@@ -92,6 +92,9 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     
     public void setCustomFieldsNode(JsonNode customFields) {
         this.customFieldsNode = customFields;
+        if (this.customFieldsNode != null && customFields == null) {
+            this.customFields = this.customFieldsNode.toString();
+        }
     }
     
     @Override

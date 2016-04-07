@@ -16,6 +16,8 @@ package net.logstash.logback.encoder;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
@@ -69,7 +71,7 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
     }
     
     public String getCustomFields() {
-        return getFormatter().getCustomFields().toString();
+        return getFormatter().getCustomFieldsAsString();
     }
     
     public LogstashFieldNames getFieldNames() {

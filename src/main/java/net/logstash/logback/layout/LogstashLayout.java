@@ -43,7 +43,7 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
     }
     
     public String getCustomFields() {
-        return getFormatter().getCustomFields().toString();
+        return getFormatter().getCustomFieldsAsString();
     }
     
     public boolean isIncludeCallerData() {

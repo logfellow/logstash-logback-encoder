@@ -726,6 +726,14 @@ public class LogstashEncoderTest {
         Assert.assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
     
+    @Test
+    public void testCustomFields() throws Exception {
+        String customFields = "{\"foo\":\"bar\"}";
+        encoder.setCustomFields(customFields);
+        assertThat(encoder.getCustomFields()).isEqualTo(customFields);
+        
+    }
+    
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         String[] values = new String[jsonNode.size()];
         for (int i = 0; i < values.length; i++) {

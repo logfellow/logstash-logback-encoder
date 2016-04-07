@@ -191,6 +191,12 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         setIncludeCallerData(includeCallerInfo);
     }
     
+    public String getCustomFieldsAsString() {
+        return globalCustomFieldsProvider == null
+                ? null
+                : globalCustomFieldsProvider.getCustomFields();
+    }
+    
     public void setCustomFieldsFromString(String customFields) {
         if (customFields == null || customFields.length() == 0) {
             getProviders().removeProvider(globalCustomFieldsProvider);
