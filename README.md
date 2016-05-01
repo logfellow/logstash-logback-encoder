@@ -920,7 +920,7 @@ For example:
 Prevent a field from being output by setting the field name to `[ignore]`.
 
 For LoggingEvents, see [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
-for all the field names that can be customized (each field in that class is the name of the xml element that you would use to specify the field name).  Additionally, a separate set of [shortened field names](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java) can be configured like this:
+for all the field names that can be customized.  Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `logger`, `levelValue`).  Additionally, a separate set of [shortened field names](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java) can be configured like this:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
@@ -932,7 +932,7 @@ in sub-objects within the JSON event by specifying field
 names for `caller`, `mdc`, and `context`, respectively.
 
 For AccessEvents, see [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
-for all the field names that can be customized
+for all the field names that can be customized. Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `fieldsMethod`, `fieldsProtocol`).
  
 <a name="custom_timezone"/>
 ## Customizing TimeZone
