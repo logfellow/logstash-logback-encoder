@@ -888,6 +888,19 @@ Request and response headers are not logged by default, but can be enabled by sp
 
 See [Customizing Standard Field Names](#custom_field_names)) for more details.
 
+To write the header names in lowercase (so that header names that only differ by case are treated the same),
+set `lowerCaseFieldNames` to true, like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <fieldNames>
+    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
+    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+  </fieldNames>
+  <lowerCaseHeaderNames>true</lowerCaseHeaderNames>
+</encoder>
+```
+
 
 <a name="custom_field_names"/>
 ## Customizing Standard Field Names
@@ -1415,6 +1428,24 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><p>Elapsed time in milliseconds</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@fields.elapsed_time</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>requestHeaders</tt></td>
+      <td><p>Include the request headers</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
+          <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>responseHeaders</tt></td>
+      <td><p>Include the response headers</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
+          <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
         </ul>
       </td>
     </tr>

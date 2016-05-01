@@ -177,6 +177,18 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
                 : globalCustomFieldsProvider.getCustomFieldsNode();
     }
     
+    public boolean getLowerCaseHeaderNames() {
+        return this.requestHeadersProvider.getLowerCaseHeaderNames();
+    }
+
+    /**
+     * When true, names of headers will be written to JSON output in lowercase. 
+     */
+    public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
+        this.requestHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
+        this.responseHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
+    }
+    
     @Override
     public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {
         if (super.getProviders() != null && !super.getProviders().getProviders().isEmpty()) {

@@ -51,5 +51,24 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
         getFormatter().setTimeZone(timeZoneId);
     }
 
+    public void setCustomFields(String customFields) {
+        getFormatter().setCustomFieldsFromString(customFields);
+    }
+    
+    public String getCustomFields() {
+        return getFormatter().getCustomFieldsAsString();
+    }
+    
+    public boolean getLowerCaseHeaderNames() {
+        return getFormatter().getLowerCaseHeaderNames();
+    }
+
+    /**
+     * When true, names of headers will be written to JSON output in lowercase. 
+     */
+    public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
+        getFormatter().setLowerCaseHeaderNames(lowerCaseHeaderNames);
+    }
+
 
 }

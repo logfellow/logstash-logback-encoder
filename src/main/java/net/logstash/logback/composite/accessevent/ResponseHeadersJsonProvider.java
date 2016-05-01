@@ -25,9 +25,14 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 public class ResponseHeadersJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
+    /**
+     * When true, names of headers will be written to JSON output in lowercase. 
+     */
+    private boolean lowerCaseHeaderNames;
+
     @Override
     public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
-        JsonWritingUtils.writeMapStringFields(generator, getFieldName(), event.getResponseHeaderMap());
+        JsonWritingUtils.writeMapStringFields(generator, getFieldName(), event.getResponseHeaderMap(), lowerCaseHeaderNames);
     }
     
     @Override
@@ -35,4 +40,11 @@ public class ResponseHeadersJsonProvider extends AbstractFieldJsonProvider<IAcce
         setFieldName(fieldNames.getFieldsResponseHeaders());
     }
 
+    public boolean getLowerCaseHeaderNames() {
+        return lowerCaseHeaderNames;
+    }
+
+    public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
+        this.lowerCaseHeaderNames = lowerCaseHeaderNames;
+    }
 }

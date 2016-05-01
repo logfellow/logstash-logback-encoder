@@ -36,15 +36,26 @@ public class JsonWritingUtils {
             }
         }
     }
-    
+
     /**
      * Writes a map as String fields to the generator if and only if the fieldName and values are not null.
      */
     public static void writeMapStringFields(JsonGenerator generator, String fieldName, Map<String, String> map) throws IOException, JsonMappingException {
+        writeMapStringFields(generator, fieldName, map, false);
+    }
+    
+    /**
+     * Writes a map as String fields to the generator if and only if the fieldName and values are not null.
+     * @param lowerCaseKeys when true, the map keys will be written in lowercase.
+     */
+    public static void writeMapStringFields(JsonGenerator generator, String fieldName, Map<String, String> map, boolean lowerCaseKeys) throws IOException, JsonMappingException {
         if (shouldWriteField(fieldName) && map != null && !map.isEmpty()) {
             generator.writeObjectFieldStart(fieldName);
             for (Map.Entry<String, String> entry : map.entrySet()) {
-                writeStringField(generator, entry.getKey(), entry.getValue());
+                String key = entry.getKey() != null && lowerCaseKeys
+                        ? entry.getKey().toLowerCase()
+                        : entry.getKey();
+                writeStringField(generator, key, entry.getValue());
             }
             generator.writeEndObject();
         }
