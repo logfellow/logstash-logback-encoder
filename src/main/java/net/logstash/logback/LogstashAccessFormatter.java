@@ -141,6 +141,12 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         this.messageProvider.setTimeZone(timeZoneId);
     }    
 
+    public String getCustomFieldsAsString() {
+        return globalCustomFieldsProvider == null
+                ? null
+                : globalCustomFieldsProvider.getCustomFields();
+    }
+    
     public void setCustomFieldsFromString(String customFields) {
         if (customFields == null || customFields.length() == 0) {
             getProviders().removeProvider(globalCustomFieldsProvider);

@@ -51,6 +51,6 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     }
     
     public String getCustomFields() {
-        return getFormatter().getCustomFields().toString();
+        return getFormatter().getCustomFieldsAsString();
     }
 }
