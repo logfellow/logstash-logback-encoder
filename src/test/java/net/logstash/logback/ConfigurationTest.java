@@ -20,13 +20,13 @@ import java.util.Map;
 
 import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.ContextJsonProvider;
+import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.ContextMapJsonProvider;
 import net.logstash.logback.composite.loggingevent.ContextNameJsonProvider;
-import net.logstash.logback.composite.loggingevent.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.loggingevent.JsonMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;

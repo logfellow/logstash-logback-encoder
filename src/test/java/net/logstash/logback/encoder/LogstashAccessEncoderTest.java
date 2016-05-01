@@ -150,6 +150,13 @@ public class LogstashAccessEncoderTest {
         assertThat(encoder.isImmediateFlush()).isEqualTo(false);
     }
     
+    @Test
+    public void testCustomFields() throws Exception {
+        String customFields = "{\"foo\":\"bar\"}";
+        encoder.setCustomFields(customFields);
+        assertThat(encoder.getCustomFields()).isEqualTo(customFields);
+    }
+    
     private IAccessEvent mockBasicILoggingEvent() {
         IAccessEvent event = mock(IAccessEvent.class);
         when(event.getContentLength()).thenReturn(123L);

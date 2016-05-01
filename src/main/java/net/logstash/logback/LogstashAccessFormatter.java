@@ -13,8 +13,11 @@
  */
 package net.logstash.logback;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
+import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
@@ -75,6 +78,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     private final RequestHeadersJsonProvider requestHeadersProvider = new RequestHeadersJsonProvider();
     private final ResponseHeadersJsonProvider responseHeadersProvider = new ResponseHeadersJsonProvider();
     private final ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
+    private GlobalCustomFieldsJsonProvider<IAccessEvent> globalCustomFieldsProvider;
     
     public LogstashAccessFormatter(ContextAware declaredOrigin) {
         super(declaredOrigin);
@@ -135,6 +139,42 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     public void setTimeZone(String timeZoneId) {
         this.timestampProvider.setTimeZone(timeZoneId);
         this.messageProvider.setTimeZone(timeZoneId);
+    }    
+
+    public String getCustomFieldsAsString() {
+        return globalCustomFieldsProvider == null
+                ? null
+                : globalCustomFieldsProvider.getCustomFields();
+    }
+    
+    public void setCustomFieldsFromString(String customFields) {
+        if (customFields == null || customFields.length() == 0) {
+            getProviders().removeProvider(globalCustomFieldsProvider);
+            globalCustomFieldsProvider = null;
+        } else {
+            if (globalCustomFieldsProvider == null) {
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<IAccessEvent>());
+            }
+            globalCustomFieldsProvider.setCustomFields(customFields);
+        }
+    }
+    
+    public void setCustomFields(JsonNode customFields) {
+        if (customFields == null) {
+            getProviders().removeProvider(globalCustomFieldsProvider);
+            globalCustomFieldsProvider = null;
+        } else {
+            if (globalCustomFieldsProvider == null) {
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<IAccessEvent>());
+            }
+            globalCustomFieldsProvider.setCustomFieldsNode(customFields);
+        }
+    }
+    
+    public JsonNode getCustomFields() {
+        return globalCustomFieldsProvider == null
+                ? null
+                : globalCustomFieldsProvider.getCustomFieldsNode();
     }
     
     @Override

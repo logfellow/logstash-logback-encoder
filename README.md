@@ -645,6 +645,15 @@ Add custom fields that will appear in every LoggingEvent like this :
 </encoder>
 ```
 
+or in an AccessEvent like this :
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+</encoder>
+```
+
+
 <a name="loggingevent_custom_event"/>
 #### Event-specific Custom Fields
 
