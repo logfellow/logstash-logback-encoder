@@ -61,8 +61,8 @@ import ch.qos.logback.core.status.ErrorStatus;
  * Options can be specified in the pattern in the following order:
  * <ol>
  * <li>maxDepthPerThrowable = "full" or "short" or an integer value</li>
- * <li>maxLength = "full" or "short" or an integer value</li>
  * <li>shortenedClassNameLength = "full" or "short" or an integer value</li>
+ * <li>maxLength = "full" or "short" or an integer value</li>
  * </ol>
  * If any other remaining options are "rootFirst",
  * then the converter awill be configured as root-cause-first.
