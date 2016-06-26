@@ -24,7 +24,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 /**
- * Writes a numerical version field.
+ * Writes a version field as a numeric value (by default) or a string value (if {@link #isWriteAsString()}).
  * This is intended to be the logstash JSON format version.
  * 
  * By default, the version is {@value #DEFAULT_VERSION}.
@@ -37,15 +37,26 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
     
     public static final int DEFAULT_VERSION = 1;
     
-    private int version = DEFAULT_VERSION;
+    private int version;
+    private String versionAsString;
+    
+    /**
+     * When true, the version will be written as a string value instead of a numeric value. 
+     */
+    private boolean writeAsString;
     
     public LogstashVersionJsonProvider() {
         setFieldName(FIELD_VERSION);
+        setVersion(DEFAULT_VERSION);
     }
 
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
-        JsonWritingUtils.writeNumberField(generator, getFieldName(), version);
+        if (writeAsString) {
+            JsonWritingUtils.writeStringField(generator, getFieldName(), versionAsString);
+        } else {
+            JsonWritingUtils.writeNumberField(generator, getFieldName(), version);
+        }
     }
     
     @Override
@@ -59,6 +70,14 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
     
     public void setVersion(int version) {
         this.version = version;
+        this.versionAsString = Integer.toString(version);
+    }
+    
+    public boolean isWriteAsString() {
+        return writeAsString;
+    }
+    public void setWriteAsString(boolean writeAsString) {
+        this.writeAsString = writeAsString;
     }
 
 }

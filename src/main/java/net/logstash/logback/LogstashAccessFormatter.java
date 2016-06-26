@@ -189,6 +189,20 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         this.responseHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
     }
     
+    public int getVersion() {
+        return this.versionProvider.getVersion();
+    }
+    public void setVersion(int version) {
+        this.versionProvider.setVersion(version);
+    }
+    
+    public boolean isWriteVersionAsString() {
+        return this.versionProvider.isWriteAsString();
+    }
+    public void setWriteVersionAsString(boolean writeVersionAsString) {
+        this.versionProvider.setWriteAsString(writeVersionAsString);
+    }
+
     @Override
     public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {
         if (super.getProviders() != null && !super.getProviders().getProviders().isEmpty()) {

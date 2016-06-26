@@ -146,4 +146,19 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
         getFormatter().setThrowableConverter(throwableConverter);
     }
+    
+    public int getVersion() {
+        return getFormatter().getVersion();
+    }
+    public void setVersion(int version) {
+        getFormatter().setVersion(version);
+    }
+    
+    public boolean isWriteVersionAsString() {
+        return getFormatter().isWriteVersionAsString();
+    }
+    public void setWriteVersionAsString(boolean writeVersionAsString) {
+        getFormatter().setWriteVersionAsString(writeVersionAsString);
+    }
+
 }

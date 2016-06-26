@@ -17,7 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -39,13 +38,11 @@ import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
-import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.Markers;
 
 import org.slf4j.MDC;
 
-import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
@@ -305,6 +302,20 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
 
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
         this.stackTraceProvider.setThrowableConverter(throwableConverter);
+    }
+    
+    public int getVersion() {
+        return this.versionProvider.getVersion();
+    }
+    public void setVersion(int version) {
+        this.versionProvider.setVersion(version);
+    }
+    
+    public boolean isWriteVersionAsString() {
+        return this.versionProvider.isWriteAsString();
+    }
+    public void setWriteVersionAsString(boolean writeVersionAsString) {
+        this.versionProvider.setWriteAsString(writeVersionAsString);
     }
     
     /**

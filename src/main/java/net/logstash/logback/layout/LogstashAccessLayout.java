@@ -70,5 +70,18 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
         getFormatter().setLowerCaseHeaderNames(lowerCaseHeaderNames);
     }
 
+    public int getVersion() {
+        return getFormatter().getVersion();
+    }
+    public void setVersion(int version) {
+        getFormatter().setVersion(version);
+    }
+    
+    public boolean isWriteVersionAsString() {
+        return getFormatter().isWriteVersionAsString();
+    }
+    public void setWriteVersionAsString(boolean writeVersionAsString) {
+        getFormatter().setWriteVersionAsString(writeVersionAsString);
+    }
 
 }

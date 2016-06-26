@@ -34,6 +34,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [Standard Fields](#accessevent_standard)
   * [Header Fields](#accessevent_headers)
 * [Customizing Standard Field Names](#custom_field_names)
+* [Customizing Version](#custom_version)
 * [Customizing TimeZone](#custom_timezone)
 * [Customizing JSON Factory and Generator](#custom_factory)
 * [Customizing Logger Name Length](#custom_logger_name)
@@ -558,7 +559,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | Field         | Description
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#custom_timezone).
-| `@version`    | Logstash format version (e.g. 1)
+| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#custom_version).
 | `message`     | Formatted log message of the event 
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
@@ -859,7 +860,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | Field         | Description
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#custom_timezone).
-| `@version`    | Logstash format version (e.g. 1)
+| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#custom_version).
 | `@message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
 | `@fields.method` | HTTP method
 | `@fields.protocol` | HTTP protocol
@@ -934,6 +935,29 @@ names for `caller`, `mdc`, and `context`, respectively.
 For AccessEvents, see [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names that can be customized. Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `fieldsMethod`, `fieldsProtocol`).
  
+
+<a name="custom_version"/>
+## Customizing Version
+
+The version field value by default is the numeric value 1.
+
+The value can be changed like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <version>2</version>
+</encoder>
+```
+
+The value can be written as a string (instead of a number) like this: 
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <writeVersionAsString>true</writeVersionAsString>
+</encoder>
+```
+
+
 <a name="custom_timezone"/>
 ## Customizing TimeZone
 
@@ -1153,6 +1177,7 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
+          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
         </ul>
       </td>
     </tr>
@@ -1348,6 +1373,7 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
+          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
         </ul>
       </td>
     </tr>
