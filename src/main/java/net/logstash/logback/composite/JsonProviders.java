@@ -50,7 +50,7 @@ public class JsonProviders<Event extends DeferredProcessingAware> {
 
     public void stop() {
         for (JsonProvider<Event> jsonProvider : jsonProviders) {
-            jsonProvider.start();
+            jsonProvider.stop();
         }
     }
 
