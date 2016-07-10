@@ -1678,11 +1678,6 @@ For example:
 </encoder>
 ```
 
-Note that the latest Logback (1.1.2 at the moment of writing), does not support deferred processing of
-request attributes. And because `LogstashAccessTcpSocketAppender` defers processing of the event to a background thread,
-you won't be able to use "%requestAttribute{name}" with TCP appender until this issue is fixed (or you build yourself
-a custom logback).   http://jira.qos.ch/browse/LOGBACK-1033
-
 There is also a special operation that can be used with this AccessEvents:
 
 * `#nullNA{...}` - if the pattern in curly braces evaluates to a dash ("-"), it will be replaced with a null value.
