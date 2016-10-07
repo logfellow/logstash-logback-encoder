@@ -317,7 +317,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         
         /**
          * When run, if the {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
-         * has elasped since the last event was sent,
+         * has elapsed since the last event was sent,
          * then this runnable will publish a keepAlive event to the ringBuffer.
          * <p>
          * The runnable will reschedule itself to execute in the future
@@ -326,7 +326,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * 
          * When the keepAlive event is processed by the event handler,
          * if the {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
-         * has elasped since the last event was sent,
+         * has elapsed since the last event was sent,
          * then the event handler will send the {@link AbstractLogstashTcpSocketAppender#keepAliveMessage}
          * to the socket outputstream.
          *
