@@ -532,7 +532,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * A null event indicates that this is a keep alive message. 
                      */
-                    if (encodedLogEvent != null) {
+                    if (encodedLogEvent.event != null) {
                         /*
                          * This is a standard (non-keepAlive) event.
                          * Therefore, we need to send the event.
@@ -736,7 +736,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
                 long delay = keepAliveDuration.getMilliseconds() - (System.currentTimeMillis() - basedOnTime);
                 try {
-                    keepAliveFuture = getExecutorService().schedule(
+                    keepAliveFuture = executorService.schedule(
                         keepAliveRunnable,
                         delay,
                         TimeUnit.MILLISECONDS);

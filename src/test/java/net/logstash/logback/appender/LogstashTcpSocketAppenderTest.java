@@ -187,8 +187,8 @@ public class LogstashTcpSocketAppenderTest {
         verify(encoder).start();
         
         appender.append(event1);
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
+
+        verify(socket, timeout(VERIFICATION_TIMEOUT).times(2)).connect(any(SocketAddress.class), anyInt());
         
         verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
     }
