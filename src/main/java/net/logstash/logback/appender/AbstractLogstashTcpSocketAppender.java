@@ -13,10 +13,7 @@
  */
 package net.logstash.logback.appender;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -27,18 +24,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import com.lmax.disruptor.*;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import net.logstash.logback.encoder.SeparatorParser;
 
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
@@ -52,10 +47,6 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.status.ErrorStatus;
 import ch.qos.logback.core.util.CloseUtil;
 import ch.qos.logback.core.util.Duration;
-
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.LifecycleAware;
-import com.lmax.disruptor.RingBuffer;
 
 /**
  * An {@link AsyncDisruptorAppender} appender that writes
@@ -252,11 +243,119 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * @see #isGetHostStringPossible()
      */
     private final boolean getHostStringPossible = isGetHostStringPossible();
-    
+
+    private Disruptor<LogEvent<byte[]>> networkDisruptor;
+
+    private LogEventFactory<byte[]> networkEventFactory = new LogEventFactory<byte[]>();
+
+    private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
+
+    private ScheduledThreadPoolExecutor executorService;
+
+    private ProducerType producerType = DEFAULT_PRODUCER_TYPE;
+
+    private WaitStrategy waitStrategy = DEFAULT_WAIT_STRATEGY;
+
+    private ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+    private final static LogEventTranslator<byte[]> LOG_EVENT_ENCODER_TRANSLATOR = new LogEventTranslator<byte[]>();
+
+    /**
+     * Event handler responsible for encoding events
+     */
+    private class EncodingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
+
+        private final AbstractLogstashTcpSocketAppender<Event>.TcpSendingEventHandler tcpSendingEventHandler;
+
+        private EncodingEventHandler(AbstractLogstashTcpSocketAppender<Event>.TcpSendingEventHandler tcpSendingEventHandler) {
+            this.tcpSendingEventHandler = tcpSendingEventHandler;
+        }
+
+        @Override
+        public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
+
+            if (logEvent.event != null) {
+
+                encoder.doEncode(logEvent.event);
+                byte[] encodedEvent = baos.toByteArray();
+                baos.reset();
+
+                networkDisruptor.getRingBuffer().publishEvent(LOG_EVENT_ENCODER_TRANSLATOR, encodedEvent);
+
+            }
+
+        }
+
+        @Override
+        public void onStart() {
+
+            executorService = new ScheduledThreadPoolExecutor(
+                    getThreadPoolCoreSize()/*,
+                    this.threadFactory*/);
+
+            networkDisruptor = new Disruptor<LogEvent<byte[]>>(
+                    networkEventFactory,
+                    ringBufferSize,
+                    executorService,
+                    producerType,
+                    waitStrategy);
+
+            // networkDisruptor.handleExceptionsWith(this.exceptionHandler); // TODO: fix
+
+            networkDisruptor.handleEventsWith(tcpSendingEventHandler);
+
+            try {
+                encoder.init(baos);
+            } catch (IOException ioe) {
+                addStatus(new ErrorStatus(
+                        "Failed to init encoder", this, ioe));
+            }
+
+            tcpSendingEventHandler.onStart();
+
+            networkDisruptor.start();
+        }
+
+        @Override
+        public void onShutdown() {
+            closeEncoder();
+            tcpSendingEventHandler.onShutdown();
+
+            try {
+                networkDisruptor.shutdown(1, TimeUnit.MINUTES);
+            } catch (com.lmax.disruptor.TimeoutException e) {
+                addWarn("Some queued events have not been logged due to requested shutdown");
+            }
+
+            executorService.shutdown();
+
+            try {
+                if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                    addWarn("Some queued events have not been logged due to requested shutdown");
+                }
+            } catch (InterruptedException e) {
+                addWarn("Some queued events have not been logged due to requested shutdown", e);
+            }
+        }
+
+        private void closeEncoder() {
+            try {
+                encoder.close();
+            } catch (IOException ioe) {
+                addStatus(new ErrorStatus(
+                        "Failed to close encoder", this, ioe));
+            }
+
+            encoder.stop();
+        }
+
+    }
+
+
     /**
      * Event handler responsible for performing the TCP transmission.
      */
-    private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
+    private class TcpSendingEventHandler implements EventHandler<LogEvent<byte[]>>, LifecycleAware {
         
         /**
          * Max number of consecutive failed connection attempts for which
@@ -345,7 +444,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * 
                      * A null event indicates that this is a keep alive message. 
                      */
-                    getDisruptor().getRingBuffer().publishEvent(getEventTranslator(), null);
+                    networkDisruptor.getRingBuffer().publishEvent(LOG_EVENT_ENCODER_TRANSLATOR, null);
                     scheduleKeepAlive(currentTime);
                 } else {
                     scheduleKeepAlive(lastSent);
@@ -404,7 +503,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
         
         @Override
-        public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
+        public void onEvent(LogEvent<byte[]> encodedLogEvent, long sequence, boolean endOfBatch) throws Exception {
             
             for (int i = 0; i < MAX_REPEAT_WRITE_ATTEMPTS; i++) {
                 if (this.socket == null) {
@@ -433,12 +532,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * A null event indicates that this is a keep alive message. 
                      */
-                    if (logEvent.event != null) {
+                    if (encodedLogEvent != null) {
                         /*
                          * This is a standard (non-keepAlive) event.
                          * Therefore, we need to send the event.
                          */
-                        encoder.doEncode(logEvent.event);
+                        outputStream.write(encodedLogEvent.event);
                     } else if (hasKeepAliveDurationElapsed(lastSentTimestamp, currentTime)){
                         /*
                          * This is a keep alive event, and the keepAliveDuration has passed,
@@ -492,7 +591,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         @Override
         public void onShutdown() {
             unscheduleKeepAlive();
-            closeEncoder();
             closeSocket();
         }
 
@@ -535,8 +633,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      */
                     tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
-                    
-                    encoder.init(tempOutputStream);
                     
                     addInfo(peerId + "connection established.");
                     
@@ -633,17 +729,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
         
-        private void closeEncoder() {
-            try {
-                encoder.close();
-            } catch (IOException ioe) {
-                addStatus(new ErrorStatus(
-                        "Failed to close encoder", this, ioe));
-            }
-            
-            encoder.stop();
-        }
-        
         private synchronized void scheduleKeepAlive(long basedOnTime) {
             if (isKeepAliveEnabled() && !Thread.currentThread().isInterrupted()) {
                 if (keepAliveRunnable == null) {
@@ -706,7 +791,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     public AbstractLogstashTcpSocketAppender() {
         super();
-        setEventHandler(new TcpSendingEventHandler());
+        setEventHandler(new EncodingEventHandler(new TcpSendingEventHandler()));
         setThreadNameFormat(DEFAULT_THREAD_NAME_FORMAT);
     }
     

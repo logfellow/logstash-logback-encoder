@@ -13,9 +13,7 @@
  */
 package net.logstash.logback.appender;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -151,20 +149,21 @@ public class LogstashTcpSocketAppenderTest {
 
     @Test
     public void testReconnectOnWrite() throws Exception {
+
+        doThrow(new SocketException()).doNothing().when(socket).connect(any(SocketAddress.class), anyInt());
+
         appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
         
         appender.start();
         
         verify(encoder).start();
-        
-        doThrow(new SocketException()).doNothing().when(encoder).doEncode(event1);
-        
+
         appender.append(event1);
+
+        verify(socket, timeout(VERIFICATION_TIMEOUT).times(2)).connect(any(SocketAddress.class), anyInt());
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(1)).doEncode(event1);
     }
 
     @Test
