@@ -311,7 +311,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         "Failed to init encoder", this, ioe));
             }
 
-            tcpSendingEventHandler.onStart();
+            //tcpSendingEventHandler.onStart();
 
             networkDisruptor.start();
         }
@@ -319,7 +319,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         @Override
         public void onShutdown() {
             closeEncoder();
-            tcpSendingEventHandler.onShutdown();
+            //tcpSendingEventHandler.onShutdown();
 
             try {
                 networkDisruptor.shutdown(1, TimeUnit.MINUTES);
