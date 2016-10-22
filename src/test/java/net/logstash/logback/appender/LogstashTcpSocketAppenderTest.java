@@ -13,30 +13,12 @@
  */
 package net.logstash.logback.appender;
 
-import static org.mockito.Matchers.*;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.nio.charset.Charset;
-import java.util.concurrent.Future;
-
-import javax.net.SocketFactory;
-
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.status.StatusManager;
+import ch.qos.logback.core.util.Duration;
 import net.logstash.logback.encoder.SeparatorParser;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -48,11 +30,18 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
-import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.status.StatusManager;
-import ch.qos.logback.core.util.Duration;
+import javax.net.SocketFactory;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.*;
+import java.nio.charset.Charset;
+import java.util.concurrent.Future;
+
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyInt;
+import static org.mockito.Matchers.argThat;
+import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LogstashTcpSocketAppenderTest {
@@ -72,7 +61,7 @@ public class LogstashTcpSocketAppenderTest {
     private ILoggingEvent event1;
     
     @Mock
-    private ILoggingEvent event2;
+    private ByteArrayOutputStream byteArrayOutputStream;
     
     @Mock
     private SocketFactory socketFactory;
@@ -130,21 +119,23 @@ public class LogstashTcpSocketAppenderTest {
     public void testReconnectOnOpen() throws Exception {
         appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
-        
-        reset(socketFactory);
-        when(socketFactory.createSocket())
-            .thenThrow(new SocketTimeoutException())
-            .thenReturn(socket);
-        
+
+        doThrow(SocketTimeoutException.class)
+                .doNothing()
+                .when(socket).connect(host("localhost", 10000), anyInt());
+
+        doReturn(new byte[]{0}).when(byteArrayOutputStream).toByteArray();
+
         appender.start();
         
         verify(encoder).start();
         
         appender.append(event1);
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+
+        verify(socket, timeout(VERIFICATION_TIMEOUT)).connect(any(SocketAddress.class), anyInt());
+
+        verify(outputStream, timeout(VERIFICATION_TIMEOUT)).write(any(byte[].class), anyInt(), anyInt());
+
     }
 
     @Test
@@ -273,9 +264,11 @@ public class LogstashTcpSocketAppenderTest {
         // First attempt of sending the event throws an exception while subsequent 
         // attempts will succeed. This should force the appender to close the connection
         // and attempt to reconnect starting from the first host of the list.
-        doThrow(new SocketException())
+        doReturn(new byte[]{0}).when(byteArrayOutputStream).toByteArray();
+
+        doThrow(new IOException())
             .doNothing()
-            .when(encoder).doEncode(event1);
+            .when(outputStream).write(any(byte[].class), anyInt(), anyInt());
         
         
         // Start the appender and verify it is actually started
@@ -284,7 +277,6 @@ public class LogstashTcpSocketAppenderTest {
         verify(encoder).start();
 
         appender.append(event1);
-
 
         // THREE connection attempts must have been made in total
         verify(socket, timeout(VERIFICATION_TIMEOUT).times(3)).connect(any(SocketAddress.class), anyInt());
@@ -371,10 +363,9 @@ public class LogstashTcpSocketAppenderTest {
         // At this point, it should be connected to primary.
         appender.start();
         verify(encoder).start();
-        
-        
+
         // THREE connection attempts must have been made in total
-        verify(socket, timeout(appender.getReconnectionDelay().getMilliseconds()+50).times(3)).connect(any(SocketAddress.class), anyInt());
+        verify(socket, timeout(VERIFICATION_TIMEOUT).times(3)).connect(any(SocketAddress.class), anyInt());
         InOrder inOrder = inOrder(socket, encoder);
 
         // 1) fail to connect on primary at startup
