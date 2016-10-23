@@ -272,30 +272,34 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     private ScheduledThreadPoolExecutor executorService;
 
-    private ExceptionHandler<LogEvent> exceptionHandler = new LogEventExceptionHandler();
+    /**
+     * Defines what happens when there is an exception during
+     * {@link RingBuffer} processing of encoded events.
+     */
+    private ExceptionHandler<LogEvent> networkExceptionHandler = new LogEventExceptionHandler();
 
+    /**
+     * The {@link ThreadFactory} used to create the handler thread for encoded events.
+     */
     private ThreadFactory networkThreadFactory = new NetworkWorkerThreadFactory();
 
     /**
-     * The default {@link ThreadFactory} used to create the handler thread.
+     * Pattern used by the {@link WorkerThreadFactory} to set the
+     * handler thread name.
+     * Defaults to {@value #DEFAULT_NETWORK_THREAD_NAME_FORMAT}.
+     * <p>
+     *
+     * If you change the {@link #networkThreadFactory}, then this
+     * value may not be honored.
+     * <p>
+     *
+     * The string is a format pattern understood by {@link Formatter#format(String, Object...)}.
+     * {@link Formatter#format(String, Object...)} is used to
+     * construct the actual thread name prefix.
+     * The first argument (%1$s) is the string appender name.
+     * The second argument (%2$d) is the numerical thread index.
+     * Other arguments can be made available by subclasses.
      */
-    private class NetworkWorkerThreadFactory implements ThreadFactory {
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread t = new Thread(r);
-            t.setName(calculateThreadName());
-            t.setDaemon(useDaemonThread);
-            return t;
-        }
-
-    }
-
-    protected String calculateThreadName() {
-        List<Object> threadNameFormatParams = getThreadNameFormatParams();
-        return String.format(networkThreadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));
-    }
-
     private String networkThreadNameFormat = DEFAULT_NETWORK_THREAD_NAME_FORMAT;
 
     /**
@@ -315,6 +319,21 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
     private final static LogEventTranslator<byte[]> LOG_EVENT_ENCODER_TRANSLATOR = new LogEventTranslator<byte[]>();
+
+    /**
+     * The default {@link ThreadFactory} used to create the handler thread.
+     */
+    private class NetworkWorkerThreadFactory implements ThreadFactory {
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setName(calculateThreadName());
+            t.setDaemon(useDaemonThread);
+            return t;
+        }
+
+    }
 
     /**
      * Event handler responsible for encoding events
@@ -357,7 +376,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     ProducerType.SINGLE,
                     networkWaitStrategy);
 
-            networkDisruptor.handleExceptionsWith(exceptionHandler); // TODO: fix
+            networkDisruptor.handleExceptionsWith(networkExceptionHandler);
 
             networkDisruptor.handleEventsWith(new EventClearingEventHandler<byte[]>(tcpSendingEventHandler));
 
@@ -1269,6 +1288,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     @Override
     public void setThreadNameFormat(String threadNameFormat) {
         super.setThreadNameFormat(threadNameFormat);
+    }
+
+    protected String calculateThreadName() {
+        List<Object> threadNameFormatParams = getThreadNameFormatParams();
+        return String.format(networkThreadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));
     }
 
     public int getNetworkRingBufferSize() {
