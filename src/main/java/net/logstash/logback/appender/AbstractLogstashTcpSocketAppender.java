@@ -252,7 +252,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     private ScheduledThreadPoolExecutor executorService;
 
-    private ProducerType producerType = DEFAULT_PRODUCER_TYPE;
+    private ExceptionHandler<LogEvent> exceptionHandler = new LogEventExceptionHandler();
+
+    private ThreadFactory threadFactory = new WorkerThreadFactory();
 
     private WaitStrategy waitStrategy = DEFAULT_WAIT_STRATEGY;
 
@@ -286,23 +288,24 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void onStart() {
 
             executorService = new ScheduledThreadPoolExecutor(
-                    getThreadPoolCoreSize()/*,
-                    this.threadFactory*/);
+                    getThreadPoolCoreSize(),
+                    threadFactory);
 
             networkDisruptor = new Disruptor<LogEvent<byte[]>>(
                     networkEventFactory,
                     ringBufferSize,
                     executorService,
-                    producerType,
+                    ProducerType.SINGLE,
                     waitStrategy);
 
-            // networkDisruptor.handleExceptionsWith(this.exceptionHandler); // TODO: fix
+            networkDisruptor.handleExceptionsWith(exceptionHandler); // TODO: fix
 
-            networkDisruptor.handleEventsWith(tcpSendingEventHandler);
+            networkDisruptor.handleEventsWith(new EventClearingEventHandler<byte[]>(tcpSendingEventHandler));
 
             try {
                 encoder.init(baos);
@@ -311,15 +314,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         "Failed to init encoder", this, ioe));
             }
 
-            //tcpSendingEventHandler.onStart();
-
             networkDisruptor.start();
         }
 
         @Override
         public void onShutdown() {
             closeEncoder();
-            //tcpSendingEventHandler.onShutdown();
 
             try {
                 networkDisruptor.shutdown(1, TimeUnit.MINUTES);
