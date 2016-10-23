@@ -73,7 +73,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     protected static final String HOST_NAME_FORMAT = "%3$s";
     protected static final String PORT_FORMAT = "%4$d";
     public static final String DEFAULT_THREAD_NAME_FORMAT = "logback-appender-" + APPENDER_NAME_FORMAT + "-" + HOST_NAME_FORMAT + ":" + PORT_FORMAT + "-" + THREAD_INDEX_FORMAT;
-    
+    public static final String DEFAULT_NETWORK_THREAD_NAME_FORMAT = "logback-appender-network-" + APPENDER_NAME_FORMAT + "-" + HOST_NAME_FORMAT + ":" + PORT_FORMAT + "-" + THREAD_INDEX_FORMAT;
+
     /**
      * The default port number of remote logging server (4560).
      */
@@ -273,7 +274,29 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     private ExceptionHandler<LogEvent> exceptionHandler = new LogEventExceptionHandler();
 
-    private ThreadFactory threadFactory = new WorkerThreadFactory(); // TODO: things to do here
+    private ThreadFactory networkThreadFactory = new NetworkWorkerThreadFactory();
+
+    /**
+     * The default {@link ThreadFactory} used to create the handler thread.
+     */
+    private class NetworkWorkerThreadFactory implements ThreadFactory {
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setName(calculateThreadName());
+            t.setDaemon(useDaemonThread);
+            return t;
+        }
+
+    }
+
+    protected String calculateThreadName() {
+        List<Object> threadNameFormatParams = getThreadNameFormatParams();
+        return String.format(networkThreadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));
+    }
+
+    private String networkThreadNameFormat = DEFAULT_NETWORK_THREAD_NAME_FORMAT;
 
     /**
      * The {@link WaitStrategy} to used by the RingBuffer
@@ -325,7 +348,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
             executorService = new ScheduledThreadPoolExecutor(
                     getThreadPoolCoreSize(),
-                    threadFactory);
+                    networkThreadFactory);
 
             networkDisruptor = new Disruptor<LogEvent<byte[]>>(
                     networkEventFactory,
@@ -1263,4 +1286,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public void setNetworkWaitStrategy(WaitStrategy networkWaitStrategy) {
         this.networkWaitStrategy = networkWaitStrategy;
     }
+
+    public String getNetworkThreadNameFormat() {
+        return networkThreadNameFormat;
+    }
+
+    public void setNetworkThreadNameFormat(String networkThreadNameFormat) {
+        this.networkThreadNameFormat = networkThreadNameFormat;
+    }
+
 }

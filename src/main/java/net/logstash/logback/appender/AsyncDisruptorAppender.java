@@ -168,7 +168,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * If you change the {@link #threadFactory}, then this
      * value may not be honored.
      */
-    private boolean useDaemonThread = true;
+    protected boolean useDaemonThread = true;
     
     /**
      * For every droppedWarnFrequency consecutive dropped events, log a warning.
@@ -254,8 +254,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     /**
      * The default {@link ThreadFactory} used to create the handler thread.
      */
-    protected class WorkerThreadFactory implements ThreadFactory {
-        
+    private class WorkerThreadFactory implements ThreadFactory {
+
         @Override
         public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
@@ -263,11 +263,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             t.setDaemon(useDaemonThread);
             return t;
         }
+
     }
-    
+
     /**
      * Sets the {@link LogEvent#event} to the logback Event.
-     * Used when publishing events to the {@link RingBuffer}. 
+     * Used when publishing events to the {@link RingBuffer}.
      */
     protected static class LogEventTranslator<Event> implements EventTranslatorOneArg<LogEvent<Event>, Event> {
 
@@ -470,6 +471,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             getName(),
             threadNumber.incrementAndGet());
     }
+
     protected void setEventFactory(LogEventFactory<Event> eventFactory) {
         this.eventFactory = eventFactory;
     }
