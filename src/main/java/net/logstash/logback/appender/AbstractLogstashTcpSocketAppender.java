@@ -244,20 +244,51 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     private final boolean getHostStringPossible = isGetHostStringPossible();
 
+    /**
+     * The {@link Disruptor} containing the {@link RingBuffer} onto
+     * which to publish encoded events for transferring.
+     */
     private Disruptor<LogEvent<byte[]>> networkDisruptor;
 
+    /**
+     * The {@link EventFactory} used to create encoded {@link LogEvent}s for the RingBuffer.
+     */
     private LogEventFactory<byte[]> networkEventFactory = new LogEventFactory<byte[]>();
 
-    private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
+    /**
+     * The size of the {@link RingBuffer} with encoded messages.
+     * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
+     * If the handler thread is not as fast as the producing threads,
+     * then the {@link RingBuffer} will eventually fill up,
+     * at which point producer will block.
+     * <p>
+     * Must be a positive power of 2.
+     */
+    private int networkRingBufferSize = DEFAULT_RING_BUFFER_SIZE;
 
+    /**
+     * The {@link ScheduledExecutorService} used to execute the handler task.
+     */
     private ScheduledThreadPoolExecutor executorService;
 
     private ExceptionHandler<LogEvent> exceptionHandler = new LogEventExceptionHandler();
 
-    private ThreadFactory threadFactory = new WorkerThreadFactory();
+    private ThreadFactory threadFactory = new WorkerThreadFactory(); // TODO: things to do here
 
-    private WaitStrategy waitStrategy = DEFAULT_WAIT_STRATEGY;
+    /**
+     * The {@link WaitStrategy} to used by the RingBuffer
+     * when pulling encoded events to be processed by {@link #eventHandler}.
+     * <p>
+     * By default, a {@link BlockingWaitStrategy} is used, which is the most
+     * CPU conservative, but results in a higher latency.
+     * If you need lower latency (at the cost of higher CPU usage),
+     * consider using a {@link SleepingWaitStrategy} or a {@link PhasedBackoffWaitStrategy}.
+     */
+    private WaitStrategy networkWaitStrategy = DEFAULT_WAIT_STRATEGY;
 
+    /**
+     * Temporary byte array used for encoding events
+     */
     private ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
     private final static LogEventTranslator<byte[]> LOG_EVENT_ENCODER_TRANSLATOR = new LogEventTranslator<byte[]>();
@@ -298,10 +329,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
             networkDisruptor = new Disruptor<LogEvent<byte[]>>(
                     networkEventFactory,
-                    ringBufferSize,
+                    networkRingBufferSize,
                     executorService,
                     ProducerType.SINGLE,
-                    waitStrategy);
+                    networkWaitStrategy);
 
             networkDisruptor.handleExceptionsWith(exceptionHandler); // TODO: fix
 
@@ -1217,4 +1248,19 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         super.setThreadNameFormat(threadNameFormat);
     }
 
+    public int getNetworkRingBufferSize() {
+        return networkRingBufferSize;
+    }
+
+    public void setNetworkRingBufferSize(int networkRingBufferSize) {
+        this.networkRingBufferSize = networkRingBufferSize;
+    }
+
+    public WaitStrategy getNetworkWaitStrategy() {
+        return networkWaitStrategy;
+    }
+
+    public void setNetworkWaitStrategy(WaitStrategy networkWaitStrategy) {
+        this.networkWaitStrategy = networkWaitStrategy;
+    }
 }
