@@ -263,7 +263,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             t.setDaemon(useDaemonThread);
             return t;
         }
-
     }
 
     /**
@@ -471,7 +470,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             getName(),
             threadNumber.incrementAndGet());
     }
-
     protected void setEventFactory(LogEventFactory<Event> eventFactory) {
         this.eventFactory = eventFactory;
     }
