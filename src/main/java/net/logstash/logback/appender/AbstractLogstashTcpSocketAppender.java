@@ -270,7 +270,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * The {@link ScheduledExecutorService} used to execute the handler task.
      */
-    private ScheduledThreadPoolExecutor executorService;
+    private ScheduledThreadPoolExecutor networkExecutorService;
 
     /**
      * Defines what happens when there is an exception during
@@ -365,14 +365,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         @Override
         public void onStart() {
 
-            executorService = new ScheduledThreadPoolExecutor(
+            networkExecutorService = new ScheduledThreadPoolExecutor(
                     getThreadPoolCoreSize(),
                     networkThreadFactory);
 
             networkDisruptor = new Disruptor<LogEvent<byte[]>>(
                     networkEventFactory,
                     networkRingBufferSize,
-                    executorService,
+                    networkExecutorService,
                     ProducerType.SINGLE,
                     networkWaitStrategy);
 
@@ -400,10 +400,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 addWarn("Some queued events have not been logged due to requested shutdown");
             }
 
-            executorService.shutdown();
+            networkExecutorService.shutdown();
 
             try {
-                if (!executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                if (!networkExecutorService.awaitTermination(1, TimeUnit.MINUTES)) {
                     addWarn("Some queued events have not been logged due to requested shutdown");
                 }
             } catch (InterruptedException e) {
@@ -809,7 +809,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
                 long delay = keepAliveDuration.getMilliseconds() - (System.currentTimeMillis() - basedOnTime);
                 try {
-                    keepAliveFuture = executorService.schedule(
+                    keepAliveFuture = networkExecutorService.schedule(
                         keepAliveRunnable,
                         delay,
                         TimeUnit.MILLISECONDS);

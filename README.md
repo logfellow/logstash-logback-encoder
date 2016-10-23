@@ -205,12 +205,13 @@ You can use a `Logstash*Encoder`, `*EventCompositeJsonEncoder`, or any other log
 All of the output formatting options are configured at the encoder level. 
 
 Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)).
-All the encoding and TCP communication is delegated to a single writer thread.
+All the encoding and TCP communication are delegated to two threads accordingly.
 There is no need to wrap the TCP appenders with another asynchronous appender
 (such as `AsyncAppender` or `LoggingEventAsyncDisruptorAppender`).
 
 All the configuration parameters (except for sub-appender) of the [async appenders](#async)
-are valid for TCP appenders.  For example, `waitStrategyType` and `ringBufferSize`. 
+are valid for TCP appenders. For example, `waitStrategyType` and `ringBufferSize`.
+They are used for customizing the encoding thread. Communication thread has its own properties with a `network` prefix such as `networkRingBufferSize`, `networkWaitStrategy`, `networkThreadNameFormat` - see [AbstractLogstashTcpSocketAppender](https://github.com/bedrin/logstash-logback-encoder/blob/master/src/main/java/net/logstash/logback/appender/AbstractLogstashTcpSocketAppender.java) for details.
 
 The TCP appenders will never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
