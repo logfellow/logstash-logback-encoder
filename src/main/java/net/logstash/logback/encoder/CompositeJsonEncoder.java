@@ -68,20 +68,26 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     @Override
     public void doEncode(Event event) throws IOException {
         
-        doEncodeWrapped(prefix, event);
+        try {
+            doEncodeWrapped(prefix, event);
+            
+            formatter.writeEventToOutputStream(event, outputStream);
+    
+            doEncodeWrapped(suffix, event);
+            
+            if (lineSeparatorBytes != null) {
+                outputStream.write(lineSeparatorBytes);
+            }
+            
+            if (immediateFlush) {
+                outputStream.flush();
+            }
         
-        formatter.writeEventToOutputStream(event, outputStream);
-
-        doEncodeWrapped(suffix, event);
-        
-        if (lineSeparatorBytes != null) {
-            outputStream.write(lineSeparatorBytes);
+        } catch (IOException e) {
+            addWarn("Error encountered while encoding log event. "
+                    + "OutputStream is now in an unknown state, but will continue to be used for future log events."
+                    + "Event: " + event, e);
         }
-        
-        if (immediateFlush) {
-            outputStream.flush();
-        }
-        
     }
 
     private void doEncodeWrapped(Encoder<Event> wrapped, Event event) throws IOException {

@@ -36,6 +36,8 @@ import com.fasterxml.jackson.core.io.SegmentedStringWriter;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Formats logstash Events as JSON using {@link JsonProvider}s.
@@ -65,7 +67,12 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     /**
      * Used to create the necessary {@link JsonGenerator}s for generating JSON.
      */
-    private MappingJsonFactory jsonFactory = (MappingJsonFactory) new MappingJsonFactory()
+    private MappingJsonFactory jsonFactory = (MappingJsonFactory) new ObjectMapper()
+        /*
+         * Assume empty beans are ok.
+         */
+        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
+        .getFactory()
         .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII)
         /*
          * When generators are flushed, don't flush the underlying outputStream.

@@ -13,6 +13,7 @@
  */
 package net.logstash.logback.encoder;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,6 +37,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
+import ch.qos.logback.core.status.StatusManager;
+import ch.qos.logback.core.status.WarnStatus;
 
 @SuppressWarnings("unchecked")
 @RunWith(MockitoJUnitRunner.class)
@@ -56,6 +59,9 @@ public class CompositeJsonEncoderTest {
     private Context context;
     
     @Mock
+    private StatusManager statusManager;
+    
+    @Mock
     private ILoggingEvent event;
     
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -64,6 +70,7 @@ public class CompositeJsonEncoderTest {
     @Before
     public void setup() {
         when(formatter.getEncoding()).thenReturn("UTF-8");
+        when(context.getStatusManager()).thenReturn(statusManager);
     }
     
     @Test
@@ -187,5 +194,28 @@ public class CompositeJsonEncoderTest {
         Assert.assertEquals(null, encoder.getLineSeparator());
     }
     
+    @Test
+    public void testIOException() throws IOException {
+        
+        encoder.start();
+        
+        Assert.assertTrue(encoder.isStarted());
+        
+        verify(formatter).setContext(context);
+        verify(formatter).start();
+        
+        encoder.init(outputStream);
+        
+        IOException exception = new IOException();
+        doThrow(exception).when(formatter).writeEventToOutputStream(event, outputStream);
+        
+        encoder.doEncode(event);
+        
+        Assert.assertTrue(encoder.isStarted());
+        
+        verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
+                + "OutputStream is now in an unknown state, but will continue to be used for future log events."
+                + "Event: " + event, context, exception));
+    }
 
 }
