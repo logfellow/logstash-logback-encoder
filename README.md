@@ -462,7 +462,7 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
   <em>timeout</em>,
   <em>timeUnit</em>
 }
-</pre>e.g.<br/><tt>timeoutBlocking{1,minutes}<</tt></td>
+</pre>e.g.<br/><tt>timeoutBlocking{1,minutes}</tt></td>
       <td>
         <ol>
           <li><tt>timeout</tt> - Time to block before throwing an exception</li>
