@@ -168,7 +168,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * If you change the {@link #threadFactory}, then this
      * value may not be honored.
      */
-    private boolean useDaemonThread = true;
+    protected boolean useDaemonThread = true;
     
     /**
      * For every droppedWarnFrequency consecutive dropped events, log a warning.
@@ -212,7 +212,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Defines what happens when there is an exception during
      * {@link RingBuffer} processing.
      */
-    private ExceptionHandler<LogEvent<Event>> exceptionHandler = new LogEventExceptionHandler();
+    private ExceptionHandler<LogEvent> exceptionHandler = new LogEventExceptionHandler();
     
     /**
      * Consecutive number of dropped events.
@@ -243,7 +243,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Factory for creating the initial {@link LogEvent}s to populate
      * the {@link RingBuffer}.
      */
-    private static class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
+    protected static class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
 
         @Override
         public LogEvent<Event> newInstance() {
@@ -255,7 +255,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * The default {@link ThreadFactory} used to create the handler thread.
      */
     private class WorkerThreadFactory implements ThreadFactory {
-        
+
         @Override
         public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
@@ -264,10 +264,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             return t;
         }
     }
-    
+
     /**
      * Sets the {@link LogEvent#event} to the logback Event.
-     * Used when publishing events to the {@link RingBuffer}. 
+     * Used when publishing events to the {@link RingBuffer}.
      */
     protected static class LogEventTranslator<Event> implements EventTranslatorOneArg<LogEvent<Event>, Event> {
 
@@ -283,10 +283,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * 
      * Currently, just logs to the logback context. 
      */
-    private class LogEventExceptionHandler implements ExceptionHandler<LogEvent<Event>> {
+    protected class LogEventExceptionHandler implements ExceptionHandler<LogEvent> {
 
         @Override
-        public void handleEventException(Throwable ex, long sequence, LogEvent<Event> event) {
+        public void handleEventException(Throwable ex, long sequence, LogEvent event) {
             addError("Unable to process event: " + ex.getMessage(), ex);
         }
 
@@ -305,7 +305,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Clears the event after a delegate event handler has processed the event,
      * so that the event can be garbage collected.
      */
-    private static class EventClearingEventHandler<Event> implements EventHandler<LogEvent<Event>>, LifecycleAware {
+    protected static class EventClearingEventHandler<Event> implements EventHandler<LogEvent<Event>>, LifecycleAware {
         
         private final EventHandler<LogEvent<Event>> delegate;
         
