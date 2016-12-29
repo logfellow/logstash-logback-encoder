@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -113,7 +114,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Index into {@link #destinations} of the "primary" destination.
      */
     private static final int PRIMARY_DESTINATION_INDEX = 0;
-    
+
     /**
      * The host to which to connect and send events
      */
@@ -252,7 +253,32 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * @see #isGetHostStringPossible()
      */
     private final boolean getHostStringPossible = isGetHostStringPossible();
-    
+
+    /**
+     * The first set destination is random.
+     *
+     * Defaults to disable. The first destination is considered the primary destination.
+     */
+    private boolean randomDestination;
+
+    /**
+     * Object to create the first random index.
+     */
+    private Random firstRandomIndexGenerator = new Random();
+
+    /**
+     * If the size is exceeded, round-robin occurs.
+     * Destination cycles by round-robin.
+     *
+     * When null (the default), disabled round-robin.
+     */
+    private Integer roundRobinSize;
+
+    /**
+     * Count of round-robin
+     */
+    private int roundRobinCount;
+
     /**
      * Event handler responsible for performing the TCP transmission.
      */
@@ -284,7 +310,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * This is a buffered wrapper of the socket output stream.
          */
         private volatile OutputStream outputStream;
-        
+
         /**
          * Time at which the last event was sent.
          * Used to calculate if a keep alive message
@@ -333,7 +359,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          */
         private class KeepAliveRunnable implements Runnable {
             
-            private int previousDestinationIndex = PRIMARY_DESTINATION_INDEX;
+            private int previousDestinationIndex = connectedDestinationIndex;
 
             @Override
             public void run() {
@@ -342,8 +368,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 if (hasKeepAliveDurationElapsed(lastSent, currentTime)) {
                     /*
                      * Publish a keep alive message to the RingBuffer.
-                     * 
-                     * A null event indicates that this is a keep alive message. 
+                     *
+                     * A null event indicates that this is a keep alive message.
                      */
                     getDisruptor().getRingBuffer().publishEvent(getEventTranslator(), null);
                     scheduleKeepAlive(currentTime);
@@ -439,6 +465,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                          * Therefore, we need to send the event.
                          */
                         encoder.doEncode(logEvent.event);
+                        roundRobin();
                     } else if (hasKeepAliveDurationElapsed(lastSentTimestamp, currentTime)){
                         /*
                          * This is a keep alive event, and the keepAliveDuration has passed,
@@ -474,6 +501,21 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
 
+        /**
+         * If the condition is satisfied, round-robin occurs.
+         * The index is repeated in a circle.
+         */
+        private void roundRobin() {
+            if (isRoundRobin() && (roundRobinCount++ >= roundRobinSize)) {
+				connectedDestinationIndex++;
+				if (connectedDestinationIndex >= destinations.size()) {
+					connectedDestinationIndex = PRIMARY_DESTINATION_INDEX;
+				}
+				roundRobinCount = 0;
+				reopenSocket();
+			}
+        }
+
         private boolean hasKeepAliveDurationElapsed(long lastSent, long currentTime) {
             return isKeepAliveEnabled()
                     && lastSent + keepAliveDuration.getMilliseconds() < currentTime;
@@ -485,6 +527,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         @Override
         public void onStart() {
+            if (randomDestination) {
+                connectedDestinationIndex = firstRandomIndexGenerator.nextInt(destinations.size());
+            }
             openSocket();
             scheduleKeepAlive(System.currentTimeMillis());
         }
@@ -509,7 +554,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
-            int destinationIndex = 0;
+            int destinationIndex = randomDestination || isRoundRobin() ? connectedDestinationIndex : PRIMARY_DESTINATION_INDEX;
+            int retryCount = 0;
             int errorCount = 0;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
                 long startTime = System.currentTimeMillis();
@@ -563,14 +609,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                          */
                         updateCurrentThreadName();
                     }
-                    
+
                     this.readerFuture = scheduleReaderRunnable(
                             new ReaderRunnable(tempSocket.getInputStream()));
 
                     return;
                     
                 } catch (Exception e) {
-                    
+
                     CloseUtil.closeQuietly(tempOutputStream);
                     CloseUtil.closeQuietly(tempSocket);
                     
@@ -578,9 +624,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Retry immediately with next available host if any. Otherwise, sleep and retry with primary
                      */
                     destinationIndex++;
-                    if (destinationIndex >= destinations.size()) {
+                    retryCount++;
+                    if (destinationIndex >= destinations.size() && (retryCount >= destinations.size())) {
                         destinationIndex = PRIMARY_DESTINATION_INDEX;
-                        
+
                         /*
                          * If the connection timed out, then take the elapsed time into account
                          * when calculating time to sleep
@@ -604,6 +651,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         }
                     }
                     else {
+                        if (destinationIndex >= destinations.size()) {
+                            destinationIndex = PRIMARY_DESTINATION_INDEX;
+                        }
                         /*
                          * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
                          */
@@ -677,7 +727,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
     }
-    
+
+    private boolean isRoundRobin() {
+        return roundRobinSize != null;
+    }
+
     /**
      * An extension of logback's {@link ConfigurableSSLSocketFactory}
      * that supports creating unconnected sockets
@@ -1132,4 +1186,34 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         super.setThreadNameFormat(threadNameFormat);
     }
 
+    public boolean isRandomDestination() {
+        return randomDestination;
+    }
+
+    /**
+     * Sets random Destination. The first set destination is random.
+     *
+     * <p>
+     * @param randomDestination enable random Destination.
+     */
+    public void setRandomDestination(boolean randomDestination) {
+        this.randomDestination = randomDestination;
+    }
+
+    public Integer getRoundRobinSize() {
+        return roundRobinSize;
+    }
+
+    /**
+     * If the size is exceeded, round-robin occurs.
+     * Destination cycles by round-robin.
+     *
+     * <p>
+     * When null (the default), disabled round-robin.
+     *
+     * @param roundRobinSize the number of round-robin incidents.
+     */
+    public void setRoundRobinSize(Integer roundRobinSize) {
+        this.roundRobinSize = roundRobinSize;
+    }
 }
