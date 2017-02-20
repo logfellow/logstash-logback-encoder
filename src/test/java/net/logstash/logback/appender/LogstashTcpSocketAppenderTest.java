@@ -123,9 +123,7 @@ public class LogstashTcpSocketAppenderTest {
         
         verify(event1).getCallerData();
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
     }
 
     @Test
@@ -144,9 +142,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.append(event1);
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
     }
 
     @Test
@@ -158,13 +154,11 @@ public class LogstashTcpSocketAppenderTest {
         
         verify(encoder).start();
         
-        doThrow(new SocketException()).doNothing().when(encoder).doEncode(event1);
+        doThrow(new SocketException()).doNothing().when(encoder).encode(event1);
         
         appender.append(event1);
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).encode(event1);
     }
 
     @Test
@@ -189,9 +183,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.append(event1);
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
     }
 
 
@@ -276,7 +268,7 @@ public class LogstashTcpSocketAppenderTest {
         // and attempt to reconnect starting from the first host of the list.
         doThrow(new SocketException())
             .doNothing()
-            .when(encoder).doEncode(event1);
+            .when(encoder).encode(event1);
         
         
         // Start the appender and verify it is actually started
@@ -341,7 +333,7 @@ public class LogstashTcpSocketAppenderTest {
         inOrder.verify(socket).connect(host("localhost", 10001), anyInt());
 
         // 3) send the event
-        inOrder.verify(encoder).doEncode(event1);
+        inOrder.verify(encoder).encode(event1);
 
         // 4) connect to primary
         inOrder.verify(socket).connect(host("localhost", 10000), anyInt());

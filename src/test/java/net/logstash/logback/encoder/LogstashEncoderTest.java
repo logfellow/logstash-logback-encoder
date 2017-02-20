@@ -76,7 +76,6 @@ public class LogstashEncoderTest {
     public void before() throws Exception {
         outputStream = new ByteArrayOutputStream();
         encoder = new LogstashEncoder();
-        encoder.init(outputStream);
     }
     
     @Test
@@ -87,7 +86,7 @@ public class LogstashEncoderTest {
         when(event.getTimeStamp()).thenReturn(timestamp);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -110,7 +109,7 @@ public class LogstashEncoderTest {
         when(event.getTimeStamp()).thenReturn(timestamp);
         encoder.setFieldNames(new ShortenedFieldNames());
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -150,7 +149,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getTimeStamp()).thenReturn(timestamp);
         
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         String output = outputStream.toString("UTF-8");
@@ -181,7 +180,7 @@ public class LogstashEncoderTest {
         encoder.setFieldNames(new ShortenedFieldNames());
         encoder.setShortenedLoggerNameLength(length);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
 
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -201,8 +200,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         
         encoder.start();
-        encoder.doEncode(event);
-        encoder.close();
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         assertThat(outputStream.toString()).endsWith(LINE_SEPARATOR);
@@ -216,7 +214,7 @@ public class LogstashEncoderTest {
         when(event.getThrowableProxy()).thenReturn(throwableProxy);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -234,7 +232,7 @@ public class LogstashEncoderTest {
         when(event.getMDCPropertyMap()).thenReturn(mdcMap);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -255,7 +253,7 @@ public class LogstashEncoderTest {
         encoder.addIncludeMdcKeyName("thing_one");
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -276,7 +274,7 @@ public class LogstashEncoderTest {
         encoder.addExcludeMdcKeyName("thing_two");
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -296,7 +294,7 @@ public class LogstashEncoderTest {
         
         encoder.setIncludeMdc(false);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -316,7 +314,7 @@ public class LogstashEncoderTest {
         
         encoder.getFieldNames().setMdc("mdc");
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -331,7 +329,7 @@ public class LogstashEncoderTest {
         when(event.getMDCPropertyMap()).thenReturn(null);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
     }
     
@@ -345,7 +343,7 @@ public class LogstashEncoderTest {
         encoder.setIncludeCallerInfo(true);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -366,7 +364,7 @@ public class LogstashEncoderTest {
         encoder.setIncludeCallerInfo(true);
         encoder.getFieldNames().setCaller("caller");
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -391,7 +389,7 @@ public class LogstashEncoderTest {
         encoder.setIncludeCallerInfo(false);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -414,7 +412,7 @@ public class LogstashEncoderTest {
         
         encoder.setContext(context);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -436,7 +434,7 @@ public class LogstashEncoderTest {
         encoder.setIncludeContext(false);
         encoder.setContext(context);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -459,7 +457,7 @@ public class LogstashEncoderTest {
         encoder.getFieldNames().setContext("context");
         encoder.setContext(context);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -475,7 +473,7 @@ public class LogstashEncoderTest {
         when(event.getMarker()).thenReturn(marker);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -491,7 +489,7 @@ public class LogstashEncoderTest {
         when(event.getMarker()).thenReturn(marker);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -505,7 +503,7 @@ public class LogstashEncoderTest {
         when(event.getMarker()).thenReturn(null);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -528,7 +526,7 @@ public class LogstashEncoderTest {
         when(event.getArgumentArray()).thenReturn(argArray);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -545,7 +543,7 @@ public class LogstashEncoderTest {
         when(event.getArgumentArray()).thenReturn(argArray);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -569,7 +567,7 @@ public class LogstashEncoderTest {
         
         encoder.setCustomFields(customFields);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -588,7 +586,7 @@ public class LogstashEncoderTest {
         
         encoder.setTimeZone("UTC");
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -615,7 +613,7 @@ public class LogstashEncoderTest {
         
         encoder.setEnableContextMap(true);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -647,7 +645,7 @@ public class LogstashEncoderTest {
         
         encoder.setEnableContextMap(true);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -682,7 +680,7 @@ public class LogstashEncoderTest {
         when(event.getMarker()).thenReturn(marker);
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());

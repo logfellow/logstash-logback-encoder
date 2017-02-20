@@ -82,12 +82,10 @@ public class CompositeJsonEncoderTest {
         
         verify(formatter).setContext(context);
         verify(formatter).start();
+
+        outputStream.write(encoder.encode(event));
         
-        encoder.init(outputStream);
-        
-        encoder.doEncode(event);
-        
-        verify(formatter).writeEventToOutputStream(event, outputStream);
+        verify(formatter).writeEventAsString(event);
         
         Assert.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
         
@@ -116,23 +114,14 @@ public class CompositeJsonEncoderTest {
         verify(prefix).start();
         verify(suffix).start();
         
-        encoder.init(outputStream);
+        outputStream.write(encoder.encode(event));
         
-        verify(prefix).init(outputStream);
-        verify(suffix).init(outputStream);
+        verify(prefix).encode(event);
+        verify(suffix).encode(event);
         
-        encoder.doEncode(event);
-        
-        verify(prefix).doEncode(event);
-        verify(suffix).doEncode(event);
-        
-        verify(formatter).writeEventToOutputStream(event, outputStream);
+        verify(formatter).writeEventAsString(event);
         
         Assert.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
-        
-        encoder.close();
-        verify(prefix).close();
-        verify(suffix).close();
         
         encoder.stop();
         Assert.assertFalse(encoder.isStarted());
@@ -153,11 +142,9 @@ public class CompositeJsonEncoderTest {
         verify(formatter).setContext(context);
         verify(formatter).start();
         
-        encoder.init(bufferedOutputStream);
+        outputStream.write(encoder.encode(event));
         
-        encoder.doEncode(event);
-        
-        verify(formatter).writeEventToOutputStream(event, bufferedOutputStream);
+        verify(formatter).writeEventAsString(event);
         
         Assert.assertEquals("", outputStream.toString("UTF-8"));
         
@@ -204,12 +191,10 @@ public class CompositeJsonEncoderTest {
         verify(formatter).setContext(context);
         verify(formatter).start();
         
-        encoder.init(outputStream);
-        
         IOException exception = new IOException();
-        doThrow(exception).when(formatter).writeEventToOutputStream(event, outputStream);
+        doThrow(exception).when(formatter).writeEventAsString(event);
         
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         
         Assert.assertTrue(encoder.isStarted());
         

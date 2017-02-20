@@ -438,7 +438,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                          * This is a standard (non-keepAlive) event.
                          * Therefore, we need to send the event.
                          */
-                        encoder.doEncode(logEvent.event);
+                        outputStream.write(encoder.encode(logEvent.event));
                     } else if (hasKeepAliveDurationElapsed(lastSentTimestamp, currentTime)){
                         /*
                          * This is a keep alive event, and the keepAliveDuration has passed,
@@ -536,8 +536,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
                     tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
                     
-                    encoder.init(tempOutputStream);
-                    
                     addInfo(peerId + "connection established.");
                     
                     this.socket = tempSocket;
@@ -634,13 +632,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
         
         private void closeEncoder() {
-            try {
-                encoder.close();
-            } catch (IOException ioe) {
-                addStatus(new ErrorStatus(
-                        "Failed to close encoder", this, ioe));
-            }
-            
             encoder.stop();
         }
         

@@ -43,7 +43,6 @@ public class LogstashAccessEncoderTest {
     public void before() throws Exception {
         outputStream = new ByteArrayOutputStream();
         encoder = new LogstashAccessEncoder();
-        encoder.init(outputStream);
     }
     
     @Test
@@ -56,7 +55,7 @@ public class LogstashAccessEncoderTest {
         encoder.getFieldNames().setTimestamp("timestamp");
         
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -89,8 +88,7 @@ public class LogstashAccessEncoderTest {
         IAccessEvent event = mockBasicILoggingEvent();
         
         encoder.start();
-        encoder.doEncode(event);
-        encoder.close();
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         assertThat(outputStream.toString()).endsWith(LINE_SEPARATOR);
@@ -109,7 +107,7 @@ public class LogstashAccessEncoderTest {
         
         encoder.setContext(context);
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
@@ -125,7 +123,7 @@ public class LogstashAccessEncoderTest {
         encoder.getFieldNames().setFieldsRequestHeaders("@fields.request_headers");
         encoder.getFieldNames().setFieldsResponseHeaders("@fields.response_headers");
         encoder.start();
-        encoder.doEncode(event);
+        outputStream.write(encoder.encode(event));
         closeQuietly(outputStream);
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
