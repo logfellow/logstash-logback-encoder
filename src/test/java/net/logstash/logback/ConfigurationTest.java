@@ -164,11 +164,11 @@ public class ConfigurationTest {
         LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
         Assert.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
         Assert.assertNotNull(patternProvider);
-        
+
         LoggingEventNestedJsonProvider nestedJsonProvider = getInstance(providers, LoggingEventNestedJsonProvider.class);
         Assert.assertNotNull(nestedJsonProvider);
         Assert.assertEquals("nested", nestedJsonProvider.getFieldName());
-        
+
         RawMessageJsonProvider rawMessageJsonProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), RawMessageJsonProvider.class);
         Assert.assertNotNull(rawMessageJsonProvider);
         Assert.assertEquals("customRawMessage", rawMessageJsonProvider.getFieldName());
@@ -197,9 +197,7 @@ public class ConfigurationTest {
                 });
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        encoder.init(outputStream);
-        encoder.doEncode(listAppender.list.get(0));
-        
+        outputStream.write(encoder.encode(listAppender.list.get(0)));
 
         Map<String, Object> output = parseJson(outputStream.toString("UTF-8"));
         Assert.assertNotNull(output.get("@timestamp"));
