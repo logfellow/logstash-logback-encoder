@@ -196,12 +196,10 @@ public class ConfigurationTest {
                     new Throwable()
                 });
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        encoder.init(outputStream);
-        encoder.doEncode(listAppender.list.get(0));
+        byte[] encoded = encoder.encode(listAppender.list.get(0));
         
 
-        Map<String, Object> output = parseJson(outputStream.toString("UTF-8"));
+        Map<String, Object> output = parseJson(new String(encoded, "UTF-8"));
         Assert.assertNotNull(output.get("@timestamp"));
         Assert.assertEquals(1, output.get("@version"));
         Assert.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));

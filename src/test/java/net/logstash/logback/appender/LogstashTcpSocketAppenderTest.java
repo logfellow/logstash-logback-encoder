@@ -16,6 +16,7 @@ package net.logstash.logback.appender;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.argThat;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -37,6 +38,7 @@ import java.util.concurrent.Future;
 
 import javax.net.SocketFactory;
 
+import net.logstash.logback.Logback11Support;
 import net.logstash.logback.encoder.SeparatorParser;
 
 import org.junit.After;
@@ -48,7 +50,10 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
@@ -56,7 +61,8 @@ import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
 
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Logback11Support.class)
 public class LogstashTcpSocketAppenderTest {
     
     private static final int VERIFICATION_TIMEOUT = 1000 * 10;
@@ -103,6 +109,7 @@ public class LogstashTcpSocketAppenderTest {
         when(context.getStatusManager()).thenReturn(statusManager);
         when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);
+        when(encoder.encode(event1)).thenReturn("event1".getBytes("UTF-8"));
     }
     
     @After
@@ -111,7 +118,10 @@ public class LogstashTcpSocketAppenderTest {
     }
     
     @Test
-    public void testEncoderCalled() throws Exception {
+    public void testEncoderCalled_logback11() throws Exception {
+        PowerMockito.mockStatic(Logback11Support.class);
+        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        
         appender.addDestination("localhost:10000");
         appender.setIncludeCallerData(true);
         
@@ -123,9 +133,28 @@ public class LogstashTcpSocketAppenderTest {
         
         verify(event1).getCallerData();
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).init(any(OutputStream.class));
+        PowerMockito.verifyStatic(timeout(VERIFICATION_TIMEOUT));
+        Logback11Support.init(eq(encoder), any(OutputStream.class));
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+        PowerMockito.verifyStatic(timeout(VERIFICATION_TIMEOUT));
+        Logback11Support.doEncode(encoder, event1);
+
+    }
+
+    @Test
+    public void testEncoderCalled_logback12OrLater() throws Exception {
+        appender.addDestination("localhost:10000");
+        appender.setIncludeCallerData(true);
+        
+        appender.start();
+        
+        verify(encoder).start();
+        
+        appender.append(event1);
+        
+        verify(event1).getCallerData();
+        
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
     }
 
     @Test
@@ -144,9 +173,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.append(event1);
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
     }
 
     @Test
@@ -158,13 +185,11 @@ public class LogstashTcpSocketAppenderTest {
         
         verify(encoder).start();
         
-        doThrow(new SocketException()).doNothing().when(encoder).doEncode(event1);
+        doThrow(new RuntimeException()).doReturn("event1".getBytes("UTF-8")).when(encoder).encode(event1);
         
         appender.append(event1);
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).encode(event1);
     }
 
     @Test
@@ -189,9 +214,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.append(event1);
         
-        verify(encoder, timeout(VERIFICATION_TIMEOUT).times(2)).init(any(OutputStream.class));
-        
-        verify(encoder, timeout(VERIFICATION_TIMEOUT)).doEncode(event1);
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
     }
 
 
@@ -274,9 +297,9 @@ public class LogstashTcpSocketAppenderTest {
         // First attempt of sending the event throws an exception while subsequent 
         // attempts will succeed. This should force the appender to close the connection
         // and attempt to reconnect starting from the first host of the list.
-        doThrow(new SocketException())
-            .doNothing()
-            .when(encoder).doEncode(event1);
+        doThrow(new RuntimeException())
+            .doReturn("event1".getBytes("UTF-8"))
+            .when(encoder).encode(event1);
         
         
         // Start the appender and verify it is actually started
@@ -341,7 +364,7 @@ public class LogstashTcpSocketAppenderTest {
         inOrder.verify(socket).connect(host("localhost", 10001), anyInt());
 
         // 3) send the event
-        inOrder.verify(encoder).doEncode(event1);
+        inOrder.verify(encoder).encode(event1);
 
         // 4) connect to primary
         inOrder.verify(socket).connect(host("localhost", 10000), anyInt());

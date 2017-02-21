@@ -23,9 +23,14 @@ import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import net.logstash.logback.Logback11Support;
+
 import org.apache.commons.lang.time.FastDateFormat;
-import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
@@ -33,21 +38,22 @@ import ch.qos.logback.core.Context;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Logback11Support.class)
 public class LogstashAccessEncoderTest {
     
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private LogstashAccessEncoder encoder;
-    private ByteArrayOutputStream outputStream;
-    
-    @Before
-    public void before() throws Exception {
-        outputStream = new ByteArrayOutputStream();
-        encoder = new LogstashAccessEncoder();
-        encoder.init(outputStream);
-    }
+    private LogstashAccessEncoder encoder = new LogstashAccessEncoder();
+    private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     
     @Test
-    public void basicsAreIncluded() throws Exception {
+    public void basicsAreIncluded_logback11() throws Exception {
+        
+        PowerMockito.mockStatic(Logback11Support.class);
+        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        
+        encoder.init(outputStream);
+        
         final long timestamp = System.currentTimeMillis();
         
         IAccessEvent event = mockBasicILoggingEvent();
@@ -61,6 +67,29 @@ public class LogstashAccessEncoderTest {
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
+        verifyBasics(timestamp, event, node);
+        
+    }
+
+    @Test
+    public void basicsAreIncluded_logback12OrLater() throws Exception {
+        
+        final long timestamp = System.currentTimeMillis();
+        
+        IAccessEvent event = mockBasicILoggingEvent();
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.getFieldNames().setTimestamp("timestamp");
+        
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        verifyBasics(timestamp, event, node);
+    }
+    
+    protected void verifyBasics(final long timestamp, IAccessEvent event, JsonNode node) {
         assertThat(node.get("timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                 (timestamp));
         assertThat(node.get("@version").intValue()).isEqualTo(1);
@@ -81,11 +110,15 @@ public class LogstashAccessEncoderTest {
         assertThat(node.get("@fields.elapsed_time").asLong()).isEqualTo(event.getElapsedTime());
         assertThat(node.get("@fields.request_headers")).isNull();
         assertThat(node.get("@fields.response_headers")).isNull();
-        
     }
     
     @Test
     public void closePutsSeparatorAtTheEnd() throws Exception {
+        PowerMockito.mockStatic(Logback11Support.class);
+        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        
+        encoder.init(outputStream);
+
         IAccessEvent event = mockBasicILoggingEvent();
         
         encoder.start();
@@ -109,10 +142,9 @@ public class LogstashAccessEncoderTest {
         
         encoder.setContext(context);
         encoder.start();
-        encoder.doEncode(event);
-        closeQuietly(outputStream);
+        byte[] encoded = encoder.encode(event);
         
-        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        JsonNode node = MAPPER.readTree(encoded);
         
         assertThat(node.get("thing_one").textValue()).isEqualTo("One");
         assertThat(node.get("thing_two").textValue()).isEqualTo("Three");
@@ -120,15 +152,15 @@ public class LogstashAccessEncoderTest {
     
     @Test
     public void requestAndResponseHeadersAreIncluded() throws Exception {
+
         IAccessEvent event = mockBasicILoggingEvent();
         
         encoder.getFieldNames().setFieldsRequestHeaders("@fields.request_headers");
         encoder.getFieldNames().setFieldsResponseHeaders("@fields.response_headers");
         encoder.start();
-        encoder.doEncode(event);
-        closeQuietly(outputStream);
+        byte[] encoded = encoder.encode(event);
         
-        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
+        JsonNode node = MAPPER.readTree(encoded);
 
         assertThat(node.get("@fields.request_headers").size()).isEqualTo(2);
         assertThat(node.get("@fields.request_headers").get("User-Agent").textValue()).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
