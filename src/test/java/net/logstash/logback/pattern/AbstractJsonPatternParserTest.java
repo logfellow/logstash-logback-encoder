@@ -206,6 +206,54 @@ public abstract class AbstractJsonPatternParserTest<Event> {
     }
 
     @Test
+    public void asJsonShouldTransformTextValueToJsonArray() throws IOException {
+
+        String pattern = ""
+                + "{\n"
+                + "    \"key1\": \"#asJson{[1, 2]}\"\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "    \"key1\": [1, 2]\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void asJsonShouldTransformTextValueToJsonObject() throws IOException {
+
+        String pattern = ""
+                + "{\n"
+                + "    \"key2\": \"#asJson{{\\\"k\\\":\\\"v\\\"}}\"\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "    \"key2\": {\"k\":\"v\"}\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void asJsonShouldTransformTextValueToJsonError() throws IOException {
+
+        String pattern = ""
+                + "{\n"
+                + "    \"key2\": \"#asJson{{\\\"k\\\":\\\"v}}\"\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "    \"key2\": null\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
     public void shouldSendNonTransformableValuesAsNulls() throws IOException {
 
         String pattern = ""
