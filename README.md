@@ -1606,8 +1606,8 @@ So this example...
   {
     "bytes_sent_str": "%b",
     "bytes_sent_long": "#asLong{%b}",
-    "has_message": "#asJson(%X{hasMessage})",
-    "raw_message: "#asJson(%m)"
+    "has_message": "#asJson{%X{hasMessage}}",
+    "raw_message": "#asJson{%m}"
   }
 </pattern>
 ```
