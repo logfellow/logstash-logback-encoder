@@ -1605,7 +1605,9 @@ So this example...
 <pattern>
   {
     "bytes_sent_str": "%b",
-    "bytes_sent_long": "#asLong{%b}"
+    "bytes_sent_long": "#asLong{%b}",
+    "has_message": "#asJson(%X{hasMessage})",
+    "raw_message: "#asJson(%m)"
   }
 </pattern>
 ```
@@ -1614,7 +1616,9 @@ So this example...
 ```
 {
   "bytes_sent_str": "1024",
-  "bytes_sent_long": 1024
+  "bytes_sent_long": 1024,
+  "has_message": true,
+  "raw_message": { "type":"example", "msg":"example of json message with type" }
 }
 ```
 

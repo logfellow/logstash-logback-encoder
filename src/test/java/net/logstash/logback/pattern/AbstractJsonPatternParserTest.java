@@ -206,48 +206,30 @@ public abstract class AbstractJsonPatternParserTest<Event> {
     }
 
     @Test
-    public void asJsonShouldTransformTextValueToJsonArray() throws IOException {
+    public void asJsonShouldTransformTextValueToJson() throws IOException {
 
         String pattern = ""
                 + "{\n"
-                + "    \"key1\": \"#asJson{[1, 2]}\"\n"
+                + "    \"key1\": \"#asJson{true}\",\n"
+                + "    \"key2\": \"#asJson{123}\",\n"
+                + "    \"key3\": \"#asJson{123.4}\",\n"
+                + "    \"key4\": \"#asJson{\\\"123\\\"}\",\n"
+                + "    \"key5\": \"#asJson{[1, 2]}\",\n"
+                + "    \"key6\": \"#asJson{[1, \\\"2\\\"]}\",\n"
+                + "    \"key7\": \"#asJson{{\\\"field\\\":\\\"value\\\"}}\",\n"
+                + "    \"key8\": \"#asJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\"\n"
                 + "}";
 
         String expected = ""
                 + "{\n"
-                + "    \"key1\": [1, 2]\n"
-                + "}";
-
-        verifyFields(pattern, expected);
-    }
-
-    @Test
-    public void asJsonShouldTransformTextValueToJsonObject() throws IOException {
-
-        String pattern = ""
-                + "{\n"
-                + "    \"key2\": \"#asJson{{\\\"k\\\":\\\"v\\\"}}\"\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "    \"key2\": {\"k\":\"v\"}\n"
-                + "}";
-
-        verifyFields(pattern, expected);
-    }
-
-    @Test
-    public void asJsonShouldTransformTextValueToJsonError() throws IOException {
-
-        String pattern = ""
-                + "{\n"
-                + "    \"key2\": \"#asJson{{\\\"k\\\":\\\"v}}\"\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "    \"key2\": null\n"
+                + "    \"key1\": true,\n"
+                + "    \"key2\": 123,\n"
+                + "    \"key3\": 123.4,\n"
+                + "    \"key4\": \"123\",\n"
+                + "    \"key5\": [1, 2],\n"
+                + "    \"key6\": [1, \"2\"],\n"
+                + "    \"key7\": {\"field\":\"value\"},\n"
+                + "    \"key8\": {\"field\":\"value\", \"num\":123}\n"
                 + "}";
 
         verifyFields(pattern, expected);
@@ -260,14 +242,16 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "{\n"
                 + "    \"key1\": \"#asLong{abc}\",\n"
                 + "    \"key2\": \"test\",\n"
-                + "    \"key3\": \"#asDouble{abc}\"\n"
+                + "    \"key3\": \"#asDouble{abc}\",\n"
+                + "    \"key4\": \"#asJson{[1, 2}\"\n"
                 + "}";
 
         String expected = ""
                 + "{\n"
                 + "    \"key1\": null,\n"
                 + "    \"key2\": \"test\",\n"
-                + "    \"key3\": null\n"
+                + "    \"key3\": null,\n"
+                + "    \"key4\": null\n"
                 + "}";
 
         verifyFields(pattern, expected);
@@ -280,14 +264,16 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "{\n"
                 + "    \"key1\": \"#asDouble{0\",\n"
                 + "    \"key2\": \"#asDouble\",\n"
-                + "    \"key3\": \"#something\"\n"
+                + "    \"key3\": \"#something\",\n"
+                + "    \"key4\": \"#asJson{[1, 2]\"\n"
                 + "}";
 
         String expected = ""
                 + "{\n"
                 + "    \"key1\": \"#asDouble{0\",\n"
                 + "    \"key2\": \"#asDouble\",\n"
-                + "    \"key3\": \"#something\"\n"
+                + "    \"key3\": \"#something\",\n"
+                + "    \"key4\": \"#asJson{[1, 2]\"\n"
                 + "}";
 
         verifyFields(pattern, expected);
