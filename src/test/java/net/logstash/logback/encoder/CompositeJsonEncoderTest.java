@@ -13,6 +13,9 @@
  */
 package net.logstash.logback.encoder;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -21,8 +24,10 @@ import static org.mockito.Mockito.when;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 
+import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 
 import org.junit.Assert;
@@ -31,7 +36,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
@@ -41,7 +48,8 @@ import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.WarnStatus;
 
 @SuppressWarnings("unchecked")
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest(Logback11Support.class)
 public class CompositeJsonEncoderTest {
     
     private CompositeJsonFormatter<ILoggingEvent> formatter = mock(CompositeJsonFormatter.class);
@@ -74,8 +82,11 @@ public class CompositeJsonEncoderTest {
     }
     
     @Test
-    public void testNoPrefixNoSuffix() throws IOException {
+    public void testNoPrefixNoSuffix_logback11() throws IOException {
         
+        PowerMockito.mockStatic(Logback11Support.class);
+        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+
         encoder.start();
         
         Assert.assertTrue(encoder.isStarted());
@@ -97,7 +108,31 @@ public class CompositeJsonEncoderTest {
     }
     
     @Test
-    public void testPrefixAndSuffix() throws IOException {
+    public void testNoPrefixNoSuffix_logback12OrLater() throws IOException {
+        
+        encoder.start();
+        
+        Assert.assertTrue(encoder.isStarted());
+        
+        verify(formatter).setContext(context);
+        verify(formatter).start();
+        
+        byte[] encoded = encoder.encode(event);
+        
+        verify(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
+        
+        assertThat(encoded).containsExactly(System.getProperty("line.separator").getBytes("UTF-8"));
+        
+        encoder.stop();
+        Assert.assertFalse(encoder.isStarted());
+        verify(formatter).stop();
+    }
+    
+    @Test
+    public void testPrefixAndSuffix_logback11() throws IOException {
+        
+        PowerMockito.mockStatic(Logback11Support.class);
+        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
         Encoder<ILoggingEvent> suffix = mock(Encoder.class);
@@ -117,22 +152,28 @@ public class CompositeJsonEncoderTest {
         verify(suffix).start();
         
         encoder.init(outputStream);
-        
-        verify(prefix).init(outputStream);
-        verify(suffix).init(outputStream);
+
+        PowerMockito.verifyStatic();
+        Logback11Support.init(prefix, outputStream);
+        PowerMockito.verifyStatic();
+        Logback11Support.init(suffix, outputStream);
         
         encoder.doEncode(event);
         
-        verify(prefix).doEncode(event);
-        verify(suffix).doEncode(event);
+        PowerMockito.verifyStatic();
+        Logback11Support.doEncode(prefix, event);
+        PowerMockito.verifyStatic();
+        Logback11Support.doEncode(suffix, event);
         
         verify(formatter).writeEventToOutputStream(event, outputStream);
         
         Assert.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
         
         encoder.close();
-        verify(prefix).close();
-        verify(suffix).close();
+        PowerMockito.verifyStatic();
+        Logback11Support.close(prefix);
+        PowerMockito.verifyStatic();
+        Logback11Support.close(suffix);
         
         encoder.stop();
         Assert.assertFalse(encoder.isStarted());
@@ -142,8 +183,50 @@ public class CompositeJsonEncoderTest {
     }
     
     @Test
-    public void testNoImmediateFlush() throws IOException {
+    public void testPrefixAndSuffix_logback12OrLater() throws IOException {
         
+        LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
+        Encoder<ILoggingEvent> suffix = mock(Encoder.class);
+        
+        when(prefix.encode(event)).thenReturn("prefix".getBytes("UTF-8"));
+        when(suffix.encode(event)).thenReturn("suffix".getBytes("UTF-8"));
+        
+        encoder.setPrefix(prefix);
+        encoder.setSuffix(suffix);
+        
+        encoder.start();
+        
+        Assert.assertTrue(encoder.isStarted());
+        
+        verify(formatter).setContext(context);
+        verify(formatter).start();
+        
+        verify(prefix).setCharset(Charset.forName("UTF-8"));
+        verify(prefix).start();
+        verify(suffix).start();
+        
+        byte[] encoded = encoder.encode(event);
+        
+        verify(prefix).encode(event);
+        verify(suffix).encode(event);
+        
+        verify(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
+        
+        assertThat(encoded).containsExactly(("prefixsuffix" + System.getProperty("line.separator")).getBytes("UTF-8"));
+        
+        encoder.stop();
+        Assert.assertFalse(encoder.isStarted());
+        verify(formatter).stop();
+        verify(prefix).stop();
+        verify(suffix).stop();
+    }
+    
+    @Test
+    public void testNoImmediateFlush_logback11() throws IOException {
+        
+        PowerMockito.mockStatic(Logback11Support.class);
+        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+
         encoder.setImmediateFlush(false);
         
         encoder.start();
@@ -195,7 +278,10 @@ public class CompositeJsonEncoderTest {
     }
     
     @Test
-    public void testIOException() throws IOException {
+    public void testIOException_logback11() throws IOException {
+        
+        PowerMockito.mockStatic(Logback11Support.class);
+        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.start();
         
@@ -215,6 +301,27 @@ public class CompositeJsonEncoderTest {
         
         verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
                 + "OutputStream is now in an unknown state, but will continue to be used for future log events."
+                + "Event: " + event, context, exception));
+    }
+
+    @Test
+    public void testIOException_logback12OrLater() throws IOException {
+        
+        encoder.start();
+        
+        Assert.assertTrue(encoder.isStarted());
+        
+        verify(formatter).setContext(context);
+        verify(formatter).start();
+        
+        IOException exception = new IOException();
+        doThrow(exception).when(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
+        
+        encoder.encode(event);
+        
+        Assert.assertTrue(encoder.isStarted());
+        
+        verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
                 + "Event: " + event, context, exception));
     }
 

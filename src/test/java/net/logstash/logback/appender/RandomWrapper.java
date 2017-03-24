@@ -18,7 +18,7 @@ import java.util.Random;
 /**
  * RandomWrapper
  *
- * @author se.hyung@navercorp.com
+ * @author withccm@gmail.com
  * @since 2016. 12. 22.
  */
 public class RandomWrapper extends Random {
