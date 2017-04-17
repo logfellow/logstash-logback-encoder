@@ -41,6 +41,7 @@ import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.UuidProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
@@ -175,6 +176,12 @@ public class ConfigurationTest {
 
         ArgumentsJsonProvider argumentsJsonProvider = getInstance(providers, ArgumentsJsonProvider.class);
         Assert.assertNotNull(argumentsJsonProvider);
+
+        UuidProvider uuidProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), UuidProvider.class);
+        Assert.assertNotNull(uuidProvider);
+        Assert.assertEquals("id", uuidProvider.getFieldName());
+        Assert.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
+        Assert.assertEquals("time", uuidProvider.getStrategy());
     }
 
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {
