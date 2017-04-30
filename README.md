@@ -19,6 +19,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
     * [Keep-alive](#keep-alive)
     * [Multiple Destinations](#multiple-destinations)
     * [Reconnection Delay](#reconnection-delay)
+    * [Write buffer size](#write-buffer-size)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
   * [Encoders / Layouts](#encoders--layouts)
@@ -324,6 +325,21 @@ This amount of time to delay can be changed by setting the `reconnectionDelay` f
   </appender>
 ```
 
+
+#### Write buffer size
+
+By default, a buffer size of 8192 is used to buffer socket output stream writes.
+You can adjust this by setting the appender's `writeBufferSize`.
+ 
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      ...
+      <writeBufferSize>16384</writeBufferSize>
+  </appender>
+```
+
+Buffering can be disabled by setting the `writeBufferSize` to `0`.
+If buffering is disabled, the writer thread can slow down, but it will also can prevent dropping events in the buffer on flaky connections.
 
 #### SSL
 

@@ -190,6 +190,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     
     /**
      * The number of bytes available in the write buffer.
+     * Defaults to {@value #DEFAULT_WRITE_BUFFER_SIZE}
+     * 
+     * If less than or equal to zero, buffering the output stream will be disabled.
+     * If buffering is disabled, the writer thread can slow down, but
+     * it will also can prevent dropping events in the buffer on flaky connections.
      */
     private int writeBufferSize = DEFAULT_WRITE_BUFFER_SIZE;
     
@@ -282,7 +287,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         
         /**
          * The destination output stream to which to send events.
-         * This is a buffered wrapper of the socket output stream.
+         * If {@link AbstractLogstashTcpSocketAppender#writeBufferSize} is greater than zero, this will be a buffered wrapper of the socket output stream.
+         * Otherwise, it will be the socket output stream.
          */
         private volatile OutputStream outputStream;
         
@@ -539,7 +545,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * must be created to resolve the hostname.
                      */
                     tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
-                    tempOutputStream = new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize);
+                    
+                    /*
+                     * Issue #218, make buffering the output stream optional.
+                     */
+                    tempOutputStream = writeBufferSize > 0
+                            ? new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize)
+                            : tempSocket.getOutputStream();
                     
                     if (Logback11Support.isLogback11OrBefore()) {
                         Logback11Support.init(encoder, tempOutputStream);
@@ -1029,6 +1041,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     
     /**
      * The number of bytes available in the write buffer.
+     * Defaults to {@value #DEFAULT_WRITE_BUFFER_SIZE}
+     * 
+     * If less than or equal to zero, buffering the output stream will be disabled.
+     * If buffering is disabled, the writer thread can slow down, but
+     * it will also can prevent dropping events in the buffer on flaky connections.
      */
    public void setWriteBufferSize(int writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
