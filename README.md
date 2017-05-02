@@ -617,10 +617,13 @@ It is a configuration error to specify both included and excluded key names.
 
 ### Context fields
 
-By default, each property of Logback's Context (`ch.qos.logback.core.Context`), such as `HOSTNAME`,
+By default, each property of Logback's Context (`ch.qos.logback.core.Context`)
 will appear as a field in the LoggingEvent.
 This can be disabled by specifying `<includeContext>false</includeContext>`
 in the encoder/layout/appender configuration.
+
+Note that logback versions prior to 1.1.10 included a `HOSTNAME` property by default in the context.
+As of logback 1.1.10, the `HOSTNAME` property is lazily calculated (see [LOGBACK-1221](https://jira.qos.ch/browse/LOGBACK-1221)), and will no longer be included by default.
 
 
 ### Caller Info Fields
