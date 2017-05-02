@@ -167,13 +167,11 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
         this.context = context;
     }
 
-    public String getUuid()
-    {
+    public String getUuid() {
         return uuid;
     }
 
-    public void setUuid(String uuid)
-    {
+    public void setUuid(String uuid) {
         this.uuid = uuid;
     }
 }

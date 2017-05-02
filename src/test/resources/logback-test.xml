@@ -54,14 +54,14 @@
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventNestedJsonProvider">
                 <fieldName>nested</fieldName>
                 <providers>
-		            <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider">
-		                <fieldName>customRawMessage</fieldName>
-		            </provider>
-		            <provider class="net.logstash.logback.composite.loggingevent.UuidProvider">
-		                <fieldName>id</fieldName>
+                    <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider">
+                        <fieldName>customRawMessage</fieldName>
+                    </provider>
+                    <provider class="net.logstash.logback.composite.loggingevent.UuidProvider">
+                        <fieldName>id</fieldName>
                         <strategy>time</strategy>
                         <ethernet>00:C0:F0:3D:5B:7C</ethernet>
-		            </provider>
+                    </provider>
                 </providers>
             </provider>
             <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider">
@@ -87,9 +87,9 @@
                         <strategy>time</strategy>
                         <ethernet>00:C0:F0:3D:5B:7C</ethernet>
                     </uuid>
-	                <rawMessage>
-	                    <fieldName>customRawMessage</fieldName>
-	                </rawMessage>
+                    <rawMessage>
+                        <fieldName>customRawMessage</fieldName>
+                    </rawMessage>
                     </providers>
                 </nestedField>
                 <loggerName>
@@ -131,8 +131,8 @@
                 </pattern>
                 <provider class="net.logstash.logback.TestJsonProvider"/>
                 <arguments>
-	                <includeNonStructuredArguments>true</includeNonStructuredArguments>
-	                <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
+                    <includeNonStructuredArguments>true</includeNonStructuredArguments>
+                    <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
                 </arguments>
             </providers>
         </encoder>

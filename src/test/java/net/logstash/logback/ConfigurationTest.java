@@ -13,7 +13,6 @@
  */
 package net.logstash.logback;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -181,7 +180,7 @@ public class ConfigurationTest {
         Assert.assertNotNull(uuidProvider);
         Assert.assertEquals("id", uuidProvider.getFieldName());
         Assert.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
-        Assert.assertEquals("time", uuidProvider.getStrategy());
+        Assert.assertEquals(UuidProvider.STRATEGY_TIME, uuidProvider.getStrategy());
     }
 
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {

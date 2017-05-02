@@ -13,20 +13,21 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Matchers.matches;
+import static org.mockito.Mockito.verify;
+
+import java.io.IOException;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import java.io.IOException;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.matches;
-import static org.mockito.Mockito.verify;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public class UuidProviderTest
 {
@@ -44,16 +45,14 @@ public class UuidProviderTest
     private ILoggingEvent event;
 
     @Test
-    public void testDefaultName() throws IOException
-    {
+    public void testDefaultName() throws IOException {
         provider.writeTo(generator, event);
 
         verify(generator).writeStringField(eq(UuidProvider.FIELD_UUID), matches(UUID));
     }
 
     @Test
-    public void testFieldName() throws IOException
-    {
+    public void testFieldName() throws IOException {
         provider.setFieldName("newFieldName");
 
         provider.writeTo(generator, event);
@@ -62,9 +61,8 @@ public class UuidProviderTest
     }
 
     @Test
-    public void testStrategy() throws IOException
-    {
-        provider.setStrategy("time");
+    public void testStrategy() throws IOException {
+        provider.setStrategy(UuidProvider.STRATEGY_TIME);
 
         provider.writeTo(generator, event);
 
@@ -72,9 +70,8 @@ public class UuidProviderTest
     }
 
     @Test
-    public void testEthernet() throws IOException
-    {
-        provider.setStrategy("time");
+    public void testEthernet() throws IOException {
+        provider.setStrategy(UuidProvider.STRATEGY_TIME);
         provider.setEthernet("00:C0:F0:3D:5B:7C");
 
         provider.writeTo(generator, event);
