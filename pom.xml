@@ -30,6 +30,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
         <com.fasterxml.jackson.version>2.6.5</com.fasterxml.jackson.version>
+        <com.fasterxml.uuid.version>3.1.4</com.fasterxml.uuid.version>
         <commons.io.version>2.4</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.12</junit.version>
@@ -110,6 +111,11 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${com.fasterxml.jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.uuid</groupId>
+            <artifactId>java-uuid-generator</artifactId>
+            <version>${com.fasterxml.uuid.version}</version>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>

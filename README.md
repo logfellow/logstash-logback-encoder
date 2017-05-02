@@ -108,7 +108,7 @@ or if you need to use logstash version 0 output.
 The `*AsyncDisruptorAppender` appenders are similar to logback's `AsyncAppender`,
 except that a [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)
 is used as the queuing mechanism, as opposed to a `BlockingQueue`.
-These async appenders can delegate to any other underlying logback appender. 
+These async appenders can delegate to any other underlying logback appender.
 
 
 
@@ -157,7 +157,7 @@ input {
   }
 }
 ```
- 
+
 
 ### TCP Appenders
 
@@ -171,11 +171,11 @@ Example logging appender configuration in `logback.xml`:
 <configuration>
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
       <destination>127.0.0.1:4560</destination>
-  
+
       <!-- encoder is required -->
       <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
   </appender>
-  
+
   <root level="DEBUG">
       <appender-ref ref="stash" />
   </root>
@@ -192,7 +192,7 @@ Example access appender in `logback-access.xml`
 <configuration>
   <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
       <destination>127.0.0.1:4560</destination>
-  
+
       <!-- encoder is required -->
       <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
   </appender>
@@ -203,7 +203,7 @@ Example access appender in `logback-access.xml`
 
 Unlike the [UDP appender](#udp), an encoder must be configured for the TCP appenders.
 You can use a `Logstash*Encoder`, `*EventCompositeJsonEncoder`, or any other logback encoder.
-All of the output formatting options are configured at the encoder level. 
+All of the output formatting options are configured at the encoder level.
 
 Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)).
 All the encoding and TCP communication is delegated to a single writer thread.
@@ -211,7 +211,7 @@ There is no need to wrap the TCP appenders with another asynchronous appender
 (such as `AsyncAppender` or `LoggingEventAsyncDisruptorAppender`).
 
 All the configuration parameters (except for sub-appender) of the [async appenders](#async)
-are valid for TCP appenders.  For example, `waitStrategyType` and `ringBufferSize`. 
+are valid for TCP appenders.  For example, `waitStrategyType` and `ringBufferSize`.
 
 The TCP appenders will never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
@@ -260,7 +260,7 @@ The TCP appenders can be configured to try to connect to multiple destinations l
       <destination>destination1.domain.com:4560</destination>
       <destination>destination2.domain.com:4560</destination>
       <destination>destination3.domain.com:4560</destination>
-  
+
       ...
   </appender>
 ```
@@ -274,7 +274,7 @@ or this:
           destination2.domain.com:4560,
           destination3.domain.com:4560
       </destination>
-  
+
       ...
   </appender>
 ```
@@ -305,7 +305,7 @@ For example:
       <destination>destination1.domain.com:4560</destination>
       <destination>destination2.domain.com:4560</destination>
       <destination>destination3.domain.com:4560</destination>
-  
+
       <secondaryConnectionTTL>5 minutes</secondaryConnectionTTL>
   </appender>
 ```
@@ -316,7 +316,7 @@ For example:
 If connecting fails to all configured destinations, the TCP appender by default will wait
 30 seconds before reattempting to connect.
 
-This amount of time to delay can be changed by setting the `reconnectionDelay` field. 
+This amount of time to delay can be changed by setting the `reconnectionDelay` field.
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
@@ -354,7 +354,7 @@ For example, to enable SSL using the JVM's default keystore/truststore, do the f
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
       ...
-      
+
       <!-- Enable SSL using the JVM's default keystore/truststore -->
       <ssl/>
   </appender>
@@ -365,7 +365,7 @@ To use a different truststore, do the following:
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
       ...
-      
+
       <!-- Enable SSL and use a different truststore -->
       <ssl>
           <trustStore>
@@ -381,7 +381,7 @@ All the customizations that [logback](http://logback.qos.ch/manual/usingSSL.html
 are supported by the `Logback*TcpSocketAppender`s.
 
 See the logstash documentation for the [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input
-for how to configure it to use SSL. 
+for how to configure it to use SSL.
 
 
 ### Async Appenders
@@ -399,7 +399,7 @@ For example:
        ...
     </appender>
   </appender>
-``` 
+```
 
 The async appenders will never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
@@ -576,7 +576,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#custom_timezone).
 | `@version`    | Logstash format version (e.g. 1)   See [customizing version](#custom_version).
-| `message`     | Formatted log message of the event 
+| `message`     | Formatted log message of the event
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
 | `level`       | String name of the level of the event
@@ -618,13 +618,13 @@ It is a configuration error to specify both included and excluded key names.
 ### Context fields
 
 By default, each property of Logback's Context (`ch.qos.logback.core.Context`), such as `HOSTNAME`,
-will appear as a field in the LoggingEvent. 
+will appear as a field in the LoggingEvent.
 This can be disabled by specifying `<includeContext>false</includeContext>`
 in the encoder/layout/appender configuration.
 
 
 ### Caller Info Fields
-The encoder/layout/appender do not contain caller info by default. 
+The encoder/layout/appender do not contain caller info by default.
 This can be costly to calculate and should be switched off for busy production environments.
 
 To switch it on, add the `includeCallerData` property to the configuration.
@@ -655,7 +655,7 @@ In addition to the fields above, you can add other fields to the LoggingEvent ei
 
 #### Global Custom Fields
 
-Add custom fields that will appear in every LoggingEvent like this : 
+Add custom fields that will appear in every LoggingEvent like this :
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
@@ -747,7 +747,7 @@ logger.info("log message {}", keyValue("name", "value", "{0}=[{1}]"));
 /*
  * In the JSON output, values will be serialized by Jackson's ObjectMapper.
  * In the formatted message, values will follow the same behavior as logback
- * (formatting of an array or if not an array `toString()` is called). 
+ * (formatting of an array or if not an array `toString()` is called).
  *
  * Add "foo":{...} to the JSON output and add `foo.toString()` to the formatted message:
  *
@@ -950,7 +950,7 @@ names for `caller`, `mdc`, and `context`, respectively.
 
 For AccessEvents, see [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names that can be customized. Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `fieldsMethod`, `fieldsProtocol`).
- 
+
 
 
 ## Customizing Version
@@ -965,7 +965,7 @@ The value can be changed like this:
 </encoder>
 ```
 
-The value can be written as a string (instead of a number) like this: 
+The value can be written as a string (instead of a number) like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -1092,7 +1092,7 @@ For example, to add standard syslog headers for syslog over UDP, configure the f
 ```xml
 <configuration>
   <conversionRule conversionWord="syslogStart" converterClass="ch.qos.logback.classic.pattern.SyslogStartConverter"/>
-    
+
   <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
     <host>MyAwesomeSyslogServer</host>
     <!-- port is optional (default value shown) -->
@@ -1101,7 +1101,7 @@ For example, to add standard syslog headers for syslog over UDP, configure the f
       <pattern>%syslogStart{USER}</pattern>
     </prefix>
   </appender>
-  
+
   ...
 </configuration>
 ```
@@ -1343,21 +1343,35 @@ For LoggingEvents, the available providers and their configuration properties (d
     <tr>
       <td><tt>arguments</tt></td>
       <td>
-        <p>Outputs fields from the event arguments array. 
+        <p>Outputs fields from the event arguments array.
         </p>
         <p>
             See <a href="#loggingevent_custom_event">Event-specific Custom Fields</a>
         </p>
         <ul>
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
-          <li><tt>includeNonStructuredArguments</tt> - Include arguments that are not an instance 
+          <li><tt>includeNonStructuredArguments</tt> - Include arguments that are not an instance
           of <a href="/src/main/java/net/logstash/logback/argument/StructuredArgument.java"><tt>StructuredArgument</tt></a>.
           (default=false)
           Object field name will be <tt>nonStructuredArgumentsFieldPrefix</tt> prepend to the argument index</li>
           <li><tt>nonStructuredArgumentsFieldPrefix</tt> - Object field name prefix (default=arg)</li>
         </ul>
       </td>
-    </tr>    
+    </tr>   
+    <tr>
+      <td><tt>uuid</tt></td>
+      <td><p>Outputs random UUID as field value. Handy when you want to provide unique identifier
+      for log lines
+      </p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>uuid</tt>)</li>
+          <li><tt>strategy</tt> - UUID generation strategy (<tt>random</tt>). Supported options: <ul><li><tt>random</tt> - for Type 4 UUID</li>
+          <li><tt>time</tt> - for Type 1 time based UUID</li>
+          </ul></li>
+          <li><tt>ethernet</tt> - Only for 'time' strategy. When defined - MAC address to use for location part of UUID. Set it to <tt>interface</tt> value to use real underlying network interface or to specific values like <tt>00:C0:F0:3D:5B:7C</tt></li>          
+        </ul>
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -1573,10 +1587,10 @@ This example...
   <providers>
     <!-- provides the timestamp -->
     <timestamp/>
-    
+
     <!-- provides the version -->
     <version/>
-    
+
     <!-- provides the fields in the configured pattern -->
     <pattern>
       <!-- the pattern that defines what to include -->
@@ -1741,7 +1755,7 @@ the [logback manual](http://logback.qos.ch/manual/configuration.html#automaticSt
 
 Memory usage and performance of logstash-logback-encoder have been improved
 by addressing issues discovered with the help of the
-[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp). 
+[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp).
 
 YourKit, LLC has graciously donated a free license of the
 [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp)
@@ -1750,4 +1764,3 @@ to this open source project.
 
 ## Build status
 [![Build Status](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
-
