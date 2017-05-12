@@ -1060,6 +1060,7 @@ is included in the logstash-logback-encoder library to format stacktraces by:
 * Filtering out consecutive unwanted stackTraceElements based on regular expressions.
 * Using evaluators to determine if the stacktrace should be logged.
 * Outputing in either 'normal' order (root-cause-last), or root-cause-first.
+* Computing and inlining hexadecimal hashes for each exception stack.
 
 For example:
 
@@ -1073,6 +1074,7 @@ For example:
     <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
     <evaluator class="myorg.MyCustomEvaluator"/>
     <rootCauseFirst>true</rootCauseFirst>
+    <inlineHash>true</inlineHash>
   </throwableConverter>
 </encoder>
 ```
@@ -1269,6 +1271,16 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
           <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>stackHash</tt></td>
+      <td><p>(Only if a throwable was logged) Computes and outputs a hexadecimal hash of the throwable.</p>
+        <p>This helps identifying several occurrences of the same error, as it is highly probable that two errors with the same hash will be occurrences of the same error.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>stack_hash</tt>)</li>
+          <li><tt>exclude</tt> - Classname+method patterns to exclude when computing the stack trace hash (regular expressions).</li>
         </ul>
       </td>
     </tr>

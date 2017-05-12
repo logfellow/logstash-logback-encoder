@@ -14,6 +14,7 @@
 package net.logstash.logback.stacktrace;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -29,6 +30,7 @@ import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
@@ -150,7 +152,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * True to print the root cause first.  False to print exceptions normally (root cause last).
      */
     private boolean rootCauseFirst;
-    
+
+    /**
+     * True to compute and inline stack hashes.
+     */
+    private boolean inlineHash;
+
+    private StackHasher stackHasher;
+
     /**
      * Evaluators that determine if the stacktrace should be logged.
      */
@@ -159,6 +168,15 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     @Override
     public void start() {
         parseOptions();
+        // instantiate stack hasher if need be
+        if(inlineHash) {
+            // use same exclusion patterns to compute hash
+            if(excludes == null || excludes.isEmpty()) {
+                stackHasher = new StackHasher();
+            } else {
+                stackHasher = new StackHasher(StackElementFilter.byPattern(excludes));
+            }
+        }
         super.start();
     }
 
@@ -230,16 +248,22 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         if (throwableProxy == null || isExcludedByEvaluator(event)) {
             return CoreConstants.EMPTY_STRING;
         }
-        
+
+        // compute stack trace hashes
+        Deque<String> stackHashes = null;
+        if(inlineHash && (throwableProxy instanceof ThrowableProxy)) {
+            stackHashes = stackHasher.hexHashes(((ThrowableProxy) throwableProxy).getThrowable());
+        }
+
         /*
          * The extra 100 gives a little more buffer room since we actually
          * go over the maxLength before detecting it and truncating.
          */
         StringBuilder builder = new StringBuilder(Math.min(BUFFER_INITIAL_CAPACITY, Math.max(Integer.MAX_VALUE, this.maxLength + 100)));
         if (rootCauseFirst) {
-            appendRootCauseFirst(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy);
+            appendRootCauseFirst(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         } else {
-            appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy);
+            appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         }
         if (builder.length() > maxLength) {
             builder.setLength(maxLength - ELLIPSIS.length());
@@ -285,21 +309,25 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             StringBuilder builder,
             String prefix,
             int indent,
-            IThrowableProxy throwableProxy) {
+            IThrowableProxy throwableProxy,
+            Deque<String> stackHashes) {
         
         if (throwableProxy == null || builder.length() > maxLength) {
             return;
         }
-        appendFirstLine(builder, prefix, indent, throwableProxy);
+
+        String hash = stackHashes == null || stackHashes.isEmpty() ? null : stackHashes.removeFirst();
+        appendFirstLine(builder, prefix, indent, throwableProxy, hash);
         appendStackTraceElements(builder, indent, throwableProxy);
         
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
-                appendRootCauseLast(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy);
+            	// stack hashes are not computed/inlined on suppressed errors
+                appendRootCauseLast(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy, null);
             }
         }
-        appendRootCauseLast(builder, CoreConstants.CAUSED_BY, indent, throwableProxy.getCause());
+        appendRootCauseLast(builder, CoreConstants.CAUSED_BY, indent, throwableProxy.getCause(), stackHashes);
     }
 
     /**
@@ -310,24 +338,27 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             StringBuilder builder,
             String prefix,
             int indent,
-            IThrowableProxy throwableProxy) {
+            IThrowableProxy throwableProxy,
+            Deque<String> stackHashes) {
         
         if (throwableProxy == null || builder.length() > maxLength) {
             return;
         }
         
         if (throwableProxy.getCause() != null) {
-            appendRootCauseFirst(builder, prefix, indent, throwableProxy.getCause());
+            appendRootCauseFirst(builder, prefix, indent, throwableProxy.getCause(), stackHashes);
             prefix = CoreConstants.WRAPPED_BY;
         }
-        
-        appendFirstLine(builder, prefix, indent, throwableProxy);
+
+        String hash = stackHashes == null || stackHashes.isEmpty() ? null : stackHashes.removeLast();
+        appendFirstLine(builder, prefix, indent, throwableProxy, hash);
         appendStackTraceElements(builder, indent, throwableProxy);
         
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
-                appendRootCauseFirst(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy);
+            	// stack hashes are not computed/inlined on suppressed errors
+                appendRootCauseFirst(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy, null);
             }
         }
     }
@@ -495,13 +526,17 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     /**
      * Appends the first line containing the prefix and throwable message 
      */
-    private void appendFirstLine(StringBuilder builder, String prefix, int indent, IThrowableProxy throwableProxy) {
+    private void appendFirstLine(StringBuilder builder, String prefix, int indent, IThrowableProxy throwableProxy, String hash) {
         if (builder.length() > maxLength) {
             return;
         }
         indent(builder, indent - 1);
         if (prefix != null) {
             builder.append(prefix);
+        }
+        if (hash != null) {
+            // inline stack hash
+            builder.append("<#" + hash + "> ");
         }
         builder.append(abbreviator.abbreviate(throwableProxy.getClassName()))
             .append(": ")
@@ -556,7 +591,19 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public void setRootCauseFirst(boolean rootCauseFirst) {
         this.rootCauseFirst = rootCauseFirst;
     }
-    
+
+    public boolean isInlineHash() {
+        return inlineHash;
+    }
+
+    public void setInlineHash(boolean inlineHash) {
+        this.inlineHash = inlineHash;
+    }
+
+    protected void setStackHasher(StackHasher stackHasher) {
+        this.stackHasher = stackHasher;
+    }
+
     public void addExclude(String exclusionPattern) {
         excludes.add(Pattern.compile(exclusionPattern));
     }

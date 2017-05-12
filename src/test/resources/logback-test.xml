@@ -45,6 +45,7 @@
                 <shortenedClassNameLength>30</shortenedClassNameLength>
                 <rootCauseFirst>true</rootCauseFirst>
                 <exclude>excluded</exclude>
+                <inlineHash>true</inlineHash>
             </throwableConverter>
             <includeMdcKeyName>included</includeMdcKeyName>
             <customFields>{"customName":"customValue"}</customFields>
@@ -61,6 +62,10 @@
                         <fieldName>id</fieldName>
                         <strategy>time</strategy>
                         <ethernet>00:C0:F0:3D:5B:7C</ethernet>
+                    </provider>
+                    <provider class="net.logstash.logback.composite.loggingevent.StackHashJsonProvider">
+                        <fieldName>customStackHash</fieldName>
+                        <exclude>exclude</exclude>
                     </provider>
                 </providers>
             </provider>
@@ -112,8 +117,12 @@
                         <shortenedClassNameLength>30</shortenedClassNameLength>
                         <rootCauseFirst>true</rootCauseFirst>
                         <exclude>excluded</exclude>
+                        <inlineHash>true</inlineHash>
                     </throwableConverter>
                 </stackTrace>
+                <stackHash>
+                    <exclude>excluded</exclude>
+                </stackHash>
                 <context/>
                 <contextName/>
                 <jsonMessage/>

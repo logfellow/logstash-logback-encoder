@@ -88,7 +88,7 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(21, providers.size());
+        Assert.assertEquals(22, providers.size());
 
         verifyCommonProviders(providers);
 

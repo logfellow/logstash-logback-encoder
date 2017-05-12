@@ -20,15 +20,19 @@ import static org.mockito.Mockito.when;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
@@ -345,6 +349,84 @@ public class ShortenedThrowableConverterTest {
         }
     }
 
+    @Test
+    public void test_inline_hash() {
+        try {
+            StackTraceElementGenerator.generateCausedBy();
+            Assert.fail();
+        } catch (RuntimeException e) {
+            // GIVEN
+            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
+            List<String> expectedHashes = Arrays.asList("11111111", "22222222");
+            Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setInlineHash(true);
+            converter.start();
+            converter.setStackHasher(mockedHasher);
+
+            // WHEN
+            String formatted = converter.convert(createEvent(e));
+
+            // THEN
+            // verify we have expected stack hashes inlined
+            List<String> actualHashes = extractStackHashes(formatted);
+            Assert.assertArrayEquals(expectedHashes.toArray(), actualHashes.toArray());
+        }
+    }
+    
+    @Test
+    public void test_inline_hash_root_cause_first() {
+        try {
+            StackTraceElementGenerator.generateCausedBy();
+            Assert.fail();
+        } catch (RuntimeException e) {
+            // GIVEN
+            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
+            List<String> expectedHashes = Arrays.asList("11111111", "22222222");
+            Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setInlineHash(true);
+            converter.setRootCauseFirst(true);
+            converter.start();
+            converter.setStackHasher(mockedHasher);
+
+            // WHEN
+            String formatted = converter.convert(createEvent(e));
+
+            // THEN
+            // verify we have expected stack hashes inlined
+            List<String> actualHashes = extractStackHashes(formatted);
+            List<String> expectedHashesInReverseOrder = new ArrayList<String>(expectedHashes);
+            Collections.reverse(expectedHashesInReverseOrder);
+            Assert.assertArrayEquals(expectedHashesInReverseOrder.toArray(), actualHashes.toArray());
+        }
+    }
+
+    @Test
+    public void test_inline_hash_with_suppressed() {
+        try {
+            StackTraceElementGenerator.generateSuppressed();
+            Assert.fail();
+        } catch (RuntimeException e) {
+            // GIVEN
+            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
+            List<String> expectedHashes = Arrays.asList("11111111"); // only one exception, no cause
+            Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setInlineHash(true);
+            converter.start();
+            converter.setStackHasher(mockedHasher);
+
+            // WHEN
+            String formatted = converter.convert(createEvent(e));
+
+            // THEN
+            // verify we have expected stack hashes inlined
+            List<String> actualHashes = extractStackHashes(formatted);
+            Assert.assertArrayEquals(expectedHashes.toArray(), actualHashes.toArray());
+        }
+    }
+
     private String extractClassAndMethod(String string) {
         int atIndex = string.indexOf("at ");
         int endIndex = string.indexOf('(');
@@ -373,5 +455,15 @@ public class ShortenedThrowableConverterTest {
         ILoggingEvent event = mock(ILoggingEvent.class);
         when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(e));
         return event;
+    }
+    
+    private List<String> extractStackHashes(String formattedStackTrace) {
+    	Pattern hashPattern = Pattern.compile("<#([0-9abcdef]{8})>");
+        Matcher matcher = hashPattern.matcher(formattedStackTrace);
+        List<String> hashes = new ArrayList<String>();
+        while(matcher.find()) {
+            hashes.add(matcher.group(1));
+        }
+        return hashes;
     }
 }
