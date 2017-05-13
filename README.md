@@ -1630,6 +1630,7 @@ The operations are:
 
 * `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a long (or a null if conversion fails).
 * `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a double (or a null if conversion fails).
+* `#asJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or a null if conversion fails).
 
 So this example...
 
@@ -1637,7 +1638,9 @@ So this example...
 <pattern>
   {
     "bytes_sent_str": "%b",
-    "bytes_sent_long": "#asLong{%b}"
+    "bytes_sent_long": "#asLong{%b}",
+    "has_message": "#asJson(%X{hasMessage})",
+    "raw_message: "#asJson(%m)"
   }
 </pattern>
 ```
@@ -1646,7 +1649,9 @@ So this example...
 ```
 {
   "bytes_sent_str": "1024",
-  "bytes_sent_long": 1024
+  "bytes_sent_long": 1024,
+  "has_message": true,
+  "raw_message": { "type":"example", "msg":"example of json message with type" }
 }
 ```
 
