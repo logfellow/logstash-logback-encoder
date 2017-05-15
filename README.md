@@ -1637,26 +1637,33 @@ So this example...
 ```xml
 <pattern>
   {
-    "bytes_sent_str": "%b",
-    "bytes_sent_long": "#asLong{%b}",
-    "has_message": "#asJson{%X{hasMessage}}",
-    "raw_message": "#asJson{%m}"
+    "line_str": "%line",
+    "line_long": "#asLong{%line}",
+    "has_message": "#asJson{%mdc{hasMessage}}",
+    "json_message": "#asJson{%message}"
   }
 </pattern>
 ```
+
+... And this logging code...
+
+```java
+MDC.put("hasMessage", "true");
+LOGGER.info("{\"type\":\"example\",\"msg\":\"example of json message with type\"}");
+```
+
 ...will produce something like...
 
 ```
 {
-  "bytes_sent_str": "1024",
-  "bytes_sent_long": 1024,
-  "has_message": true,
-  "raw_message": { "type":"example", "msg":"example of json message with type" }
-}
+  "line_str":"97",
+  "line_long":97,
+  "has_message":true,
+  "json_message":{"type":"example","msg":"example of json message with type"}}
 ```
 
-The value that is sent for `bytes_sent_long` is a number even though in your pattern it is a quoted text.
-
+Note that the value that is sent for `line_long` is a number even though in your pattern it is a quoted text.
+And the json_message field value is a json object, not a string.
 
 
 #### LoggingEvent patterns
