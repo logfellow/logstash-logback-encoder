@@ -20,8 +20,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
-import net.logstash.logback.CachingAbbreviator;
-import net.logstash.logback.NullAbbreviator;
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
@@ -36,6 +34,8 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
 import ch.qos.logback.core.boolex.EventEvaluator;
 import ch.qos.logback.core.status.ErrorStatus;
+import net.logstash.logback.CachingAbbreviator;
+import net.logstash.logback.NullAbbreviator;
 
 /**
  * A {@link ThrowableHandlingConverter} (similar to logback's {@link ThrowableProxyConverter})
@@ -109,7 +109,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final String OPTION_VALUE_FULL = "full";
     private static final String OPTION_VALUE_SHORT = "short";
     private static final String OPTION_VALUE_ROOT_FIRST = "rootFirst";
-    
+    private static final String OPTION_VALUE_INLINE_HASH = "inlineHash";
+
     private static final int OPTION_INDEX_MAX_DEPTH = 0;
     private static final int OPTION_INDEX_SHORTENED_CLASS_NAME = 1;
     private static final int OPTION_INDEX_MAX_LENGTH = 2;
@@ -158,7 +159,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      */
     private boolean inlineHash;
 
-    private StackHasher stackHasher;
+    private StackElementFilter stackElementFilter;
+
+    private ThrowableHasher throwableHasher;
 
     /**
      * Evaluators that determine if the stacktrace should be logged.
@@ -168,14 +171,15 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     @Override
     public void start() {
         parseOptions();
-        // instantiate stack hasher if need be
+        // instantiate stack element filter
+        if(excludes == null || excludes.isEmpty()) {
+            stackElementFilter = StackElementFilter.any();
+        } else {
+            stackElementFilter = StackElementFilter.byPattern(excludes);
+        }
+        // instantiate stack hasher if "inline hash" is active
         if(inlineHash) {
-            // use same exclusion patterns to compute hash
-            if(excludes == null || excludes.isEmpty()) {
-                stackHasher = new StackHasher();
-            } else {
-                stackHasher = new StackHasher(StackElementFilter.byPattern(excludes));
-            }
+            throwableHasher = new ThrowableHasher(stackElementFilter);
         }
         super.start();
     }
@@ -203,11 +207,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                     /*
                      * Remaining options are either
                      *     - "rootFirst" - indicating that stacks should be printed root-cause first
+                     *     - "inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
                      *     - evaluator name - name of evaluators that will determine if the stacktrace is ignored
                      *     - exclusion pattern - pattern for stack trace elements to exclude
                      */
                     if (OPTION_VALUE_ROOT_FIRST.equals(option)) {
                         setRootCauseFirst(true);
+                    } else if(OPTION_VALUE_INLINE_HASH.equals(option)) {
+                        setInlineHash(true);
                     } else {
                         @SuppressWarnings("rawtypes")
                         Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
@@ -252,7 +259,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         // compute stack trace hashes
         Deque<String> stackHashes = null;
         if(inlineHash && (throwableProxy instanceof ThrowableProxy)) {
-            stackHashes = stackHasher.hexHashes(((ThrowableProxy) throwableProxy).getThrowable());
+            stackHashes = throwableHasher.hexHashes(((ThrowableProxy) throwableProxy).getThrowable());
         }
 
         /*
@@ -458,17 +465,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Return true if the stack trace element is included (i.e. doesn't match any exclude patterns).
      */
     private boolean isIncluded(StackTraceElementProxy step) {
-        if (!excludes.isEmpty()) {
-            StackTraceElement stackTraceElement = step.getStackTraceElement();
-            String testString = stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName();
-            
-            for (Pattern exclusionPattern : excludes) {
-                if (exclusionPattern.matcher(testString).find()) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return stackElementFilter.accept(step.getStackTraceElement());
     }
     
     /**
@@ -600,8 +597,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         this.inlineHash = inlineHash;
     }
 
-    protected void setStackHasher(StackHasher stackHasher) {
-        this.stackHasher = stackHasher;
+    protected void setThrowableHasher(ThrowableHasher throwableHasher) {
+        this.throwableHasher = throwableHasher;
     }
 
     public void addExclude(String exclusionPattern) {

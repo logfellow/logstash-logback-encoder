@@ -30,16 +30,15 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.mockito.Mockito;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
 import ch.qos.logback.core.boolex.EventEvaluator;
+import org.junit.Assert;
+import org.junit.Test;
+import org.mockito.Mockito;
 
 public class ShortenedThrowableConverterTest {
     
@@ -114,6 +113,7 @@ public class ShortenedThrowableConverterTest {
              * First get the un-truncated length
              */
             converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             int totalLines = countLines(formatted);
             
@@ -121,6 +121,8 @@ public class ShortenedThrowableConverterTest {
              * Now truncate and compare
              */
             converter.setMaxDepthPerThrowable(totalLines - 5);
+            converter.start();
+
             formatted = converter.convert(createEvent(e));
             
             Assert.assertEquals(totalLines - 3, countLines(formatted));
@@ -136,11 +138,12 @@ public class ShortenedThrowableConverterTest {
             Assert.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-            
+
             /*
              * First get the un-truncated length
              */
             converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             int totalLength = formatted.length();
             
@@ -148,6 +151,7 @@ public class ShortenedThrowableConverterTest {
              * Now truncate and compare
              */
             converter.setMaxLength(totalLength - 10);
+            converter.start();
             formatted = converter.convert(createEvent(e));
             
             Assert.assertEquals(totalLength - 10, formatted.length());
@@ -169,6 +173,7 @@ public class ShortenedThrowableConverterTest {
             converter.addExclude("five");
             converter.addExclude("six");
             converter.setMaxDepthPerThrowable(8);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             Assert.assertTrue(formatted.contains("2 frames excluded"));
             Assert.assertTrue(formatted.contains("3 frames excluded"));
@@ -185,6 +190,7 @@ public class ShortenedThrowableConverterTest {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setExcludes(Collections.singletonList("one"));
             converter.setMaxDepthPerThrowable(8);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             Assert.assertFalse(formatted.contains("frames excluded"));
             Assert.assertEquals(10, countLines(formatted));
@@ -204,6 +210,7 @@ public class ShortenedThrowableConverterTest {
              * First get the un-truncated stacktrace
              */
             converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             
             /*
@@ -217,6 +224,7 @@ public class ShortenedThrowableConverterTest {
              */
             converter.addExclude(extractClassAndMethod(lines.get(lines.size() - 2)) + "$");
             converter.addExclude(extractClassAndMethod(lines.get(lines.size() - 1)) + "$");
+            converter.start();
             formatted = converter.convert(createEvent(e));
             
             Assert.assertEquals(lines.size() - 1, countLines(formatted));
@@ -234,6 +242,7 @@ public class ShortenedThrowableConverterTest {
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setMaxDepthPerThrowable(8);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             Assert.assertTrue(formatted.contains("Caused by"));
             Assert.assertTrue(formatted.contains("common frames omitted"));
@@ -251,6 +260,7 @@ public class ShortenedThrowableConverterTest {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setRootCauseFirst(true);
             converter.setMaxDepthPerThrowable(8);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             Assert.assertTrue(formatted.contains("Wrapped by"));
             Assert.assertTrue(formatted.contains("common frames omitted"));
@@ -271,6 +281,7 @@ public class ShortenedThrowableConverterTest {
             EventEvaluator evaluator = mock(EventEvaluator.class);
             when(evaluator.evaluate(any(Object.class))).thenReturn(true);
             converter.addEvaluator(evaluator);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             Assert.assertEquals("", formatted);
         }
@@ -291,7 +302,7 @@ public class ShortenedThrowableConverterTest {
         converter.setContext(context);
         
         // test full values
-        converter.setOptionList(Arrays.asList("full", "full", "full", "rootFirst", "evaluator", "regex"));
+        converter.setOptionList(Arrays.asList("full", "full", "full", "rootFirst", "inlineHash", "evaluator", "regex"));
         converter.start();
         
         Assert.assertEquals(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE, converter.getMaxDepthPerThrowable());
@@ -302,7 +313,7 @@ public class ShortenedThrowableConverterTest {
         Assert.assertEquals("regex", converter.getExcludes().get(0));
         
         // test short values
-        converter.setOptionList(Arrays.asList("short", "short", "short", "rootFirst", "evaluator", "regex"));
+        converter.setOptionList(Arrays.asList("short", "short", "short", "rootFirst", "inlineHash", "evaluator", "regex"));
         converter.start();
         
         Assert.assertEquals(ShortenedThrowableConverter.SHORT_MAX_DEPTH_PER_THROWABLE, converter.getMaxDepthPerThrowable());
@@ -327,6 +338,7 @@ public class ShortenedThrowableConverterTest {
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setMaxDepthPerThrowable(8);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             Assert.assertTrue(formatted.contains("Suppressed"));
             Assert.assertTrue(formatted.contains("common frames omitted"));
@@ -343,6 +355,7 @@ public class ShortenedThrowableConverterTest {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
             converter.setShortenedClassNameLength(10);
+            converter.start();
             String formatted = converter.convert(createEvent(e));
             Assert.assertFalse(formatted.contains(getClass().getPackage().getName()));
             Assert.assertTrue(formatted.contains("n.l.l.s."));
@@ -356,13 +369,13 @@ public class ShortenedThrowableConverterTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
+            ThrowableHasher mockedHasher = Mockito.mock(ThrowableHasher.class);
             List<String> expectedHashes = Arrays.asList("11111111", "22222222");
             Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setInlineHash(true);
             converter.start();
-            converter.setStackHasher(mockedHasher);
+            converter.setThrowableHasher(mockedHasher);
 
             // WHEN
             String formatted = converter.convert(createEvent(e));
@@ -381,14 +394,14 @@ public class ShortenedThrowableConverterTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
+            ThrowableHasher mockedHasher = Mockito.mock(ThrowableHasher.class);
             List<String> expectedHashes = Arrays.asList("11111111", "22222222");
             Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setInlineHash(true);
             converter.setRootCauseFirst(true);
             converter.start();
-            converter.setStackHasher(mockedHasher);
+            converter.setThrowableHasher(mockedHasher);
 
             // WHEN
             String formatted = converter.convert(createEvent(e));
@@ -409,13 +422,13 @@ public class ShortenedThrowableConverterTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
+            ThrowableHasher mockedHasher = Mockito.mock(ThrowableHasher.class);
             List<String> expectedHashes = Arrays.asList("11111111"); // only one exception, no cause
             Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setInlineHash(true);
             converter.start();
-            converter.setStackHasher(mockedHasher);
+            converter.setThrowableHasher(mockedHasher);
 
             // WHEN
             String formatted = converter.convert(createEvent(e));

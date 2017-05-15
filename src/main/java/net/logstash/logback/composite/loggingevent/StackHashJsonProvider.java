@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.stacktrace.StackElementFilter;
-import net.logstash.logback.stacktrace.StackHasher;
+import net.logstash.logback.stacktrace.ThrowableHasher;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 /**
  * A JSON provider that adds a {@code stack_hash} Json field on a log with a stack trace
  * <p>
- * This hash is computed using {@link StackHasher}
+ * This hash is computed using {@link ThrowableHasher}
  * 
  * @author Pierre Smeyers
  */
@@ -49,7 +49,7 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
      */
     private List<Pattern> excludes = new ArrayList<Pattern>(5);
 
-    private StackHasher hasher = new StackHasher();
+    private ThrowableHasher hasher = new ThrowableHasher();
 
     public StackHashJsonProvider() {
         setFieldName(FIELD_NAME);
@@ -58,7 +58,7 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
     @Override
     public void start() {
         if(!excludes.isEmpty()) {
-            hasher = new StackHasher(StackElementFilter.byPattern(excludes));
+            hasher = new ThrowableHasher(StackElementFilter.byPattern(excludes));
         }
         super.start();
     }
