@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -114,6 +115,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Index into {@link #destinations} of the "primary" destination.
      */
     private static final int PRIMARY_DESTINATION_INDEX = 0;
+
+    /**
+     * The default selection strategy is PreferPrimary.
+     * There are several {@link DestinationSelectionStrategy}.
+     */
+    private static final DestinationSelectionStrategy DEFAULT_DESTINATION_SELECTION_STRATEGY = DestinationSelectionStrategy.PreferPrimary;
     
     /**
      * The host to which to connect and send events
@@ -258,7 +265,32 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * @see #isGetHostStringPossible()
      */
     private final boolean getHostStringPossible = isGetHostStringPossible();
-    
+
+    /**
+     * The {@link DestinationSelectionStrategy} is a strategy to select a destination.
+     * Default is {@value #DEFAULT_DESTINATION_SELECTION_STRATEGY}.
+     */
+    private DestinationSelectionStrategy selectionStrategy = DEFAULT_DESTINATION_SELECTION_STRATEGY;
+
+    /**
+     * Object to create the first random index.
+     */
+    private Random firstRandomIndexGenerator = new Random();
+
+    /**
+     * It is working that DestinationSelectionStrategy is round-robin.
+     * Time period for connections to next destinations by round-robin.
+     * Destinations is circulated if round-robin occurs.
+     *
+     * When null (the default), circulate Destinations if a connection fails.
+     */
+    private Duration roundRobinConnectionTTL;
+
+    /**
+     * Last round-robin time.
+     */
+    private long lastRoundRobinTime = System.currentTimeMillis();;
+
     /**
      * Event handler responsible for performing the TCP transmission.
      */
@@ -340,7 +372,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          */
         private class KeepAliveRunnable implements Runnable {
             
-            private int previousDestinationIndex = PRIMARY_DESTINATION_INDEX;
+            private int previousDestinationIndex = connectedDestinationIndex;
 
             @Override
             public void run() {
@@ -349,8 +381,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 if (hasKeepAliveDurationElapsed(lastSent, currentTime)) {
                     /*
                      * Publish a keep alive message to the RingBuffer.
-                     * 
-                     * A null event indicates that this is a keep alive message. 
+                     *
+                     * A null event indicates that this is a keep alive message.
                      */
                     getDisruptor().getRingBuffer().publishEvent(getEventTranslator(), null);
                     scheduleKeepAlive(currentTime);
@@ -450,6 +482,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         } else {
                             outputStream.write(encoder.encode(logEvent.event));
                         }
+                        roundRobin();
                     } else if (hasKeepAliveDurationElapsed(lastSentTimestamp, currentTime)){
                         /*
                          * This is a keep alive event, and the keepAliveDuration has passed,
@@ -485,6 +518,27 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
 
+        /**
+         * If the condition is satisfied, round-robin occurs.
+         * The index is repeated in a circle.
+         */
+        private void roundRobin() {
+            if (!isRoundRobin() || (roundRobinConnectionTTL == null) || (destinations.size() <= 1)) {
+                return;
+            }
+
+            long previousTime = lastRoundRobinTime + roundRobinConnectionTTL.getMilliseconds();
+            long currentTime = System.currentTimeMillis();
+            if ((previousTime < currentTime)) {
+                lastRoundRobinTime = currentTime;
+				connectedDestinationIndex++;
+				if (connectedDestinationIndex >= destinations.size()) {
+					connectedDestinationIndex = PRIMARY_DESTINATION_INDEX;
+				}
+				reopenSocket();
+			}
+        }
+
         private boolean hasKeepAliveDurationElapsed(long lastSent, long currentTime) {
             return isKeepAliveEnabled()
                     && lastSent + keepAliveDuration.getMilliseconds() < currentTime;
@@ -496,6 +550,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         @Override
         public void onStart() {
+            if (isRandomDestination()) {
+                connectedDestinationIndex = firstRandomIndexGenerator.nextInt(destinations.size());
+            }
             openSocket();
             scheduleKeepAlive(System.currentTimeMillis());
         }
@@ -520,7 +577,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
-            int destinationIndex = 0;
+            int destinationIndex = isRandomDestination() || isRoundRobin() ? connectedDestinationIndex : PRIMARY_DESTINATION_INDEX;
+            int retryCount = 0;
             int errorCount = 0;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
                 long startTime = System.currentTimeMillis();
@@ -569,7 +627,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * If connected to a secondary, remember when the connection should be closed to
                      * force attempt to reconnect to primary
                      */
-                    if (secondaryConnectionTTL != null && destinationIndex != PRIMARY_DESTINATION_INDEX) {
+                    if (isPreferPrimary() && secondaryConnectionTTL != null && destinationIndex != PRIMARY_DESTINATION_INDEX) {
                         secondaryConnectionExpirationTime = startTime + secondaryConnectionTTL.getMilliseconds();
                     }
                     else {
@@ -597,7 +655,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Retry immediately with next available host if any. Otherwise, sleep and retry with primary
                      */
                     destinationIndex++;
-                    if (destinationIndex >= destinations.size()) {
+                    retryCount++;
+                    if (destinationIndex >= destinations.size() && (retryCount >= destinations.size())) {
                         destinationIndex = PRIMARY_DESTINATION_INDEX;
                         
                         /*
@@ -623,6 +682,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         }
                     }
                     else {
+                        if (destinationIndex >= destinations.size()) {
+                            destinationIndex = PRIMARY_DESTINATION_INDEX;
+                        }
                         /*
                          * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
                          */
@@ -698,7 +760,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
     }
-    
+
     /**
      * An extension of logback's {@link ConfigurableSSLSocketFactory}
      * that supports creating unconnected sockets
@@ -1158,4 +1220,41 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         super.setThreadNameFormat(threadNameFormat);
     }
 
+    private boolean isPreferPrimary() {
+        return DestinationSelectionStrategy.PreferPrimary == selectionStrategy;
+    }
+
+    private boolean isRoundRobin() {
+        return DestinationSelectionStrategy.RoundRobin == selectionStrategy;
+    }
+
+    private boolean isRandomDestination() {
+        return DestinationSelectionStrategy.Random == selectionStrategy;
+    }
+
+    public void setSelectionStrategy(String selectionStrategy) {
+        this.selectionStrategy = DestinationSelectionStrategy.findFromString(selectionStrategy);
+    }
+
+    public DestinationSelectionStrategy getSelectionStrategy() {
+        return selectionStrategy;
+    }
+
+    /**
+     * It is working that DestinationSelectionStrategy is round-robin.
+     * Time period for connections to next destinations by round-robin.
+     * Destinations is circulated if round-robin occurs.
+     *
+     * When null (the default), circulate Destinations if a connection fails.
+     */
+    public void setRoundRobinConnectionTTL(Duration roundRobinConnectionTTL) {
+        if (roundRobinConnectionTTL != null && roundRobinConnectionTTL.getMilliseconds() <= 0) {
+            throw new IllegalArgumentException("roundRobinConnectionTTL must be > 0");
+        }
+        this.roundRobinConnectionTTL = roundRobinConnectionTTL;
+    }
+
+    public Duration getRoundRobinConnectionTTL() {
+        return roundRobinConnectionTTL;
+    }
 }
