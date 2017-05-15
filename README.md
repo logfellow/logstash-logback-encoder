@@ -1659,7 +1659,8 @@ LOGGER.info("{\"type\":\"example\",\"msg\":\"example of json message with type\"
   "line_str":"97",
   "line_long":97,
   "has_message":true,
-  "json_message":{"type":"example","msg":"example of json message with type"}}
+  "json_message":{"type":"example","msg":"example of json message with type"}
+}
 ```
 
 Note that the value that is sent for `line_long` is a number even though in your pattern it is a quoted text.
