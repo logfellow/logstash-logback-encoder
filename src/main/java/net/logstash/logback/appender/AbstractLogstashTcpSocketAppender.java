@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
@@ -41,11 +40,16 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import net.logstash.logback.Logback11Support;
+import net.logstash.logback.appender.destination.DelegateDestinationConnectionStrategy;
+import net.logstash.logback.appender.destination.DestinationParser;
+import net.logstash.logback.appender.destination.DestinationConnectionStrategy;
+import net.logstash.logback.appender.destination.PreferPrimaryDestinationConnectionStrategy;
 import net.logstash.logback.encoder.SeparatorParser;
 
 import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
 
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
 import ch.qos.logback.core.net.ssl.SSLConfigurableSocket;
 import ch.qos.logback.core.net.ssl.SSLConfiguration;
@@ -112,15 +116,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public static final int DEFAULT_WRITE_BUFFER_SIZE = 8192;
     
     /**
-     * Index into {@link #destinations} of the "primary" destination.
+     * The default connection strategy ({@link PreferPrimaryDestinationConnectionStrategy}).
      */
-    private static final int PRIMARY_DESTINATION_INDEX = 0;
-
-    /**
-     * The default selection strategy is PreferPrimary.
-     * There are several {@link DestinationSelectionStrategy}.
-     */
-    private static final DestinationSelectionStrategy DEFAULT_DESTINATION_SELECTION_STRATEGY = DestinationSelectionStrategy.PreferPrimary;
+    private static final DestinationConnectionStrategy DEFAULT_DESTINATION_CONNECTION_STRATEGY = new PreferPrimaryDestinationConnectionStrategy();
     
     /**
      * The host to which to connect and send events
@@ -136,17 +134,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Destinations to which to attempt to send logs, in order of preference.
      * <p>
      * 
-     * The first entry is considered the "primary" destination.
-     * The remaining entries are considered "secondary" destinations.
-     * <p>
-     * 
      * Logs are only sent to one destination at a time.
-     * 
      * <p>
-     * Connections are attempted to each destination in order until a connection succeeds.
-     * Logs will be sent to the first destination for which the connection succeeds
-     * until the connection breaks or (if the connection is to a secondary destination)
-     * the {@link #secondaryConnectionTTL} elapses.
+     * 
+     * The interpretation of this list is up to the current {@link #connectionStrategy}.
      */
     private List<InetSocketAddress> destinations = new ArrayList<InetSocketAddress>(2);
     
@@ -155,14 +146,20 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * to the currently connected destination.
      * <p>
      * 
-     * When a connection has never been established, the value is the primary index.
+     * When a connection has never been established, the value is 0.
      * <p>
      * 
      * When a connection has been established, but lost, the value is the
      * previously connected index.
      */
-    private volatile int connectedDestinationIndex = PRIMARY_DESTINATION_INDEX;
+    private volatile int connectedDestinationIndex = 0;
     
+    /**
+     * Strategy used to determine to which destination to connect, and when to reconnect. 
+     * Default is {@value #DEFAULT_DESTINATION_CONNECTION_STRATEGY}.
+     */
+    private DestinationConnectionStrategy connectionStrategy = DEFAULT_DESTINATION_CONNECTION_STRATEGY;
+
     /**
      * Time period for which to wait after a connection fails,
      * before attempting to reconnect.
@@ -170,15 +167,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     private Duration reconnectionDelay = new Duration(DEFAULT_RECONNECTION_DELAY);
 
-    /**
-     * Time period for connections to secondary destinations to be used
-     * before attempting to reconnect to primary server.
-     * 
-     * When the value is null (the default), the feature is disabled:
-     * the appender will stay on the current destination until an error occurs.
-     */
-    private Duration secondaryConnectionTTL;
-    
     /**
      * Socket connection timeout in milliseconds. 
      */
@@ -267,31 +255,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private final boolean getHostStringPossible = isGetHostStringPossible();
 
     /**
-     * The {@link DestinationSelectionStrategy} is a strategy to select a destination.
-     * Default is {@value #DEFAULT_DESTINATION_SELECTION_STRATEGY}.
-     */
-    private DestinationSelectionStrategy selectionStrategy = DEFAULT_DESTINATION_SELECTION_STRATEGY;
-
-    /**
-     * Object to create the first random index.
-     */
-    private Random firstRandomIndexGenerator = new Random();
-
-    /**
-     * It is working that DestinationSelectionStrategy is round-robin.
-     * Time period for connections to next destinations by round-robin.
-     * Destinations is circulated if round-robin occurs.
-     *
-     * When null (the default), circulate Destinations if a connection fails.
-     */
-    private Duration roundRobinConnectionTTL;
-
-    /**
-     * Last round-robin time.
-     */
-    private long lastRoundRobinTime = System.currentTimeMillis();;
-
-    /**
      * Event handler responsible for performing the TCP transmission.
      */
     private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
@@ -330,12 +293,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * needs to be scheduled/sent.
          */
         private volatile long lastSentTimestamp;
-        
-        /**
-         * Time at which the current connection should be automatically closed
-         * to force an attempt to reconnect to the primary server
-         */
-        private volatile long secondaryConnectionExpirationTime = Long.MAX_VALUE;
         
         /**
          * Future for the currently scheduled {@link #keepAliveRunnable}.
@@ -482,7 +439,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         } else {
                             outputStream.write(encoder.encode(logEvent.event));
                         }
-                        roundRobin();
                     } else if (hasKeepAliveDurationElapsed(lastSentTimestamp, currentTime)){
                         /*
                          * This is a keep alive event, and the keepAliveDuration has passed,
@@ -496,10 +452,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     lastSentTimestamp = currentTime;
                     
                     /*
-                     * Should we close the current connection?
+                     * Should we close the current connection, and attempt to reconnect to another destination?
                      */
-                    if (shouldCloseConnection(currentTime)) {
-                        addInfo(peerId + "closing connection and attempt to reconnect to primary server.");
+                    if (connectionStrategy.shouldReconnect(currentTime, connectedDestinationIndex, destinations.size())) {
+                        addInfo(peerId + "reestablishing connection.");
                         outputStream.flush();
                         reopenSocket();
                     }
@@ -518,41 +474,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
 
-        /**
-         * If the condition is satisfied, round-robin occurs.
-         * The index is repeated in a circle.
-         */
-        private void roundRobin() {
-            if (!isRoundRobin() || (roundRobinConnectionTTL == null) || (destinations.size() <= 1)) {
-                return;
-            }
-
-            long previousTime = lastRoundRobinTime + roundRobinConnectionTTL.getMilliseconds();
-            long currentTime = System.currentTimeMillis();
-            if ((previousTime < currentTime)) {
-                lastRoundRobinTime = currentTime;
-				connectedDestinationIndex++;
-				if (connectedDestinationIndex >= destinations.size()) {
-					connectedDestinationIndex = PRIMARY_DESTINATION_INDEX;
-				}
-				reopenSocket();
-			}
-        }
 
         private boolean hasKeepAliveDurationElapsed(long lastSent, long currentTime) {
             return isKeepAliveEnabled()
                     && lastSent + keepAliveDuration.getMilliseconds() < currentTime;
         }
 
-        private boolean shouldCloseConnection(long currentTime) {
-            return secondaryConnectionExpirationTime <= currentTime;
-        }
-
         @Override
         public void onStart() {
-            if (isRandomDestination()) {
-                connectedDestinationIndex = firstRandomIndexGenerator.nextInt(destinations.size());
-            }
             openSocket();
             scheduleKeepAlive(System.currentTimeMillis());
         }
@@ -577,10 +506,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
-            int destinationIndex = isRandomDestination() || isRoundRobin() ? connectedDestinationIndex : PRIMARY_DESTINATION_INDEX;
             int retryCount = 0;
             int errorCount = 0;
+            int destinationIndex = connectedDestinationIndex;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
+                destinationIndex = connectionStrategy.selectNextDestinationIndex(destinationIndex, destinations.size()); 
                 long startTime = System.currentTimeMillis();
                 Socket tempSocket = null;
                 OutputStream tempOutputStream = null;
@@ -623,16 +553,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     boolean shouldUpdateThreadName = (destinationIndex != connectedDestinationIndex);
                     connectedDestinationIndex = destinationIndex;
                     
-                    /*
-                     * If connected to a secondary, remember when the connection should be closed to
-                     * force attempt to reconnect to primary
-                     */
-                    if (isPreferPrimary() && secondaryConnectionTTL != null && destinationIndex != PRIMARY_DESTINATION_INDEX) {
-                        secondaryConnectionExpirationTime = startTime + secondaryConnectionTTL.getMilliseconds();
-                    }
-                    else {
-                        secondaryConnectionExpirationTime = Long.MAX_VALUE;
-                    }
+                    connectionStrategy.connectSuccess(startTime, destinationIndex, destinations.size());
                     
                     if (shouldUpdateThreadName) {
                         /*
@@ -651,13 +572,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     CloseUtil.closeQuietly(tempOutputStream);
                     CloseUtil.closeQuietly(tempSocket);
                     
-                    /*
-                     * Retry immediately with next available host if any. Otherwise, sleep and retry with primary
-                     */
-                    destinationIndex++;
-                    retryCount++;
-                    if (destinationIndex >= destinations.size() && (retryCount >= destinations.size())) {
-                        destinationIndex = PRIMARY_DESTINATION_INDEX;
+                    connectionStrategy.connectFailed(startTime, destinationIndex, destinations.size());
+                    
+                    
+                    if (++retryCount >= destinations.size()) {
+                        /*
+                         * After every destination.size() connection attempts, delay the next connection attempt
+                         */
+                        retryCount = 0;
                         
                         /*
                          * If the connection timed out, then take the elapsed time into account
@@ -682,14 +604,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         }
                     }
                     else {
-                        if (destinationIndex >= destinations.size()) {
-                            destinationIndex = PRIMARY_DESTINATION_INDEX;
-                        }
                         /*
                          * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
                          */
                         if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
-                            addWarn(peerId + "connection failed. Trying next server (" + getDestinations().get(destinationIndex) + ").", e);
+                            addWarn(peerId + "connection failed.", e);
                         }
                     }
                 }
@@ -1073,21 +992,28 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     
 
     /**
-     * Time period for connections to secondary destinations to be used
-     * before attempting to reconnect to primary server.
+     * Convenience method for setting {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.
      * 
-     * When the value is null (the default), the feature is disabled:
-     * the appender will stay on the current destination until an error occurs.
+     * When the {@link #connectionStrategy} is a {@link PreferPrimaryDestinationConnectionStrategy},
+     * this will set its {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.
+     * 
+     * @see PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)
+     * @throws IllegalStateException if the {@link #connectionStrategy} is not a {@link PreferPrimaryDestinationConnectionStrategy}
      */
     public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
-        if (secondaryConnectionTTL != null && secondaryConnectionTTL.getMilliseconds() <= 0) {
-            throw new IllegalArgumentException("secondaryConnectionTTL must be > 0");
+        if (connectionStrategy instanceof PreferPrimaryDestinationConnectionStrategy) {
+            ((PreferPrimaryDestinationConnectionStrategy) connectionStrategy).setSecondaryConnectionTTL(secondaryConnectionTTL);
         }
-        this.secondaryConnectionTTL = secondaryConnectionTTL;
+        else {
+            throw new IllegalStateException(String.format("When setting the secondaryConnectionTTL, the strategy must be a %s.  It is currently a %s", PreferPrimaryDestinationConnectionStrategy.class, connectionStrategy));
+        }
     }
     
     public Duration getSecondaryConnectionTTL() {
-        return secondaryConnectionTTL;
+        if (connectionStrategy instanceof PreferPrimaryDestinationConnectionStrategy) {
+            return ((PreferPrimaryDestinationConnectionStrategy) connectionStrategy).getSecondaryConnectionTTL();
+        }
+        return null;
     }
 
     /**
@@ -1219,42 +1145,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public void setThreadNameFormat(String threadNameFormat) {
         super.setThreadNameFormat(threadNameFormat);
     }
-
-    private boolean isPreferPrimary() {
-        return DestinationSelectionStrategy.PreferPrimary == selectionStrategy;
+    
+    public DestinationConnectionStrategy getConnectionStrategy() {
+        return connectionStrategy;
+    }
+    @DefaultClass(DelegateDestinationConnectionStrategy.class)
+    public void setConnectionStrategy(DestinationConnectionStrategy destinationConnectionStrategy) {
+        this.connectionStrategy = destinationConnectionStrategy;
     }
 
-    private boolean isRoundRobin() {
-        return DestinationSelectionStrategy.RoundRobin == selectionStrategy;
-    }
-
-    private boolean isRandomDestination() {
-        return DestinationSelectionStrategy.Random == selectionStrategy;
-    }
-
-    public void setSelectionStrategy(String selectionStrategy) {
-        this.selectionStrategy = DestinationSelectionStrategy.findFromString(selectionStrategy);
-    }
-
-    public DestinationSelectionStrategy getSelectionStrategy() {
-        return selectionStrategy;
-    }
-
-    /**
-     * It is working that DestinationSelectionStrategy is round-robin.
-     * Time period for connections to next destinations by round-robin.
-     * Destinations is circulated if round-robin occurs.
-     *
-     * When null (the default), circulate Destinations if a connection fails.
-     */
-    public void setRoundRobinConnectionTTL(Duration roundRobinConnectionTTL) {
-        if (roundRobinConnectionTTL != null && roundRobinConnectionTTL.getMilliseconds() <= 0) {
-            throw new IllegalArgumentException("roundRobinConnectionTTL must be > 0");
-        }
-        this.roundRobinConnectionTTL = roundRobinConnectionTTL;
-    }
-
-    public Duration getRoundRobinConnectionTTL() {
-        return roundRobinConnectionTTL;
-    }
 }

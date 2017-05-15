@@ -18,9 +18,11 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,11 +36,14 @@ import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
+import java.util.Random;
 import java.util.concurrent.Future;
 
 import javax.net.SocketFactory;
 
 import net.logstash.logback.Logback11Support;
+import net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy;
+import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
 import net.logstash.logback.encoder.SeparatorParser;
 
 import org.junit.After;
@@ -50,7 +55,6 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -98,7 +102,7 @@ public class LogstashTcpSocketAppenderTest {
     private Future<?> readableRunnableFuture;
 
     @Mock
-    private RandomWrapper randomWrapper;
+    private Random random;
     
     private class TestableLogstashTcpSocketAppender extends LogstashTcpSocketAppender {
         @Override
@@ -282,14 +286,16 @@ public class LogstashTcpSocketAppenderTest {
     public void testRandomDestinationAndReconnectToSecondaryOnOpen() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
-        appender.setSelectionStrategy("Random");
+        RandomDestinationConnectionStrategy strategy = spy(new RandomDestinationConnectionStrategy());
+        doReturn(random).when(strategy).getRandom();
+        appender.setConnectionStrategy(strategy);
 
         // Make it failed to connect to second destination
         doThrow(SocketTimeoutException.class)
             .when(socket).connect(host("localhost", 10001), anyInt());
 
         // The first index is second destination.
-        when(randomWrapper.nextInt(appender.getDestinations().size())).thenReturn(1);
+        when(random.nextInt(appender.getDestinations().size())).thenReturn(1).thenReturn(0);
 
         // Start the appender and verify it is actually started.
         // It should try to connect to second destination by random destination, fail then retry on first destination.
@@ -554,8 +560,9 @@ public class LogstashTcpSocketAppenderTest {
     public void testRoundRobin() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
-        appender.setSelectionStrategy("RoundRobin");
-        appender.setRoundRobinConnectionTTL(Duration.buildByMilliseconds(100));
+        RoundRobinDestinationConnectionStrategy strategy = new RoundRobinDestinationConnectionStrategy();
+        strategy.setConnectionTTL(Duration.buildByMilliseconds(100));
+        appender.setConnectionStrategy(strategy);
 
         appender.start();
 
@@ -564,7 +571,7 @@ public class LogstashTcpSocketAppenderTest {
         appender.append(event1);
 
         // Wait for round robin to occur, then send an event.
-        Thread.sleep(appender.getRoundRobinConnectionTTL().getMilliseconds() + 50);
+        Thread.sleep(strategy.getConnectionTTL().getMilliseconds() + 50);
         appender.append(event1);
 
         verify(socket, timeout(VERIFICATION_TIMEOUT).times(2)).connect(any(SocketAddress.class), anyInt());

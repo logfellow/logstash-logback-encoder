@@ -11,36 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.appender;
+package net.logstash.logback.appender.destination;
 
-import java.util.Random;
 
-/**
- * RandomWrapper
- *
- * @author withccm@gmail.com
- * @since 2016. 12. 22.
- */
-public class RandomWrapper extends Random {
-	int seq = 0;
-	public RandomWrapper() {
-		super();
-	}
+public class RoundRobinDestinationConnectionStrategy extends DestinationConnectionStrategyWithTtl {
 
-	@Override
-	public int nextInt() {
-		return seq++;
-	}
+    /**
+     * The destinationIndex to be returned on the next call to {@link #selectNextDestinationIndex(int, int)}.
+     */
+    private volatile int nextDestinationIndex = 0;
 
-	@Override
-	public int nextInt(int bound) {
-		int result = seq;
-		if (result < bound) {
-			seq++;
-		} else {
-			result = 0;
-			seq = 1;
-		}
-		return result;
-	}
+    @Override
+    public int selectNextDestinationIndex(int previousDestinationIndex, int numDestinations) {
+        return nextDestinationIndex++ % numDestinations;
+    }
+
 }

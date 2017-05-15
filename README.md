@@ -254,7 +254,7 @@ but can be changed by setting the `keepAliveMessage` property.
 
 #### Multiple Destinations
 
-The TCP appenders can be configured to try to connect to multiple destinations like this:
+The TCP appenders can be configured to try to connect to one of several destinations like this:
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
       <destination>destination1.domain.com:4560</destination>
@@ -279,34 +279,120 @@ or this:
   </appender>
 ```
 
-When multiple destinations are configured, the appender will attempt to connect
-to each destination in the order in which they are configured.
-Logs will be sent to the first destination that accepts the connection.
+The appender uses a `connectionStrategy` to determine:
+
+* the order in which destination connections are attempted, and 
+* when an established connection should be reestablished (to the next destination selected by the connection strategy).
+
 Logs are only sent to one destination at a time (i.e. not all destinations).
-
-If that connection breaks, then the appender will again attempt to connect
-to the destinations in the order in which they are configured,
-starting at the first destination.
-
-The first destination is considered the _primary_ destination.
-Each additional destination is considered a _secondary_ destination.
 By default, the appender will stay connected to the connected destination
 until it breaks, or until the application is shut down.
-The `secondaryConnectionTTL` can be set to kill connections to _secondary_
+Some connection strategies can force a reconnect (see below).
+If a connection breaks, then the appender will attempt to connect
+to the next destination selected by the connection strategy. 
+
+
+The available connection strategies are as follows:
+
+<table>
+  <tbody>
+    <tr>
+      <th>Strategy</th>
+      <th>Description</th>
+    </tr>
+    <tr>
+      <td><tt>preferPrimary</tt></td>
+      <td>(default)
+The first destination is considered the <em>primary</em> destination.
+Each additional destination is considered a <em>secondary</em> destination.
+This strategy prefers the primary destination, unless it is down.
+The appender will attempt to connect to each destination in the order in which they are configured.
+If a connection breaks, then the appender will again attempt to connect
+to the destinations in the order in which they are configured,
+starting at the first/primary destination.
+<br/><br/>
+The <tt>secondaryConnectionTTL</tt> can be set to gracefully close connections to <em>secondary</em>
 destinations after a specific duration.  This will force the
 the appender to reattempt to connect to the destinations in order again.
-The `secondaryConnectionTTL` value does not affect connections to the
-_primary_ destination.
+The <tt>secondaryConnectionTTL</tt> value does not affect connections to the
+<em>primary</em> destination.
+<br/><br/>
+Example:
+<pre>
+  &lt;appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender"&gt;
+      &lt;destination&gt;destination1.domain.com:4560&lt;/destination&gt;
+      &lt;destination&gt;destination2.domain.com:4560&lt;/destination&gt;
+      &lt;destination&gt;destination3.domain.com:4560&lt;/destination&gt;
+      &lt;connectionStrategy&gt;
+          &lt;preferPrimary&gt;
+              &lt;secondaryConnectionTTL&gt;5 minutes&lt;/secondaryConnectionTTL&gt;
+          &lt;/preferPrimary&gt;
+      &lt;/connectionStrategy&gt;
+  &lt;/appender&gt;
+</pre>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>roundRobin</tt></td>
+      <td>
+This strategy attempts connections to the destination in round robin order.
+If a connection fails, the next destination is attempted.
+<br/><br/>
+The <tt>connectionTTL</tt> can be set to gracefully close connections after a specific duration.
+This will force the the appender to reattempt to connect to the next destination.
+<br/><br/>
+Example:
+<pre>
+  &lt;appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender"&gt;
+      &lt;destination&gt;destination1.domain.com:4560&lt;/destination&gt;
+      &lt;destination&gt;destination2.domain.com:4560&lt;/destination&gt;
+      &lt;destination&gt;destination3.domain.com:4560&lt;/destination&gt;
+      &lt;connectionStrategy&gt;
+          &lt;roundRobin&gt;
+              &lt;connectionTTL&gt;5 minutes&lt;/connectionTTL&gt;
+          &lt;/roundRobin&gt;
+      &lt;/connectionStrategy&gt;
+  &lt;/appender&gt;
+</pre>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>random</tt></td>
+      <td>
+This strategy attempts connections to the destination in a random order.
+If a connection fails, the next random destination is attempted.
+<br/><br/>
+The <tt>connectionTTL</tt> can be set to gracefully close connections after a specific duration.
+This will force the the appender to reattempt to connect to the next random destination.
+<br/><br/>
+Example:
+<pre>
+  &lt;appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender"&gt;
+      &lt;destination&gt;destination1.domain.com:4560&lt;/destination&gt;
+      &lt;destination&gt;destination2.domain.com:4560&lt;/destination&gt;
+      &lt;destination&gt;destination3.domain.com:4560&lt;/destination&gt;
+      &lt;connectionStrategy&gt;
+          &lt;random&gt;
+              &lt;connectionTTL&gt;5 minutes&lt;/connectionTTL&gt;
+          &lt;/random&gt;
+      &lt;/connectionStrategy&gt;
+  &lt;/appender&gt;
+</pre>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-For example:
+You can also use your own custom connection strategy by implementing the `DestinationConnectionStrategy` interface,
+and configuring the appender to use it like this:
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
       <destination>destination1.domain.com:4560</destination>
       <destination>destination2.domain.com:4560</destination>
       <destination>destination3.domain.com:4560</destination>
-
-      <secondaryConnectionTTL>5 minutes</secondaryConnectionTTL>
+      <connectionStrategy class="your.package.YourDestinationConnectionStrategy">
+      </connectionStrategy>
   </appender>
 ```
 
