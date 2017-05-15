@@ -13,15 +13,6 @@
  */
 package net.logstash.logback.pattern;
 
-import ch.qos.logback.core.pattern.PatternLayoutBase;
-import ch.qos.logback.core.spi.ContextAware;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import ch.qos.logback.core.pattern.PatternLayoutBase;
+import ch.qos.logback.core.spi.ContextAware;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Parser that takes a JSON pattern, resolves all the conversion specifiers and returns an instance
@@ -113,7 +111,7 @@ public abstract class AbstractJsonPatternParser<Event> {
 
         @Override
         public ValueGetter<?, Event> createValueGetter(String data) {
-            return new AsJsonValueTransformer<Event>(makeLayoutValueGetter(data));
+            return new AsJsonValueTransformer(makeLayoutValueGetter(data));
         }
     }
 
@@ -199,17 +197,14 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
     }
 
-    protected static class AsJsonValueTransformer<Event> extends AbstractAsObjectTransformer<JsonNode, Event> {
-        private static final ObjectMapper mapper = new ObjectMapper()
-                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-                .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+    protected class AsJsonValueTransformer extends AbstractAsObjectTransformer<JsonNode, Event> {
 
         public AsJsonValueTransformer(final ValueGetter<String, Event> generator) {
             super(generator);
         }
 
         protected JsonNode transform(final String value) throws IOException {
-            return mapper.readTree(value);
+            return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
         }
     }
 
