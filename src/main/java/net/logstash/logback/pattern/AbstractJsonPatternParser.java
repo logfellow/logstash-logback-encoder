@@ -13,13 +13,6 @@
  */
 package net.logstash.logback.pattern;
 
-import ch.qos.logback.core.pattern.PatternLayoutBase;
-import ch.qos.logback.core.spi.ContextAware;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,6 +21,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import ch.qos.logback.core.pattern.PatternLayoutBase;
+import ch.qos.logback.core.spi.ContextAware;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Parser that takes a JSON pattern, resolves all the conversion specifiers and returns an instance
@@ -51,6 +51,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         this.jsonFactory = jsonFactory;
         addOperation(new AsLongOperation());
         addOperation(new AsDoubleOperation());
+        addOperation(new AsJsonOperation());
     }
     
     protected void addOperation(Operation operation) {
@@ -102,6 +103,18 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
     }
 
+    protected class AsJsonOperation extends Operation {
+
+        public AsJsonOperation() {
+            super("asJson", true);
+        }
+
+        @Override
+        public ValueGetter<?, Event> createValueGetter(String data) {
+            return new AsJsonValueTransformer(makeLayoutValueGetter(data));
+        }
+    }
+
     protected static class LayoutValueGetter<Event> implements ValueGetter<String, Event> {
 
         private final PatternLayoutBase<Event> layout;
@@ -114,6 +127,30 @@ public abstract class AbstractJsonPatternParser<Event> {
         public String getValue(final Event event) {
             return layout.doLayout(event);
         }
+    }
+
+    protected static abstract class AbstractAsObjectTransformer<T, Event> implements ValueGetter<T, Event> {
+
+        private final ValueGetter<String, Event> generator;
+
+        AbstractAsObjectTransformer(final ValueGetter<String, Event> generator) {
+            this.generator = generator;
+        }
+
+        @Override
+        public T getValue(final Event event) {
+            final String value = generator.getValue(event);
+            if (value == null || value.isEmpty()) {
+                return null;
+            }
+            try {
+                return transform(value);
+            } catch (Exception e) {
+                return null;
+            }
+        }
+
+        abstract protected T transform(final String value) throws NumberFormatException, IOException;
     }
 
     protected static abstract class AbstractAsNumberTransformer<T extends Number, Event> implements ValueGetter<T, Event> {
@@ -160,6 +197,16 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
     }
 
+    protected class AsJsonValueTransformer extends AbstractAsObjectTransformer<JsonNode, Event> {
+
+        public AsJsonValueTransformer(final ValueGetter<String, Event> generator) {
+            super(generator);
+        }
+
+        protected JsonNode transform(final String value) throws IOException {
+            return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
+        }
+    }
 
     protected static interface FieldWriter<Event> extends NodeWriter<Event> {
     }
