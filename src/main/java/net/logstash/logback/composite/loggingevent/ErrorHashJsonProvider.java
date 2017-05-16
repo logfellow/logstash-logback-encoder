@@ -2,9 +2,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,30 +28,27 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * A JSON provider that adds a {@code stack_hash} Json field on a log with a stack trace
+ * A JSON provider that adds a {@code error_hash} Json field on a log with a stack trace
  * <p>
  * This hash is computed using {@link ThrowableHasher}
  * 
  * @author Pierre Smeyers
  */
-public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+public class ErrorHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
 
-    public static final String FIELD_NAME = "stack_hash";
+    public static final String FIELD_NAME = "error_hash";
 
     /**
-     * Patterns used to determine which stacktrace elements to exclude.
+     * Patterns used to determine which stacktrace elements to exclude from hash computation.
      *
      * The strings being matched against are in the form "fullyQualifiedClassName.methodName"
      * (e.g. "java.lang.Object.toString").
-     *
-     * Note that these elements will only be excluded if and only if
-     * more than one consecutive line matches an exclusion pattern.
      */
     private List<Pattern> excludes = new ArrayList<Pattern>(5);
 
     private ThrowableHasher hasher = new ThrowableHasher();
 
-    public StackHashJsonProvider() {
+    public ErrorHashJsonProvider() {
         setFieldName(FIELD_NAME);
     }
 

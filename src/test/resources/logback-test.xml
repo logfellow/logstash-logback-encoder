@@ -63,8 +63,8 @@
                         <strategy>time</strategy>
                         <ethernet>00:C0:F0:3D:5B:7C</ethernet>
                     </provider>
-                    <provider class="net.logstash.logback.composite.loggingevent.StackHashJsonProvider">
-                        <fieldName>customStackHash</fieldName>
+                    <provider class="net.logstash.logback.composite.loggingevent.ErrorHashJsonProvider">
+                        <fieldName>customErrorHash</fieldName>
                         <exclude>exclude</exclude>
                     </provider>
                 </providers>
@@ -120,9 +120,9 @@
                         <inlineHash>true</inlineHash>
                     </throwableConverter>
                 </stackTrace>
-                <stackHash>
+                <errorHash>
                     <exclude>excluded</exclude>
-                </stackHash>
+                </errorHash>
                 <context/>
                 <contextName/>
                 <jsonMessage/>

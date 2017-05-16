@@ -1275,12 +1275,12 @@ For LoggingEvents, the available providers and their configuration properties (d
       </td>
     </tr>
     <tr>
-      <td><tt>stackHash</tt></td>
+      <td><tt>errorHash</tt></td>
       <td><p>(Only if a throwable was logged) Computes and outputs a hexadecimal hash of the throwable.</p>
-        <p>This helps identifying several occurrences of the same error, as it is highly probable that two errors with the same hash will be occurrences of the same error.</p>
+        <p>This helps identifying several occurrences of the same error, as it is highly probable that two errors with the same hash are occurrences of the same error.</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>stack_hash</tt>)</li>
-          <li><tt>exclude</tt> - Classname+method patterns to exclude when computing the stack trace hash (regular expressions).</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>error_hash</tt>)</li>
+          <li><tt>exclude</tt> - Regular expressions patterns of <i>stack trace elements</i> (formatted as <code>&lt;fully qualified classname&gt;.&lt;method&gt;</code>) to exclude when computing the error hash.</li>
         </ul>
       </td>
     </tr>

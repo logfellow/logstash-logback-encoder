@@ -11,19 +11,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/**
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package net.logstash.logback.stacktrace;
 
 import java.util.ArrayDeque;
@@ -60,7 +47,8 @@ public class ThrowableHasher {
      * Two errors with the same stack hash are most probably same errors
      */
     public String hexHash(Throwable error) {
-        return hexHashes(error).peek();
+        // compute topmost error hash, but don't queue the complete hashes chain
+        return toHex(hash(error, null));
     }
 
     /**
@@ -94,20 +82,21 @@ public class ThrowableHasher {
         hash = 31 * hash + error.getClass().getName().hashCode();
         // hash stacktrace
         for (StackTraceElement element : error.getStackTrace()) {
-            if (accept(element)) {
+            if (filter.accept(element)) {
                 hash = 31 * hash + hash(element);
             }
         }
 
         // push hexadecimal representation of hash
-        hexHashes.push(String.format("%08x", hash));
+        if(hexHashes != null) {
+            hexHashes.push(toHex(hash));
+        }
 
         return hash;
     }
 
-    boolean accept(StackTraceElement element) {
-        // skip null element, generated class or filter element
-        return element != null && element.getFileName() != null && element.getLineNumber() >= 0 && filter.accept(element);
+    String toHex(int hash) {
+        return String.format("%08x", hash);
     }
 
     int hash(StackTraceElement element) {

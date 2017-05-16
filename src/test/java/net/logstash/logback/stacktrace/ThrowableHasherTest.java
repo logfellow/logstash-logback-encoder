@@ -13,10 +13,10 @@
  */
 package net.logstash.logback.stacktrace;
 
+import java.util.Deque;
+
 import org.junit.Assert;
 import org.junit.Test;
-
-import java.util.Deque;
 
 public class ThrowableHasherTest {
 
