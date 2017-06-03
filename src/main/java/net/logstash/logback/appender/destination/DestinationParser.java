@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.appender;
+package net.logstash.logback.appender.destination;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;

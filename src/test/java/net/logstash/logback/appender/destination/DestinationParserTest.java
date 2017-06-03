@@ -11,12 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.appender;
+package net.logstash.logback.appender.destination;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.InetSocketAddress;
 import java.util.List;
+
+import net.logstash.logback.appender.destination.DestinationParser;
 
 import org.junit.Test;
 
