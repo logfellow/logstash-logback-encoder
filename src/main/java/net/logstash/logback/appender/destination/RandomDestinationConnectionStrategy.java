@@ -15,6 +15,13 @@ package net.logstash.logback.appender.destination;
 
 import java.util.Random;
 
+/**
+ * This strategy attempts connections to the destination in a random order.
+ * If a connection fails, the next random destination is attempted.
+ * 
+ * The connectionTTL can be set to gracefully close connections after a specific duration.
+ * This will force the the appender to reattempt to connect to the next random destination.  
+ */
 public class RandomDestinationConnectionStrategy extends DestinationConnectionStrategyWithTtl {
     
     private final ThreadLocal<Random> threadLocalRandom = new ThreadLocal<Random>() {
