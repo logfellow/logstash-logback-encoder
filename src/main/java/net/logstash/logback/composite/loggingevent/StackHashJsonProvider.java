@@ -20,7 +20,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.stacktrace.StackElementFilter;
-import net.logstash.logback.stacktrace.ThrowableHasher;
+import net.logstash.logback.stacktrace.StackHasher;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,15 +28,15 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * A JSON provider that adds a {@code error_hash} Json field on a log with a stack trace
+ * A JSON provider that adds a {@code stack_hash} Json field on a log with a stack trace
  * <p>
- * This hash is computed using {@link ThrowableHasher}
+ * This hash is computed using {@link StackHasher}
  * 
  * @author Pierre Smeyers
  */
-public class ErrorHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
 
-    public static final String FIELD_NAME = "error_hash";
+    public static final String FIELD_NAME = "stack_hash";
 
     /**
      * Patterns used to determine which stacktrace elements to exclude from hash computation.
@@ -46,16 +46,16 @@ public class ErrorHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
      */
     private List<Pattern> excludes = new ArrayList<Pattern>(5);
 
-    private ThrowableHasher hasher = new ThrowableHasher();
+    private StackHasher hasher = new StackHasher();
 
-    public ErrorHashJsonProvider() {
+    public StackHashJsonProvider() {
         setFieldName(FIELD_NAME);
     }
 
     @Override
     public void start() {
         if(!excludes.isEmpty()) {
-            hasher = new ThrowableHasher(StackElementFilter.byPattern(excludes));
+            hasher = new StackHasher(StackElementFilter.byPattern(excludes));
         }
         super.start();
     }

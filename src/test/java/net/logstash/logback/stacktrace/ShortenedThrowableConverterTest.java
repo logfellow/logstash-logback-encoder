@@ -369,13 +369,13 @@ public class ShortenedThrowableConverterTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            ThrowableHasher mockedHasher = Mockito.mock(ThrowableHasher.class);
+            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
             List<String> expectedHashes = Arrays.asList("11111111", "22222222");
             Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setInlineHash(true);
             converter.start();
-            converter.setThrowableHasher(mockedHasher);
+            converter.setStackHasher(mockedHasher);
 
             // WHEN
             String formatted = converter.convert(createEvent(e));
@@ -394,14 +394,14 @@ public class ShortenedThrowableConverterTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            ThrowableHasher mockedHasher = Mockito.mock(ThrowableHasher.class);
+            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
             List<String> expectedHashes = Arrays.asList("11111111", "22222222");
             Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setInlineHash(true);
             converter.setRootCauseFirst(true);
             converter.start();
-            converter.setThrowableHasher(mockedHasher);
+            converter.setStackHasher(mockedHasher);
 
             // WHEN
             String formatted = converter.convert(createEvent(e));
@@ -422,13 +422,13 @@ public class ShortenedThrowableConverterTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            ThrowableHasher mockedHasher = Mockito.mock(ThrowableHasher.class);
+            StackHasher mockedHasher = Mockito.mock(StackHasher.class);
             List<String> expectedHashes = Arrays.asList("11111111"); // only one exception, no cause
             Mockito.when(mockedHasher.hexHashes(any(Throwable.class))).thenReturn(new ArrayDeque<String>(expectedHashes));
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setInlineHash(true);
             converter.start();
-            converter.setThrowableHasher(mockedHasher);
+            converter.setStackHasher(mockedHasher);
 
             // WHEN
             String formatted = converter.convert(createEvent(e));

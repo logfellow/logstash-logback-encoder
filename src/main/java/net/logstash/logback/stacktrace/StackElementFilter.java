@@ -43,6 +43,19 @@ public abstract class StackElementFilter {
     }
 
     /**
+     * Creates a {@link StackElementFilter} that accepts all stack trace elements with a non {@code null}
+     * {@code {@link StackTraceElement#getFileName()} filename} and positive {@link StackTraceElement#getLineNumber()} line number}
+     */
+    public static final StackElementFilter withSourceInfo() {
+        return new StackElementFilter() {
+            @Override
+            public boolean accept(StackTraceElement element) {
+                return element.getFileName() != null && element.getLineNumber() >= 0;
+            }
+        };
+    }
+
+    /**
      * Creates a {@link StackElementFilter} by exclusion {@link Pattern patterns}
      *
      * @param excludes regular expressions matching {@link StackTraceElement} to filter out

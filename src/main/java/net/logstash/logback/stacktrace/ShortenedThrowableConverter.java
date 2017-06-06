@@ -161,7 +161,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     private StackElementFilter stackElementFilter;
 
-    private ThrowableHasher throwableHasher;
+    private StackHasher stackHasher;
 
     /**
      * Evaluators that determine if the stacktrace should be logged.
@@ -173,13 +173,21 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         parseOptions();
         // instantiate stack element filter
         if(excludes == null || excludes.isEmpty()) {
-            stackElementFilter = StackElementFilter.any();
+            if(inlineHash) {
+                // filter out elements with no source info
+                addInfo("[inlineHash] is active with no exclusion pattern: use non null source info filter to exclude generated classnames (see doc)");
+                stackElementFilter = StackElementFilter.withSourceInfo();
+            } else {
+                // use any filter
+                stackElementFilter = StackElementFilter.any();
+            }
         } else {
+            // use patterns filter
             stackElementFilter = StackElementFilter.byPattern(excludes);
         }
         // instantiate stack hasher if "inline hash" is active
         if(inlineHash) {
-            throwableHasher = new ThrowableHasher(stackElementFilter);
+            stackHasher = new StackHasher(stackElementFilter);
         }
         super.start();
     }
@@ -259,7 +267,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         // compute stack trace hashes
         Deque<String> stackHashes = null;
         if(inlineHash && (throwableProxy instanceof ThrowableProxy)) {
-            stackHashes = throwableHasher.hexHashes(((ThrowableProxy) throwableProxy).getThrowable());
+            stackHashes = stackHasher.hexHashes(((ThrowableProxy) throwableProxy).getThrowable());
         }
 
         /*
@@ -597,8 +605,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         this.inlineHash = inlineHash;
     }
 
-    protected void setThrowableHasher(ThrowableHasher throwableHasher) {
-        this.throwableHasher = throwableHasher;
+    protected void setStackHasher(StackHasher stackHasher) {
+        this.stackHasher = stackHasher;
     }
 
     public void addExclude(String exclusionPattern) {

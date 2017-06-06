@@ -17,28 +17,28 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 /**
- * Utility class that generates a hash for any Java {@link Throwable error}
+ * Utility class that generates a hash from any Java {@link Throwable error}
  *
  * @author Pierre Smeyers
  */
-public class ThrowableHasher {
+public class StackHasher {
 
     private final StackElementFilter filter;
 
     /**
-     * Constructs a {@link ThrowableHasher} with the given filter
+     * Constructs a {@link StackHasher} with the given filter
      *
      * @param filter filter
      */
-    public ThrowableHasher(StackElementFilter filter) {
+    public StackHasher(StackElementFilter filter) {
         this.filter = filter;
     }
 
     /**
-     * Constructs a {@link ThrowableHasher} using {@link StackElementFilter#any()} filter
+     * Constructs a {@link StackHasher} using {@link StackElementFilter#withSourceInfo()} filter
      */
-    public ThrowableHasher() {
-        this(StackElementFilter.any());
+    public StackHasher() {
+        this(StackElementFilter.withSourceInfo());
     }
 
     /**

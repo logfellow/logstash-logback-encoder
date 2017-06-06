@@ -1060,7 +1060,7 @@ is included in the logstash-logback-encoder library to format stacktraces by:
 * Filtering out consecutive unwanted stackTraceElements based on regular expressions.
 * Using evaluators to determine if the stacktrace should be logged.
 * Outputing in either 'normal' order (root-cause-last), or root-cause-first.
-* Computing and inlining hexadecimal hashes for each exception stack.
+* Computing and inlining hexadecimal hashes for each exception stack ([more info](stack-hash.md)).
 
 For example:
 
@@ -1158,8 +1158,8 @@ For example:
         <maxDepthPerThrowable>30</maxDepthPerThrowable>
         <maxLength>2048</maxLength>
         <shortenedClassNameLength>20</shortenedClassNameLength>
-        <exclude>sun\.reflect\..*\.invoke.*</exclude>
-        <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+        <exclude>^sun\.reflect\..*\.invoke</exclude>
+        <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
         <evaluator class="myorg.MyCustomEvaluator"/>
         <rootCauseFirst>true</rootCauseFirst>
       </throwableConverter>
@@ -1275,11 +1275,11 @@ For LoggingEvents, the available providers and their configuration properties (d
       </td>
     </tr>
     <tr>
-      <td><tt>errorHash</tt></td>
-      <td><p>(Only if a throwable was logged) Computes and outputs a hexadecimal hash of the throwable.</p>
-        <p>This helps identifying several occurrences of the same error, as it is highly probable that two errors with the same hash are occurrences of the same error.</p>
+      <td><tt>stackHash</tt></td>
+      <td><p>(Only if a throwable was logged) Computes and outputs a hexadecimal hash of the throwable stack.</p>
+        <p>This helps identifying several occurrences of the same error (<a href="stack-hash.md">more info</a>).</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>error_hash</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>stack_hash</tt>)</li>
           <li><tt>exclude</tt> - Regular expressions patterns of <i>stack trace elements</i> (formatted as <code>&lt;fully qualified classname&gt;.&lt;method&gt;</code>) to exclude when computing the error hash.</li>
         </ul>
       </td>

@@ -18,7 +18,7 @@ import java.util.Deque;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ThrowableHasherTest {
+public class StackHasherTest {
 
     private static class StackTraceElementGenerator {
         public static void generateSingle() {
@@ -99,7 +99,7 @@ public class ThrowableHasherTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            ThrowableHasher hasher = new ThrowableHasher();
+            StackHasher hasher = new StackHasher();
 
             // WHEN
             Deque<String> hashes = hasher.hexHashes(e);
@@ -116,7 +116,7 @@ public class ThrowableHasherTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            ThrowableHasher hasher = new ThrowableHasher();
+            StackHasher hasher = new StackHasher();
 
             // WHEN
             Deque<String> hashes = hasher.hexHashes(e);
@@ -144,14 +144,14 @@ public class ThrowableHasherTest {
             Assert.fail();
         } catch (RuntimeException e) {
             // GIVEN
-            ThrowableHasher hasher = new ThrowableHasher(new OnlyFromStackTraceElementGeneratorFilter());
+            StackHasher hasher = new StackHasher(new OnlyFromStackTraceElementGeneratorFilter());
 
             // WHEN
             Deque<String> hashes = hasher.hexHashes(e);
 
             // THEN
             Assert.assertEquals(1, hashes.size());
-            Assert.assertEquals("052431f6", hashes.getFirst());
+            Assert.assertEquals("e30d4cae", hashes.getFirst());
         }
     }
 }

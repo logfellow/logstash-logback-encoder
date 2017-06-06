@@ -31,12 +31,12 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-public class ErrorHashJsonProviderTest {
+public class StackHashJsonProviderTest {
     
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
     
-    private ErrorHashJsonProvider provider = new ErrorHashJsonProvider();
+    private StackHashJsonProvider provider = new StackHashJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -58,7 +58,7 @@ public class ErrorHashJsonProviderTest {
         provider.writeTo(generator, event);
         // THEN
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        verify(generator).writeStringField(eq(ErrorHashJsonProvider.FIELD_NAME), hashCaptor.capture());
+        verify(generator).writeStringField(eq(StackHashJsonProvider.FIELD_NAME), hashCaptor.capture());
         Assert.assertTrue("Did not produce an hexadecimal integer: "+hashCaptor.getValue(), HEX_PATTERN.matcher(hashCaptor.getValue()).matches());
     }
 
