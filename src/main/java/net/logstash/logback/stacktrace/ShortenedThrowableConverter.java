@@ -13,10 +13,7 @@
  */
 package net.logstash.logback.stacktrace;
 
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -612,7 +609,19 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public void addExclude(String exclusionPattern) {
         excludes.add(Pattern.compile(exclusionPattern));
     }
-    
+
+    /**
+     * Set exclusion patterns as a list of coma separated patterns
+     * @param comaSeparatedPatterns list of coma separated patterns
+     */
+    public void setExclusions(String comaSeparatedPatterns) {
+        if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
+            this.excludes = new ArrayList<Pattern>(5);
+        } else {
+            setExcludes(Arrays.asList(comaSeparatedPatterns.split("\\s*\\,\\s*")));
+        }
+    }
+
     public void setExcludes(List<String> exclusionPatterns) {
         if (exclusionPatterns == null || exclusionPatterns.isEmpty()) {
             this.excludes = new ArrayList<Pattern>(5);

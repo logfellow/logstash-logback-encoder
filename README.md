@@ -1280,7 +1280,8 @@ For LoggingEvents, the available providers and their configuration properties (d
         <p>This helps identifying several occurrences of the same error (<a href="stack-hash.md">more info</a>).</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>stack_hash</tt>)</li>
-          <li><tt>exclude</tt> - Regular expressions patterns of <i>stack trace elements</i> (formatted as <code>&lt;fully qualified classname&gt;.&lt;method&gt;</code>) to exclude when computing the error hash.</li>
+          <li><tt>exclude</tt> - Regular expression pattern matching <i>stack trace elements</i> to exclude when computing the error hash</li>
+          <li><tt>exclusions</tt> - Coma separated list of regular expression patterns matching <i>stack trace elements</i> to exclude when computing the error hash</li>
         </ul>
       </td>
     </tr>

@@ -24,6 +24,7 @@ import net.logstash.logback.stacktrace.StackHasher;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -62,6 +63,18 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
 
     public void addExclude(String exclusionPattern) {
         excludes.add(Pattern.compile(exclusionPattern));
+    }
+
+    /**
+     * Set exclusion patterns as a list of coma separated patterns
+     * @param comaSeparatedPatterns list of coma separated patterns
+     */
+    public void setExclusions(String comaSeparatedPatterns) {
+        if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
+            this.excludes = new ArrayList<Pattern>(5);
+        } else {
+            setExcludes(Arrays.asList(comaSeparatedPatterns.split("\\s*\\,\\s*")));
+        }
     }
 
     public void setExcludes(List<String> exclusionPatterns) {

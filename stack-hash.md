@@ -225,14 +225,9 @@ Note: if no exclusion pattern is specified and the `inlineHash` property is acti
 elements with no source info (null filename or linenumber < 0) to ignore generated classnames. The drawback is that it 
 will also exclude classes not compiled in debug mode (do not contain source info).
 
-Warning: if you compute stack hashes with both `StackHashJsonProvider` and `ShortenedThrowableConverter` components, 
-make sure to define the same exclusion patterns for both or - in some cases - you will not get same hashes. 
-Unfortunately there is no way of sharing the same configuration in Logback configuration.
-
-
 ## Recommended exclusion patterns
 
-In a spring framework context, the following exclusion patterns seem pretty good:
+In a spring framework context, the following exclusion patterns produce pretty stable hashes:
 
 ```xml
   <provider class="net.logstash.logback.composite.loggingevent.StackHashJsonProvider">
@@ -264,4 +259,52 @@ In a spring framework context, the following exclusion patterns seem pretty good
     <exclude>^java\.util\.concurrent\.ThreadPoolExecutor\.runWorker</exclude>
     <exclude>^java\.lang\.Thread\.run$</exclude>
   </provider>
+```
+
+Also notice that both `StackHashJsonProvider` and `ShortenedThrowableConverter` components support a single `<exclusions>`
+element to set all exclusion patterns at once (as a coma separated list):
+
+```xml
+  <provider class="net.logstash.logback.composite.loggingevent.StackHashJsonProvider">
+    <!-- coma separated exclusion patterns -->
+    <exclusions>\$\$FastClassByCGLIB\$\$,\$\$EnhancerBySpringCGLIB\$\$,^sun\.reflect\..*\.invoke,^com\.sun\.,^sun\.net\.,^net\.sf\.cglib\.proxy\.MethodProxy\.invoke,^org\.springframework\.cglib\.,^org\.springframework\.transaction\.,^org\.springframework\.validation\.,^org\.springframework\.app\.,^org\.springframework\.aop\.,^java\.lang\.reflect\.Method\.invoke,^org\.springframework\.ws\..*\.invoke,^org\.springframework\.ws\.transport\.,^org\.springframework\.ws\.soap\.saaj\.SaajSoapMessage\.,^org\.springframework\.ws\.client\.core\.WebServiceTemplate\.,^org\.springframework\.web\.filter\.,^org\.apache\.tomcat\.,^org\.apache\.catalina\.,^org\.apache\.coyote\.,^java\.util\.concurrent\.ThreadPoolExecutor\.runWorker,^java\.lang\.Thread\.run$</exclusions>
+  </provider>
+```
+
+Obviously it is recommended to use either multiple `<exclude>` elements or one single `<exclusions>`.
+
+## Tip: variabilize your exclusion patterns!
+
+If you compute stack hashes with both `StackHashJsonProvider` and `ShortenedThrowableConverter` components, 
+it is highly recommended to use **the same exclusion patterns** for both or - in some cases - you will not get same hashes.
+
+In such a case, or even if you just want to make the exclusion patterns configurable, you shall use the `<exclusions>`
+field (see above) in conjunction with a Logback variable.
+
+Here is an example:
+
+```xml
+  <!-- 1: define stack trace exclusion patterns in a variable -->
+  <property name="STE_EXCLUSIONS" value="\$\$FastClassByCGLIB\$\$,\$\$EnhancerBySpringCGLIB\$\$,^sun\.reflect\..*\.invoke,^com\.sun\.,^sun\.net\.,^net\.sf\.cglib\.proxy\.MethodProxy\.invoke,^org\.springframework\.cglib\.,^org\.springframework\.transaction\.,^org\.springframework\.validation\.,^org\.springframework\.app\.,^org\.springframework\.aop\.,^java\.lang\.reflect\.Method\.invoke,^org\.springframework\.ws\..*\.invoke,^org\.springframework\.ws\.transport\.,^org\.springframework\.ws\.soap\.saaj\.SaajSoapMessage\.,^org\.springframework\.ws\.client\.core\.WebServiceTemplate\.,^org\.springframework\.web\.filter\.,^org\.apache\.tomcat\.,^org\.apache\.catalina\.,^org\.apache\.coyote\.,^java\.util\.concurrent\.ThreadPoolExecutor\.runWorker,^java\.lang\.Thread\.run$"/>
+  
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+      <providers>
+        ...
+        <stackTrace>
+          <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+            <inlineHash>true</inlineHash>
+            <!-- 2: use defined variable -->
+            <exclusions>${STE_EXCLUSIONS}</exclusions>
+          </throwableConverter>
+        </stackTrace>
+        ...
+        <stackHash>
+          <!-- 2: use defined variable -->
+          <exclusions>${STE_EXCLUSIONS}</exclusions>
+        </stackHash>
+        ...
+      </providers>
+    </encoder>
+  </appender>
 ```
