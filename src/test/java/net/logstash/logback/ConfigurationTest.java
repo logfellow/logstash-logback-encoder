@@ -88,7 +88,7 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(21, providers.size());
+        Assert.assertEquals(22, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -142,7 +142,10 @@ public class ConfigurationTest {
         Assert.assertEquals(1000, throwableConverter.getMaxLength());
         Assert.assertEquals(30, throwableConverter.getShortenedClassNameLength());
         Assert.assertTrue(throwableConverter.isRootCauseFirst());
-        Assert.assertEquals("excluded", throwableConverter.getExcludes().get(0));
+        Assert.assertEquals(2, throwableConverter.getExcludes().size());
+        Assert.assertEquals("excluded1", throwableConverter.getExcludes().get(0));
+        Assert.assertEquals("excluded2", throwableConverter.getExcludes().get(1));
+        Assert.assertEquals(true, throwableConverter.isInlineHash());
 
         Assert.assertNotNull(getInstance(providers, ContextJsonProvider.class));
         Assert.assertNotNull(getInstance(providers, ContextNameJsonProvider.class));

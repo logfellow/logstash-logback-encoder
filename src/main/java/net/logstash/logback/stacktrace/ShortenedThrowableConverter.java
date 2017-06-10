@@ -13,14 +13,10 @@
  */
 package net.logstash.logback.stacktrace;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
-import net.logstash.logback.CachingAbbreviator;
-import net.logstash.logback.NullAbbreviator;
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
@@ -29,11 +25,14 @@ import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
 import ch.qos.logback.core.boolex.EventEvaluator;
 import ch.qos.logback.core.status.ErrorStatus;
+import net.logstash.logback.CachingAbbreviator;
+import net.logstash.logback.NullAbbreviator;
 
 /**
  * A {@link ThrowableHandlingConverter} (similar to logback's {@link ThrowableProxyConverter})
@@ -107,7 +106,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final String OPTION_VALUE_FULL = "full";
     private static final String OPTION_VALUE_SHORT = "short";
     private static final String OPTION_VALUE_ROOT_FIRST = "rootFirst";
-    
+    private static final String OPTION_VALUE_INLINE_HASH = "inlineHash";
+
     private static final int OPTION_INDEX_MAX_DEPTH = 0;
     private static final int OPTION_INDEX_SHORTENED_CLASS_NAME = 1;
     private static final int OPTION_INDEX_MAX_LENGTH = 2;
@@ -150,7 +150,16 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * True to print the root cause first.  False to print exceptions normally (root cause last).
      */
     private boolean rootCauseFirst;
-    
+
+    /**
+     * True to compute and inline stack hashes.
+     */
+    private boolean inlineHash;
+
+    private StackElementFilter stackElementFilter;
+
+    private StackHasher stackHasher;
+
     /**
      * Evaluators that determine if the stacktrace should be logged.
      */
@@ -159,6 +168,24 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     @Override
     public void start() {
         parseOptions();
+        // instantiate stack element filter
+        if(excludes == null || excludes.isEmpty()) {
+            if(inlineHash) {
+                // filter out elements with no source info
+                addInfo("[inlineHash] is active with no exclusion pattern: use non null source info filter to exclude generated classnames (see doc)");
+                stackElementFilter = StackElementFilter.withSourceInfo();
+            } else {
+                // use any filter
+                stackElementFilter = StackElementFilter.any();
+            }
+        } else {
+            // use patterns filter
+            stackElementFilter = StackElementFilter.byPattern(excludes);
+        }
+        // instantiate stack hasher if "inline hash" is active
+        if(inlineHash) {
+            stackHasher = new StackHasher(stackElementFilter);
+        }
         super.start();
     }
 
@@ -185,11 +212,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                     /*
                      * Remaining options are either
                      *     - "rootFirst" - indicating that stacks should be printed root-cause first
+                     *     - "inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
                      *     - evaluator name - name of evaluators that will determine if the stacktrace is ignored
                      *     - exclusion pattern - pattern for stack trace elements to exclude
                      */
                     if (OPTION_VALUE_ROOT_FIRST.equals(option)) {
                         setRootCauseFirst(true);
+                    } else if(OPTION_VALUE_INLINE_HASH.equals(option)) {
+                        setInlineHash(true);
                     } else {
                         @SuppressWarnings("rawtypes")
                         Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
@@ -230,16 +260,22 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         if (throwableProxy == null || isExcludedByEvaluator(event)) {
             return CoreConstants.EMPTY_STRING;
         }
-        
+
+        // compute stack trace hashes
+        Deque<String> stackHashes = null;
+        if(inlineHash && (throwableProxy instanceof ThrowableProxy)) {
+            stackHashes = stackHasher.hexHashes(((ThrowableProxy) throwableProxy).getThrowable());
+        }
+
         /*
          * The extra 100 gives a little more buffer room since we actually
          * go over the maxLength before detecting it and truncating.
          */
         StringBuilder builder = new StringBuilder(Math.min(BUFFER_INITIAL_CAPACITY, Math.max(Integer.MAX_VALUE, this.maxLength + 100)));
         if (rootCauseFirst) {
-            appendRootCauseFirst(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy);
+            appendRootCauseFirst(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         } else {
-            appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy);
+            appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         }
         if (builder.length() > maxLength) {
             builder.setLength(maxLength - ELLIPSIS.length());
@@ -285,21 +321,25 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             StringBuilder builder,
             String prefix,
             int indent,
-            IThrowableProxy throwableProxy) {
+            IThrowableProxy throwableProxy,
+            Deque<String> stackHashes) {
         
         if (throwableProxy == null || builder.length() > maxLength) {
             return;
         }
-        appendFirstLine(builder, prefix, indent, throwableProxy);
+
+        String hash = stackHashes == null || stackHashes.isEmpty() ? null : stackHashes.removeFirst();
+        appendFirstLine(builder, prefix, indent, throwableProxy, hash);
         appendStackTraceElements(builder, indent, throwableProxy);
         
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
-                appendRootCauseLast(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy);
+            	// stack hashes are not computed/inlined on suppressed errors
+                appendRootCauseLast(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy, null);
             }
         }
-        appendRootCauseLast(builder, CoreConstants.CAUSED_BY, indent, throwableProxy.getCause());
+        appendRootCauseLast(builder, CoreConstants.CAUSED_BY, indent, throwableProxy.getCause(), stackHashes);
     }
 
     /**
@@ -310,24 +350,27 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             StringBuilder builder,
             String prefix,
             int indent,
-            IThrowableProxy throwableProxy) {
+            IThrowableProxy throwableProxy,
+            Deque<String> stackHashes) {
         
         if (throwableProxy == null || builder.length() > maxLength) {
             return;
         }
         
         if (throwableProxy.getCause() != null) {
-            appendRootCauseFirst(builder, prefix, indent, throwableProxy.getCause());
+            appendRootCauseFirst(builder, prefix, indent, throwableProxy.getCause(), stackHashes);
             prefix = CoreConstants.WRAPPED_BY;
         }
-        
-        appendFirstLine(builder, prefix, indent, throwableProxy);
+
+        String hash = stackHashes == null || stackHashes.isEmpty() ? null : stackHashes.removeLast();
+        appendFirstLine(builder, prefix, indent, throwableProxy, hash);
         appendStackTraceElements(builder, indent, throwableProxy);
         
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
-                appendRootCauseFirst(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy);
+            	// stack hashes are not computed/inlined on suppressed errors
+                appendRootCauseFirst(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy, null);
             }
         }
     }
@@ -427,17 +470,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Return true if the stack trace element is included (i.e. doesn't match any exclude patterns).
      */
     private boolean isIncluded(StackTraceElementProxy step) {
-        if (!excludes.isEmpty()) {
-            StackTraceElement stackTraceElement = step.getStackTraceElement();
-            String testString = stackTraceElement.getClassName() + "." + stackTraceElement.getMethodName();
-            
-            for (Pattern exclusionPattern : excludes) {
-                if (exclusionPattern.matcher(testString).find()) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return stackElementFilter.accept(step.getStackTraceElement());
     }
     
     /**
@@ -495,13 +528,17 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     /**
      * Appends the first line containing the prefix and throwable message 
      */
-    private void appendFirstLine(StringBuilder builder, String prefix, int indent, IThrowableProxy throwableProxy) {
+    private void appendFirstLine(StringBuilder builder, String prefix, int indent, IThrowableProxy throwableProxy, String hash) {
         if (builder.length() > maxLength) {
             return;
         }
         indent(builder, indent - 1);
         if (prefix != null) {
             builder.append(prefix);
+        }
+        if (hash != null) {
+            // inline stack hash
+            builder.append("<#" + hash + "> ");
         }
         builder.append(abbreviator.abbreviate(throwableProxy.getClassName()))
             .append(": ")
@@ -556,11 +593,35 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public void setRootCauseFirst(boolean rootCauseFirst) {
         this.rootCauseFirst = rootCauseFirst;
     }
-    
+
+    public boolean isInlineHash() {
+        return inlineHash;
+    }
+
+    public void setInlineHash(boolean inlineHash) {
+        this.inlineHash = inlineHash;
+    }
+
+    protected void setStackHasher(StackHasher stackHasher) {
+        this.stackHasher = stackHasher;
+    }
+
     public void addExclude(String exclusionPattern) {
         excludes.add(Pattern.compile(exclusionPattern));
     }
-    
+
+    /**
+     * Set exclusion patterns as a list of coma separated patterns
+     * @param comaSeparatedPatterns list of coma separated patterns
+     */
+    public void setExclusions(String comaSeparatedPatterns) {
+        if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
+            this.excludes = new ArrayList<Pattern>(5);
+        } else {
+            setExcludes(Arrays.asList(comaSeparatedPatterns.split("\\s*\\,\\s*")));
+        }
+    }
+
     public void setExcludes(List<String> exclusionPatterns) {
         if (exclusionPatterns == null || exclusionPatterns.isEmpty()) {
             this.excludes = new ArrayList<Pattern>(5);
