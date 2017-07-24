@@ -656,7 +656,7 @@ vary by the providers you configure.
 
 These fields will appear in every LoggingEvent unless otherwise noted.
 The field names listed here are the default field names.
-The field names can be customized (see [Customizing Standard Field Names](#custom_field_names)).
+The field names can be customized (see [Customizing Standard Field Names](#customizing-standard-field-names)).
 
 | Field         | Description
 |---------------|------------
@@ -960,7 +960,7 @@ vary by the providers you configure.
 
 These fields will appear in every AccessEvent unless otherwise noted.
 The field names listed here are the default field names.
-The field names can be customized (see [Customizing Standard Field Names](#custom_field_names)).
+The field names can be customized (see [Customizing Standard Field Names](#customizing-standard-field-names)).
 
 | Field         | Description
 |---------------|------------
@@ -992,7 +992,7 @@ Request and response headers are not logged by default, but can be enabled by sp
 </encoder>
 ```
 
-See [Customizing Standard Field Names](#custom_field_names)) for more details.
+See [Customizing Standard Field Names](#customizing-standard-field-names)) for more details.
 
 To write the header names in lowercase (so that header names that only differ by case are treated the same),
 set `lowerCaseFieldNames` to true, like this:
