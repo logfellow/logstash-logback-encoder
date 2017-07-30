@@ -23,8 +23,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
  * Contains a collection of {@link JsonProvider}s to be used to write
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.MappingJsonFactory;
  *
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
-public class JsonProviders<Event extends DeferredProcessingAware> {
+public class JsonProviders<Event extends DeferredProcessingAware> implements JsonFactoryAware {
     
     private final List<JsonProvider<Event>> jsonProviders = new ArrayList<JsonProvider<Event>>();
 
@@ -84,7 +84,8 @@ public class JsonProviders<Event extends DeferredProcessingAware> {
         }
     }
     
-    public void setJsonFactory(MappingJsonFactory jsonFactory) {
+    @Override
+    public void setJsonFactory(JsonFactory jsonFactory) {
         for (JsonProvider<Event> jsonProvider : jsonProviders) {
             if (jsonProvider instanceof JsonFactoryAware) {
                 ((JsonFactoryAware) jsonProvider).setJsonFactory(jsonFactory);
@@ -95,5 +96,4 @@ public class JsonProviders<Event extends DeferredProcessingAware> {
     public List<JsonProvider<Event>> getProviders() {
         return Collections.unmodifiableList(jsonProviders);
     }
-
 }
