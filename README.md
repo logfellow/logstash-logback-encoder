@@ -470,7 +470,8 @@ For example, to enable SSL using the JVM's default keystore/truststore, do the f
       ...
 
       <!-- Enable SSL using the JVM's default keystore/truststore -->
-      <ssl/>
+      <ssl>
+      </ssl>
   </appender>
 ```
 
