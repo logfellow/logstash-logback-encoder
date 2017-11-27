@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration debug="true">
     <contextName>testContext</contextName>
+
+    <turboFilter class="net.logstash.logback.turbo.ThrowableAsField"/>
+
     <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>info</level>
@@ -149,6 +152,12 @@
         </encoder>
     </appender>
     <appender name="listAppender" class="ch.qos.logback.core.read.ListAppender"/>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <Pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} - [%X] %msg%n</Pattern>
+        </encoder>
+    </appender>
+
     <logger name="net.logstash.logback.encoder.LogstashEncoderTest" level="DEBUG">
         <appender-ref ref="stash" />
     </logger>
@@ -156,5 +165,8 @@
         <appender-ref ref="loggingEventCompositeJsonEncoderAppender" />
         <appender-ref ref="logstashEncoderAppender" />
         <appender-ref ref="listAppender" />
+    </logger>
+    <logger name="net.logstash.logback.turbo.ThrowableAsFieldIT" level="DEBUG">
+        <appender-ref ref="STDOUT" />
     </logger>
 </configuration>
