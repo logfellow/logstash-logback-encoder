@@ -145,6 +145,10 @@
                     <includeNonStructuredArguments>true</includeNonStructuredArguments>
                     <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
                 </arguments>
+                <throwableClassName/>
+                <throwableRootCauseClassName>
+                    <useSimpleClassName>false</useSimpleClassName>
+                </throwableRootCauseClassName>
             </providers>
         </encoder>
     </appender>
