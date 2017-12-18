@@ -143,6 +143,13 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         return getFormatter().getThrowableConverter();
     }
 
+    public String getTimestampPattern() {
+        return getFormatter().getTimestampPattern();
+    }
+    public void setTimestampPattern(String pattern) {
+        getFormatter().setTimestampPattern(pattern);
+    }
+
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
         getFormatter().setThrowableConverter(throwableConverter);
     }

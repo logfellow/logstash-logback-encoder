@@ -365,6 +365,12 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setTimeZone(String timeZoneId) {
         this.timestampProvider.setTimeZone(timeZoneId);
     }
+    public String getTimestampPattern() {
+        return timestampProvider.getPattern();
+    }
+    public void setTimestampPattern(String pattern) {
+        timestampProvider.setPattern(pattern);
+    }
     
     @Override
     public void setProviders(JsonProviders<ILoggingEvent> jsonProviders) {

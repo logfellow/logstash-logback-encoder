@@ -186,6 +186,13 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setTimeZone(timeZoneId);
     }
     
+    public String getTimestampPattern() {
+        return getFormatter().getTimestampPattern();
+    }
+    public void setTimestampPattern(String pattern) {
+        getFormatter().setTimestampPattern(pattern);
+    }
+
     public int getVersion() {
         return getFormatter().getVersion();
     }
