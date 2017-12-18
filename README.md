@@ -1400,6 +1400,22 @@ For LoggingEvents, the available providers and their configuration properties (d
       </td>
     </tr>
     <tr>
+      <td><tt>throwableClassName</tt></td>
+      <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the thrown Throwable.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>throwable_class</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>throwableRootCauseClassName</tt></td>
+      <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the root cause of the thrown Throwable.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>throwable_root_cause_class</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>context</tt></td>
       <td><p>Outputs entries from logback's context</p>
         <ul>
