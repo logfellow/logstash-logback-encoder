@@ -1404,6 +1404,7 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the thrown Throwable.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>throwable_class</tt>)</li>
+          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used.  When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1412,6 +1413,7 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the root cause of the thrown Throwable.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>throwable_root_cause_class</tt>)</li>
+          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used.  When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
         </ul>
       </td>
     </tr>
