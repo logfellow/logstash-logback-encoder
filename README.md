@@ -1109,22 +1109,14 @@ The value of the `timeZone` element can be any string accepted by java's  `TimeZ
 
 ## Customizing JSON Factory and Generator
 
-The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by creating
-custom instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
+The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by 
+instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
 or [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java), respectively.
 
-For example, you could enable pretty printing like this:
-```java
-public class PrettyPrintingDecorator implements JsonGeneratorDecorator {
+For example, you could enable pretty printing by using the
+[PrettyPrintingJsonGeneratorDecorator](/src/main/java/net/logstash/logback/decorate/PrettyPrintingJsonGeneratorDecorator.java)
 
-    @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        return generator.useDefaultPrettyPrinter();
-    }
-
-}
-```
-or custom object mapping like this:
+Or customize object mapping like this:
 
 ```java
 public class ISO8601DateDecorator implements JsonFactoryDecorator  {
@@ -1137,14 +1129,16 @@ public class ISO8601DateDecorator implements JsonFactoryDecorator  {
 	}
 }
 ```
-and then specify your decorator in the logback.xml file like this:
+and then specify the decorator in the logback.xml file like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonGeneratorDecorator class="your.package.PrettyPrintingDecorator"/>
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
   <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
 </encoder>
 ```
+
+See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
 
 
 ## Customizing Logger Name Length
