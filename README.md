@@ -130,7 +130,7 @@ The Logstash encoders/layouts are really just extensions of the general
 composite JSON encoders/layouts with a pre-defined set of providers.
 
 The logstash encoders/layouts are easier to configure if you want to use the standard logstash version 1 output format.
-Use the [composite encoders/layouts](#composite_encoder) if you want to heavily customize the output,
+Use the [composite encoders/layouts](#composite-encoderlayout) if you want to heavily customize the output,
 or if you need to use logstash version 0 output.
 
 The `*AsyncDisruptorAppender` appenders are similar to logback's `AsyncAppender`,
@@ -165,7 +165,7 @@ just like you can with a `LogstashLayout` or `LogstashEncoder` as described in l
 It is not necessary to configure a `<layout>` or `<encoder>` sub-element
 within the `<appender>` element in the logback configuration.
 All the properties of `LogstashLayout` or `LogstashEncoder` can be set at the `<appender>` level.
-For example, to configure [global custom fields](#loggingevent_custom_global), you can specify
+For example, to configure [global custom fields](#global-custom-fields), you can specify
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
     <host>MyAwesomeSyslogServer</host>
@@ -676,7 +676,7 @@ The following sections describe the fields included in the JSON output by defaul
 * `LogstashLayout`, and
 * the logstash appenders
 
-If you are using the [composite encoders/layouts](#composite_encoder), then the fields written will
+If you are using the [composite encoders/layouts](#composite-encoderlayout), then the fields written will
 vary by the providers you configure.
 
 
@@ -688,8 +688,8 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#custom_timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#custom_version).
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#customizing-version).
 | `message`     | Formatted log message of the event
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
@@ -802,10 +802,10 @@ The difference between the two is that
 * `StructuredArguments` are included in a the log event's formatted message
 (when the message has a parameter for the argument) _AND_ in the JSON output.
   * `StructuredArguments` will be included in the JSON output if using `LogstashEncoder/Layout`
-    or if using [composite encoders/layouts](#composite_encoder) with the `arguments` provider.
+    or if using [composite encoders/layouts](#composite-encoderlayout) with the `arguments` provider.
 * `Markers` are only written to the JSON output, and _NEVER_ to the log event's formatted message.
   * `Markers` will be included in the JSON output if using `LogstashEncoder/Layout`
-    or if using [composite encoders/layouts](#composite_encoder) with the `logstashMarkers` provider.
+    or if using [composite encoders/layouts](#composite-encoderlayout) with the `logstashMarkers` provider.
 
 
 You can use `StructuredArguments` even if the message does not contain a parameter
@@ -979,7 +979,7 @@ The following sections describe the fields included in the JSON output by defaul
 * `LogstashAccessLayout`, and
 * the logstash access appenders.
 
-If you are using the [composite encoders/layouts](#composite_encoder), then the fields written will
+If you are using the [composite encoders/layouts](#composite-encoderlayout), then the fields written will
 vary by the providers you configure.
 
 
@@ -992,8 +992,8 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#custom_timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#custom_version).
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#customizing-version).
 | `@message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
 | `@fields.method` | HTTP method
 | `@fields.protocol` | HTTP protocol
