@@ -594,7 +594,7 @@ public class LogstashTcpSocketAppenderTest {
     	return new ArgumentMatcher<SocketAddress>() {
 
 			@Override
-			public boolean matches(Object argument) {
+			public boolean matches(SocketAddress argument) {
 				InetSocketAddress sockAddr = (InetSocketAddress) argument;
 				return host.equals(sockAddr.getHostName()) && port==sockAddr.getPort();
 			}

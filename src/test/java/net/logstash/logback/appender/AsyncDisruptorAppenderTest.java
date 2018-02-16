@@ -91,7 +91,7 @@ public class AsyncDisruptorAppenderTest {
 
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                capturedEvent.set(invocation.getArgumentAt(0, LogEvent.class).event);
+                capturedEvent.set(invocation.<LogEvent>getArgument(0).event);
                 return null;
             }
         }).when(eventHandler).onEvent(any(LogEvent.class), anyLong(), eq(true));

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.mockito.internal.util.reflection.Whitebox;
+import org.powermock.reflect.Whitebox;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.BusySpinWaitStrategy;

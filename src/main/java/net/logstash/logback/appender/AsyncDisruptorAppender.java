@@ -354,7 +354,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 getThreadPoolCoreSize(),
                 this.threadFactory);
         
-        setRemoveOnCancelPolicy();
+        /*
+         * This ensures that cancelled tasks
+         * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
+         * do not hold up shutdown.
+         */
+        this.executorService.setRemoveOnCancelPolicy(true);
         
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
@@ -367,7 +372,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          * Define the exceptionHandler first, so that it applies
          * to all future eventHandlers.
          */
-        this.disruptor.handleExceptionsWith(this.exceptionHandler);
+        this.disruptor.setDefaultExceptionHandler(this.exceptionHandler);
         
         this.disruptor.handleEventsWith(new EventClearingEventHandler<Event>(this.eventHandler));
         
@@ -428,38 +433,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         event.prepareForDeferredProcessing();
     }
     
-    @IgnoreJRERequirement
-    private void setRemoveOnCancelPolicy() {
-        /*
-         * ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy was added in 1.7.
-         * 
-         * Don't try to invoke it if running on a JVM less than 1.7
-         * 
-         * If running on less than 1.7, then shutdown will wait for all tasks
-         * to complete (even if they are cancelled), or the max wait timeout,
-         * whichever comes first.
-         */
-        if (isRemoveOnCancelPolicyPossible()) {
-            /*
-             * This ensures that cancelled tasks
-             * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
-             * do not hold up shutdown.
-             */
-            this.executorService.setRemoveOnCancelPolicy(true);
-        }
-    }
     
-    private boolean isRemoveOnCancelPolicyPossible() {
-        try {
-            ScheduledThreadPoolExecutor.class.getMethod("setRemoveOnCancelPolicy", Boolean.TYPE);
-            return true;
-        } catch (NoSuchMethodException e) {
-            return false;
-        } catch (SecurityException e) {
-            return false;
-        }
-    }
-
     protected String calculateThreadName() {
         List<Object> threadNameFormatParams = getThreadNameFormatParams();
         return String.format(threadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));

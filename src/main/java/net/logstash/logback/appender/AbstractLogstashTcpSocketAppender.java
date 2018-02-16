@@ -250,11 +250,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private volatile CountDownLatch shutdownLatch;
     
     /**
-     * @see #isGetHostStringPossible()
-     */
-    private final boolean getHostStringPossible = isGetHostStringPossible();
-
-    /**
      * Event handler responsible for performing the TCP transmission.
      */
     private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
@@ -924,33 +919,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     @IgnoreJRERequirement
     protected String getHostString(InetSocketAddress destination) {
         
-        return getHostStringPossible
-                /*
-                 * Avoid the potential DNS hit if possible.
-                 */
-                ? destination.getHostString()
-                /*
-                 * On JRE's less than 1.7, we have to use getHostName(),
-                 * and potentially hit DNS.
-                 */
-                : destination.getHostName();
+        /*
+         * Avoid the potential DNS hit by using getHostString() instead of getHostName()
+         */
+        return destination.getHostString();
     }
     
-    /**
-     * Return true if the {@link InetSocketAddress#getHostString()} method is available.
-     * It was made public in java 1.7, so this will return false on jre's less than 1.7. 
-     */
-    private boolean isGetHostStringPossible() {
-        try {
-            InetSocketAddress.class.getMethod("getHostString");
-            return true;
-        } catch (NoSuchMethodException e) {
-            return false;
-        } catch (SecurityException e) {
-            return false;
-        }
-    }
-
     protected void updateCurrentThreadName() {
         Thread.currentThread().setName(calculateThreadName());
     }
