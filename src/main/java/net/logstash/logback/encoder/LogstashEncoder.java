@@ -16,8 +16,6 @@ package net.logstash.logback.encoder;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
@@ -129,6 +127,31 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
     public void setIncludeContext(boolean includeContext) {
         getFormatter().setIncludeContext(includeContext);
     }
+    
+    public boolean isIncludeStructuredArguments() {
+        return getFormatter().isIncludeStructuredArguments();
+    }
+
+    public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
+        getFormatter().setIncludeStructuredArguments(includeStructuredArguments);
+    }
+    
+    public boolean isIncludeNonStructuredArguments() {
+        return getFormatter().isIncludeNonStructuredArguments();
+    }
+
+    public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
+        getFormatter().setIncludeNonStructuredArguments(includeNonStructuredArguments);
+    }
+    
+    public String getNonStructuredArgumentsFieldPrefix() {
+        return getFormatter().getNonStructuredArgumentsFieldPrefix();
+    }
+
+    public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
+        getFormatter().setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
+    }
+    
     
     /**
      * <p>

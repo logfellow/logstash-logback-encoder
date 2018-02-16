@@ -118,6 +118,30 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().setIncludeContext(includeContext);
     }
 
+    public boolean isIncludeStructuredArguments() {
+        return getFormatter().isIncludeStructuredArguments();
+    }
+
+    public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
+        getFormatter().setIncludeStructuredArguments(includeStructuredArguments);
+    }
+    
+    public boolean isIncludeNonStructuredArguments() {
+        return getFormatter().isIncludeNonStructuredArguments();
+    }
+
+    public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
+        getFormatter().setIncludeNonStructuredArguments(includeNonStructuredArguments);
+    }
+    
+    public String getNonStructuredArgumentsFieldPrefix() {
+        return getFormatter().getNonStructuredArgumentsFieldPrefix();
+    }
+
+    public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
+        getFormatter().setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
+    }
+
     public int getShortenedLoggerNameLength() {
         return getFormatter().getShortenedLoggerNameLength();
     }

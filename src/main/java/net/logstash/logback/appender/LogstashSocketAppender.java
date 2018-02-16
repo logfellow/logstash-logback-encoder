@@ -156,6 +156,30 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         logstashLayout.setIncludeContext(includeContext);
     }
 
+    public boolean isIncludeStructuredArguments() {
+        return logstashLayout.isIncludeStructuredArguments();
+    }
+
+    public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
+        logstashLayout.setIncludeStructuredArguments(includeStructuredArguments);
+    }
+    
+    public boolean isIncludeNonStructuredArguments() {
+        return logstashLayout.isIncludeNonStructuredArguments();
+    }
+
+    public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
+        logstashLayout.setIncludeNonStructuredArguments(includeNonStructuredArguments);
+    }
+    
+    public String getNonStructuredArgumentsFieldPrefix() {
+        return logstashLayout.getNonStructuredArgumentsFieldPrefix();
+    }
+
+    public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
+        logstashLayout.setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
+    }
+
     public int getShortenedLoggerNameLength() {
         return logstashLayout.getShortenedLoggerNameLength();
     }

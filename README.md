@@ -801,8 +801,8 @@ When logging a message, you can add additional fields to the JSON output by usin
 The difference between the two is that
 * `StructuredArguments` are included in a the log event's formatted message
 (when the message has a parameter for the argument) _AND_ in the JSON output.
-  * `StructuredArguments` will only be included in the JSON output if using
-    [composite encoders/layouts](#composite_encoder) with the `arguments` provider.
+  * `StructuredArguments` will be included in the JSON output if using `LogstashEncoder/Layout`
+    or if using [composite encoders/layouts](#composite_encoder) with the `arguments` provider.
 * `Markers` are only written to the JSON output, and _NEVER_ to the log event's formatted message.
   * `Markers` will be included in the JSON output if using `LogstashEncoder/Layout`
     or if using [composite encoders/layouts](#composite_encoder) with the `logstashMarkers` provider.
