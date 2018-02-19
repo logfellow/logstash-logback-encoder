@@ -13,8 +13,6 @@
  */
 package net.logstash.logback;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -27,7 +25,6 @@ import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
 import net.logstash.logback.composite.accessevent.AccessMessageJsonProvider;
 import net.logstash.logback.composite.accessevent.ContentLengthJsonProvider;
 import net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider;
-import net.logstash.logback.composite.accessevent.HostnameJsonProvider;
 import net.logstash.logback.composite.accessevent.MethodJsonProvider;
 import net.logstash.logback.composite.accessevent.ProtocolJsonProvider;
 import net.logstash.logback.composite.accessevent.RemoteHostJsonProvider;
@@ -40,6 +37,8 @@ import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.spi.ContextAware;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * A {@link AccessEventCompositeJsonFormatter} that contains a common
@@ -71,7 +70,6 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     private final RequestedUrlJsonProvider requestedUrlProvider = new RequestedUrlJsonProvider();
     private final RequestedUriJsonProvider requestedUriProvider = new RequestedUriJsonProvider();
     private final RemoteHostJsonProvider remoteHostProvider = new RemoteHostJsonProvider();
-    private final HostnameJsonProvider hostnameProvider = new HostnameJsonProvider();
     private final RemoteUserJsonProvider remoteUserProvider = new RemoteUserJsonProvider();
     private final ContentLengthJsonProvider contentLengthProvider = new ContentLengthJsonProvider();
     private final ElapsedTimeJsonProvider elapsedTimeProvider = new ElapsedTimeJsonProvider();
@@ -92,7 +90,6 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         getProviders().addRequestedUrl(this.requestedUrlProvider);
         getProviders().addRequestedUri(this.requestedUriProvider);
         getProviders().addRemoteHost(this.remoteHostProvider);
-        getProviders().addHostname(this.hostnameProvider);
         getProviders().addRemoteUser(this.remoteUserProvider);
         getProviders().addContentLength(this.contentLengthProvider);
         getProviders().addElapsedTime(this.elapsedTimeProvider);

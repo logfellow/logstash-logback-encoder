@@ -994,17 +994,16 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
 | `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
-| `@message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
-| `@fields.method` | HTTP method
-| `@fields.protocol` | HTTP protocol
-| `@fields.status_code` | HTTP status code
-| `@fields.requested_url` | Request URL
-| `@fields.requested_uri` | Request URI
-| `@fields.remote_host` | Remote host
-| `@fields.HOSTNAME` | another field for remote host (not sure why this is here honestly)
-| `@fields.remote_user` | Remote user
-| `@fields.content_length` | Content length
-| `@fields.elapsed_time` | Elapsed time in millis
+| `message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
+| `method` | HTTP method
+| `protocol` | HTTP protocol
+| `status_code` | HTTP status code
+| `requested_url` | Request URL
+| `requested_uri` | Request URI
+| `remote_host` | Remote host
+| `remote_user` | Remote user
+| `content_length` | Content length
+| `elapsed_time` | Elapsed time in millis
 
 
 ### Header Fields
@@ -1014,8 +1013,8 @@ Request and response headers are not logged by default, but can be enabled by sp
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
   <fieldNames>
-    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
-    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+    <requestHeaders>request_headers</requestHeaders>
+    <responseHeaders>response_headers</responseHeaders>
   </fieldNames>
 </encoder>
 ```
@@ -1028,8 +1027,8 @@ set `lowerCaseFieldNames` to true, like this:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
   <fieldNames>
-    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
-    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+    <requestHeaders>request_headers</requestHeaders>
+    <responseHeaders>response_headers</responseHeaders>
   </fieldNames>
   <lowerCaseHeaderNames>true</lowerCaseHeaderNames>
 </encoder>
@@ -1555,7 +1554,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>message</tt></td>
       <td><p>Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@message</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1563,7 +1562,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>method</tt></td>
       <td><p>HTTP method</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.method</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>method</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1571,7 +1570,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>protocol</tt></td>
       <td><p>HTTP protocol</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.protocol</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>protocol</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1579,7 +1578,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>statusCode</tt></td>
       <td><p>HTTP status code</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.status_code</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>status_code</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1587,7 +1586,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>requestedUrl</tt></td>
       <td><p>Requested URL</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.requested_url</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_url</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1595,7 +1594,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>requestedUri</tt></td>
       <td><p>Requested URI</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.requested_uri</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_uri</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1603,7 +1602,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>remoteHost</tt></td>
       <td><p>Remote Host</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.remote_host</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_host</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1611,7 +1610,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>remoteUser</tt></td>
       <td><p>Remote User</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.remote_user</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_user</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1619,7 +1618,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>contentLength</tt></td>
       <td><p>Content length</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.content_length</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>content_length</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1627,7 +1626,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>elapsedTime</tt></td>
       <td><p>Elapsed time in milliseconds</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.elapsed_time</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>elapsed_time</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1690,7 +1689,7 @@ For example...
   <providers>
     <timestamp/>
     <nestedField>
-      <fieldName>@fields</fieldName>
+      <fieldName>fields</fieldName>
       <providers>
         <logLevel/>
       </providers>
@@ -1704,7 +1703,7 @@ For example...
 ```
 {
   "@timestamp":"...",
-  "@fields":{
+  "fields":{
     "level": "DEBUG"
   }
 }

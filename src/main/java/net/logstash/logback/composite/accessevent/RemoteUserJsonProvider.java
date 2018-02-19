@@ -25,7 +25,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 public class RemoteUserJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
-    public static final String FIELD_REMOTE_USER = "@fields.remote_user";
+    public static final String FIELD_REMOTE_USER = "remote_user";
     
     public RemoteUserJsonProvider() {
         setFieldName(FIELD_REMOTE_USER);
@@ -38,7 +38,7 @@ public class RemoteUserJsonProvider extends AbstractFieldJsonProvider<IAccessEve
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsRemoteUser());
+        setFieldName(fieldNames.getRemoteUser());
     }
 
 }

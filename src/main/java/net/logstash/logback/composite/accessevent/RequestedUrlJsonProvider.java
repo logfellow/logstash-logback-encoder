@@ -25,7 +25,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 public class RequestedUrlJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
-    public static final String FIELD_REQUESTED_URL = "@fields.requested_url";
+    public static final String FIELD_REQUESTED_URL = "requested_url";
     
     public RequestedUrlJsonProvider() {
         setFieldName(FIELD_REQUESTED_URL);
@@ -38,7 +38,7 @@ public class RequestedUrlJsonProvider extends AbstractFieldJsonProvider<IAccessE
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsRequestedUrl());
+        setFieldName(fieldNames.getRequestedUrl());
     }
 
 }

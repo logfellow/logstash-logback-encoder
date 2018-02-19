@@ -37,7 +37,7 @@ public class ResponseHeadersJsonProvider extends AbstractFieldJsonProvider<IAcce
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsResponseHeaders());
+        setFieldName(fieldNames.getResponseHeaders());
     }
 
     public boolean getLowerCaseHeaderNames() {

@@ -93,23 +93,22 @@ public class LogstashAccessEncoderTest {
         assertThat(node.get("timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                 (timestamp));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
-        assertThat(node.get("@message").textValue()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
+        assertThat(node.get("message").textValue()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
                 FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                         (event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
                 event.getContentLength()));
         
-        assertThat(node.get("@fields.method").textValue()).isEqualTo(event.getMethod());
-        assertThat(node.get("@fields.protocol").textValue()).isEqualTo(event.getProtocol());
-        assertThat(node.get("@fields.status_code").asInt()).isEqualTo(event.getStatusCode());
-        assertThat(node.get("@fields.requested_url").textValue()).isEqualTo(event.getRequestURL());
-        assertThat(node.get("@fields.requested_uri").textValue()).isEqualTo(event.getRequestURI());
-        assertThat(node.get("@fields.remote_host").textValue()).isEqualTo(event.getRemoteHost());
-        assertThat(node.get("@fields.HOSTNAME").textValue()).isEqualTo(event.getRemoteHost());
-        assertThat(node.get("@fields.remote_user").textValue()).isEqualTo(event.getRemoteUser());
-        assertThat(node.get("@fields.content_length").asLong()).isEqualTo(event.getContentLength());
-        assertThat(node.get("@fields.elapsed_time").asLong()).isEqualTo(event.getElapsedTime());
-        assertThat(node.get("@fields.request_headers")).isNull();
-        assertThat(node.get("@fields.response_headers")).isNull();
+        assertThat(node.get("method").textValue()).isEqualTo(event.getMethod());
+        assertThat(node.get("protocol").textValue()).isEqualTo(event.getProtocol());
+        assertThat(node.get("status_code").asInt()).isEqualTo(event.getStatusCode());
+        assertThat(node.get("requested_url").textValue()).isEqualTo(event.getRequestURL());
+        assertThat(node.get("requested_uri").textValue()).isEqualTo(event.getRequestURI());
+        assertThat(node.get("remote_host").textValue()).isEqualTo(event.getRemoteHost());
+        assertThat(node.get("remote_user").textValue()).isEqualTo(event.getRemoteUser());
+        assertThat(node.get("content_length").asLong()).isEqualTo(event.getContentLength());
+        assertThat(node.get("elapsed_time").asLong()).isEqualTo(event.getElapsedTime());
+        assertThat(node.get("request_headers")).isNull();
+        assertThat(node.get("response_headers")).isNull();
     }
     
     @Test
@@ -155,22 +154,22 @@ public class LogstashAccessEncoderTest {
 
         IAccessEvent event = mockBasicILoggingEvent();
         
-        encoder.getFieldNames().setFieldsRequestHeaders("@fields.request_headers");
-        encoder.getFieldNames().setFieldsResponseHeaders("@fields.response_headers");
+        encoder.getFieldNames().setRequestHeaders("request_headers");
+        encoder.getFieldNames().setResponseHeaders("response_headers");
         encoder.start();
         byte[] encoded = encoder.encode(event);
         
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@fields.request_headers").size()).isEqualTo(2);
-        assertThat(node.get("@fields.request_headers").get("User-Agent").textValue()).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
-        assertThat(node.get("@fields.request_headers").get("Accept").textValue()).isEqualTo("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        assertThat(node.get("@fields.request_headers").get("Unknown")).isNull();
+        assertThat(node.get("request_headers").size()).isEqualTo(2);
+        assertThat(node.get("request_headers").get("User-Agent").textValue()).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
+        assertThat(node.get("request_headers").get("Accept").textValue()).isEqualTo("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        assertThat(node.get("request_headers").get("Unknown")).isNull();
         
-        assertThat(node.get("@fields.response_headers").size()).isEqualTo(2);
-        assertThat(node.get("@fields.response_headers").get("Content-Type").textValue()).isEqualTo("text/html; charset=UTF-8");
-        assertThat(node.get("@fields.response_headers").get("Content-Length").textValue()).isEqualTo("42");
-        assertThat(node.get("@fields.response_headers").get("Unknown")).isNull();
+        assertThat(node.get("response_headers").size()).isEqualTo(2);
+        assertThat(node.get("response_headers").get("Content-Type").textValue()).isEqualTo("text/html; charset=UTF-8");
+        assertThat(node.get("response_headers").get("Content-Length").textValue()).isEqualTo("42");
+        assertThat(node.get("response_headers").get("Unknown")).isNull();
     }
     
     @Test

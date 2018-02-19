@@ -25,7 +25,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 public class ContentLengthJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
-    public static final String FIELD_CONTENT_LENGTH = "@fields.content_length";
+    public static final String FIELD_CONTENT_LENGTH = "content_length";
     
     public ContentLengthJsonProvider() {
         setFieldName(FIELD_CONTENT_LENGTH);
@@ -38,7 +38,7 @@ public class ContentLengthJsonProvider extends AbstractFieldJsonProvider<IAccess
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsContentLength());
+        setFieldName(fieldNames.getContentLength());
     }
 
 }
