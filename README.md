@@ -689,7 +689,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | Field         | Description
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#customizing-version).
+| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `message`     | Formatted log message of the event
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
@@ -993,7 +993,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | Field         | Description
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#customizing-version).
+| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `@message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
 | `@fields.method` | HTTP method
 | `@fields.protocol` | HTTP protocol
@@ -1072,7 +1072,7 @@ for all the field names that can be customized. Each java field name in that cla
 
 ## Customizing Version
 
-The version field value by default is the numeric value 1.
+The version field value by default is the string value `1`.
 
 The value can be changed like this:
 
@@ -1082,11 +1082,11 @@ The value can be changed like this:
 </encoder>
 ```
 
-The value can be written as a string (instead of a number) like this:
+The value can be written as a number (instead of a string) like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <writeVersionAsString>true</writeVersionAsString>
+  <writeVersionAsInteger>true</writeVersionAsInteger>
 </encoder>
 ```
 
@@ -1308,7 +1308,7 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
-          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
+          <li><tt>writeAsInteger</tt> - Write the version as a integer value (<tt>false</tt> = write as a string value)</li>
         </ul>
       </td>
     </tr>
@@ -1547,7 +1547,7 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
-          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
+          <li><tt>writeAsInteger</tt> - Write the version as a integer value (<tt>false</tt> = write as a string value)</li>
         </ul>
       </td>
     </tr>
@@ -1748,7 +1748,7 @@ This example...
 ```
 {
   "@timestamp":"...",
-  "@version": 1,
+  "@version": "1",
   "level": "DEBUG"
 }
 ```

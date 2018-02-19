@@ -207,7 +207,7 @@ public class ConfigurationTest {
 
         Map<String, Object> output = parseJson(new String(encoded, "UTF-8"));
         Assert.assertNotNull(output.get("@timestamp"));
-        Assert.assertEquals(1, output.get("@version"));
+        Assert.assertEquals("1", output.get("@version"));
         Assert.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));
         Map<String, Object> nested = (Map<String, Object>) output.get("nested");
         Assert.assertEquals("message {} {} {} {}", nested.get("customRawMessage"));

@@ -92,7 +92,7 @@ public class LogstashAccessEncoderTest {
     protected void verifyBasics(final long timestamp, IAccessEvent event, JsonNode node) {
         assertThat(node.get("timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                 (timestamp));
-        assertThat(node.get("@version").intValue()).isEqualTo(1);
+        assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("@message").textValue()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
                 FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                         (event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),

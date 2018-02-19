@@ -216,18 +216,35 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setTimestampPattern(pattern);
     }
 
-    public int getVersion() {
+    public String getVersion() {
         return getFormatter().getVersion();
     }
-    public void setVersion(int version) {
+    public void setVersion(String version) {
         getFormatter().setVersion(version);
     }
+
     
+    /**
+     * @deprecated Use {@link #isWriteVersionAsInteger()}
+     */
+    @Deprecated
     public boolean isWriteVersionAsString() {
         return getFormatter().isWriteVersionAsString();
     }
+    /**
+     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
+     */
+    @Deprecated
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         getFormatter().setWriteVersionAsString(writeVersionAsString);
     }
+    
+    public boolean isWriteVersionAsInteger() {
+        return getFormatter().isWriteVersionAsInteger();
+    }
+    public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
+        getFormatter().setWriteVersionAsInteger(writeVersionAsInteger);
+    }
+    
 
 }
