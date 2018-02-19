@@ -562,6 +562,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         updateCurrentThreadName();
                     }
                     
+                    afterSocketOpen(socket);
+
                     this.readerFuture = scheduleReaderRunnable(
                             new ReaderRunnable(tempSocket.getInputStream()));
 
@@ -1154,4 +1156,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         this.connectionStrategy = destinationConnectionStrategy;
     }
 
+
+    protected void afterSocketOpen(Socket socket) throws Exception {
+        //implement action after the socket was opened
+    }
 }
