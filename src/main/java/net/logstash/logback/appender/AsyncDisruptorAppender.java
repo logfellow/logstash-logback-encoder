@@ -427,8 +427,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     @Override
     protected void append(Event event) {
         long startTime = System.nanoTime();
-        prepareForDeferredProcessing(event);
-        
+        try {
+            prepareForDeferredProcessing(event);
+        } catch (RuntimeException e) {
+            addWarn("Unable to prepare event for deferred processing.  Event output might be missing data.", e);
+        }
+
         if (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
             long consecutiveDropped = this.consecutiveDroppedCount.incrementAndGet();
             if ((consecutiveDropped) % this.droppedWarnFrequency == 1) {
