@@ -22,6 +22,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
     * [Write buffer size](#write-buffer-size)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
+  * [Appender Listeners](#appender-listeners)
   * [Encoders / Layouts](#encoders--layouts)
 * [LoggingEvent Fields](#loggingevent-fields)
   * [Standard Fields](#standard-fields)
@@ -607,8 +608,39 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
 for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
 
-In order to guarantee that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+In order to guarantees that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
+### Appender Listeners
+
+Listeners can be registered to an appender to receive notifications for the appender lifecycle and event processing.
+
+See the two listener interfaces for the types of notifications that can be received:
+
+* [`AppenderListener`](/src/main/java/net/logstash/logback/appender/listener/AppenderListener.java) - basic notifications for the [async appenders](#async-appenders) and [udp appender](#udp-appender).
+* [`TcpAppenderListener`](/src/main/java/net/logstash/logback/appender/listener/TcpAppenderListener.java) - extension of `AppenderListener` with additional TCP-specific notifications.  Only works with the [TCP appenders](#tcp-appenders). 
+
+Some example use cases for a listener are:
+
+* Monitoring metrics for events per second, event processing durations, dropped events, connections successes / failures, etc.
+* Reporting event processing errors to a different appender (that perhaps appends to a different destination).
+
+To create a listener, create a new class that extends one of the `*ListenerImpl` classes or directly implements the `*Listener` interface.
+Extending the `*ListenerImpl` class will have better backwards compatibilty in the future in case new methods are added to the interfaces.
+(Logstash-logback-encoder still supports Java 7, so default interface methods cannot be used yet.)
+
+Then register your listener class to an appender using the `listener` xml element like this:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+      ...
+
+      <listener class="your.package.YourListenerClass">
+          <yourListenerProperty>propertyValue</yourListenerProperty>
+      </listener>
+  </appender>
+```
+
+Multiple listeners can be registered by supplying multiple `listener` xml elements.
 
 
 ### Encoders / Layouts

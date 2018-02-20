@@ -13,6 +13,7 @@
  */
 package net.logstash.logback.appender;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
@@ -24,8 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
-
+import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -90,7 +90,7 @@ import com.lmax.disruptor.dsl.ProducerType;
  * 
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
-public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware> extends UnsynchronizedAppenderBase<Event> {
+public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware, Listener extends AppenderListener<Event>> extends UnsynchronizedAppenderBase<Event> {
     
     protected static final String APPENDER_NAME_FORMAT = "%1$s";
     protected static final String THREAD_INDEX_FORMAT = "%2$d";
@@ -100,6 +100,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public static final ProducerType DEFAULT_PRODUCER_TYPE = ProducerType.MULTI;
     public static final WaitStrategy DEFAULT_WAIT_STRATEGY = new BlockingWaitStrategy();
     public static final int DEFAULT_DROPPED_WARN_FREQUENCY = 1000;
+    
+    private static final RingBufferFullException RING_BUFFER_FULL_EXCEPTION = new RingBufferFullException();
+    static {
+        RING_BUFFER_FULL_EXCEPTION.setStackTrace(new StackTraceElement[] { new StackTraceElement(AsyncDisruptorAppender.class.getName(), "append(..)", null, -1)});
+    }
     
     /**
      * The size of the {@link RingBuffer}.
@@ -228,6 +233,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Incrementor number used as part of thread names for uniqueness.
      */
     private final AtomicInteger threadNumber = new AtomicInteger(1);
+    
+    /**
+     * These listeners will be notified when certain events occur on this appender.
+     */
+    protected final List<Listener> listeners = new ArrayList<>();
     
     /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
@@ -378,6 +388,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         
         this.disruptor.start();
         super.start();
+        fireAppenderStarted();
     }
 
     @Override
@@ -410,10 +421,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         } catch (InterruptedException e) {
             addWarn("Some queued events have not been logged due to requested shutdown", e);
         }
+        fireAppenderStopped();
     }
 
     @Override
     protected void append(Event event) {
+        long startTime = System.nanoTime();
         prepareForDeferredProcessing(event);
         
         if (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
@@ -421,11 +434,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             if ((consecutiveDropped) % this.droppedWarnFrequency == 1) {
                 addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
             }
+            fireEventAppendFailed(event, RING_BUFFER_FULL_EXCEPTION);
         } else {
+            long endTime = System.nanoTime();
             long consecutiveDropped = this.consecutiveDroppedCount.get();
             if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
                 addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
             }
+            fireEventAppended(event, endTime - startTime);
         }
     }
 
@@ -444,6 +460,28 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             getName(),
             threadNumber.incrementAndGet());
     }
+    
+    protected void fireAppenderStarted() {
+        for (Listener listener : listeners) {
+            listener.appenderStarted(this);
+        }
+    }
+    protected void fireAppenderStopped() {
+        for (Listener listener : listeners) {
+            listener.appenderStopped(this);
+        }
+    }
+    protected void fireEventAppended(Event event, long durationInNanos) {
+        for (Listener listener : listeners) {
+            listener.eventAppended(this, event, durationInNanos);
+        }
+    }
+    protected void fireEventAppendFailed(Event event, Throwable reason) {
+        for (Listener listener : listeners) {
+            listener.eventAppendFailed(this, event, reason);
+        }
+    }
+    
     protected void setEventFactory(LogEventFactory<Event> eventFactory) {
         this.eventFactory = eventFactory;
     }
@@ -573,6 +611,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
     public void setDaemon(boolean useDaemonThread) {
         this.useDaemonThread = useDaemonThread;
+    }
+    
+    public void addListener(Listener listener) {
+        this.listeners.add(listener);
+    }
+    public void removeListener(Listener listener) {
+        this.listeners.remove(listener);
     }
 
 }

@@ -13,10 +13,11 @@
  */
 package net.logstash.logback.appender;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
@@ -37,6 +39,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
 import javax.net.SocketFactory;
@@ -44,6 +47,7 @@ import javax.net.SocketFactory;
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy;
 import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
+import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
 
 import org.junit.After;
@@ -99,15 +103,18 @@ public class LogstashTcpSocketAppenderTest {
     private Encoder<ILoggingEvent> encoder;
 
     @Mock
-    private Future<?> readableRunnableFuture;
+    private Future<?> readableCallableFuture;
+    
+    @Mock
+    private TcpAppenderListener<ILoggingEvent> listener;
 
     @Mock
     private Random random;
     
     private class TestableLogstashTcpSocketAppender extends LogstashTcpSocketAppender {
         @Override
-        protected Future<?> scheduleReaderRunnable(Runnable readerRunnable) {
-            return readableRunnableFuture;
+        protected Future<?> scheduleReaderCallable(Callable<Void> readerCallable) {
+            return readableCallableFuture;
         }
     }
     
@@ -117,6 +124,7 @@ public class LogstashTcpSocketAppenderTest {
         when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);
         when(encoder.encode(event1)).thenReturn("event1".getBytes("UTF-8"));
+        appender.addListener(listener);
     }
     
     @After
@@ -170,8 +178,9 @@ public class LogstashTcpSocketAppenderTest {
         appender.setReconnectionDelay(new Duration(100));
         
         reset(socketFactory);
+        SocketTimeoutException exception = new SocketTimeoutException();
         when(socketFactory.createSocket())
-            .thenThrow(new SocketTimeoutException())
+            .thenThrow(exception)
             .thenReturn(socket);
         
         appender.start();
@@ -181,6 +190,16 @@ public class LogstashTcpSocketAppenderTest {
         appender.append(event1);
         
         verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
+        
+        verify(listener).appenderStarted(appender);
+        verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
+        verify(listener).connectionFailed(eq(appender), any(InetSocketAddress.class), eq(exception));
+        verify(listener).connectionOpened(appender, socket);
+        verify(listener).eventSent(eq(appender), eq(socket), eq(event1), anyLong());
+        
+        appender.stop();
+        
+        verify(listener).connectionClosed(appender, socket);
     }
 
     @Test
@@ -205,7 +224,7 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
         
-        when(readableRunnableFuture.isDone())
+        when(readableCallableFuture.isDone())
             /*
              * First return true, so that the reconnect logic is executed 
              */

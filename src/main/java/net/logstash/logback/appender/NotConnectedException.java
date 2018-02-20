@@ -13,12 +13,9 @@
  */
 package net.logstash.logback.appender;
 
-import net.logstash.logback.appender.listener.AppenderListener;
-import ch.qos.logback.access.spi.IAccessEvent;
-
 /**
- * A {@link DelegatingAsyncDisruptorAppender} for {@link IAccessEvent}s.
+ * Indicates that an event cannot be sent because an outbound connection is not established.
  */
-public class AccessEventAsyncDisruptorAppender extends DelegatingAsyncDisruptorAppender<IAccessEvent, AppenderListener<IAccessEvent>> {
-    
+public class NotConnectedException extends Exception {
+
 }

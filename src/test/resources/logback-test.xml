@@ -153,6 +153,12 @@
         </encoder>
     </appender>
     <appender name="listAppender" class="ch.qos.logback.core.read.ListAppender"/>
+    
+    <appender name="asyncAppender" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
+        <appender class="ch.qos.logback.core.read.ListAppender"/>
+        <listener class="net.logstash.logback.appender.listener.LoggingEventAppenderListenerImpl"/>
+    </appender>
+    
     <logger name="net.logstash.logback.encoder.LogstashEncoderTest" level="DEBUG">
         <appender-ref ref="stash" />
     </logger>
@@ -160,5 +166,6 @@
         <appender-ref ref="loggingEventCompositeJsonEncoderAppender" />
         <appender-ref ref="logstashEncoderAppender" />
         <appender-ref ref="listAppender" />
+        <appender-ref ref="asyncAppender" />
     </logger>
 </configuration>

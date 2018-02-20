@@ -14,10 +14,10 @@
 package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
+import net.logstash.logback.appender.listener.AppenderListener;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -55,7 +56,7 @@ public class AsyncDisruptorAppenderTest {
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
 
     @InjectMocks
-    private AsyncDisruptorAppender<ILoggingEvent> appender = new AsyncDisruptorAppender<ILoggingEvent>() {};
+    private AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() {};
     
     @Mock
     private EventHandler<LogEvent<ILoggingEvent>> eventHandler;
@@ -72,9 +73,14 @@ public class AsyncDisruptorAppenderTest {
     @Mock
     private ILoggingEvent event2;
     
+    @Mock
+    private AppenderListener<ILoggingEvent> listener;
+    
     @Before
     public void setup() {
         when(context.getStatusManager()).thenReturn(statusManager);
+        
+        appender.addListener(listener);
     }
     
     @After
@@ -98,7 +104,12 @@ public class AsyncDisruptorAppenderTest {
         
         appender.start();
         
+        verify(listener).appenderStarted(appender);
+        
         appender.append(event1);
+        
+        verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
+        
         
         @SuppressWarnings("rawtypes")
         ArgumentCaptor<LogEvent> captor = ArgumentCaptor.forClass(LogEvent.class);
@@ -110,6 +121,11 @@ public class AsyncDisruptorAppenderTest {
         Assert.assertNull(captor.getValue().event);
         
         verify(event1).prepareForDeferredProcessing();
+        
+        appender.stop();
+
+        verify(listener).appenderStopped(appender);
+        
     }
 
     @Test

@@ -15,6 +15,7 @@ package net.logstash.logback.appender;
 
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import net.logstash.logback.appender.listener.AppenderListener;
 
 import org.junit.After;
 import org.junit.Before;
@@ -33,7 +34,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
 
     @InjectMocks
-    private DelegatingAsyncDisruptorAppender<ILoggingEvent> appender = new DelegatingAsyncDisruptorAppender<ILoggingEvent>() {};
+    private DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() {};
     
     @Mock
     private ILoggingEvent event;

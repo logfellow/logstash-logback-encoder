@@ -13,11 +13,12 @@
  */
 package net.logstash.logback.appender;
 
+import net.logstash.logback.appender.listener.TcpAppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 
 /**
  * A {@link AbstractLogstashTcpSocketAppender} for logging {@link IAccessEvent}s.
  */
-public class LogstashAccessTcpSocketAppender extends AbstractLogstashTcpSocketAppender<IAccessEvent> {
+public class LogstashAccessTcpSocketAppender extends AbstractLogstashTcpSocketAppender<IAccessEvent, TcpAppenderListener<IAccessEvent>> {
 
 }

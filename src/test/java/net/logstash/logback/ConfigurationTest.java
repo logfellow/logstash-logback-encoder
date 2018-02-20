@@ -17,18 +17,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
-import org.junit.*;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.OutputStreamAppender;
-import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.read.ListAppender;
+import net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender;
+import net.logstash.logback.appender.listener.AppenderListener;
 import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -56,6 +46,24 @@ import net.logstash.logback.composite.loggingevent.UuidProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.powermock.reflect.Whitebox;
+import org.powermock.reflect.internal.WhiteboxImpl;
+import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.read.ListAppender;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 public class ConfigurationTest {
 
@@ -92,6 +100,13 @@ public class ConfigurationTest {
         Assert.assertNotNull(getInstance(providers, TestJsonProvider.class));
 
         verifyOutput(encoder);
+    }
+
+    @Test
+    public void testAppenderHasListener() throws IOException {
+        LoggingEventAsyncDisruptorAppender appender = getAppender("asyncAppender");
+        List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) Whitebox.getFieldValue(Whitebox.getField(LoggingEventAsyncDisruptorAppender.class, "listeners") , appender);
+        Assert.assertEquals(1, listeners.size());
     }
 
 
@@ -229,9 +244,13 @@ public class ConfigurationTest {
     }
 
     @SuppressWarnings("unchecked")
+    private <T extends Appender<ILoggingEvent>> T getAppender(String appenderName) {
+        return (T) LOGGER.getAppender(appenderName);
+    }
+
+    @SuppressWarnings("unchecked")
     private <T extends Encoder<ILoggingEvent>> T getEncoder(String appenderName) {
-        OutputStreamAppender<ILoggingEvent> appender = (OutputStreamAppender<ILoggingEvent>) LOGGER.getAppender(appenderName);
-        return (T) appender.getEncoder();
+        return (T) this.<OutputStreamAppender<ILoggingEvent>>getAppender(appenderName).getEncoder();
     }
 
     private Map<String, Object> parseJson(final String text) throws IOException {
