@@ -16,8 +16,11 @@ package net.logstash.logback.layout;
 import net.logstash.logback.LogstashAccessFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
+import net.logstash.logback.composite.accessevent.HeaderFilter;
+import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 
 public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
     
@@ -75,6 +78,24 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
      */
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         getFormatter().setLowerCaseHeaderNames(lowerCaseHeaderNames);
+    }
+
+    public HeaderFilter getRequestHeaderFilter() {
+        return getFormatter().getRequestHeaderFilter();
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setRequestHeaderFilter(HeaderFilter filter) {
+        getFormatter().setRequestHeaderFilter(filter);
+    }
+    
+    public HeaderFilter getResponseHeaderFilter() {
+        return getFormatter().getResponseHeaderFilter();
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setResponseHeaderFilter(HeaderFilter filter) {
+        getFormatter().setResponseHeaderFilter(filter);
     }
 
     public String getVersion() {

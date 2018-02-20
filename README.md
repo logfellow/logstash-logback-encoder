@@ -1066,7 +1066,28 @@ set `lowerCaseFieldNames` to true, like this:
 </encoder>
 ```
 
+Headers can be filtered via configuring the `requestHeaderFilter` and/or the `responseHeaderFilter`
+with a [`HeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java), such as the
+[`IncludeExcludeHeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java).
 
+The `IncludeExcludeHeaderFilter` can be configured like this:
+ 
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <fieldNames>
+    <requestHeaders>request_headers</requestHeaders>
+  </fieldNames>
+  <requestHeaderFilter>
+    <include>Content-Type</include>
+  </requestHeaderFilter>
+</encoder>
+
+Custom filters implementing [`HeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java)
+can be used by specifying the filter class like this:
+
+```xml
+  <requestHeaderFilter class="your.package.YourFilterClass"/>
+```
 
 ## Customizing Standard Field Names
 
@@ -1668,6 +1689,9 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
+          <li><tt>filter</tt> - A filter to determine which headers to include/exclude.
+          See <a href="/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java"><tt>HeaderFilter</tt></a>
+          and <a href="/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java"><tt>IncludeExcludeHeaderFilter</tt></a></li>
         </ul>
       </td>
     </tr>
@@ -1677,6 +1701,9 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
+          <li><tt>filter</tt> - A filter to determine which headers to include/exclude.
+          See <a href="/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java"><tt>HeaderFilter</tt></a>
+          and <a href="/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java"><tt>IncludeExcludeHeaderFilter</tt></a></li>
         </ul>
       </td>
     </tr>

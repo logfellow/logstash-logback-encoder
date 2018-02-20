@@ -25,6 +25,8 @@ import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
 import net.logstash.logback.composite.accessevent.AccessMessageJsonProvider;
 import net.logstash.logback.composite.accessevent.ContentLengthJsonProvider;
 import net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider;
+import net.logstash.logback.composite.accessevent.HeaderFilter;
+import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
 import net.logstash.logback.composite.accessevent.MethodJsonProvider;
 import net.logstash.logback.composite.accessevent.ProtocolJsonProvider;
 import net.logstash.logback.composite.accessevent.RemoteHostJsonProvider;
@@ -36,6 +38,7 @@ import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
 import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -190,6 +193,24 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         this.requestHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
         this.responseHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
+    }
+    
+    public HeaderFilter getRequestHeaderFilter() {
+        return this.requestHeadersProvider.getFilter();
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setRequestHeaderFilter(HeaderFilter filter) {
+        this.requestHeadersProvider.setFilter(filter);
+    }
+    
+    public HeaderFilter getResponseHeaderFilter() {
+        return this.responseHeadersProvider.getFilter();
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setResponseHeaderFilter(HeaderFilter filter) {
+        this.responseHeadersProvider.setFilter(filter);
     }
     
     public String getVersion() {

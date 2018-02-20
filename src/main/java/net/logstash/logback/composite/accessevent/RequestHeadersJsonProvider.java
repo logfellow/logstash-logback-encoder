@@ -14,14 +14,17 @@
 package net.logstash.logback.composite.accessevent;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
-import ch.qos.logback.access.spi.IAccessEvent;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
+
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public class RequestHeadersJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
     
@@ -29,10 +32,23 @@ public class RequestHeadersJsonProvider extends AbstractFieldJsonProvider<IAcces
      * When true, names of headers will be written to JSON output in lowercase. 
      */
     private boolean lowerCaseHeaderNames;
+    
+    private HeaderFilter filter;
 
     @Override
     public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
-        JsonWritingUtils.writeMapStringFields(generator, getFieldName(), event.getRequestHeaderMap(), lowerCaseHeaderNames);
+        Map<String, String> headers;
+        if (filter == null) {
+            headers = event.getRequestHeaderMap();
+        } else {
+            headers = new HashMap<>(event.getRequestHeaderMap().size());
+            for (Map.Entry<String, String> header : event.getRequestHeaderMap().entrySet()) {
+                if (filter.includeHeader(header.getKey(), header.getValue())) {
+                    headers.put(header.getKey(), header.getValue());
+                }
+            }
+        }
+        JsonWritingUtils.writeMapStringFields(generator, getFieldName(), headers, lowerCaseHeaderNames);
     }
     
     @Override
@@ -47,4 +63,14 @@ public class RequestHeadersJsonProvider extends AbstractFieldJsonProvider<IAcces
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         this.lowerCaseHeaderNames = lowerCaseHeaderNames;
     }
+
+    public HeaderFilter getFilter() {
+        return filter;
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setFilter(HeaderFilter filter) {
+        this.filter = filter;
+    }
+
 }
