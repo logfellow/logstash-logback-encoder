@@ -90,7 +90,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     
     public static final int FULL_MAX_DEPTH_PER_THROWABLE = Integer.MAX_VALUE;
     public static final int SHORT_MAX_DEPTH_PER_THROWABLE = 3;
-    public static final int DEFAULT_MAX_DEPTH_PER_THROWABLE = 25;
+    public static final int DEFAULT_MAX_DEPTH_PER_THROWABLE = FULL_MAX_DEPTH_PER_THROWABLE;
     
     public static final int FULL_MAX_LENGTH = Integer.MAX_VALUE;
     public static final int SHORT_MAX_LENGTH = 1024;
