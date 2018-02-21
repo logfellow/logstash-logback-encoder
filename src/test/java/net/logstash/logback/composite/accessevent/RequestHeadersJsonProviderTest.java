@@ -61,6 +61,7 @@ public class RequestHeadersJsonProviderTest {
     @Test
     public void testFieldName() throws IOException {
         provider.setFieldName("fieldName");
+        provider.setLowerCaseHeaderNames(false);
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
@@ -75,7 +76,6 @@ public class RequestHeadersJsonProviderTest {
     @Test
     public void testFieldNameWithLowerCase() throws IOException {
         provider.setFieldName("fieldName");
-        provider.setLowerCaseHeaderNames(true);
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
@@ -95,7 +95,6 @@ public class RequestHeadersJsonProviderTest {
         
         provider.setFieldName("fieldName");
         provider.setFilter(filter);
-        provider.setLowerCaseHeaderNames(true);
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);

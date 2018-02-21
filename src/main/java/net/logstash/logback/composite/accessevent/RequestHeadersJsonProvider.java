@@ -31,7 +31,7 @@ public class RequestHeadersJsonProvider extends AbstractFieldJsonProvider<IAcces
     /**
      * When true, names of headers will be written to JSON output in lowercase. 
      */
-    private boolean lowerCaseHeaderNames;
+    private boolean lowerCaseHeaderNames = true;
     
     private HeaderFilter filter;
 

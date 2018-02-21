@@ -162,14 +162,14 @@ public class LogstashAccessEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
 
         assertThat(node.get("request_headers").size()).isEqualTo(2);
-        assertThat(node.get("request_headers").get("User-Agent").textValue()).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
-        assertThat(node.get("request_headers").get("Accept").textValue()).isEqualTo("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        assertThat(node.get("request_headers").get("Unknown")).isNull();
+        assertThat(node.get("request_headers").get("user-agent").textValue()).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
+        assertThat(node.get("request_headers").get("accept").textValue()).isEqualTo("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        assertThat(node.get("request_headers").get("unknown")).isNull();
         
         assertThat(node.get("response_headers").size()).isEqualTo(2);
-        assertThat(node.get("response_headers").get("Content-Type").textValue()).isEqualTo("text/html; charset=UTF-8");
-        assertThat(node.get("response_headers").get("Content-Length").textValue()).isEqualTo("42");
-        assertThat(node.get("response_headers").get("Unknown")).isNull();
+        assertThat(node.get("response_headers").get("content-type").textValue()).isEqualTo("text/html; charset=UTF-8");
+        assertThat(node.get("response_headers").get("content-length").textValue()).isEqualTo("42");
+        assertThat(node.get("response_headers").get("unknown")).isNull();
     }
     
     @Test
