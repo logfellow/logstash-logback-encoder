@@ -16,7 +16,6 @@ package net.logstash.logback.fieldnames;
 import net.logstash.logback.composite.accessevent.AccessMessageJsonProvider;
 import net.logstash.logback.composite.accessevent.ContentLengthJsonProvider;
 import net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider;
-import net.logstash.logback.composite.accessevent.HostnameJsonProvider;
 import net.logstash.logback.composite.accessevent.MethodJsonProvider;
 import net.logstash.logback.composite.accessevent.ProtocolJsonProvider;
 import net.logstash.logback.composite.accessevent.RemoteHostJsonProvider;
@@ -27,126 +26,112 @@ import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 
 public class LogstashAccessFieldNames extends LogstashCommonFieldNames {
     
-    private String fieldsMethod = MethodJsonProvider.FIELD_METHOD;
-    private String fieldsProtocol = ProtocolJsonProvider.FIELD_PROTOCOL;
-    private String fieldsStatusCode = StatusCodeJsonProvider.FIELD_STATUS_CODE;
-    private String fieldsRequestedUrl = RequestedUrlJsonProvider.FIELD_REQUESTED_URL;
-    private String fieldsRequestedUri = RequestedUriJsonProvider.FIELD_REQUESTED_URI;
-    private String fieldsRemoteHost = RemoteHostJsonProvider.FIELD_REMOTE_HOST;
-    private String fieldsHostname = HostnameJsonProvider.FIELD_HOSTNAME;
-    private String fieldsRemoteUser = RemoteUserJsonProvider.FIELD_REMOTE_USER;
-    private String fieldsContentLength = ContentLengthJsonProvider.FIELD_CONTENT_LENGTH;
-    private String fieldsElapsedTime = ElapsedTimeJsonProvider.FIELD_ELAPSED_TIME;
+    private String method = MethodJsonProvider.FIELD_METHOD;
+    private String protocol = ProtocolJsonProvider.FIELD_PROTOCOL;
+    private String statusCode = StatusCodeJsonProvider.FIELD_STATUS_CODE;
+    private String requestedUrl = RequestedUrlJsonProvider.FIELD_REQUESTED_URL;
+    private String requestedUri = RequestedUriJsonProvider.FIELD_REQUESTED_URI;
+    private String remoteHost = RemoteHostJsonProvider.FIELD_REMOTE_HOST;
+    private String remoteUser = RemoteUserJsonProvider.FIELD_REMOTE_USER;
+    private String contentLength = ContentLengthJsonProvider.FIELD_CONTENT_LENGTH;
+    private String elapsedTime = ElapsedTimeJsonProvider.FIELD_ELAPSED_TIME;
     /*
      * By default:
-     * fieldsRequestHeaders and fieldsResponseHeaders are ignored
+     * requestHeaders and responseHeaders are ignored
      * because those fields can be quite big.
      */
-    private String fieldsRequestHeaders;
-    private String fieldsResponseHeaders;
+    private String requestHeaders;
+    private String responseHeaders;
     
     public LogstashAccessFieldNames() {
-        /*
-         * By default:
-         * LogstashAccessEncoder uses '@message' for the message field.
-         * LogstashEncoder uses 'message'.
-         */
         setMessage(AccessMessageJsonProvider.FIELD_MESSAGE);
     }
 
-    public String getFieldsMethod() {
-        return fieldsMethod;
+    public String getMethod() {
+        return method;
     }
 
-    public void setFieldsMethod(String fieldsMethod) {
-        this.fieldsMethod = fieldsMethod;
+    public void setMethod(String method) {
+        this.method = method;
     }
 
-    public String getFieldsProtocol() {
-        return fieldsProtocol;
+    public String getProtocol() {
+        return protocol;
     }
 
-    public void setFieldsProtocol(String fieldsProtocol) {
-        this.fieldsProtocol = fieldsProtocol;
+    public void setProtocol(String protocol) {
+        this.protocol = protocol;
     }
 
-    public String getFieldsStatusCode() {
-        return fieldsStatusCode;
+    public String getStatusCode() {
+        return statusCode;
     }
 
-    public void setFieldsStatusCode(String fieldsStatusCode) {
-        this.fieldsStatusCode = fieldsStatusCode;
+    public void setStatusCode(String statusCode) {
+        this.statusCode = statusCode;
     }
 
-    public String getFieldsRequestedUrl() {
-        return fieldsRequestedUrl;
+    public String getRequestedUrl() {
+        return requestedUrl;
     }
 
-    public void setFieldsRequestedUrl(String fieldsRequestedUrl) {
-        this.fieldsRequestedUrl = fieldsRequestedUrl;
+    public void setRequestedUrl(String requestedUrl) {
+        this.requestedUrl = requestedUrl;
     }
 
-    public String getFieldsRequestedUri() {
-        return fieldsRequestedUri;
+    public String getRequestedUri() {
+        return requestedUri;
     }
 
-    public void setFieldsRequestedUri(String fieldsRequestedUri) {
-        this.fieldsRequestedUri = fieldsRequestedUri;
+    public void setRequestedUri(String requestedUri) {
+        this.requestedUri = requestedUri;
     }
 
-    public String getFieldsRemoteHost() {
-        return fieldsRemoteHost;
+    public String getRemoteHost() {
+        return remoteHost;
     }
 
-    public void setFieldsRemoteHost(String fieldsRemoteHost) {
-        this.fieldsRemoteHost = fieldsRemoteHost;
+    public void setRemoteHost(String remoteHost) {
+        this.remoteHost = remoteHost;
     }
 
-    public String getFieldsHostname() {
-        return fieldsHostname;
+    public String getRemoteUser() {
+        return remoteUser;
     }
 
-    public void setFieldsHostname(String fieldsHostname) {
-        this.fieldsHostname = fieldsHostname;
+    public void setRemoteUser(String remoteUser) {
+        this.remoteUser = remoteUser;
     }
 
-    public String getFieldsRemoteUser() {
-        return fieldsRemoteUser;
+    public String getContentLength() {
+        return contentLength;
     }
 
-    public void setFieldsRemoteUser(String fieldsRemoteUser) {
-        this.fieldsRemoteUser = fieldsRemoteUser;
+    public void setContentLength(String contentLength) {
+        this.contentLength = contentLength;
     }
 
-    public String getFieldsContentLength() {
-        return fieldsContentLength;
+    public String getElapsedTime() {
+        return elapsedTime;
     }
 
-    public void setFieldsContentLength(String fieldsContentLength) {
-        this.fieldsContentLength = fieldsContentLength;
+    public void setElapsedTime(String elapsedTime) {
+        this.elapsedTime = elapsedTime;
     }
 
-    public String getFieldsElapsedTime() {
-        return fieldsElapsedTime;
+    public String getRequestHeaders() {
+      return requestHeaders;
     }
 
-    public void setFieldsElapsedTime(String fieldsElapsedTime) {
-        this.fieldsElapsedTime = fieldsElapsedTime;
+    public void setRequestHeaders(String requestHeaders) {
+      this.requestHeaders = requestHeaders;
     }
 
-    public String getFieldsRequestHeaders() {
-      return fieldsRequestHeaders;
+    public String getResponseHeaders() {
+      return responseHeaders;
     }
 
-    public void setFieldsRequestHeaders(String fieldsRequestHeaders) {
-      this.fieldsRequestHeaders = fieldsRequestHeaders;
-    }
-
-    public String getFieldsResponseHeaders() {
-      return fieldsResponseHeaders;
-    }
-
-    public void setFieldsResponseHeaders(String fieldsResponseHeaders) {
-      this.fieldsResponseHeaders = fieldsResponseHeaders;
+    public void setResponseHeaders(String responseHeaders) {
+      this.responseHeaders = responseHeaders;
     }
 }

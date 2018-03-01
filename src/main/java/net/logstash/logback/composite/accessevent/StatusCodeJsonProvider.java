@@ -25,7 +25,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 public class StatusCodeJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
-    public static final String FIELD_STATUS_CODE = "@fields.status_code";
+    public static final String FIELD_STATUS_CODE = "status_code";
     
     public StatusCodeJsonProvider() {
         setFieldName(FIELD_STATUS_CODE);
@@ -38,7 +38,7 @@ public class StatusCodeJsonProvider extends AbstractFieldJsonProvider<IAccessEve
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsStatusCode());
+        setFieldName(fieldNames.getStatusCode());
     }
 
 }

@@ -15,8 +15,11 @@ package net.logstash.logback.encoder;
 
 import net.logstash.logback.LogstashAccessFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.accessevent.HeaderFilter;
+import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 
 public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     
@@ -72,18 +75,52 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
         getFormatter().setLowerCaseHeaderNames(lowerCaseHeaderNames);
     }
     
-    public int getVersion() {
-        return getFormatter().getVersion();
-    }
-    public void setVersion(int version) {
-        getFormatter().setVersion(version);
+    public HeaderFilter getRequestHeaderFilter() {
+        return getFormatter().getRequestHeaderFilter();
     }
     
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setRequestHeaderFilter(HeaderFilter filter) {
+        getFormatter().setRequestHeaderFilter(filter);
+    }
+    
+    public HeaderFilter getResponseHeaderFilter() {
+        return getFormatter().getResponseHeaderFilter();
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setResponseHeaderFilter(HeaderFilter filter) {
+        getFormatter().setResponseHeaderFilter(filter);
+    }
+    
+    public String getVersion() {
+        return getFormatter().getVersion();
+    }
+    public void setVersion(String version) {
+        getFormatter().setVersion(version);
+    }
+
+    
+    /**
+     * @deprecated Use {@link #isWriteVersionAsInteger()}
+     */
+    @Deprecated
     public boolean isWriteVersionAsString() {
         return getFormatter().isWriteVersionAsString();
     }
+    /**
+     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
+     */
+    @Deprecated
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         getFormatter().setWriteVersionAsString(writeVersionAsString);
     }
-
+    
+    public boolean isWriteVersionAsInteger() {
+        return getFormatter().isWriteVersionAsInteger();
+    }
+    public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
+        getFormatter().setWriteVersionAsInteger(writeVersionAsInteger);
+    }
+    
 }

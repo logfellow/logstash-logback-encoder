@@ -13,14 +13,15 @@
  */
 package net.logstash.logback.appender;
 
-import com.lmax.disruptor.RingBuffer;
-
+import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+
+import com.lmax.disruptor.RingBuffer;
 
 /**
  * A {@link DelegatingAsyncDisruptorAppender} for {@link ILoggingEvent}s.
  */
-public class LoggingEventAsyncDisruptorAppender extends DelegatingAsyncDisruptorAppender<ILoggingEvent> {
+public class LoggingEventAsyncDisruptorAppender extends DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> {
 
     /**
      * Set to true if the caller data should be captured before publishing the event

@@ -54,6 +54,7 @@ public class ResponseHeadersJsonProviderTest {
     
     @Test
     public void testNoFieldName() throws IOException {
+        provider.setLowerCaseHeaderNames(false);
         provider.writeTo(generator, event);
         verifyNoMoreInteractions(generator);
     }
@@ -61,6 +62,7 @@ public class ResponseHeadersJsonProviderTest {
     @Test
     public void testFieldName() throws IOException {
         provider.setFieldName("fieldName");
+        provider.setLowerCaseHeaderNames(false);
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
@@ -75,13 +77,30 @@ public class ResponseHeadersJsonProviderTest {
     @Test
     public void testFieldNameWithLowerCase() throws IOException {
         provider.setFieldName("fieldName");
-        provider.setLowerCaseHeaderNames(true);
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
         inOrder.verify(generator).writeFieldName("fieldName");
         inOrder.verify(generator).writeStartObject();
         inOrder.verify(generator).writeStringField("headera", "valueA");
+        inOrder.verify(generator).writeStringField("headerb", "valueB");
+        inOrder.verify(generator).writeEndObject();
+        inOrder.verifyNoMoreInteractions();
+    }
+
+    @Test
+    public void testFilter() throws IOException {
+        
+        IncludeExcludeHeaderFilter filter = new IncludeExcludeHeaderFilter();
+        filter.addInclude("headerb");
+        
+        provider.setFieldName("fieldName");
+        provider.setFilter(filter);
+        provider.writeTo(generator, event);
+        
+        InOrder inOrder = inOrder(generator);
+        inOrder.verify(generator).writeFieldName("fieldName");
+        inOrder.verify(generator).writeStartObject();
         inOrder.verify(generator).writeStringField("headerb", "valueB");
         inOrder.verify(generator).writeEndObject();
         inOrder.verifyNoMoreInteractions();

@@ -22,6 +22,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
     * [Write buffer size](#write-buffer-size)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
+  * [Appender Listeners](#appender-listeners)
   * [Encoders / Layouts](#encoders--layouts)
 * [LoggingEvent Fields](#loggingevent-fields)
   * [Standard Fields](#standard-fields)
@@ -607,8 +608,39 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
 for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
 
-In order to guarantee that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+In order to guarantees that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
+### Appender Listeners
+
+Listeners can be registered to an appender to receive notifications for the appender lifecycle and event processing.
+
+See the two listener interfaces for the types of notifications that can be received:
+
+* [`AppenderListener`](/src/main/java/net/logstash/logback/appender/listener/AppenderListener.java) - basic notifications for the [async appenders](#async-appenders) and [udp appender](#udp-appender).
+* [`TcpAppenderListener`](/src/main/java/net/logstash/logback/appender/listener/TcpAppenderListener.java) - extension of `AppenderListener` with additional TCP-specific notifications.  Only works with the [TCP appenders](#tcp-appenders). 
+
+Some example use cases for a listener are:
+
+* Monitoring metrics for events per second, event processing durations, dropped events, connections successes / failures, etc.
+* Reporting event processing errors to a different appender (that perhaps appends to a different destination).
+
+To create a listener, create a new class that extends one of the `*ListenerImpl` classes or directly implements the `*Listener` interface.
+Extending the `*ListenerImpl` class will have better backwards compatibilty in the future in case new methods are added to the interfaces.
+(Logstash-logback-encoder still supports Java 7, so default interface methods cannot be used yet.)
+
+Then register your listener class to an appender using the `listener` xml element like this:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+      ...
+
+      <listener class="your.package.YourListenerClass">
+          <yourListenerProperty>propertyValue</yourListenerProperty>
+      </listener>
+  </appender>
+```
+
+Multiple listeners can be registered by supplying multiple `listener` xml elements.
 
 
 ### Encoders / Layouts
@@ -689,7 +721,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | Field         | Description
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#customizing-version).
+| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `message`     | Formatted log message of the event
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
@@ -801,8 +833,8 @@ When logging a message, you can add additional fields to the JSON output by usin
 The difference between the two is that
 * `StructuredArguments` are included in a the log event's formatted message
 (when the message has a parameter for the argument) _AND_ in the JSON output.
-  * `StructuredArguments` will only be included in the JSON output if using
-    [composite encoders/layouts](#composite-encoderlayout) with the `arguments` provider.
+  * `StructuredArguments` will be included in the JSON output if using `LogstashEncoder/Layout`
+    or if using [composite encoders/layouts](#composite-encoderlayout) with the `arguments` provider.
 * `Markers` are only written to the JSON output, and _NEVER_ to the log event's formatted message.
   * `Markers` will be included in the JSON output if using `LogstashEncoder/Layout`
     or if using [composite encoders/layouts](#composite-encoderlayout) with the `logstashMarkers` provider.
@@ -993,18 +1025,17 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | Field         | Description
 |---------------|------------
 | `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#customizing-version).
-| `@message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
-| `@fields.method` | HTTP method
-| `@fields.protocol` | HTTP protocol
-| `@fields.status_code` | HTTP status code
-| `@fields.requested_url` | Request URL
-| `@fields.requested_uri` | Request URI
-| `@fields.remote_host` | Remote host
-| `@fields.HOSTNAME` | another field for remote host (not sure why this is here honestly)
-| `@fields.remote_user` | Remote user
-| `@fields.content_length` | Content length
-| `@fields.elapsed_time` | Elapsed time in millis
+| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
+| `message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
+| `method` | HTTP method
+| `protocol` | HTTP protocol
+| `status_code` | HTTP status code
+| `requested_url` | Request URL
+| `requested_uri` | Request URI
+| `remote_host` | Remote host
+| `remote_user` | Remote user
+| `content_length` | Content length
+| `elapsed_time` | Elapsed time in millis
 
 
 ### Header Fields
@@ -1014,8 +1045,8 @@ Request and response headers are not logged by default, but can be enabled by sp
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
   <fieldNames>
-    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
-    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+    <requestHeaders>request_headers</requestHeaders>
+    <responseHeaders>response_headers</responseHeaders>
   </fieldNames>
 </encoder>
 ```
@@ -1028,14 +1059,35 @@ set `lowerCaseFieldNames` to true, like this:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
   <fieldNames>
-    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
-    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+    <requestHeaders>request_headers</requestHeaders>
+    <responseHeaders>response_headers</responseHeaders>
   </fieldNames>
   <lowerCaseHeaderNames>true</lowerCaseHeaderNames>
 </encoder>
 ```
 
+Headers can be filtered via configuring the `requestHeaderFilter` and/or the `responseHeaderFilter`
+with a [`HeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java), such as the
+[`IncludeExcludeHeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java).
 
+The `IncludeExcludeHeaderFilter` can be configured like this:
+ 
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <fieldNames>
+    <requestHeaders>request_headers</requestHeaders>
+  </fieldNames>
+  <requestHeaderFilter>
+    <include>Content-Type</include>
+  </requestHeaderFilter>
+</encoder>
+
+Custom filters implementing [`HeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java)
+can be used by specifying the filter class like this:
+
+```xml
+  <requestHeaderFilter class="your.package.YourFilterClass"/>
+```
 
 ## Customizing Standard Field Names
 
@@ -1072,7 +1124,7 @@ for all the field names that can be customized. Each java field name in that cla
 
 ## Customizing Version
 
-The version field value by default is the numeric value 1.
+The version field value by default is the string value `1`.
 
 The value can be changed like this:
 
@@ -1082,11 +1134,11 @@ The value can be changed like this:
 </encoder>
 ```
 
-The value can be written as a string (instead of a number) like this:
+The value can be written as a number (instead of a string) like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <writeVersionAsString>true</writeVersionAsString>
+  <writeVersionAsInteger>true</writeVersionAsInteger>
 </encoder>
 ```
 
@@ -1308,7 +1360,7 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
-          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
+          <li><tt>writeAsInteger</tt> - Write the version as a integer value (<tt>false</tt> = write as a string value)</li>
         </ul>
       </td>
     </tr>
@@ -1547,7 +1599,7 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
-          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
+          <li><tt>writeAsInteger</tt> - Write the version as a integer value (<tt>false</tt> = write as a string value)</li>
         </ul>
       </td>
     </tr>
@@ -1555,7 +1607,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>message</tt></td>
       <td><p>Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@message</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1563,7 +1615,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>method</tt></td>
       <td><p>HTTP method</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.method</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>method</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1571,7 +1623,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>protocol</tt></td>
       <td><p>HTTP protocol</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.protocol</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>protocol</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1579,7 +1631,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>statusCode</tt></td>
       <td><p>HTTP status code</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.status_code</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>status_code</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1587,7 +1639,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>requestedUrl</tt></td>
       <td><p>Requested URL</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.requested_url</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_url</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1595,7 +1647,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>requestedUri</tt></td>
       <td><p>Requested URI</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.requested_uri</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_uri</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1603,7 +1655,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>remoteHost</tt></td>
       <td><p>Remote Host</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.remote_host</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_host</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1611,7 +1663,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>remoteUser</tt></td>
       <td><p>Remote User</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.remote_user</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_user</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1619,7 +1671,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>contentLength</tt></td>
       <td><p>Content length</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.content_length</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>content_length</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1627,7 +1679,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>elapsedTime</tt></td>
       <td><p>Elapsed time in milliseconds</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.elapsed_time</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>elapsed_time</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1637,6 +1689,9 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
+          <li><tt>filter</tt> - A filter to determine which headers to include/exclude.
+          See <a href="/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java"><tt>HeaderFilter</tt></a>
+          and <a href="/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java"><tt>IncludeExcludeHeaderFilter</tt></a></li>
         </ul>
       </td>
     </tr>
@@ -1646,6 +1701,9 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
+          <li><tt>filter</tt> - A filter to determine which headers to include/exclude.
+          See <a href="/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java"><tt>HeaderFilter</tt></a>
+          and <a href="/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java"><tt>IncludeExcludeHeaderFilter</tt></a></li>
         </ul>
       </td>
     </tr>
@@ -1690,7 +1748,7 @@ For example...
   <providers>
     <timestamp/>
     <nestedField>
-      <fieldName>@fields</fieldName>
+      <fieldName>fields</fieldName>
       <providers>
         <logLevel/>
       </providers>
@@ -1704,7 +1762,7 @@ For example...
 ```
 {
   "@timestamp":"...",
-  "@fields":{
+  "fields":{
     "level": "DEBUG"
   }
 }
@@ -1748,7 +1806,7 @@ This example...
 ```
 {
   "@timestamp":"...",
-  "@version": 1,
+  "@version": "1",
   "level": "DEBUG"
 }
 ```
@@ -1770,6 +1828,7 @@ The operations are:
 * `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a long (or a null if conversion fails).
 * `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a double (or a null if conversion fails).
 * `#asJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or a null if conversion fails).
+* `#tryJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or just the string if conversion fails).
 
 So this example...
 

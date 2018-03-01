@@ -73,7 +73,6 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
          */
         .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
         .getFactory()
-        .enable(JsonGenerator.Feature.ESCAPE_NON_ASCII)
         /*
          * When generators are flushed, don't flush the underlying outputStream.
          * 

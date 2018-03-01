@@ -13,6 +13,7 @@
  */
 package net.logstash.logback.appender;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
@@ -24,8 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
-
+import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -90,7 +90,7 @@ import com.lmax.disruptor.dsl.ProducerType;
  * 
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
-public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware> extends UnsynchronizedAppenderBase<Event> {
+public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware, Listener extends AppenderListener<Event>> extends UnsynchronizedAppenderBase<Event> {
     
     protected static final String APPENDER_NAME_FORMAT = "%1$s";
     protected static final String THREAD_INDEX_FORMAT = "%2$d";
@@ -100,6 +100,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public static final ProducerType DEFAULT_PRODUCER_TYPE = ProducerType.MULTI;
     public static final WaitStrategy DEFAULT_WAIT_STRATEGY = new BlockingWaitStrategy();
     public static final int DEFAULT_DROPPED_WARN_FREQUENCY = 1000;
+    
+    private static final RingBufferFullException RING_BUFFER_FULL_EXCEPTION = new RingBufferFullException();
+    static {
+        RING_BUFFER_FULL_EXCEPTION.setStackTrace(new StackTraceElement[] { new StackTraceElement(AsyncDisruptorAppender.class.getName(), "append(..)", null, -1)});
+    }
     
     /**
      * The size of the {@link RingBuffer}.
@@ -230,6 +235,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private final AtomicInteger threadNumber = new AtomicInteger(1);
     
     /**
+     * These listeners will be notified when certain events occur on this appender.
+     */
+    protected final List<Listener> listeners = new ArrayList<>();
+    
+    /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
      */
     protected static class LogEvent<Event> {
@@ -354,7 +364,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 getThreadPoolCoreSize(),
                 this.threadFactory);
         
-        setRemoveOnCancelPolicy();
+        /*
+         * This ensures that cancelled tasks
+         * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
+         * do not hold up shutdown.
+         */
+        this.executorService.setRemoveOnCancelPolicy(true);
         
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
@@ -367,12 +382,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          * Define the exceptionHandler first, so that it applies
          * to all future eventHandlers.
          */
-        this.disruptor.handleExceptionsWith(this.exceptionHandler);
+        this.disruptor.setDefaultExceptionHandler(this.exceptionHandler);
         
         this.disruptor.handleEventsWith(new EventClearingEventHandler<Event>(this.eventHandler));
         
         this.disruptor.start();
         super.start();
+        fireAppenderStarted();
     }
 
     @Override
@@ -405,22 +421,31 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         } catch (InterruptedException e) {
             addWarn("Some queued events have not been logged due to requested shutdown", e);
         }
+        fireAppenderStopped();
     }
 
     @Override
     protected void append(Event event) {
-        prepareForDeferredProcessing(event);
-        
+        long startTime = System.nanoTime();
+        try {
+            prepareForDeferredProcessing(event);
+        } catch (RuntimeException e) {
+            addWarn("Unable to prepare event for deferred processing.  Event output might be missing data.", e);
+        }
+
         if (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
             long consecutiveDropped = this.consecutiveDroppedCount.incrementAndGet();
             if ((consecutiveDropped) % this.droppedWarnFrequency == 1) {
                 addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
             }
+            fireEventAppendFailed(event, RING_BUFFER_FULL_EXCEPTION);
         } else {
+            long endTime = System.nanoTime();
             long consecutiveDropped = this.consecutiveDroppedCount.get();
             if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
                 addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
             }
+            fireEventAppended(event, endTime - startTime);
         }
     }
 
@@ -428,38 +453,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         event.prepareForDeferredProcessing();
     }
     
-    @IgnoreJRERequirement
-    private void setRemoveOnCancelPolicy() {
-        /*
-         * ScheduledThreadPoolExecutor.setRemoveOnCancelPolicy was added in 1.7.
-         * 
-         * Don't try to invoke it if running on a JVM less than 1.7
-         * 
-         * If running on less than 1.7, then shutdown will wait for all tasks
-         * to complete (even if they are cancelled), or the max wait timeout,
-         * whichever comes first.
-         */
-        if (isRemoveOnCancelPolicyPossible()) {
-            /*
-             * This ensures that cancelled tasks
-             * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
-             * do not hold up shutdown.
-             */
-            this.executorService.setRemoveOnCancelPolicy(true);
-        }
-    }
     
-    private boolean isRemoveOnCancelPolicyPossible() {
-        try {
-            ScheduledThreadPoolExecutor.class.getMethod("setRemoveOnCancelPolicy", Boolean.TYPE);
-            return true;
-        } catch (NoSuchMethodException e) {
-            return false;
-        } catch (SecurityException e) {
-            return false;
-        }
-    }
-
     protected String calculateThreadName() {
         List<Object> threadNameFormatParams = getThreadNameFormatParams();
         return String.format(threadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));
@@ -470,6 +464,28 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             getName(),
             threadNumber.incrementAndGet());
     }
+    
+    protected void fireAppenderStarted() {
+        for (Listener listener : listeners) {
+            listener.appenderStarted(this);
+        }
+    }
+    protected void fireAppenderStopped() {
+        for (Listener listener : listeners) {
+            listener.appenderStopped(this);
+        }
+    }
+    protected void fireEventAppended(Event event, long durationInNanos) {
+        for (Listener listener : listeners) {
+            listener.eventAppended(this, event, durationInNanos);
+        }
+    }
+    protected void fireEventAppendFailed(Event event, Throwable reason) {
+        for (Listener listener : listeners) {
+            listener.eventAppendFailed(this, event, reason);
+        }
+    }
+    
     protected void setEventFactory(LogEventFactory<Event> eventFactory) {
         this.eventFactory = eventFactory;
     }
@@ -599,6 +615,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
     public void setDaemon(boolean useDaemonThread) {
         this.useDaemonThread = useDaemonThread;
+    }
+    
+    public void addListener(Listener listener) {
+        this.listeners.add(listener);
+    }
+    public void removeListener(Listener listener) {
+        this.listeners.remove(listener);
     }
 
 }

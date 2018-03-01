@@ -24,7 +24,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 /**
- * Writes a version field as a numeric value (by default) or a string value (if {@link #isWriteAsString()}).
+ * Writes a version field as a string value (by default) or a numeric value (if {@link #isWriteAsInteger()} is true).
  * This is intended to be the logstash JSON format version.
  * 
  * By default, the version is {@value #DEFAULT_VERSION}.
@@ -35,15 +35,16 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
     
     public static final String FIELD_VERSION = "@version";
     
-    public static final int DEFAULT_VERSION = 1;
+    public static final String DEFAULT_VERSION = "1";
     
-    private int version;
-    private String versionAsString;
+    private String version;
+    private long versionAsInteger;
     
     /**
-     * When true, the version will be written as a string value instead of a numeric value. 
+     * When false (the default), the version will be written as a string value.
+     * When true, the version will be written as a numeric integer value.
      */
-    private boolean writeAsString;
+    private boolean writeAsInteger;
     
     public LogstashVersionJsonProvider() {
         setFieldName(FIELD_VERSION);
@@ -52,10 +53,10 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
 
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
-        if (writeAsString) {
-            JsonWritingUtils.writeStringField(generator, getFieldName(), versionAsString);
+        if (writeAsInteger) {
+            JsonWritingUtils.writeNumberField(generator, getFieldName(), versionAsInteger);
         } else {
-            JsonWritingUtils.writeNumberField(generator, getFieldName(), version);
+            JsonWritingUtils.writeStringField(generator, getFieldName(), version);
         }
     }
     
@@ -64,20 +65,41 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
         setFieldName(fieldNames.getVersion());
     }
     
-    public int getVersion() {
+    public String getVersion() {
         return version;
     }
     
-    public void setVersion(int version) {
+    public void setVersion(String version) {
         this.version = version;
-        this.versionAsString = Integer.toString(version);
+        if (writeAsInteger) {
+            this.versionAsInteger = Integer.parseInt(version);
+        }
     }
     
+    /**
+     * @deprecated Use {@link #isWriteAsInteger()}
+     */
+    @Deprecated
     public boolean isWriteAsString() {
-        return writeAsString;
+        return !isWriteAsInteger();
     }
+    /**
+     * @deprecated Use {@link #setWriteAsInteger(boolean)}
+     */
+    @Deprecated
     public void setWriteAsString(boolean writeAsString) {
-        this.writeAsString = writeAsString;
+        setWriteAsInteger(!writeAsString);
     }
-
+    
+    public boolean isWriteAsInteger() {
+        return writeAsInteger;
+    }
+    
+    public void setWriteAsInteger(boolean writeAsInteger) {
+        this.writeAsInteger = writeAsInteger;
+        if (writeAsInteger) {
+            this.versionAsInteger = Integer.parseInt(version);
+        }
+    }
+    
 }

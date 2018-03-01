@@ -13,10 +13,13 @@
  */
 package net.logstash.logback.appender;
 
+import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.List;
 
+import net.logstash.logback.appender.listener.AppenderListener;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
@@ -32,6 +35,17 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     
     private final LogstashLayout logstashLayout = new LogstashLayout();
     
+    /**
+     * These listeners will be notified when certain events occur on this appender.
+     */
+    private final List<AppenderListener<ILoggingEvent>> listeners = new ArrayList<>();
+    
+    private SyslogOutputStream syslogOutputStream;  
+
+    public LogstashSocketAppender() {
+        setFacility("NEWS"); // NOTE: this value is never used
+    }
+    
     @Override
     public Layout<ILoggingEvent> buildLayout() {
         logstashLayout.setContext(getContext());
@@ -42,16 +56,68 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
     public void start() {
         super.start();
         getLayout().start();
+        fireAppenderStarted();
     }
     
     @Override
     public void stop() {
         super.stop();
         getLayout().stop();
+        fireAppenderStopped();
     }
     
-    public LogstashSocketAppender() {
-        setFacility("NEWS"); // NOTE: this value is never used
+    @Override
+    protected void append(ILoggingEvent eventObject) {
+        if (!isStarted()) {
+            return;
+        }
+        long startTime = System.nanoTime();
+        try {
+            /*
+             * This is a cut-and-paste of SyslogAppenderBase.append(E)
+             * so that we can fire the appropriate event.
+             */
+            String msg = getLayout().doLayout(eventObject);
+            if (msg == null) {
+                return;
+            }
+            if (msg.length() > getMaxMessageSize()) {
+                msg = msg.substring(0, getMaxMessageSize());
+            }
+            syslogOutputStream.write(msg.getBytes(getCharset()));
+            syslogOutputStream.flush();
+            postProcess(eventObject, syslogOutputStream);
+            
+            fireEventAppended(eventObject, System.nanoTime() - startTime);
+        } catch (IOException ioe) {
+            addError("Failed to send diagram to " + getSyslogHost(), ioe);
+
+            fireEventAppendFailed(eventObject, ioe);
+        }
+    }
+    
+    protected void fireAppenderStarted() {
+        for (AppenderListener<ILoggingEvent> listener : listeners) {
+            listener.appenderStarted(this);
+        }
+    }
+    
+    protected void fireAppenderStopped() {
+        for (AppenderListener<ILoggingEvent> listener : listeners) {
+            listener.appenderStopped(this);
+        }
+    }
+    
+    protected void fireEventAppended(ILoggingEvent event, long durationInNanos) {
+        for (AppenderListener<ILoggingEvent> listener : listeners) {
+            listener.eventAppended(this, event, durationInNanos);
+        }
+    }
+    
+    protected void fireEventAppendFailed(ILoggingEvent event, Throwable reason) {
+        for (AppenderListener<ILoggingEvent> listener : listeners) {
+            listener.eventAppendFailed(this, event, reason);
+        }
     }
     
     @Override
@@ -156,6 +222,30 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         logstashLayout.setIncludeContext(includeContext);
     }
 
+    public boolean isIncludeStructuredArguments() {
+        return logstashLayout.isIncludeStructuredArguments();
+    }
+
+    public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
+        logstashLayout.setIncludeStructuredArguments(includeStructuredArguments);
+    }
+    
+    public boolean isIncludeNonStructuredArguments() {
+        return logstashLayout.isIncludeNonStructuredArguments();
+    }
+
+    public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
+        logstashLayout.setIncludeNonStructuredArguments(includeNonStructuredArguments);
+    }
+    
+    public String getNonStructuredArgumentsFieldPrefix() {
+        return logstashLayout.getNonStructuredArgumentsFieldPrefix();
+    }
+
+    public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
+        logstashLayout.setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
+    }
+
     public int getShortenedLoggerNameLength() {
         return logstashLayout.getShortenedLoggerNameLength();
     }
@@ -210,8 +300,16 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         logstashLayout.setSuffix(suffix);
     }
 
+    public void addListener(AppenderListener<ILoggingEvent> listener) {
+        this.listeners.add(listener);
+    }
+    public void removeListener(AppenderListener<ILoggingEvent> listener) {
+        this.listeners.remove(listener);
+    }
+
     @Override
     public SyslogOutputStream createOutputStream() throws UnknownHostException, SocketException {
-        return new SyslogOutputStream(this.getHost(), this.getPort());
+        this.syslogOutputStream = new SyslogOutputStream(this.getHost(), this.getPort());
+        return this.syslogOutputStream;
     }
 }

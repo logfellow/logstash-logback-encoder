@@ -11,14 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.appender;
-
-import net.logstash.logback.appender.listener.AppenderListener;
-import ch.qos.logback.access.spi.IAccessEvent;
+package net.logstash.logback.composite.accessevent;
 
 /**
- * A {@link DelegatingAsyncDisruptorAppender} for {@link IAccessEvent}s.
+ * A filter used to determine if a request/response header should be included in the log event output. 
  */
-public class AccessEventAsyncDisruptorAppender extends DelegatingAsyncDisruptorAppender<IAccessEvent, AppenderListener<IAccessEvent>> {
+public interface HeaderFilter {
     
+    /**
+     * Returns true if the given header should be included in the log event output
+     * @return true if the given header should be included in the log event output
+     */
+    boolean includeHeader(String headerName, String headerValue);
+
 }
