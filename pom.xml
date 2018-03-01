@@ -116,6 +116,10 @@
             <groupId>com.fasterxml.uuid</groupId>
             <artifactId>java-uuid-generator</artifactId>
             <version>${com.fasterxml.uuid.version}</version>
+            <!--
+               Only needed if the UuidProvider is used.
+            -->
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>commons-lang</groupId>
@@ -368,6 +372,7 @@
                                 <exclude>ch.qos.logback:*</exclude>
                                 <exclude>org.slf4j:*</exclude>
                                 <exclude>com.fasterxml.jackson.core:*</exclude>
+                                <exclude>com.fasterxml.uuid:*</exclude>
                             </excludes>
                         </artifactSet>
                         <relocations>
