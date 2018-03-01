@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-4.11).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.0).
 
 # Logback JSON encoder
 
@@ -61,7 +61,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>4.11</version>
+  <version>5.0</version>
 </dependency>
 ```
 
