@@ -35,7 +35,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.io.SegmentedStringWriter;
 import com.fasterxml.jackson.core.util.BufferRecycler;
 import com.fasterxml.jackson.core.util.ByteArrayBuilder;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -67,7 +66,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     /**
      * Used to create the necessary {@link JsonGenerator}s for generating JSON.
      */
-    private MappingJsonFactory jsonFactory = (MappingJsonFactory) new ObjectMapper()
+    private JsonFactory jsonFactory = new ObjectMapper()
         /*
          * Assume empty beans are ok.
          */

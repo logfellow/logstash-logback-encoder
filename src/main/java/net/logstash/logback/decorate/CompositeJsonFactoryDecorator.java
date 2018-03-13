@@ -16,7 +16,7 @@ package net.logstash.logback.decorate;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.core.JsonFactory;
 
 /**
  * Combines a list of decorators into a single decorator, so multiple decorators can be used together.
@@ -26,8 +26,8 @@ public class CompositeJsonFactoryDecorator implements JsonFactoryDecorator {
     private final List<JsonFactoryDecorator> decorators = new ArrayList<JsonFactoryDecorator>();
 
     @Override
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        MappingJsonFactory decoratedFactory = factory;
+    public JsonFactory decorate(JsonFactory factory) {
+        JsonFactory decoratedFactory = factory;
         for (JsonFactoryDecorator decorator : decorators) {
             decoratedFactory = decorator.decorate(decoratedFactory);
         }

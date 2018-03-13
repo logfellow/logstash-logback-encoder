@@ -15,7 +15,6 @@ package net.logstash.logback.decorate;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
  * Enables the {@link JsonGenerator.Feature#ESCAPE_NON_ASCII} feature on the {@link JsonFactory}.
@@ -26,8 +25,8 @@ import com.fasterxml.jackson.databind.MappingJsonFactory;
 public class EscapeNonAsciiJsonFactoryDecorator implements JsonFactoryDecorator {
 
     @Override
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        return (MappingJsonFactory) factory.enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+    public JsonFactory decorate(JsonFactory factory) {
+        return factory.enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
     }
 
 }

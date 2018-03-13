@@ -45,6 +45,10 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
      * logger.info(append("name1", "value1).and(append("name2", "value2")), "log message");
      * }
      * </pre>
+     * 
+     * @param <T> subtype of LogstashMarker
+     * @param reference The marker to add
+     * @return A marker with this marker and the given marker
      */
     @SuppressWarnings("unchecked")
     public <T extends LogstashMarker> T and(Marker reference) {
@@ -53,8 +57,11 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
     }
     
     /**
+     * @param <T> subtype of LogstashMarker
+     * @param reference The marker to add
      * @deprecated Use {@link #and(Marker)} instead
      * @see #and(Marker)
+     * @return A marker with this marker and the given marker
      */
     @Deprecated
     public <T extends LogstashMarker> T with(Marker reference) {
@@ -63,6 +70,9 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
 
     /**
      * Writes the data associated with this marker to the given {@link JsonGenerator}.
+     * 
+     * @param generator the generator to which to write the output of this marker.
+     * @throws IOException if there was an error writing to the generator
      */
     public abstract void writeTo(JsonGenerator generator) throws IOException;
     

@@ -13,7 +13,7 @@
  */
 package net.logstash.logback.decorate;
 
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.core.JsonFactory;
 
 /**
  * A {@link JsonFactoryDecorator} that doesn't do any decoration.
@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.MappingJsonFactory;
 public class NullJsonFactoryDecorator implements JsonFactoryDecorator {
 
     @Override
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
+    public JsonFactory decorate(JsonFactory factory) {
         return factory;
     }
 

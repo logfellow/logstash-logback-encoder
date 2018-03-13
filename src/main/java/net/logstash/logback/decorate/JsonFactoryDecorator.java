@@ -15,10 +15,10 @@ package net.logstash.logback.decorate;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
 
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.core.JsonFactory;
 
 /**
- * Decorates the {@link MappingJsonFactory} used by a
+ * Decorates the {@link JsonFactory} used by a
  * {@link CompositeJsonFormatter}.
  * <p>
  * This allows you to customize the factory used by the formatters.
@@ -30,6 +30,6 @@ import com.fasterxml.jackson.databind.MappingJsonFactory;
  */
 public interface JsonFactoryDecorator {
     
-    MappingJsonFactory decorate(MappingJsonFactory factory);
+    JsonFactory decorate(JsonFactory factory);
 
 }

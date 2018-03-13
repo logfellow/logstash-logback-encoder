@@ -154,8 +154,8 @@ public class LogstashEncoderTest {
         encoder.setJsonFactoryDecorator(new JsonFactoryDecorator() {
             
             @Override
-            public MappingJsonFactory decorate(MappingJsonFactory factory) {
-                return (MappingJsonFactory) factory.disable(JsonGenerator.Feature.QUOTE_FIELD_NAMES);
+            public JsonFactory decorate(JsonFactory factory) {
+                return factory.disable(JsonGenerator.Feature.QUOTE_FIELD_NAMES);
             }
         });
         
