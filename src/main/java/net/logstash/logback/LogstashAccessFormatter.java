@@ -13,8 +13,6 @@
  */
 package net.logstash.logback;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -27,7 +25,8 @@ import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
 import net.logstash.logback.composite.accessevent.AccessMessageJsonProvider;
 import net.logstash.logback.composite.accessevent.ContentLengthJsonProvider;
 import net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider;
-import net.logstash.logback.composite.accessevent.HostnameJsonProvider;
+import net.logstash.logback.composite.accessevent.HeaderFilter;
+import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
 import net.logstash.logback.composite.accessevent.MethodJsonProvider;
 import net.logstash.logback.composite.accessevent.ProtocolJsonProvider;
 import net.logstash.logback.composite.accessevent.RemoteHostJsonProvider;
@@ -39,7 +38,10 @@ import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
 import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * A {@link AccessEventCompositeJsonFormatter} that contains a common
@@ -71,7 +73,6 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     private final RequestedUrlJsonProvider requestedUrlProvider = new RequestedUrlJsonProvider();
     private final RequestedUriJsonProvider requestedUriProvider = new RequestedUriJsonProvider();
     private final RemoteHostJsonProvider remoteHostProvider = new RemoteHostJsonProvider();
-    private final HostnameJsonProvider hostnameProvider = new HostnameJsonProvider();
     private final RemoteUserJsonProvider remoteUserProvider = new RemoteUserJsonProvider();
     private final ContentLengthJsonProvider contentLengthProvider = new ContentLengthJsonProvider();
     private final ElapsedTimeJsonProvider elapsedTimeProvider = new ElapsedTimeJsonProvider();
@@ -92,7 +93,6 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         getProviders().addRequestedUrl(this.requestedUrlProvider);
         getProviders().addRequestedUri(this.requestedUriProvider);
         getProviders().addRemoteHost(this.remoteHostProvider);
-        getProviders().addHostname(this.hostnameProvider);
         getProviders().addRemoteUser(this.remoteUserProvider);
         getProviders().addContentLength(this.contentLengthProvider);
         getProviders().addElapsedTime(this.elapsedTimeProvider);
@@ -140,6 +140,12 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         this.timestampProvider.setTimeZone(timeZoneId);
         this.messageProvider.setTimeZone(timeZoneId);
     }    
+    public String getTimestampPattern() {
+        return timestampProvider.getPattern();
+    }
+    public void setTimestampPattern(String pattern) {
+        timestampProvider.setPattern(pattern);
+    }
 
     public String getCustomFieldsAsString() {
         return globalCustomFieldsProvider == null
@@ -189,19 +195,54 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         this.responseHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
     }
     
-    public int getVersion() {
-        return this.versionProvider.getVersion();
-    }
-    public void setVersion(int version) {
-        this.versionProvider.setVersion(version);
+    public HeaderFilter getRequestHeaderFilter() {
+        return this.requestHeadersProvider.getFilter();
     }
     
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setRequestHeaderFilter(HeaderFilter filter) {
+        this.requestHeadersProvider.setFilter(filter);
+    }
+    
+    public HeaderFilter getResponseHeaderFilter() {
+        return this.responseHeadersProvider.getFilter();
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setResponseHeaderFilter(HeaderFilter filter) {
+        this.responseHeadersProvider.setFilter(filter);
+    }
+    
+    public String getVersion() {
+        return this.versionProvider.getVersion();
+    }
+    public void setVersion(String version) {
+        this.versionProvider.setVersion(version);
+    }
+
+    
+    /**
+     * @deprecated Use {@link #isWriteVersionAsInteger()}
+     */
+    @Deprecated
     public boolean isWriteVersionAsString() {
         return this.versionProvider.isWriteAsString();
     }
+    /**
+     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
+     */
+    @Deprecated
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         this.versionProvider.setWriteAsString(writeVersionAsString);
     }
+    
+    public boolean isWriteVersionAsInteger() {
+        return this.versionProvider.isWriteAsInteger();
+    }
+    public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
+        this.versionProvider.setWriteAsInteger(writeVersionAsInteger);
+    }
+    
 
     @Override
     public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {

@@ -90,7 +90,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     
     public static final int FULL_MAX_DEPTH_PER_THROWABLE = Integer.MAX_VALUE;
     public static final int SHORT_MAX_DEPTH_PER_THROWABLE = 3;
-    public static final int DEFAULT_MAX_DEPTH_PER_THROWABLE = 25;
+    public static final int DEFAULT_MAX_DEPTH_PER_THROWABLE = FULL_MAX_DEPTH_PER_THROWABLE;
     
     public static final int FULL_MAX_LENGTH = Integer.MAX_VALUE;
     public static final int SHORT_MAX_LENGTH = 1024;
@@ -271,7 +271,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
          * The extra 100 gives a little more buffer room since we actually
          * go over the maxLength before detecting it and truncating.
          */
-        StringBuilder builder = new StringBuilder(Math.min(BUFFER_INITIAL_CAPACITY, Math.max(Integer.MAX_VALUE, this.maxLength + 100)));
+        StringBuilder builder = new StringBuilder(Math.min(BUFFER_INITIAL_CAPACITY, this.maxLength + 100 > 0 ? this.maxLength + 100 : this.maxLength));
         if (rootCauseFirst) {
             appendRootCauseFirst(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         } else {

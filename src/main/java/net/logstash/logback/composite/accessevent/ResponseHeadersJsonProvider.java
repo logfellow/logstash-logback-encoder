@@ -14,30 +14,46 @@
 package net.logstash.logback.composite.accessevent;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
-import ch.qos.logback.access.spi.IAccessEvent;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
+
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public class ResponseHeadersJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
     /**
      * When true, names of headers will be written to JSON output in lowercase. 
      */
-    private boolean lowerCaseHeaderNames;
+    private boolean lowerCaseHeaderNames = true;
+
+    private HeaderFilter filter;
 
     @Override
     public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
-        JsonWritingUtils.writeMapStringFields(generator, getFieldName(), event.getResponseHeaderMap(), lowerCaseHeaderNames);
+        Map<String, String> headers;
+        if (filter == null) {
+            headers = event.getResponseHeaderMap();
+        } else {
+            headers = new HashMap<>(event.getResponseHeaderMap().size());
+            for (Map.Entry<String, String> header : event.getResponseHeaderMap().entrySet()) {
+                if (filter.includeHeader(header.getKey(), header.getValue())) {
+                    headers.put(header.getKey(), header.getValue());
+                }
+            }
+        }
+        JsonWritingUtils.writeMapStringFields(generator, getFieldName(), headers, lowerCaseHeaderNames);
     }
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsResponseHeaders());
+        setFieldName(fieldNames.getResponseHeaders());
     }
 
     public boolean getLowerCaseHeaderNames() {
@@ -47,4 +63,14 @@ public class ResponseHeadersJsonProvider extends AbstractFieldJsonProvider<IAcce
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         this.lowerCaseHeaderNames = lowerCaseHeaderNames;
     }
+    
+    public HeaderFilter getFilter() {
+        return filter;
+    }
+    
+    @DefaultClass(IncludeExcludeHeaderFilter.class)
+    public void setFilter(HeaderFilter filter) {
+        this.filter = filter;
+    }
+
 }

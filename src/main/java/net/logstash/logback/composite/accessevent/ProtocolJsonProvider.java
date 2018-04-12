@@ -25,7 +25,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 public class ProtocolJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
-    public static final String FIELD_PROTOCOL = "@fields.protocol";
+    public static final String FIELD_PROTOCOL = "protocol";
     
     public ProtocolJsonProvider() {
         setFieldName(FIELD_PROTOCOL);
@@ -38,7 +38,7 @@ public class ProtocolJsonProvider extends AbstractFieldJsonProvider<IAccessEvent
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsProtocol());
+        setFieldName(fieldNames.getProtocol());
     }
 
 }

@@ -217,7 +217,8 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key5\": \"#asJson{[1, 2]}\",\n"
                 + "    \"key6\": \"#asJson{[1, \\\"2\\\"]}\",\n"
                 + "    \"key7\": \"#asJson{{\\\"field\\\":\\\"value\\\"}}\",\n"
-                + "    \"key8\": \"#asJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\"\n"
+                + "    \"key8\": \"#asJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\",\n"
+                + "    \"key9\": \"#asJson{one two three}\"\n"
                 + "}";
 
         String expected = ""
@@ -229,7 +230,40 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key5\": [1, 2],\n"
                 + "    \"key6\": [1, \"2\"],\n"
                 + "    \"key7\": {\"field\":\"value\"},\n"
-                + "    \"key8\": {\"field\":\"value\", \"num\":123}\n"
+                + "    \"key8\": {\"field\":\"value\", \"num\":123},\n"
+                + "    \"key9\": null\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void tryJsonShouldTransformTextValueToJson() throws IOException {
+
+        String pattern = ""
+                + "{\n"
+                + "    \"key1\": \"#tryJson{true}\",\n"
+                + "    \"key2\": \"#tryJson{123}\",\n"
+                + "    \"key3\": \"#tryJson{123.4}\",\n"
+                + "    \"key4\": \"#tryJson{\\\"123\\\"}\",\n"
+                + "    \"key5\": \"#tryJson{[1, 2]}\",\n"
+                + "    \"key6\": \"#tryJson{[1, \\\"2\\\"]}\",\n"
+                + "    \"key7\": \"#tryJson{{\\\"field\\\":\\\"value\\\"}}\",\n"
+                + "    \"key8\": \"#tryJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\",\n"
+                + "    \"key9\": \"#tryJson{one two three}\"\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "    \"key1\": true,\n"
+                + "    \"key2\": 123,\n"
+                + "    \"key3\": 123.4,\n"
+                + "    \"key4\": \"123\",\n"
+                + "    \"key5\": [1, 2],\n"
+                + "    \"key6\": [1, \"2\"],\n"
+                + "    \"key7\": {\"field\":\"value\"},\n"
+                + "    \"key8\": {\"field\":\"value\", \"num\":123},\n"
+                + "    \"key9\": \"one two three\"\n"
                 + "}";
 
         verifyFields(pattern, expected);

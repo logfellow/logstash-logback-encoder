@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender;
+import net.logstash.logback.appender.listener.AppenderListener;
 import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -48,10 +50,13 @@ import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.powermock.reflect.Whitebox;
+import org.powermock.reflect.internal.WhiteboxImpl;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.read.ListAppender;
@@ -88,13 +93,20 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(22, providers.size());
+        Assert.assertEquals(24, providers.size());
 
         verifyCommonProviders(providers);
 
         Assert.assertNotNull(getInstance(providers, TestJsonProvider.class));
 
         verifyOutput(encoder);
+    }
+
+    @Test
+    public void testAppenderHasListener() throws IOException {
+        LoggingEventAsyncDisruptorAppender appender = getAppender("asyncAppender");
+        List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) Whitebox.getFieldValue(Whitebox.getField(LoggingEventAsyncDisruptorAppender.class, "listeners") , appender);
+        Assert.assertEquals(1, listeners.size());
     }
 
 
@@ -210,7 +222,7 @@ public class ConfigurationTest {
 
         Map<String, Object> output = parseJson(new String(encoded, "UTF-8"));
         Assert.assertNotNull(output.get("@timestamp"));
-        Assert.assertEquals(1, output.get("@version"));
+        Assert.assertEquals("1", output.get("@version"));
         Assert.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));
         Map<String, Object> nested = (Map<String, Object>) output.get("nested");
         Assert.assertEquals("message {} {} {} {}", nested.get("customRawMessage"));
@@ -232,9 +244,13 @@ public class ConfigurationTest {
     }
 
     @SuppressWarnings("unchecked")
+    private <T extends Appender<ILoggingEvent>> T getAppender(String appenderName) {
+        return (T) LOGGER.getAppender(appenderName);
+    }
+
+    @SuppressWarnings("unchecked")
     private <T extends Encoder<ILoggingEvent>> T getEncoder(String appenderName) {
-        OutputStreamAppender<ILoggingEvent> appender = (OutputStreamAppender<ILoggingEvent>) LOGGER.getAppender(appenderName);
-        return (T) appender.getEncoder();
+        return (T) this.<OutputStreamAppender<ILoggingEvent>>getAppender(appenderName).getEncoder();
     }
 
     private Map<String, Object> parseJson(final String text) throws IOException {

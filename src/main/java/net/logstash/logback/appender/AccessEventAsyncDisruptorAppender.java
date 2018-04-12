@@ -13,11 +13,12 @@
  */
 package net.logstash.logback.appender;
 
+import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 
 /**
  * A {@link DelegatingAsyncDisruptorAppender} for {@link IAccessEvent}s.
  */
-public class AccessEventAsyncDisruptorAppender extends DelegatingAsyncDisruptorAppender<IAccessEvent> {
+public class AccessEventAsyncDisruptorAppender extends DelegatingAsyncDisruptorAppender<IAccessEvent, AppenderListener<IAccessEvent>> {
     
 }

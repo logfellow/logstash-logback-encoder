@@ -27,6 +27,8 @@ import ch.qos.logback.core.spi.ContextAware;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 
 /**
@@ -52,6 +54,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         addOperation(new AsLongOperation());
         addOperation(new AsDoubleOperation());
         addOperation(new AsJsonOperation());
+        addOperation(new TryJsonOperation());
     }
     
     protected void addOperation(Operation operation) {
@@ -112,6 +115,18 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public ValueGetter<?, Event> createValueGetter(String data) {
             return new AsJsonValueTransformer(makeLayoutValueGetter(data));
+        }
+    }
+    
+    protected class TryJsonOperation extends Operation {
+
+        public TryJsonOperation() {
+            super("tryJson", true);
+        }
+
+        @Override
+        public ValueGetter<?, Event> createValueGetter(String data) {
+            return new TryJsonValueTransformer(makeLayoutValueGetter(data));
         }
     }
 
@@ -205,6 +220,21 @@ public abstract class AbstractJsonPatternParser<Event> {
 
         protected JsonNode transform(final String value) throws IOException {
             return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
+        }
+    }
+    
+    protected class TryJsonValueTransformer extends AbstractAsObjectTransformer<Object, Event> {
+
+        public TryJsonValueTransformer(final ValueGetter<String, Event> generator) {
+            super(generator);
+        }
+
+        protected Object transform(final String value) throws IOException {
+            try {
+                return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
+            } catch (JsonParseException e) {
+                return value;
+            }
         }
     }
 

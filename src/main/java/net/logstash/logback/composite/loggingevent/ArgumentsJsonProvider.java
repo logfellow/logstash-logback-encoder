@@ -17,6 +17,8 @@ import java.io.IOException;
 
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -38,13 +40,19 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * If the fieldName is non-null, then the arguments will be written to that field as a subobject.
  * Otherwise, the arguments are written inline.
  */
-public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
+    private boolean includeStructuredArguments = true;
     private boolean includeNonStructuredArguments;
     private String nonStructuredArgumentsFieldPrefix = "arg";
 
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+        
+        if (!includeStructuredArguments && !includeNonStructuredArguments) {
+            // Short-circuit if nothing is included
+            return;
+        }
 
         Object[] args = event.getArgumentArray();
 
@@ -59,12 +67,14 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
             Object arg = args[argIndex];
 
             if (arg instanceof StructuredArgument) {
-                if (!hasWrittenFieldName && getFieldName() != null) {
-                    generator.writeObjectFieldStart(getFieldName());
-                    hasWrittenFieldName = true;
+                if (includeStructuredArguments) {
+                    if (!hasWrittenFieldName && getFieldName() != null) {
+                        generator.writeObjectFieldStart(getFieldName());
+                        hasWrittenFieldName = true;
+                    }
+                    StructuredArgument structuredArgument = (StructuredArgument) arg;
+                    structuredArgument.writeTo(generator);
                 }
-                StructuredArgument structuredArgument = (StructuredArgument) arg;
-                structuredArgument.writeTo(generator);
             } else if (includeNonStructuredArguments) {
                 if (!hasWrittenFieldName && getFieldName() != null) {
                     generator.writeObjectFieldStart(getFieldName());
@@ -79,20 +89,33 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
             generator.writeEndObject();
         }
     }
+    
+    public boolean isIncludeStructuredArguments() {
+        return includeStructuredArguments;
+    }
 
+    public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
+        this.includeStructuredArguments = includeStructuredArguments;
+    }
+    
     public boolean isIncludeNonStructuredArguments() {
         return includeNonStructuredArguments;
     }
 
-    public void setIncludeNonStructuredArguments(boolean includeArgumentWithNoKey) {
-        this.includeNonStructuredArguments = includeArgumentWithNoKey;
+    public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
+        this.includeNonStructuredArguments = includeNonStructuredArguments;
     }
 
     public String getNonStructuredArgumentsFieldPrefix() {
         return nonStructuredArgumentsFieldPrefix;
     }
 
-    public void setNonStructuredArgumentsFieldPrefix(String argumentWithNoKeyPrefix) {
-        this.nonStructuredArgumentsFieldPrefix = argumentWithNoKeyPrefix;
+    public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
+        this.nonStructuredArgumentsFieldPrefix = nonStructuredArgumentsFieldPrefix;
+    }
+    
+    @Override
+    public void setFieldNames(LogstashFieldNames fieldNames) {
+        setFieldName(fieldNames.getArguments());
     }
 }

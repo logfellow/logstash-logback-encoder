@@ -117,7 +117,7 @@ public class LogstashEncoderTest {
 
     protected void verifyBasics(final long timestamp, JsonNode node) {
         assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp));
-        assertThat(node.get("@version").intValue()).isEqualTo(1);
+        assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
         assertThat(node.get("message").textValue()).isEqualTo("My message");
@@ -140,7 +140,7 @@ public class LogstashEncoderTest {
         
         assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                 (timestamp));
-        assertThat(node.get("@version").intValue()).isEqualTo(1);
+        assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
         assertThat(node.get("message").textValue()).isEqualTo("My message");
@@ -180,7 +180,7 @@ public class LogstashEncoderTest {
         assertThat(output).isEqualTo(String.format(
                 "{%n"
                 + "  @timestamp : \"" + FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp) + "\",%n"
-                + "  @version : 1,%n"
+                + "  @version : \"1\",%n"
                 + "  message : \"My message\",%n"
                 + "  logger_name : \"LoggerName\",%n"
                 + "  thread_name : \"ThreadName\",%n"
@@ -209,7 +209,7 @@ public class LogstashEncoderTest {
 
         assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
                 (timestamp));
-        assertThat(node.get("@version").intValue()).isEqualTo(1);
+        assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo(shortenedLoggerName);
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
         assertThat(node.get("message").textValue()).isEqualTo("My message");
@@ -601,7 +601,7 @@ public class LogstashEncoderTest {
         
         assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", TimeZone.getTimeZone("UTC")).format
                 (timestamp));
-        assertThat(node.get("@version").intValue()).isEqualTo(1);
+        assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
         assertThat(node.get("message").textValue()).isEqualTo("My message");

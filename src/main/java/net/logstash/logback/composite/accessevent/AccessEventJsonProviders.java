@@ -61,9 +61,6 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addRemoteHost(RemoteHostJsonProvider provider) {
         addProvider(provider);
     }
-    public void addHostname(HostnameJsonProvider provider) {
-        addProvider(provider);
-    }
     public void addRemoteUser(RemoteUserJsonProvider provider) {
         addProvider(provider);
     }

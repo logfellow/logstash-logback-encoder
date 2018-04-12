@@ -13,14 +13,15 @@
  */
 package net.logstash.logback.appender;
 
-import com.lmax.disruptor.RingBuffer;
-
+import net.logstash.logback.appender.listener.TcpAppenderListener;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+
+import com.lmax.disruptor.RingBuffer;
 
 /**
  * A {@link AbstractLogstashTcpSocketAppender} for logging {@link ILoggingEvent}s.
  */
-public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender<ILoggingEvent> {
+public class LogstashTcpSocketAppender extends AbstractLogstashTcpSocketAppender<ILoggingEvent, TcpAppenderListener<ILoggingEvent>> {
 
     /**
      * Set to true if the caller data should be captured before publishing the event

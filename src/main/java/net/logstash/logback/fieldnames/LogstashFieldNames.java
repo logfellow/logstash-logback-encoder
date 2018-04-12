@@ -40,6 +40,7 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
     private String context;
+    private String arguments;
     private String uuid = UuidProvider.FIELD_UUID;
     
     public String getLogger() {
@@ -165,6 +166,20 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     
     public void setContext(String context) {
         this.context = context;
+    }
+    
+    /**
+     * The name of the arguments object field.
+     * <p>
+     * If this returns null, then the arguments will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
+     * <p>
+     * If this returns non-null, then the arguments will be written inside an object with field name returned by this method
+     */
+    public String getArguments() {
+        return arguments;
+    }
+    public void setArguments(String arguments) {
+        this.arguments = arguments;
     }
 
     public String getUuid() {

@@ -25,7 +25,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 public class ElapsedTimeJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
-    public static final String FIELD_ELAPSED_TIME = "@fields.elapsed_time";
+    public static final String FIELD_ELAPSED_TIME = "elapsed_time";
     
     public ElapsedTimeJsonProvider() {
         setFieldName(FIELD_ELAPSED_TIME);
@@ -38,7 +38,7 @@ public class ElapsedTimeJsonProvider extends AbstractFieldJsonProvider<IAccessEv
     
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
-        setFieldName(fieldNames.getFieldsElapsedTime());
+        setFieldName(fieldNames.getElapsedTime());
     }
 
 }

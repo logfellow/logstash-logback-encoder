@@ -16,8 +16,6 @@ package net.logstash.logback.encoder;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
@@ -130,6 +128,31 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setIncludeContext(includeContext);
     }
     
+    public boolean isIncludeStructuredArguments() {
+        return getFormatter().isIncludeStructuredArguments();
+    }
+
+    public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
+        getFormatter().setIncludeStructuredArguments(includeStructuredArguments);
+    }
+    
+    public boolean isIncludeNonStructuredArguments() {
+        return getFormatter().isIncludeNonStructuredArguments();
+    }
+
+    public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
+        getFormatter().setIncludeNonStructuredArguments(includeNonStructuredArguments);
+    }
+    
+    public String getNonStructuredArgumentsFieldPrefix() {
+        return getFormatter().getNonStructuredArgumentsFieldPrefix();
+    }
+
+    public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
+        getFormatter().setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
+    }
+    
+    
     /**
      * <p>
      * If set to true the encoder will search logging event array and if the last item is a Map, entries will be included in the message.
@@ -186,18 +209,42 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setTimeZone(timeZoneId);
     }
     
-    public int getVersion() {
+    public String getTimestampPattern() {
+        return getFormatter().getTimestampPattern();
+    }
+    public void setTimestampPattern(String pattern) {
+        getFormatter().setTimestampPattern(pattern);
+    }
+
+    public String getVersion() {
         return getFormatter().getVersion();
     }
-    public void setVersion(int version) {
+    public void setVersion(String version) {
         getFormatter().setVersion(version);
     }
+
     
+    /**
+     * @deprecated Use {@link #isWriteVersionAsInteger()}
+     */
+    @Deprecated
     public boolean isWriteVersionAsString() {
         return getFormatter().isWriteVersionAsString();
     }
+    /**
+     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
+     */
+    @Deprecated
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         getFormatter().setWriteVersionAsString(writeVersionAsString);
     }
+    
+    public boolean isWriteVersionAsInteger() {
+        return getFormatter().isWriteVersionAsInteger();
+    }
+    public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
+        getFormatter().setWriteVersionAsInteger(writeVersionAsInteger);
+    }
+    
 
 }

@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-4.10).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.0).
 
 # Logback JSON encoder
 
@@ -22,6 +22,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
     * [Write buffer size](#write-buffer-size)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
+  * [Appender Listeners](#appender-listeners)
   * [Encoders / Layouts](#encoders--layouts)
 * [LoggingEvent Fields](#loggingevent-fields)
   * [Standard Fields](#standard-fields)
@@ -60,7 +61,7 @@ Maven style:
 <dependency>
   <groupId>net.logstash.logback</groupId>
   <artifactId>logstash-logback-encoder</artifactId>
-  <version>4.10</version>
+  <version>5.0</version>
 </dependency>
 ```
 
@@ -74,6 +75,34 @@ If you get `ClassNotFoundException`/`NoClassDefFoundError`/`NoSuchMethodError` a
 
 Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
 
+If you are using logstash-logback-encoder in a project (such as spring-boot) that also declares dependencies on any of the above libraries, you might need to tell maven explicitly which versions to use to avoid conflicts.
+You can do so using maven's [dependencyManagement](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Management) feature.
+For example, to ensure that maven doesn't pick different versions of logback-core, logback-classic, and logback-access, add this to your project's pom.xml
+
+```xml
+    <properties>
+        <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
+    </properties>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${ch.qos.logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${ch.qos.logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-access</artifactId>
+                <version>${ch.qos.logback.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+```
 
 ## Usage
 
@@ -102,7 +131,7 @@ The Logstash encoders/layouts are really just extensions of the general
 composite JSON encoders/layouts with a pre-defined set of providers.
 
 The logstash encoders/layouts are easier to configure if you want to use the standard logstash version 1 output format.
-Use the [composite encoders/layouts](#composite_encoder) if you want to heavily customize the output,
+Use the [composite encoders/layouts](#composite-encoderlayout) if you want to heavily customize the output,
 or if you need to use logstash version 0 output.
 
 The `*AsyncDisruptorAppender` appenders are similar to logback's `AsyncAppender`,
@@ -137,7 +166,7 @@ just like you can with a `LogstashLayout` or `LogstashEncoder` as described in l
 It is not necessary to configure a `<layout>` or `<encoder>` sub-element
 within the `<appender>` element in the logback configuration.
 All the properties of `LogstashLayout` or `LogstashEncoder` can be set at the `<appender>` level.
-For example, to configure [global custom fields](#loggingevent_custom_global), you can specify
+For example, to configure [global custom fields](#global-custom-fields), you can specify
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
     <host>MyAwesomeSyslogServer</host>
@@ -579,8 +608,39 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
 for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
 
-In order to guarantee that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+In order to guarantees that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
+### Appender Listeners
+
+Listeners can be registered to an appender to receive notifications for the appender lifecycle and event processing.
+
+See the two listener interfaces for the types of notifications that can be received:
+
+* [`AppenderListener`](/src/main/java/net/logstash/logback/appender/listener/AppenderListener.java) - basic notifications for the [async appenders](#async-appenders) and [udp appender](#udp-appender).
+* [`TcpAppenderListener`](/src/main/java/net/logstash/logback/appender/listener/TcpAppenderListener.java) - extension of `AppenderListener` with additional TCP-specific notifications.  Only works with the [TCP appenders](#tcp-appenders). 
+
+Some example use cases for a listener are:
+
+* Monitoring metrics for events per second, event processing durations, dropped events, connections successes / failures, etc.
+* Reporting event processing errors to a different appender (that perhaps appends to a different destination).
+
+To create a listener, create a new class that extends one of the `*ListenerImpl` classes or directly implements the `*Listener` interface.
+Extending the `*ListenerImpl` class will have better backwards compatibilty in the future in case new methods are added to the interfaces.
+(Logstash-logback-encoder still supports Java 7, so default interface methods cannot be used yet.)
+
+Then register your listener class to an appender using the `listener` xml element like this:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+      ...
+
+      <listener class="your.package.YourListenerClass">
+          <yourListenerProperty>propertyValue</yourListenerProperty>
+      </listener>
+  </appender>
+```
+
+Multiple listeners can be registered by supplying multiple `listener` xml elements.
 
 
 ### Encoders / Layouts
@@ -648,7 +708,7 @@ The following sections describe the fields included in the JSON output by defaul
 * `LogstashLayout`, and
 * the logstash appenders
 
-If you are using the [composite encoders/layouts](#composite_encoder), then the fields written will
+If you are using the [composite encoders/layouts](#composite-encoderlayout), then the fields written will
 vary by the providers you configure.
 
 
@@ -656,12 +716,12 @@ vary by the providers you configure.
 
 These fields will appear in every LoggingEvent unless otherwise noted.
 The field names listed here are the default field names.
-The field names can be customized (see [Customizing Standard Field Names](#custom_field_names)).
+The field names can be customized (see [Customizing Standard Field Names](#customizing-standard-field-names)).
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#custom_timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#custom_version).
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `message`     | Formatted log message of the event
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
@@ -773,11 +833,11 @@ When logging a message, you can add additional fields to the JSON output by usin
 The difference between the two is that
 * `StructuredArguments` are included in a the log event's formatted message
 (when the message has a parameter for the argument) _AND_ in the JSON output.
-  * `StructuredArguments` will only be included in the JSON output if using
-    [composite encoders/layouts](#composite_encoder) with the `arguments` provider.
+  * `StructuredArguments` will be included in the JSON output if using `LogstashEncoder/Layout`
+    or if using [composite encoders/layouts](#composite-encoderlayout) with the `arguments` provider.
 * `Markers` are only written to the JSON output, and _NEVER_ to the log event's formatted message.
   * `Markers` will be included in the JSON output if using `LogstashEncoder/Layout`
-    or if using [composite encoders/layouts](#composite_encoder) with the `logstashMarkers` provider.
+    or if using [composite encoders/layouts](#composite-encoderlayout) with the `logstashMarkers` provider.
 
 
 You can use `StructuredArguments` even if the message does not contain a parameter
@@ -951,7 +1011,7 @@ The following sections describe the fields included in the JSON output by defaul
 * `LogstashAccessLayout`, and
 * the logstash access appenders.
 
-If you are using the [composite encoders/layouts](#composite_encoder), then the fields written will
+If you are using the [composite encoders/layouts](#composite-encoderlayout), then the fields written will
 vary by the providers you configure.
 
 
@@ -960,23 +1020,22 @@ vary by the providers you configure.
 
 These fields will appear in every AccessEvent unless otherwise noted.
 The field names listed here are the default field names.
-The field names can be customized (see [Customizing Standard Field Names](#custom_field_names)).
+The field names can be customized (see [Customizing Standard Field Names](#customizing-standard-field-names)).
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#custom_timezone).
-| `@version`    | Logstash format version (e.g. 1)   See [customizing version](#custom_version).
-| `@message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
-| `@fields.method` | HTTP method
-| `@fields.protocol` | HTTP protocol
-| `@fields.status_code` | HTTP status code
-| `@fields.requested_url` | Request URL
-| `@fields.requested_uri` | Request URI
-| `@fields.remote_host` | Remote host
-| `@fields.HOSTNAME` | another field for remote host (not sure why this is here honestly)
-| `@fields.remote_user` | Remote user
-| `@fields.content_length` | Content length
-| `@fields.elapsed_time` | Elapsed time in millis
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
+| `message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
+| `method` | HTTP method
+| `protocol` | HTTP protocol
+| `status_code` | HTTP status code
+| `requested_url` | Request URL
+| `requested_uri` | Request URI
+| `remote_host` | Remote host
+| `remote_user` | Remote user
+| `content_length` | Content length
+| `elapsed_time` | Elapsed time in millis
 
 
 ### Header Fields
@@ -986,13 +1045,13 @@ Request and response headers are not logged by default, but can be enabled by sp
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
   <fieldNames>
-    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
-    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+    <requestHeaders>request_headers</requestHeaders>
+    <responseHeaders>response_headers</responseHeaders>
   </fieldNames>
 </encoder>
 ```
 
-See [Customizing Standard Field Names](#custom_field_names)) for more details.
+See [Customizing Standard Field Names](#customizing-standard-field-names)) for more details.
 
 To write the header names in lowercase (so that header names that only differ by case are treated the same),
 set `lowerCaseFieldNames` to true, like this:
@@ -1000,14 +1059,35 @@ set `lowerCaseFieldNames` to true, like this:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
   <fieldNames>
-    <fieldsRequestHeaders>@fields.request_headers</fieldsRequestHeaders>
-    <fieldsResponseHeaders>@fields.response_headers</fieldsResponseHeaders>
+    <requestHeaders>request_headers</requestHeaders>
+    <responseHeaders>response_headers</responseHeaders>
   </fieldNames>
   <lowerCaseHeaderNames>true</lowerCaseHeaderNames>
 </encoder>
 ```
 
+Headers can be filtered via configuring the `requestHeaderFilter` and/or the `responseHeaderFilter`
+with a [`HeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java), such as the
+[`IncludeExcludeHeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java).
 
+The `IncludeExcludeHeaderFilter` can be configured like this:
+ 
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <fieldNames>
+    <requestHeaders>request_headers</requestHeaders>
+  </fieldNames>
+  <requestHeaderFilter>
+    <include>Content-Type</include>
+  </requestHeaderFilter>
+</encoder>
+
+Custom filters implementing [`HeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java)
+can be used by specifying the filter class like this:
+
+```xml
+  <requestHeaderFilter class="your.package.YourFilterClass"/>
+```
 
 ## Customizing Standard Field Names
 
@@ -1044,7 +1124,7 @@ for all the field names that can be customized. Each java field name in that cla
 
 ## Customizing Version
 
-The version field value by default is the numeric value 1.
+The version field value by default is the string value `1`.
 
 The value can be changed like this:
 
@@ -1054,11 +1134,11 @@ The value can be changed like this:
 </encoder>
 ```
 
-The value can be written as a string (instead of a number) like this:
+The value can be written as a number (instead of a string) like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <writeVersionAsString>true</writeVersionAsString>
+  <writeVersionAsInteger>true</writeVersionAsInteger>
 </encoder>
 ```
 
@@ -1081,22 +1161,14 @@ The value of the `timeZone` element can be any string accepted by java's  `TimeZ
 
 ## Customizing JSON Factory and Generator
 
-The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by creating
-custom instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
+The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by 
+instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
 or [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java), respectively.
 
-For example, you could enable pretty printing like this:
-```java
-public class PrettyPrintingDecorator implements JsonGeneratorDecorator {
+For example, you could enable pretty printing by using the
+[PrettyPrintingJsonGeneratorDecorator](/src/main/java/net/logstash/logback/decorate/PrettyPrintingJsonGeneratorDecorator.java)
 
-    @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        return generator.useDefaultPrettyPrinter();
-    }
-
-}
-```
-or custom object mapping like this:
+Or customize object mapping like this:
 
 ```java
 public class ISO8601DateDecorator implements JsonFactoryDecorator  {
@@ -1109,14 +1181,16 @@ public class ISO8601DateDecorator implements JsonFactoryDecorator  {
 	}
 }
 ```
-and then specify your decorator in the logback.xml file like this:
+and then specify the decorator in the logback.xml file like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonGeneratorDecorator class="your.package.PrettyPrintingDecorator"/>
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
   <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
 </encoder>
 ```
+
+See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
 
 
 ## Customizing Logger Name Length
@@ -1286,7 +1360,7 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
-          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
+          <li><tt>writeAsInteger</tt> - Write the version as a integer value (<tt>false</tt> = write as a string value)</li>
         </ul>
       </td>
     </tr>
@@ -1368,6 +1442,24 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Output field name (<tt>stack_hash</tt>)</li>
           <li><tt>exclude</tt> - Regular expression pattern matching <i>stack trace elements</i> to exclude when computing the error hash</li>
           <li><tt>exclusions</tt> - Coma separated list of regular expression patterns matching <i>stack trace elements</i> to exclude when computing the error hash</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>throwableClassName</tt></td>
+      <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the thrown Throwable.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>throwable_class</tt>)</li>
+          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used.  When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>throwableRootCauseClassName</tt></td>
+      <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the root cause of the thrown Throwable.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>throwable_root_cause_class</tt>)</li>
+          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used.  When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1507,7 +1599,7 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
-          <li><tt>writeAsString</tt> - Write the version as a string value (<tt>false</tt> = write as a numeric value)</li>
+          <li><tt>writeAsInteger</tt> - Write the version as a integer value (<tt>false</tt> = write as a string value)</li>
         </ul>
       </td>
     </tr>
@@ -1515,7 +1607,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>message</tt></td>
       <td><p>Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@message</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1523,7 +1615,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>method</tt></td>
       <td><p>HTTP method</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.method</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>method</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1531,7 +1623,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>protocol</tt></td>
       <td><p>HTTP protocol</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.protocol</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>protocol</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1539,7 +1631,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>statusCode</tt></td>
       <td><p>HTTP status code</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.status_code</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>status_code</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1547,7 +1639,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>requestedUrl</tt></td>
       <td><p>Requested URL</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.requested_url</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_url</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1555,7 +1647,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>requestedUri</tt></td>
       <td><p>Requested URI</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.requested_uri</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_uri</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1563,7 +1655,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>remoteHost</tt></td>
       <td><p>Remote Host</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.remote_host</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_host</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1571,7 +1663,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>remoteUser</tt></td>
       <td><p>Remote User</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.remote_user</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_user</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1579,7 +1671,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>contentLength</tt></td>
       <td><p>Content length</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.content_length</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>content_length</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1587,7 +1679,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><tt>elapsedTime</tt></td>
       <td><p>Elapsed time in milliseconds</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@fields.elapsed_time</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>elapsed_time</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1597,6 +1689,9 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
+          <li><tt>filter</tt> - A filter to determine which headers to include/exclude.
+          See <a href="/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java"><tt>HeaderFilter</tt></a>
+          and <a href="/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java"><tt>IncludeExcludeHeaderFilter</tt></a></li>
         </ul>
       </td>
     </tr>
@@ -1606,6 +1701,9 @@ For AccessEvents, the available providers and their configuration properties (de
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
+          <li><tt>filter</tt> - A filter to determine which headers to include/exclude.
+          See <a href="/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java"><tt>HeaderFilter</tt></a>
+          and <a href="/src/main/java/net/logstash/logback/composite/accessevent/IncludeExcludeHeaderFilter.java"><tt>IncludeExcludeHeaderFilter</tt></a></li>
         </ul>
       </td>
     </tr>
@@ -1650,7 +1748,7 @@ For example...
   <providers>
     <timestamp/>
     <nestedField>
-      <fieldName>@fields</fieldName>
+      <fieldName>fields</fieldName>
       <providers>
         <logLevel/>
       </providers>
@@ -1664,7 +1762,7 @@ For example...
 ```
 {
   "@timestamp":"...",
-  "@fields":{
+  "fields":{
     "level": "DEBUG"
   }
 }
@@ -1708,7 +1806,7 @@ This example...
 ```
 {
   "@timestamp":"...",
-  "@version": 1,
+  "@version": "1",
   "level": "DEBUG"
 }
 ```
@@ -1730,6 +1828,7 @@ The operations are:
 * `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a long (or a null if conversion fails).
 * `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a double (or a null if conversion fails).
 * `#asJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or a null if conversion fails).
+* `#tryJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or just the string if conversion fails).
 
 So this example...
 
