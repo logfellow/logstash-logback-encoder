@@ -56,18 +56,18 @@ public class IncludeExcludeHeaderFilter implements HeaderFilter {
         return Collections.unmodifiableSet(excludes);
     }
     
-    public boolean addInclude(String include) {
-        return this.includes.add(include.toLowerCase());
+    public void addInclude(String include) {
+        this.includes.add(include.toLowerCase());
     }
-    public boolean removeInclude(String include) {
-        return this.includes.remove(include.toLowerCase());
+    public void removeInclude(String include) {
+        this.includes.remove(include.toLowerCase());
     }
     
-    public boolean addExclude(String exclude) {
-        return this.excludes.add(exclude.toLowerCase());
+    public void addExclude(String exclude) {
+        this.excludes.add(exclude.toLowerCase());
     }
-    public boolean removeExclude(String exclude) {
-        return this.excludes.remove(exclude.toLowerCase());
+    public void removeExclude(String exclude) {
+        this.excludes.remove(exclude.toLowerCase());
     }
     
 }
