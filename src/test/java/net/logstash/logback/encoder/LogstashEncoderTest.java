@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import net.logstash.logback.Logback11Support;
+import net.logstash.logback.decorate.ReplaceCharsJsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
@@ -147,7 +148,33 @@ public class LogstashEncoderTest {
         assertThat(node.get("level").textValue()).isEqualTo("ERROR");
         assertThat(node.get("levelVal").intValue()).isEqualTo(40000);
     }
-    
+
+    @Test
+    public void replaceCharsDecorator() throws Exception {
+        ReplaceCharsJsonFactoryDecorator decorator = new ReplaceCharsJsonFactoryDecorator();
+        decorator.addReplace(ReplaceCharsJsonFactoryDecorator.Replace.create("\n", "_"));
+        decorator.addReplace(ReplaceCharsJsonFactoryDecorator.Replace.create(" ", "==="));
+        decorator.addReplace(ReplaceCharsJsonFactoryDecorator.Replace.create("y", "!"));
+        decorator.addReplace(ReplaceCharsJsonFactoryDecorator.Replace.create("ё", "?"));
+
+        encoder.stop();
+        encoder.setJsonFactoryDecorator(decorator);
+        encoder.setJsonGeneratorDecorator(new JsonGeneratorDecorator() {
+
+            @Override
+            public JsonGenerator decorate(JsonGenerator generator) {
+                return generator.useDefaultPrettyPrinter();
+            }
+        });
+        encoder.start();
+
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getFormattedMessage()).thenReturn("My message\nМоё сообщение");
+
+        JsonNode node = MAPPER.readTree(encoder.encode(event));
+        assertThat(node.get("message").textValue()).isEqualTo("M!===message_Мо?===сообщение");
+    }
+
     @Test
     public void customDecorators() throws Exception {
         encoder.stop();
