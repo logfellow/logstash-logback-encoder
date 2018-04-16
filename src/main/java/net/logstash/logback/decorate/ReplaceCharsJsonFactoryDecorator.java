@@ -5,43 +5,48 @@ import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
 public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
 
     private static class CharactersReplacer extends CharacterEscapes {
 
-        private final Map<Integer, SerializedString> replacements = new HashMap<>();
         private final int[] escapeCodesForAscii;
+        private final List<Replace> replaces = new ArrayList<>();
 
         private CharactersReplacer() {
-            escapeCodesForAscii = standardAsciiEscapesForJSON();
+            escapeCodesForAscii = new int[128];
+            Arrays.fill(escapeCodesForAscii, ESCAPE_NONE);
         }
 
         void addReplace(Replace replace) {
-            int charIdx = replace.targetIdx();
-            this.replacements.put(charIdx, new SerializedString(replace.getReplacement()));
-
-            if (charIdx <= 127) {
-                escapeCodesForAscii[charIdx] = ESCAPE_CUSTOM;
+            replaces.add(replace);
+            if (replace.target < 128) {
+                escapeCodesForAscii[replace.target] = ESCAPE_CUSTOM;
             }
         }
 
         boolean removeReplace(Replace replace) {
-            int charIdx = replace.targetIdx();
-            if (charIdx <= 127) {
-                escapeCodesForAscii[charIdx] = ESCAPE_STANDARD;
+            if (replace.target < 128) {
+                escapeCodesForAscii[replace.target] = ESCAPE_NONE;
             }
-            return null != replacements.remove(charIdx);
+            return replaces.remove(replace);
         }
 
         @Override
         public SerializableString getEscapeSequence(int ch) {
-            // for `ch <= 127` only registered `ch` will be passed.
-            // for `ch > 127` null value is ok (if we got not replacement)
-            // todo think how to reduce unboxing
-            return replacements.get(ch);
+            // old fashioned for-loop. No iterator instance created
+            for (int i = 0; i < replaces.size(); i++) {
+                if (replaces.get(i).target == ch) {
+                    return replaces.get(i).replacement;
+                }
+            }
+            // for `ch < 128` only registered `characters` will be passed.
+            // for `ch >= 128` null value is ok (if we got not replacement)
+            return null;
         }
 
         @Override
@@ -52,42 +57,48 @@ public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
 
     public static class Replace {
 
-        private String target;
-        private String replacement;
+        private int target;
+        private SerializedString replacement;
 
         public static Replace create(String target, String replacement) {
             Replace instance = new Replace();
-            instance.target = target;
-            instance.replacement = replacement;
+            instance.setTarget(target);
+            instance.setReplacement(replacement);
             return instance;
         }
 
         public void setTarget(String target) {
-            this.target = target;
-        }
-
-        public void setReplacement(String replacement) {
-            this.replacement = replacement;
-        }
-
-        String getReplacement() {
-            return replacement;
-        }
-
-        int targetIdx() {
-            char i = target.charAt(0);
-            return (int)i;
-
-        }
-
-        void assertValid() {
-            if (null == target || null == replacement) {
-                throw new IllegalArgumentException("Target and Replacement must be non-empty strings");
-            }
-
             if (target.length() != 1) {
                 throw new IllegalArgumentException("Target's length must be 1");
             }
+            this.target = (int)target.charAt(0);
+        }
+
+        public void setReplacement(String replacement) {
+            this.replacement = new SerializedString(replacement);
+        }
+
+        void assertValid() {
+            if (0 == target || null == replacement) {
+                throw new IllegalArgumentException("Target and Replacement must be non-empty strings");
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            Replace replace = (Replace) o;
+            return target == replace.target;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(target);
         }
     }
 
