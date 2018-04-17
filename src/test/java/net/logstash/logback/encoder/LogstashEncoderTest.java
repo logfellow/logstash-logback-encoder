@@ -176,6 +176,37 @@ public class LogstashEncoderTest {
     }
 
     @Test
+    public void replaceCharsDecoratorConfigurationOptions() throws Exception {
+        ReplaceCharsJsonFactoryDecorator.Replace defaultReplacement = new ReplaceCharsJsonFactoryDecorator.Replace();
+        defaultReplacement.setTarget("z");
+
+        ReplaceCharsJsonFactoryDecorator.Replace replacementWithCharIdx = new ReplaceCharsJsonFactoryDecorator.Replace();
+        replacementWithCharIdx.setTargetNumber(10); // \n
+        replacementWithCharIdx.setReplacement("===");
+
+        ReplaceCharsJsonFactoryDecorator decorator = new ReplaceCharsJsonFactoryDecorator();
+        decorator.addReplace(defaultReplacement);
+        decorator.addReplace(replacementWithCharIdx);
+
+        encoder.stop();
+        encoder.setJsonFactoryDecorator(decorator);
+        encoder.setJsonGeneratorDecorator(new JsonGeneratorDecorator() {
+
+            @Override
+            public JsonGenerator decorate(JsonGenerator generator) {
+                return generator.useDefaultPrettyPrinter();
+            }
+        });
+        encoder.start();
+
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getFormattedMessage()).thenReturn(".z.\n.y.");
+
+        JsonNode node = MAPPER.readTree(encoder.encode(event));
+        assertThat(node.get("message").textValue()).isEqualTo("..===.y.");
+    }
+
+    @Test
     public void customDecorators() throws Exception {
         encoder.stop();
         encoder.setJsonFactoryDecorator(new JsonFactoryDecorator() {

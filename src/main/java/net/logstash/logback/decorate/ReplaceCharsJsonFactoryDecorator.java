@@ -12,18 +12,18 @@ import java.util.Objects;
 
 public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
 
-    private static class CharactersReplacer extends CharacterEscapes {
+    private static class CustomizableCharacterReplacer extends CharacterEscapes {
 
         private final int[] escapeCodesForAscii;
-        private final List<Replace> replaces = new ArrayList<>();
+        private final List<Replace> replacements = new ArrayList<>();
 
-        private CharactersReplacer() {
+        private CustomizableCharacterReplacer() {
             escapeCodesForAscii = new int[128];
             Arrays.fill(escapeCodesForAscii, ESCAPE_NONE);
         }
 
         void addReplace(Replace replace) {
-            replaces.add(replace);
+            replacements.add(replace);
             if (replace.target < 128) {
                 escapeCodesForAscii[replace.target] = ESCAPE_CUSTOM;
             }
@@ -33,15 +33,15 @@ public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
             if (replace.target < 128) {
                 escapeCodesForAscii[replace.target] = ESCAPE_NONE;
             }
-            return replaces.remove(replace);
+            return replacements.remove(replace);
         }
 
         @Override
         public SerializableString getEscapeSequence(int ch) {
             // old fashioned for-loop. No iterator instance created
-            for (int i = 0; i < replaces.size(); i++) {
-                if (replaces.get(i).target == ch) {
-                    return replaces.get(i).replacement;
+            for (int i = 0; i < replacements.size(); i++) {
+                if (replacements.get(i).target == ch) {
+                    return replacements.get(i).replacement;
                 }
             }
             // for `ch < 128` only registered `characters` will be passed.
@@ -57,8 +57,11 @@ public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
 
     public static class Replace {
 
+        // empty default replacement to simplify xml-configuration
+        private static final SerializedString EMPTY_REPLACEMENT = new SerializedString("");
+
         private int target;
-        private SerializedString replacement;
+        private SerializedString replacement = EMPTY_REPLACEMENT;
 
         public static Replace create(String target, String replacement) {
             Replace instance = new Replace();
@@ -68,10 +71,17 @@ public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
         }
 
         public void setTarget(String target) {
-            if (target.length() != 1) {
+            if (null == target || target.length() != 1) {
                 throw new IllegalArgumentException("Target's length must be 1");
             }
             this.target = (int)target.charAt(0);
+        }
+
+        public void setTargetNumber(int idx) {
+            if (idx < 1) {
+                throw new IllegalArgumentException("Target char number should be positive integer");
+            }
+            this.target = idx;
         }
 
         public void setReplacement(String replacement) {
@@ -79,8 +89,8 @@ public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
         }
 
         void assertValid() {
-            if (0 == target || null == replacement) {
-                throw new IllegalArgumentException("Target and Replacement must be non-empty strings");
+            if (0 == target) {
+                throw new IllegalArgumentException("Target must be non empty string");
             }
         }
 
@@ -102,20 +112,20 @@ public class ReplaceCharsJsonFactoryDecorator implements JsonFactoryDecorator {
         }
     }
 
-    private final CharactersReplacer escapes = new CharactersReplacer();
+    private final CustomizableCharacterReplacer replacements = new CustomizableCharacterReplacer();
 
     @Override
     public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        return (MappingJsonFactory)factory.setCharacterEscapes(escapes);
+        return (MappingJsonFactory)factory.setCharacterEscapes(replacements);
     }
 
-    public void addReplace(Replace escape) {
-        escape.assertValid();
-        escapes.addReplace(escape);
+    public void addReplace(Replace replacement) {
+        replacement.assertValid();
+        replacements.addReplace(replacement);
     }
 
-    public boolean removeReplace(Replace escape) {
-        escape.assertValid();
-        return escapes.removeReplace(escape);
+    public boolean removeReplace(Replace replacement) {
+        replacement.assertValid();
+        return replacements.removeReplace(replacement);
     }
 }
