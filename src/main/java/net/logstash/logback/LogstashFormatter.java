@@ -421,6 +421,12 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setTimestampPattern(String pattern) {
         timestampProvider.setPattern(pattern);
     }
+    public void setUnixTimestamp(boolean enabled) {
+        timestampProvider.setUnixTimestamp(enabled);
+    }
+    public boolean isUnixTimestamp() {
+        return timestampProvider.isUnixTimestamp();
+    }
     
     @Override
     public void setProviders(JsonProviders<ILoggingEvent> jsonProviders) {

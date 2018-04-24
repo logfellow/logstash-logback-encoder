@@ -212,13 +212,23 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
     public String getTimestampPattern() {
         return getFormatter().getTimestampPattern();
     }
+    
     public void setTimestampPattern(String pattern) {
         getFormatter().setTimestampPattern(pattern);
     }
-
+    
+    public boolean isUnixTimestamp() {
+        return getFormatter().isUnixTimestamp();
+    }
+    
+    public void setUnixTimestamp(boolean enabled) {
+        getFormatter().setUnixTimestamp(enabled);
+    }
+    
     public String getVersion() {
         return getFormatter().getVersion();
     }
+    
     public void setVersion(String version) {
         getFormatter().setVersion(version);
     }

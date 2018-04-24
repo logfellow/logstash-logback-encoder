@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>5.1-SNAPSHOT</version>
+    <version>5.2-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>

@@ -609,6 +609,28 @@ public class LogstashEncoderTest {
         assertThat(node.get("level_value").intValue()).isEqualTo(40000);
     }
     
+    @Test
+    public void unixTimestamp() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setUnixTimestamp( true );
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
+        assertThat(node.get("@version").textValue()).isEqualTo("1");
+        assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
+        assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
+        assertThat(node.get("message").textValue()).isEqualTo("My message");
+        assertThat(node.get("level").textValue()).isEqualTo("ERROR");
+        assertThat(node.get("level_value").intValue()).isEqualTo(40000);
+    }
+    
     public JsonNode parse(String string) throws JsonParseException, IOException {
         return FACTORY.createParser(string).readValueAsTree();
     }
