@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.logstash.logback.Logback11Support;
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 
 import org.apache.commons.lang.time.FastDateFormat;
 import org.junit.Test;
@@ -33,6 +34,8 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -187,6 +190,38 @@ public class LogstashAccessEncoderTest {
         encoder.setCustomFields(customFields);
         assertThat(encoder.getCustomFields()).isEqualTo(customFields);
     }
+    
+    @Test
+    public void unixTimestampAsNumber() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        IAccessEvent event = mockBasicILoggingEvent();
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_NUMBER);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
+    }    
+    
+    @Test
+    public void unixTimestampAsString() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        IAccessEvent event = mockBasicILoggingEvent();
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_STRING);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
+    }    
     
     private IAccessEvent mockBasicILoggingEvent() {
         IAccessEvent event = mock(IAccessEvent.class);

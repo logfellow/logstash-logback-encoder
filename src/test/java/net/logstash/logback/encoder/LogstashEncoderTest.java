@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import net.logstash.logback.Logback11Support;
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
@@ -736,6 +737,38 @@ public class LogstashEncoderTest {
         assertThat(encoder.getCustomFields()).isEqualTo(customFields);
         
     }
+    
+    @Test
+    public void unixTimestampAsNumber() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_NUMBER);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
+    }    
+    
+    @Test
+    public void unixTimestampAsString() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_STRING);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
+    }    
     
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         String[] values = new String[jsonNode.size()];

@@ -37,7 +37,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [Header Fields](#header-fields)
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
-* [Customizing TimeZone](#customizing-timezone)
+* [Customizing Timestamp](#customizing-timestamp)
 * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
@@ -720,7 +720,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).
 | `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `message`     | Formatted log message of the event
 | `logger_name` | Name of the logger that logged the event
@@ -1024,7 +1024,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).
 | `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
 | `method` | HTTP method
@@ -1143,10 +1143,10 @@ The value can be written as a number (instead of a string) like this:
 ```
 
 
+## Customizing Timestamp
 
-## Customizing TimeZone
+By default, timestamps are written as string values in the format `yyyy-MM-dd'T'HH:mm:ss.SSSZZ` (e.g. `2018-04-28T22:23:59.164-07:00`), in the default TimeZone of the host Java platform.
 
-By default, timestamps are logged in the default TimeZone of the host Java platform.
 You can change the timezone like this:
 
 ```xml
@@ -1157,6 +1157,26 @@ You can change the timezone like this:
 
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
 
+You can change the pattern used like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
+</encoder>
+```
+
+Use these timestamp pattern values to output the timestamp as a unix timestamp (number of milliseconds since unix epoch).
+
+* `[UNIX_TIMESTAMP_AS_NUMBER]` - write the timestamp value as a numeric unix timestamp
+* `[UNIX_TIMESTAMP_AS_STRING]` - write the timestamp value as a string verion of the numeric unix timestamp
+
+For example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timestampPattern>[UNIX_TIMESTAMP_AS_NUMBER]</timestampPattern>
+</encoder>
+```
 
 
 ## Customizing JSON Factory and Generator
@@ -1349,7 +1369,12 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)</li>
+          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
+          <ul>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
+          </ul>
+          </li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>
@@ -1588,7 +1613,12 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)</li>
+          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
+          <ul>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
+          </ul>
+          </li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>
