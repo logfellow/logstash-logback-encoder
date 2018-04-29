@@ -39,6 +39,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
 * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+* [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix](#prefixsuffix)
@@ -1211,6 +1212,29 @@ and then specify the decorator in the logback.xml file like this:
 ```
 
 See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
+
+## Customizing Character Escapes
+
+By default, when a string is written as a JSON string value, any character not allowed in a JSON string will be escaped.
+For example, the newline character (ASCII 10) will be escaped as `\n`.
+
+To customize these escape sequences, use the `net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator`.
+
+For example, if you want to use something other than `\n` as the escape sequence for the newline character, you can do the following:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator">
+    <escape>
+      <targetCharacterCode>10</targetCharacterCode>
+      <escapeSequence>\u2028</escapeSequence>
+    </escape>
+  </jsonFactoryDecorator>
+</encoder>
+```
+
+You can also disable all the default escape sequences by specifying `<includeStandardAsciiEscapesForJSON>false</includeStandardAsciiEscapesForJSON>` on the `CharacterEscapesJsonFactoryDecorator`.
+If you do this, then you will need to register custom escapes for each character that is illegal in JSON string values.  Otherwise, invalid JSON could be written.
 
 
 ## Customizing Logger Name Length
