@@ -39,6 +39,8 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
 
     private FastDateFormat formatter;
     
+    private boolean unixTimestamp;
+    
     public FormattedTimestampJsonProvider() {
         setFieldName(FIELD_TIMESTAMP);
     }
@@ -54,6 +56,9 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     }
 
     protected String getFormattedTimestamp(Event event) {
+        if (unixTimestamp) {
+            return String.valueOf(getTimestampAsMillis(event));
+        }
         return formatter.format(getTimestampAsMillis(event));
     }
 
@@ -61,7 +66,9 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     
     @Override
     public void start() {
-        formatter = FastDateFormat.getInstance(pattern, timeZone);
+        if ( ! unixTimestamp ) {
+            formatter = FastDateFormat.getInstance(pattern, timeZone);
+        }
         super.start();
     }
     
@@ -77,4 +84,11 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     public void setTimeZone(String timeZoneId) {
         this.timeZone = TimeZone.getTimeZone(timeZoneId);
     }
+    public boolean isUnixTimestamp() {
+        return unixTimestamp;
+    }
+    public void setUnixTimestamp(boolean unixTimestamp) {
+        this.unixTimestamp = unixTimestamp;
+    }
+ 
 }

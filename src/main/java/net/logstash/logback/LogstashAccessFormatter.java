@@ -219,6 +219,13 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     public void setVersion(String version) {
         this.versionProvider.setVersion(version);
     }
+    
+    public void setUnixTimestamp(boolean enabled) {
+        this.timestampProvider.setUnixTimestamp(enabled);
+    }
+    public boolean isUnixTimestamp() {
+        return this.timestampProvider.isUnixTimestamp();
+    }
 
     
     /**

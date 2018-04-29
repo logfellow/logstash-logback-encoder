@@ -1156,8 +1156,14 @@ You can change the timezone like this:
 ```
 
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
+It is also possible generate `@timestamp` as a unix timestamp using following configuration:
 
-
+```
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <unixTimestamp>true</unixTimestamp>
+</encoder>
+```
+An output will looks like `"@timestamp":"1524597357413"`.
 
 ## Customizing JSON Factory and Generator
 
@@ -1590,6 +1596,7 @@ For AccessEvents, the available providers and their configuration properties (de
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
           <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)</li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
+	  <li><tt>unixTimestamp</tt> - Output value will be written as a unix timestmap in ms</li>
         </ul>
       </td>
     </tr>

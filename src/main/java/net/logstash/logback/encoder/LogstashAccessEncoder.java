@@ -99,6 +99,13 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     public void setVersion(String version) {
         getFormatter().setVersion(version);
     }
+    
+    public boolean isUnixTimestamp() {
+        return getFormatter().isUnixTimestamp();
+    }
+    public void setUnixTimestamp(boolean enabled) {
+        getFormatter().setUnixTimestamp(enabled);
+    }
 
     
     /**

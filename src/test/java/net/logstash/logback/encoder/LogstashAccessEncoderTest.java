@@ -150,6 +150,21 @@ public class LogstashAccessEncoderTest {
     }
     
     @Test
+    public void unixTimestamp() throws Exception {
+        long timestamp = System.currentTimeMillis();
+        IAccessEvent event = mockBasicILoggingEvent();
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setUnixTimestamp(true);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
+    }
+    
+    @Test
     public void requestAndResponseHeadersAreIncluded() throws Exception {
 
         IAccessEvent event = mockBasicILoggingEvent();
