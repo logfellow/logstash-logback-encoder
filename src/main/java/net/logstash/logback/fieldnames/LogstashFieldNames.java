@@ -17,6 +17,7 @@ import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.SequenceJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
@@ -42,7 +43,8 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String context;
     private String arguments;
     private String uuid = UuidProvider.FIELD_UUID;
-    
+    private String sequence = SequenceJsonProvider.FIELD_SEQUENCE;
+
     public String getLogger() {
         return logger;
     }
@@ -189,4 +191,8 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     public void setUuid(String uuid) {
         this.uuid = uuid;
     }
+
+    public String getSequence() { return sequence; }
+
+    public void setSequence(String sequence) { this.sequence = sequence; }
 }
