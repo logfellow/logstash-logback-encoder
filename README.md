@@ -50,6 +50,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [Pattern JSON Provider](#pattern-json-provider)
     * [LoggingEvent patterns](#loggingevent-patterns)
     * [AccessEvent patterns](#accessevent-patterns)
+  * [Custom JSON Provider](#custom-json-provider)
 * [Debugging](#debugging)
 
 
@@ -2004,6 +2005,38 @@ So the following pattern...
   "filtered_cookie": null
 }
 ```
+
+### Custom JSON Provider
+
+You can create your own JSON provider by implementing the [`JsonProvider`](src/main/java/net/logstash/logback/composite/JsonProvider.java) interface (or extending one of the existing classes that implements the `JsonProvider` interface).
+
+Then, add the provider to a `LoggingEventCompositeJsonEncoder` like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    ...
+    <provider class="your.provider.YourJsonProvider">
+        <!-- Any properties exposed by your provider can be set here -->
+    </provider>
+    ...
+  </providers>
+</encoder>
+```
+
+or a `LogstashEncoder` like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    ...
+    <provider class="your.provider.YourJsonProvider">
+        <!-- Any properties exposed by your provider can be set here -->
+    </provider>
+    ...
+</encoder>
+```
+
+You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEnceder` as well.
 
 ## Debugging
 
