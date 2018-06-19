@@ -29,7 +29,12 @@ public class StructuredArgumentsToStringTest {
     private static  class BuguyToString {
         @Override
         public String toString() {
-            throw new NullPointerException("npe");
+            throw new NullPointerException("npe") {
+                @Override
+                public synchronized Throwable fillInStackTrace() {
+                    return this;
+                }
+            };
         }
     }
 
