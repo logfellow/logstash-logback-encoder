@@ -1183,7 +1183,7 @@ For example:
 
 ## Customizing JSON Factory and Generator
 
-The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by 
+The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by
 instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
 or [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java), respectively.
 
@@ -1614,6 +1614,17 @@ For LoggingEvents, the available providers and their configuration properties (d
           </ul></li>
           <li><tt>ethernet</tt> - Only for 'time' strategy. When defined - MAC address to use for location part of UUID. Set it to <tt>interface</tt> value to use real underlying network interface or to specific values like <tt>00:C0:F0:3D:5B:7C</tt></li>          
         </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>sequence</tt></td>
+      <td>
+        <p>
+          Outputs an incrementing sequence number for every log event.
+          Useful for tracking pottential message loss during transport (eg. UDP)
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li></ul>
       </td>
     </tr>
   </tbody>
