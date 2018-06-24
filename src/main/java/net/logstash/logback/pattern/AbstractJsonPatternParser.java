@@ -28,6 +28,7 @@ import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -231,7 +232,18 @@ public abstract class AbstractJsonPatternParser<Event> {
 
         protected Object transform(final String value) throws IOException {
             try {
-                return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
+                final String trimmedValue = value.trim();
+                final JsonParser parser = jsonFactory.createParser(trimmedValue);
+                final TreeNode tree = jsonFactory.getCodec().readTree(parser);
+                if (parser.getCurrentLocation().getCharOffset() < trimmedValue.length()) {
+                    /*
+                     * If the full trimmed string was not read, then the full trimmed string contains a json value plus other text.
+                     * For example, trimmedValue = '10 foobar', or 'true foobar', or '{"foo","bar"} baz'.
+                     * In these cases readTree will only read the first part, and will not read the remaining text.
+                     */
+                    return value;
+                }
+                return tree;
             } catch (JsonParseException e) {
                 return value;
             }

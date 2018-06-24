@@ -250,7 +250,12 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key6\": \"#tryJson{[1, \\\"2\\\"]}\",\n"
                 + "    \"key7\": \"#tryJson{{\\\"field\\\":\\\"value\\\"}}\",\n"
                 + "    \"key8\": \"#tryJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\",\n"
-                + "    \"key9\": \"#tryJson{one two three}\"\n"
+                + "    \"key9\": \"#tryJson{{\\\"field\\\":\\\"value\\\"} extra}\",\n"
+                + "    \"key10\": \"#tryJson{one two three}\",\n"
+                + "    \"key11\": \"#tryJson{ false }\",\n"
+                + "    \"key12\": \"#tryJson{ false true}\",\n"
+                + "    \"key13\": \"#tryJson{123 foo}\",\n"
+                + "    \"key14\": \"#tryJson{ 123 }\"\n"
                 + "}";
 
         String expected = ""
@@ -263,7 +268,12 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key6\": [1, \"2\"],\n"
                 + "    \"key7\": {\"field\":\"value\"},\n"
                 + "    \"key8\": {\"field\":\"value\", \"num\":123},\n"
-                + "    \"key9\": \"one two three\"\n"
+                + "    \"key9\": \"{\\\"field\\\":\\\"value\\\"} extra\",\n"
+                + "    \"key10\": \"one two three\",\n"
+                + "    \"key11\": false,\n"
+                + "    \"key12\": \" false true\",\n"
+                + "    \"key13\": \"123 foo\",\n"
+                + "    \"key14\": 123\n"
                 + "}";
 
         verifyFields(pattern, expected);
