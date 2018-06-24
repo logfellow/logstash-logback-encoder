@@ -71,6 +71,9 @@
                     </provider>
                 </providers>
             </provider>
+            <provider class="net.logstash.logback.composite.loggingevent.SequenceJsonProvider">
+                <fieldName>sequenceNumberField</fieldName>
+            </provider>
             <provider class="net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider">
                 <includeNonStructuredArguments>true</includeNonStructuredArguments>
                 <nonStructuredArgumentsFieldPrefix>prefix</nonStructuredArgumentsFieldPrefix>
@@ -99,6 +102,9 @@
                     </rawMessage>
                     </providers>
                 </nestedField>
+                <sequence>
+                    <fieldName>sequenceNumberField</fieldName>
+                </sequence>
                 <loggerName>
                     <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
                 </loggerName>

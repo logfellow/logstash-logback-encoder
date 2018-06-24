@@ -39,6 +39,7 @@ import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
+import net.logstash.logback.composite.loggingevent.SequenceJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
@@ -51,7 +52,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.powermock.reflect.Whitebox;
-import org.powermock.reflect.internal.WhiteboxImpl;
 import org.slf4j.LoggerFactory;
 
 import ch.qos.logback.classic.Logger;
@@ -82,7 +82,7 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(20, providers.size());
+        Assert.assertEquals(21, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -93,7 +93,7 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(24, providers.size());
+        Assert.assertEquals(25, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -196,6 +196,10 @@ public class ConfigurationTest {
         Assert.assertEquals("id", uuidProvider.getFieldName());
         Assert.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
         Assert.assertEquals(UuidProvider.STRATEGY_TIME, uuidProvider.getStrategy());
+
+        SequenceJsonProvider sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
+        Assert.assertNotNull(sequenceJsonProvider);
+        Assert.assertEquals("sequenceNumberField", sequenceJsonProvider.getFieldName());
     }
 
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {
@@ -241,6 +245,11 @@ public class ConfigurationTest {
         Assert.assertEquals("v1", output.get("k1"));
         Assert.assertEquals("v2", output.get("k2"));
         Assert.assertEquals("v3", output.get("k3"));
+
+        Number sequence = (Number)output.get("sequenceNumberField");
+        Assert.assertNotNull(sequence);
+        Assert.assertNotEquals("", sequence);
+        Assert.assertTrue(0L < sequence.longValue());
     }
 
     @SuppressWarnings("unchecked")
