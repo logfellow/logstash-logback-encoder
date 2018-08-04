@@ -531,7 +531,10 @@ By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disrupt
 is used by the worker thread spawned by this appender.
 The `BlockingWaitStrategy` minimizes CPU utilization, but results in slower latency and throughput.
 If you need faster latency and throughput (at the expense of higher CPU utilization), consider
-a different wait strategy offered by the disruptor, such as `SleepingWaitStrategy`.
+a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/WaitStrategy.html) offered by the disruptor.
+
+> !! Whichever wait strategy you choose, be sure to test and monitor CPU utilization, latency, and throughput to ensure it meets your needs.
+> For example, in some configurations, `SleepingWaitStrategy` can consume 90% CPU utilization at rest.
 
 The wait strategy can be configured on the async appender using the `waitStrategyType` parameter, like this:
 ```xml
@@ -568,14 +571,23 @@ The supported wait strategies are as follows:
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/LiteBlockingWaitStrategy.html"><tt>LiteBlockingWaitStrategy</tt></a></td>
     </tr>
     <tr>
-      <td><tt>sleeping</tt></td>
-      <td>none</td>
-      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/SleepingWaitStrategy.html"><tt>SleepingWaitStrategy</tt></a></td>
-    </tr>
-    <tr>
       <td><tt>yielding</tt></td>
       <td>none</td>
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/YieldingWaitStrategy.html"><tt>YieldingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><pre>sleeping{
+  <em>retries</em>,
+  <em>sleepTimeNs</em>
+}
+</pre>e.g.<br/><tt>sleeping</tt><br/>or<br/><tt>sleeping{500,1000}</tt></td>
+      <td>
+        <ol>
+          <li><tt>retries</tt> - Number of times (integer) to spin before sleeping. (default = 200)</li>
+          <li><tt>sleepTimeNs</tt> - Time in nanoseconds to sleep each iteration after spinning (default = 100)</li>
+        </ol>
+      </td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/SleepingWaitStrategy.html"><tt>SleepingWaitStrategy</tt></a></td>
     </tr>
     <tr>
       <td><pre>phasedBackoff{
@@ -609,6 +621,20 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
         </ol>
       </td>
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/TimeoutBlockingWaitStrategy.html"><tt>TimeoutBlockingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><pre>liteTimeoutBlocking{
+  <em>timeout</em>,
+  <em>timeUnit</em>
+}
+</pre>e.g.<br/><tt>liteTimeoutBlocking{1,minutes}</tt></td>
+      <td>
+        <ol>
+          <li><tt>timeout</tt> - Time to block before throwing an exception</li>
+          <li><tt>timeUnit</tt> - Units of time for timeout. String name of a <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><tt>TimeUnit</tt></a> value (e.g. <tt>seconds</tt>)</li>
+        </ol>
+      </td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/LiteTimeoutBlockingWaitStrategy.html"><tt>LiteTimeoutBlockingWaitStrategy</tt></a></td>
     </tr>
   </tbody>
 </table>

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.LiteBlockingWaitStrategy;
+import com.lmax.disruptor.LiteTimeoutBlockingWaitStrategy;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.TimeoutBlockingWaitStrategy;
@@ -44,7 +45,10 @@ public class WaitStrategyFactory {
      * <li><tt>blocking</tt> - {@link BlockingWaitStrategy}</li>
      * <li><tt>busySpin</tt> - {@link BusySpinWaitStrategy}</li>
      * <li><tt>liteBlocking</tt> - {@link LiteBlockingWaitStrategy}</li>
-     * <li><tt>sleeping</tt> - {@link SleepingWaitStrategy}</li>
+     * <li><tt>sleeping{retries,sleepTimeNs}</tt> - {@link SleepingWaitStrategy}
+     *         - <tt>retries</tt> an integer number of times to spin before sleeping. (default = 200)
+     *           <tt>sleepTimeNs</tt> nanosecond time to sleep each iteration after spinning (default = 100)
+     * </li>
      * <li><tt>yielding</tt> - {@link YieldingWaitStrategy}</li>
      * <li><tt>phasedBackoff{spinTimeout,yieldTimeout,timeUnit,fallackStrategy}</tt> - {@link PhasedBackoffWaitStrategy}
      *         - <tt>spinTimeout</tt> and <tt>yieldTimeout</tt> are long values.
@@ -52,6 +56,10 @@ public class WaitStrategyFactory {
      *           <tt>fallbackStrategy</tt> is a wait strategy string (e.g. <tt>blocking</tt>).
      * </li>
      * <li><tt>timeoutBlocking{timeout,timeUnit}</tt> - {@link TimeoutBlockingWaitStrategy}
+     *         - <tt>timeout</tt> is a long value.
+     *           <tt>timeUnit</tt> is a string name of one of the {@link TimeUnit} values.
+     * </li>
+     * <li><tt>liteTimeoutBlocking{timeout,timeUnit}</tt> - {@link LiteTimeoutBlockingWaitStrategy}
      *         - <tt>timeout</tt> is a long value.
      *           <tt>timeUnit</tt> is a string name of one of the {@link TimeUnit} values.
      * </li>
@@ -76,8 +84,17 @@ public class WaitStrategyFactory {
         if (waitStrategyType.equals("liteblocking")) {
             return new LiteBlockingWaitStrategy();
         }
-        if (waitStrategyType.equals("sleeping")) {
-            return new SleepingWaitStrategy();
+        if (waitStrategyType.startsWith("sleeping")) {
+            if (waitStrategyType.equals("sleeping")) {
+                return new SleepingWaitStrategy();
+            } else {
+                List<Object> params = parseParams(waitStrategyType,
+                        Integer.class,
+                        Long.class);
+                return new SleepingWaitStrategy(
+                        (Integer) params.get(0),
+                        (Long) params.get(1));
+            }
         }
         if (waitStrategyType.equals("yielding")) {
             return new YieldingWaitStrategy();
@@ -102,6 +119,14 @@ public class WaitStrategyFactory {
                     (Long) params.get(0),
                     (TimeUnit) params.get(1));
         }
+        if (waitStrategyType.startsWith("litetimeoutblocking")) {
+            List<Object> params = parseParams(waitStrategyType,
+                    Long.class,
+                    TimeUnit.class);
+            return new LiteTimeoutBlockingWaitStrategy(
+                    (Long) params.get(0),
+                    (TimeUnit) params.get(1));
+        }
         
         throw new IllegalArgumentException("Unknown wait strategy type: " + waitStrategyType);
         
@@ -118,7 +143,9 @@ public class WaitStrategyFactory {
             String paramString = paramsString.substring(startIndex, endIndex).trim();
             startIndex = endIndex + 1;
             
-            if (Long.class.equals(paramTypes[i])) {
+            if (Integer.class.equals(paramTypes[i])) {
+                params.add(Integer.valueOf(paramString));
+            } else if (Long.class.equals(paramTypes[i])) {
                 params.add(Long.valueOf(paramString));
             } else if (TimeUnit.class.equals(paramTypes[i])) {
                 params.add(TimeUnit.valueOf(paramString.toUpperCase()));
