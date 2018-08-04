@@ -80,6 +80,8 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
             <version>${ch.qos.logback.version}</version>
+            <!-- required at compile time and provided at runtime -->
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
