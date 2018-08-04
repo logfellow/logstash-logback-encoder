@@ -78,11 +78,6 @@
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${ch.qos.logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${ch.qos.logback.version}</version>
             <!--
@@ -100,6 +95,17 @@
                Not needed if only logging regular ILoggingEvents with a Logger.
             -->
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${ch.qos.logback.version}</version>
+            <!--
+               "provided" since users of logstash-logback-encoder must also
+               directly depend on logback-classic or logback-access,
+               and both of those depend on logback-core transitively.
+            -->
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
