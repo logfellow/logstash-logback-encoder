@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.1).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.2).
 
 # Logback JSON encoder
 
@@ -63,7 +63,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>5.1</version>
+    <version>5.2</version>
 </dependency>
 <!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
 <dependency>
