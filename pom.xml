@@ -247,7 +247,7 @@
                 <artifactId>maven-license-plugin</artifactId>
                 <version>1.9.0</version>
                 <configuration>
-                    <header>LICENSE</header>
+                    <header>license-header.txt</header>
                     <strictCheck>true</strictCheck>
                     <aggregate>true</aggregate>
                     <encoding>UTF-8</encoding>
