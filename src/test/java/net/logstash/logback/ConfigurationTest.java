@@ -14,9 +14,11 @@
 package net.logstash.logback;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
+import net.logstash.logback.appender.AsyncDisruptorAppender;
 import net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender;
 import net.logstash.logback.appender.listener.AppenderListener;
 import net.logstash.logback.argument.StructuredArguments;
@@ -51,8 +53,11 @@ import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.powermock.reflect.Whitebox;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -60,10 +65,6 @@ import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.read.ListAppender;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 public class ConfigurationTest {
 
@@ -103,9 +104,11 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void testAppenderHasListener() throws IOException {
+    public void testAppenderHasListener() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         LoggingEventAsyncDisruptorAppender appender = getAppender("asyncAppender");
-        List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) Whitebox.getFieldValue(Whitebox.getField(LoggingEventAsyncDisruptorAppender.class, "listeners") , appender);
+        Field listenersField = AsyncDisruptorAppender.class.getDeclaredField("listeners");
+        listenersField.setAccessible(true);
+        List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) listenersField.get(appender);
         Assert.assertEquals(1, listeners.size());
     }
 

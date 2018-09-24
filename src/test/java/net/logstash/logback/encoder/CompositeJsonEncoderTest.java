@@ -36,9 +36,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
@@ -48,8 +46,7 @@ import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.WarnStatus;
 
 @SuppressWarnings("unchecked")
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Logback11Support.class)
+@RunWith(MockitoJUnitRunner.class)
 public class CompositeJsonEncoderTest {
     
     private CompositeJsonFormatter<ILoggingEvent> formatter = mock(CompositeJsonFormatter.class);
@@ -72,6 +69,9 @@ public class CompositeJsonEncoderTest {
     @Mock
     private ILoggingEvent event;
     
+    @Mock
+    private Logback11Support logback11Support;
+
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
     
@@ -79,13 +79,13 @@ public class CompositeJsonEncoderTest {
     public void setup() {
         when(formatter.getEncoding()).thenReturn("UTF-8");
         when(context.getStatusManager()).thenReturn(statusManager);
+        encoder.setLogback11Support(logback11Support);
     }
     
     @Test
     public void testNoPrefixNoSuffix_logback11() throws IOException {
         
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
 
         encoder.start();
         
@@ -131,8 +131,7 @@ public class CompositeJsonEncoderTest {
     @Test
     public void testPrefixAndSuffix_logback11() throws IOException {
         
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
         Encoder<ILoggingEvent> suffix = mock(Encoder.class);
@@ -153,27 +152,21 @@ public class CompositeJsonEncoderTest {
         
         encoder.init(outputStream);
 
-        PowerMockito.verifyStatic();
-        Logback11Support.init(prefix, outputStream);
-        PowerMockito.verifyStatic();
-        Logback11Support.init(suffix, outputStream);
+        verify(logback11Support).init(prefix, outputStream);
+        verify(logback11Support).init(suffix, outputStream);
         
         encoder.doEncode(event);
         
-        PowerMockito.verifyStatic();
-        Logback11Support.doEncode(prefix, event);
-        PowerMockito.verifyStatic();
-        Logback11Support.doEncode(suffix, event);
+        verify(logback11Support).doEncode(prefix, event);
+        verify(logback11Support).doEncode(suffix, event);
         
         verify(formatter).writeEventToOutputStream(event, outputStream);
         
         Assert.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
         
         encoder.close();
-        PowerMockito.verifyStatic();
-        Logback11Support.close(prefix);
-        PowerMockito.verifyStatic();
-        Logback11Support.close(suffix);
+        verify(logback11Support).close(prefix);
+        verify(logback11Support).close(suffix);
         
         encoder.stop();
         Assert.assertFalse(encoder.isStarted());
@@ -224,8 +217,8 @@ public class CompositeJsonEncoderTest {
     @Test
     public void testNoImmediateFlush_logback11() throws IOException {
         
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
 
         encoder.setImmediateFlush(false);
         
@@ -280,8 +273,8 @@ public class CompositeJsonEncoderTest {
     @Test
     public void testIOException_logback11() throws IOException {
         
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.start();
         

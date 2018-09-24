@@ -471,7 +471,7 @@ public class ShortenedThrowableConverterTest {
     }
     
     private List<String> extractStackHashes(String formattedStackTrace) {
-    	Pattern hashPattern = Pattern.compile("<#([0-9abcdef]{8})>");
+        Pattern hashPattern = Pattern.compile("<#([0-9abcdef]{8})>");
         Matcher matcher = hashPattern.matcher(formattedStackTrace);
         List<String> hashes = new ArrayList<String>();
         while(matcher.find()) {

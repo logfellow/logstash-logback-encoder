@@ -35,8 +35,7 @@
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.12</junit.version>
         <org.assertj.version>2.9.1</org.assertj.version>
-        <org.mockito.version>2.9.0</org.mockito.version>
-        <org.powermock.version>1.7.3</org.powermock.version>
+        <org.mockito.version>2.22.0</org.mockito.version>
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
         <org.codehaus.mojo.animal-sniffer.version>1.17</org.codehaus.mojo.animal-sniffer.version>
     </properties>
@@ -160,24 +159,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${org.mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>${org.powermock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-core</artifactId>
-            <version>${org.powermock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito2</artifactId>
-            <version>${org.powermock.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

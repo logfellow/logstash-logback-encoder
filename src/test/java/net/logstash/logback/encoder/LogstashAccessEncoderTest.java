@@ -23,37 +23,34 @@ import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.logstash.logback.Logback11Support;
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-
 import org.apache.commons.lang.time.FastDateFormat;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
-
-import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Logback11Support.class)
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.Context;
+import net.logstash.logback.Logback11Support;
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+
+@RunWith(MockitoJUnitRunner.class)
 public class LogstashAccessEncoderTest {
     
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private LogstashAccessEncoder encoder = new LogstashAccessEncoder();
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     
+    @Mock
+    private Logback11Support logback11Support;
+    
     @Test
     public void basicsAreIncluded_logback11() throws Exception {
-        
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.init(outputStream);
         
@@ -116,8 +113,8 @@ public class LogstashAccessEncoderTest {
     
     @Test
     public void closePutsSeparatorAtTheEnd() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.init(outputStream);
 

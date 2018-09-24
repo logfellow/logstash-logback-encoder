@@ -15,10 +15,10 @@ package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.Test;
-import org.powermock.reflect.Whitebox;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.BusySpinWaitStrategy;
@@ -87,8 +87,8 @@ public class WaitStrategyFactoryTest {
         
         SleepingWaitStrategy waitStrategy = (SleepingWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" SLEEPING { 500, 1000 } ");
         
-        assertThat(Whitebox.getInternalState(waitStrategy, "retries")).isEqualTo(500);
-        assertThat(Whitebox.getInternalState(waitStrategy, "sleepTimeNs")).isEqualTo(1000L);
+        assertThat(getFieldValue(waitStrategy, SleepingWaitStrategy.class, "retries")).isEqualTo(500);
+        assertThat(getFieldValue(waitStrategy, SleepingWaitStrategy.class, "sleepTimeNs")).isEqualTo(1000L);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -122,9 +122,9 @@ public class WaitStrategyFactoryTest {
         
         PhasedBackoffWaitStrategy waitStrategy = (PhasedBackoffWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" PHASEDBACKOFF { 1, 2, SECONDS , blocking } ");
         
-        assertThat(Whitebox.getInternalState(waitStrategy, "spinTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
-        assertThat(Whitebox.getInternalState(waitStrategy, "yieldTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1 + 2));
-        assertThat(Whitebox.getInternalState(waitStrategy, "fallbackStrategy")).isInstanceOf(BlockingWaitStrategy.class);
+        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "spinTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "yieldTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1 + 2));
+        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "fallbackStrategy")).isInstanceOf(BlockingWaitStrategy.class);
         
     }
 
@@ -151,7 +151,7 @@ public class WaitStrategyFactoryTest {
     @Test
     public void testCreatePhasedBackoff_nested() {
         PhasedBackoffWaitStrategy waitStrategy = (PhasedBackoffWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}}");
-        assertThat(Whitebox.getInternalState(waitStrategy, "fallbackStrategy")).isInstanceOf(PhasedBackoffWaitStrategy.class);
+        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "fallbackStrategy")).isInstanceOf(PhasedBackoffWaitStrategy.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -173,7 +173,7 @@ public class WaitStrategyFactoryTest {
         
         TimeoutBlockingWaitStrategy waitStrategy = (TimeoutBlockingWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" TIMEOUTBLOCKING { 1, SECONDS } ");
         
-        assertThat(Whitebox.getInternalState(waitStrategy, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat(getFieldValue(waitStrategy, TimeoutBlockingWaitStrategy.class, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
         
     }
 
@@ -206,7 +206,7 @@ public class WaitStrategyFactoryTest {
         
         LiteTimeoutBlockingWaitStrategy waitStrategy = (LiteTimeoutBlockingWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" LITETIMEOUTBLOCKING { 1, SECONDS } ");
         
-        assertThat(Whitebox.getInternalState(waitStrategy, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat(getFieldValue(waitStrategy, LiteTimeoutBlockingWaitStrategy.class, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
         
     }
 
@@ -230,4 +230,14 @@ public class WaitStrategyFactoryTest {
         WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking{hello,SECONDS}");
     }
     
+    private <T> T getFieldValue(Object object, Class<?> clazz, String fieldName) {
+        try {
+            Field field = clazz.getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return (T) field.get(object);
+        } catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }

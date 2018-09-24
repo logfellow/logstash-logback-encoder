@@ -44,14 +44,20 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
@@ -61,15 +67,7 @@ import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Logback11Support.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LogstashEncoderTest {
     
     private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
@@ -79,10 +77,15 @@ public class LogstashEncoderTest {
     private LogstashEncoder encoder = new LogstashEncoder();
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     
+    @Mock
+    private Logback11Support logback11Support;
+
     @Test
     public void basicsAreIncluded_logback11() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+
+        encoder.setLogback11Support(logback11Support);
+
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.init(outputStream);
         final long timestamp = System.currentTimeMillis();
@@ -101,8 +104,9 @@ public class LogstashEncoderTest {
 
     @Test
     public void basicsAreIncluded_logback12() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         final long timestamp = System.currentTimeMillis();
         
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
@@ -220,8 +224,9 @@ public class LogstashEncoderTest {
     
     @Test
     public void closePutsSeparatorAtTheEnd_logback11() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.init(outputStream);
 
@@ -440,7 +445,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void propertiesInContextAreNotIncludedIfSwitchedOFf() throws Exception {
+    public void propertiesInContextAreNotIncludedIfSwitchedOff() throws Exception {
         Map<String, String> propertyMap = new HashMap<String, String>();
         propertyMap.put("thing_one", "One");
         propertyMap.put("thing_two", "Three");

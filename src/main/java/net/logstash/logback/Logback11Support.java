@@ -32,6 +32,8 @@ import ch.qos.logback.core.encoder.Encoder;
  * and invoke the old methods on the {@link Encoder} interface.
  */
 public class Logback11Support {
+
+    public static final Logback11Support INSTANCE = new Logback11Support();
     
     private static final Method ENCODER_INIT_METHOD = getMethod(Encoder.class, "init", OutputStream.class);
     private static final Method ENCODER_DO_ENCODE_METHOD = getMethod(Encoder.class, "doEncode", Object.class);
@@ -42,7 +44,7 @@ public class Logback11Support {
      * Returns true if logback 1.1.x or earlier is on the runtime classpath.
      * Returns false if logback 1.2.x or later is on the runtime classpath
      */
-    public static boolean isLogback11OrBefore() {
+    public boolean isLogback11OrBefore() {
         return IS_LOGBACK_1_1;
     }
 
@@ -51,7 +53,7 @@ public class Logback11Support {
      * 
      * @throws IllegalStateException if the logback version is >= 1.2 
      */
-    public static void verifyLogback11OrBefore() {
+    public void verifyLogback11OrBefore() {
         if (!isLogback11OrBefore()) {
             throw new IllegalStateException("Logback 1.1 only method called, but Logback version is >= 1.2");
         }
@@ -61,7 +63,7 @@ public class Logback11Support {
      * 
      * @throws IllegalStateException if the logback version is < 1.2 
      */
-    public static void verifyLogback12OrAfter() {
+    public void verifyLogback12OrAfter() {
         if (isLogback11OrBefore()) {
             throw new IllegalStateException("Logback 1.2+ method called, but Logback version is < 1.2");
         }
@@ -70,7 +72,7 @@ public class Logback11Support {
     /**
      * Invokes the init method of a logback 1.1 encoder, with the given outputStream as the argument.
      */
-    public static void init(Encoder<?> encoder, OutputStream outputStream) throws IOException {
+    public void init(Encoder<?> encoder, OutputStream outputStream) throws IOException {
         verifyLogback11OrBefore();
         try {
             ENCODER_INIT_METHOD.invoke(encoder, outputStream);
@@ -92,7 +94,7 @@ public class Logback11Support {
     /**
      * Invokes the doEncode method of a logback 1.1 encoder, with the given event as the argument.
      */
-    public static void doEncode(Encoder<?> encoder, Object event) throws IOException {
+    public void doEncode(Encoder<?> encoder, Object event) throws IOException {
         verifyLogback11OrBefore();
         try {
             ENCODER_DO_ENCODE_METHOD.invoke(encoder, event);
@@ -114,7 +116,7 @@ public class Logback11Support {
     /**
      * Invokes the close method of a logback 1.1 encoder.
      */
-    public static void close(Encoder<?> encoder) throws IOException {
+    public void close(Encoder<?> encoder) throws IOException {
         verifyLogback11OrBefore();
         try {
             ENCODER_CLOSE_METHOD.invoke(encoder);

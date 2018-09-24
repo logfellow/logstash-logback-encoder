@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
+import com.fasterxml.jackson.databind.annotation.JsonValueInstantiator;
+
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
@@ -65,6 +67,12 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     private Charset charset;
     
+    /**
+     * Logback 1.1 reflection support.
+     * This field is set by unit tests.
+     */
+    private Logback11Support logback11Support = Logback11Support.INSTANCE;
+
     public CompositeJsonEncoder() {
         super();
         this.formatter = createFormatter();
@@ -82,7 +90,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * @throws IllegalStateException if the logback version is >= 1.2 
      */
     public void init(OutputStream outputStream) throws IOException {
-        Logback11Support.verifyLogback11OrBefore();
+        logback11Support.verifyLogback11OrBefore();
         this.logback11OutputStream = outputStream;
         initWrapped(prefix, outputStream);
         initWrapped(suffix, outputStream);
@@ -90,13 +98,13 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     private void initWrapped(Encoder<Event> wrapped, OutputStream outputStream) throws IOException {
         if (wrapped != null) {
-            Logback11Support.init(wrapped, outputStream);
+            logback11Support.init(wrapped, outputStream);
         }
     }
     
     @Override
     public byte[] encode(Event event) {
-        Logback11Support.verifyLogback12OrAfter();
+        logback11Support.verifyLogback12OrAfter();
         
         byte[] prefixBytes = doEncodeWrappedToBytes(prefix, event);
         byte[] suffixBytes = doEncodeWrappedToBytes(suffix, event);
@@ -162,7 +170,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * @throws IllegalStateException if the logback version is >= 1.2 
      */
     public void doEncode(Event event) throws IOException {
-        Logback11Support.verifyLogback11OrBefore();
+        logback11Support.verifyLogback11OrBefore();
         try {
             doEncodeWrappedToOutputStream(prefix, event);
             
@@ -192,7 +200,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     private void doEncodeWrappedToOutputStream(Encoder<Event> wrapped, Event event) throws IOException {
         if (wrapped != null) {
-            Logback11Support.doEncode(wrapped, event);
+            logback11Support.doEncode(wrapped, event);
         }
     }
     
@@ -207,7 +215,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
                 : this.lineSeparator.getBytes(charset);
         startWrapped(prefix);
         startWrapped(suffix);
-        if (Logback11Support.isLogback11OrBefore()) {
+        if (logback11Support.isLogback11OrBefore()) {
             addWarn("Logback version is prior to 1.2.0.  Enabling backwards compatible encoding.  Logback 1.2.1 or greater is recommended.");
         }
     }
@@ -270,15 +278,22 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * @throws IllegalStateException if the logback version is >= 1.2 
      */
     public void close() throws IOException {
-        Logback11Support.verifyLogback11OrBefore();
+        logback11Support.verifyLogback11OrBefore();
         closeWrapped(prefix);
         closeWrapped(suffix);
     }
     
     private void closeWrapped(Encoder<Event> wrapped) throws IOException {
         if (wrapped != null && !wrapped.isStarted()) {
-            Logback11Support.close(wrapped);
+            logback11Support.close(wrapped);
         }
+    }
+    
+    /*
+     * Visible for unit testing 
+     */
+    protected void setLogback11Support(Logback11Support logback11Support) {
+        this.logback11Support = logback11Support;
     }
     
     @Override
