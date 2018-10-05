@@ -105,7 +105,11 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     @Deprecated
     private ContextMapJsonProvider contextMapProvider;
     private GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsProvider;
-    private final TagsJsonProvider tagsProvider = new TagsJsonProvider();
+    /**
+     * When not null, markers will be included according
+     * to the logic in {@link TagsJsonProvider}
+     */
+    private TagsJsonProvider tagsProvider = new TagsJsonProvider();
     private final LogstashMarkersJsonProvider logstashMarkersProvider = new LogstashMarkersJsonProvider();
     private ArgumentsJsonProvider argumentsProvider = new ArgumentsJsonProvider();
     
@@ -250,7 +254,23 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             }
         }
     }
-    
+
+    public boolean isIncludeTags() {
+        return this.tagsProvider != null;
+    }
+
+    public void setIncludeTags(boolean includeTags) {
+        if (isIncludeTags() != includeTags) {
+            if (includeTags) {
+                tagsProvider = new TagsJsonProvider();
+                addProvider(tagsProvider);
+            } else {
+                getProviders().removeProvider(tagsProvider);
+                tagsProvider = null;
+            }
+        }
+    }
+
     public boolean isIncludeStructuredArguments() {
         return this.argumentsProvider.isIncludeStructuredArguments();
     }

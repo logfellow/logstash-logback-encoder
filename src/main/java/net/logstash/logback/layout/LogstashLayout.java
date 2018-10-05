@@ -109,7 +109,15 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
     public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
         getFormatter().setExcludeMdcKeyNames(excludeMdcKeyNames);
     }
-    
+
+    public boolean isIncludeTags() {
+        return getFormatter().isIncludeTags();
+    }
+
+    public void setIncludeTags(boolean includeTags) {
+        getFormatter().setIncludeTags(includeTags);
+    }
+
     public boolean isIncludeContext() {
         return getFormatter().isIncludeContext();
     }

@@ -16,6 +16,7 @@
                 <version>[ignore]</version>
             </fieldNames>
             <includeMdc>false</includeMdc>
+            <includeTags>false</includeTags>
         </encoder>
     </appender>
     

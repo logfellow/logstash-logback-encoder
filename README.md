@@ -762,7 +762,8 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | `level`       | String name of the level of the event
 | `level_value` | Integer value of the level of the event
 | `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.
-| `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.)
+| `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.) This can be fully disabled by specifying `<includeTags>false</includeTags>`, in the encoder/layout/appender configuration.
+
 
 
 ### MDC fields
