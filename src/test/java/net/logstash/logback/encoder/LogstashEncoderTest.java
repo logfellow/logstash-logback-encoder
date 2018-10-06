@@ -528,7 +528,23 @@ public class LogstashEncoderTest {
         
         assertThat(node.findValue("tags")).isNull();
     }
-    
+
+    @Test
+    public void markerNoneIncluded() throws Exception {
+        Marker marker = MarkerFactory.getMarker("bees");
+        marker.add(MarkerFactory.getMarker("knees"));
+        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
+        when(event.getMarker()).thenReturn(marker);
+
+        encoder.setIncludeTags(false);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.findValue("tags")).isNull();
+    }
+
     /**
      * Tests the old way of appending a json_message to the event.
      * 
