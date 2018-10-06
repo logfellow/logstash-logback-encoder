@@ -41,6 +41,18 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     }
     
     @Override
+    public void start() {
+        super.start();
+        getProviders().start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        getProviders().stop();
+    }
+    
+    @Override
     public void writeTo(JsonGenerator generator, Event event)
             throws IOException {
         generator.writeFieldName(getFieldName());
@@ -60,5 +72,11 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     @Override
     public void setJsonFactory(final JsonFactory jsonFactory) {
         getProviders().setJsonFactory(jsonFactory);
+    }
+    
+    @Override
+    public void prepareForDeferredProcessing(Event event) {
+        super.prepareForDeferredProcessing(event);
+        getProviders().prepareForDeferredProcessing(event);
     }
 }

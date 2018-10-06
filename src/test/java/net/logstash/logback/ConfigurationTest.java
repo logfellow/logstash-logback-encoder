@@ -14,9 +14,11 @@
 package net.logstash.logback;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
+import net.logstash.logback.appender.AsyncDisruptorAppender;
 import net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender;
 import net.logstash.logback.appender.listener.AppenderListener;
 import net.logstash.logback.argument.StructuredArguments;
@@ -39,6 +41,7 @@ import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
+import net.logstash.logback.composite.loggingevent.SequenceJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
@@ -50,9 +53,11 @@ import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.powermock.reflect.Whitebox;
-import org.powermock.reflect.internal.WhiteboxImpl;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -60,10 +65,6 @@ import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.read.ListAppender;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 public class ConfigurationTest {
 
@@ -82,7 +83,7 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(20, providers.size());
+        Assert.assertEquals(21, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -93,7 +94,7 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(24, providers.size());
+        Assert.assertEquals(25, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -103,9 +104,11 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void testAppenderHasListener() throws IOException {
+    public void testAppenderHasListener() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         LoggingEventAsyncDisruptorAppender appender = getAppender("asyncAppender");
-        List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) Whitebox.getFieldValue(Whitebox.getField(LoggingEventAsyncDisruptorAppender.class, "listeners") , appender);
+        Field listenersField = AsyncDisruptorAppender.class.getDeclaredField("listeners");
+        listenersField.setAccessible(true);
+        List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) listenersField.get(appender);
         Assert.assertEquals(1, listeners.size());
     }
 
@@ -196,6 +199,10 @@ public class ConfigurationTest {
         Assert.assertEquals("id", uuidProvider.getFieldName());
         Assert.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
         Assert.assertEquals(UuidProvider.STRATEGY_TIME, uuidProvider.getStrategy());
+
+        SequenceJsonProvider sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
+        Assert.assertNotNull(sequenceJsonProvider);
+        Assert.assertEquals("sequenceNumberField", sequenceJsonProvider.getFieldName());
     }
 
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {
@@ -241,6 +248,11 @@ public class ConfigurationTest {
         Assert.assertEquals("v1", output.get("k1"));
         Assert.assertEquals("v2", output.get("k2"));
         Assert.assertEquals("v3", output.get("k3"));
+
+        Number sequence = (Number)output.get("sequenceNumberField");
+        Assert.assertNotNull(sequence);
+        Assert.assertNotEquals("", sequence);
+        Assert.assertTrue(0L < sequence.longValue());
     }
 
     @SuppressWarnings("unchecked")

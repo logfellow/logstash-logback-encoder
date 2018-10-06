@@ -42,7 +42,7 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String context;
     private String arguments;
     private String uuid = UuidProvider.FIELD_UUID;
-    
+
     public String getLogger() {
         return logger;
     }

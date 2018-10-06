@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.0).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.2).
 
 # Logback JSON encoder
 
@@ -37,8 +37,9 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [Header Fields](#header-fields)
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
-* [Customizing TimeZone](#customizing-timezone)
+* [Customizing Timestamp](#customizing-timestamp)
 * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+* [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix](#prefixsuffix)
@@ -49,6 +50,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
   * [Pattern JSON Provider](#pattern-json-provider)
     * [LoggingEvent patterns](#loggingevent-patterns)
     * [AccessEvent patterns](#accessevent-patterns)
+  * [Custom JSON Provider](#custom-json-provider)
 * [Debugging](#debugging)
 
 
@@ -59,9 +61,15 @@ Maven style:
 
 ```xml
 <dependency>
-  <groupId>net.logstash.logback</groupId>
-  <artifactId>logstash-logback-encoder</artifactId>
-  <version>5.0</version>
+    <groupId>net.logstash.logback</groupId>
+    <artifactId>logstash-logback-encoder</artifactId>
+    <version>5.2</version>
+</dependency>
+<!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
+<dependency>
+    <groupId>ch.qos.logback</groupId>
+    <artifactId>logback-classic</artifactId>
+    <version>1.2.3</version>
 </dependency>
 ```
 
@@ -523,7 +531,10 @@ By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disrupt
 is used by the worker thread spawned by this appender.
 The `BlockingWaitStrategy` minimizes CPU utilization, but results in slower latency and throughput.
 If you need faster latency and throughput (at the expense of higher CPU utilization), consider
-a different wait strategy offered by the disruptor, such as `SleepingWaitStrategy`.
+a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/WaitStrategy.html) offered by the disruptor.
+
+> !! Whichever wait strategy you choose, be sure to test and monitor CPU utilization, latency, and throughput to ensure it meets your needs.
+> For example, in some configurations, `SleepingWaitStrategy` can consume 90% CPU utilization at rest.
 
 The wait strategy can be configured on the async appender using the `waitStrategyType` parameter, like this:
 ```xml
@@ -560,14 +571,23 @@ The supported wait strategies are as follows:
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/LiteBlockingWaitStrategy.html"><tt>LiteBlockingWaitStrategy</tt></a></td>
     </tr>
     <tr>
-      <td><tt>sleeping</tt></td>
-      <td>none</td>
-      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/SleepingWaitStrategy.html"><tt>SleepingWaitStrategy</tt></a></td>
-    </tr>
-    <tr>
       <td><tt>yielding</tt></td>
       <td>none</td>
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/YieldingWaitStrategy.html"><tt>YieldingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><pre>sleeping{
+  <em>retries</em>,
+  <em>sleepTimeNs</em>
+}
+</pre>e.g.<br/><tt>sleeping</tt><br/>or<br/><tt>sleeping{500,1000}</tt></td>
+      <td>
+        <ol>
+          <li><tt>retries</tt> - Number of times (integer) to spin before sleeping. (default = 200)</li>
+          <li><tt>sleepTimeNs</tt> - Time in nanoseconds to sleep each iteration after spinning (default = 100)</li>
+        </ol>
+      </td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/SleepingWaitStrategy.html"><tt>SleepingWaitStrategy</tt></a></td>
     </tr>
     <tr>
       <td><pre>phasedBackoff{
@@ -601,6 +621,20 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
         </ol>
       </td>
       <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/TimeoutBlockingWaitStrategy.html"><tt>TimeoutBlockingWaitStrategy</tt></a></td>
+    </tr>
+    <tr>
+      <td><pre>liteTimeoutBlocking{
+  <em>timeout</em>,
+  <em>timeUnit</em>
+}
+</pre>e.g.<br/><tt>liteTimeoutBlocking{1,minutes}</tt></td>
+      <td>
+        <ol>
+          <li><tt>timeout</tt> - Time to block before throwing an exception</li>
+          <li><tt>timeUnit</tt> - Units of time for timeout. String name of a <a href="http://docs.oracle.com/javase/8/docs/api/java/util/concurrent/TimeUnit.html"><tt>TimeUnit</tt></a> value (e.g. <tt>seconds</tt>)</li>
+        </ol>
+      </td>
+      <td><a href="https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/LiteTimeoutBlockingWaitStrategy.html"><tt>LiteTimeoutBlockingWaitStrategy</tt></a></td>
     </tr>
   </tbody>
 </table>
@@ -720,7 +754,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).
 | `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `message`     | Formatted log message of the event
 | `logger_name` | Name of the logger that logged the event
@@ -728,7 +762,8 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 | `level`       | String name of the level of the event
 | `level_value` | Integer value of the level of the event
 | `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.
-| `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.)
+| `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.) This can be fully disabled by specifying `<includeTags>false</includeTags>`, in the encoder/layout/appender configuration.
+
 
 
 ### MDC fields
@@ -1024,7 +1059,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timezone](#customizing-timezone).
+| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).
 | `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
 | `message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
 | `method` | HTTP method
@@ -1143,10 +1178,10 @@ The value can be written as a number (instead of a string) like this:
 ```
 
 
+## Customizing Timestamp
 
-## Customizing TimeZone
+By default, timestamps are written as string values in the format `yyyy-MM-dd'T'HH:mm:ss.SSSZZ` (e.g. `2018-04-28T22:23:59.164-07:00`), in the default TimeZone of the host Java platform.
 
-By default, timestamps are logged in the default TimeZone of the host Java platform.
 You can change the timezone like this:
 
 ```xml
@@ -1157,11 +1192,31 @@ You can change the timezone like this:
 
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
 
+You can change the pattern used like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
+</encoder>
+```
+
+Use these timestamp pattern values to output the timestamp as a unix timestamp (number of milliseconds since unix epoch).
+
+* `[UNIX_TIMESTAMP_AS_NUMBER]` - write the timestamp value as a numeric unix timestamp
+* `[UNIX_TIMESTAMP_AS_STRING]` - write the timestamp value as a string verion of the numeric unix timestamp
+
+For example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timestampPattern>[UNIX_TIMESTAMP_AS_NUMBER]</timestampPattern>
+</encoder>
+```
 
 
 ## Customizing JSON Factory and Generator
 
-The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by 
+The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by
 instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
 or [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java), respectively.
 
@@ -1191,6 +1246,29 @@ and then specify the decorator in the logback.xml file like this:
 ```
 
 See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
+
+## Customizing Character Escapes
+
+By default, when a string is written as a JSON string value, any character not allowed in a JSON string will be escaped.
+For example, the newline character (ASCII 10) will be escaped as `\n`.
+
+To customize these escape sequences, use the `net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator`.
+
+For example, if you want to use something other than `\n` as the escape sequence for the newline character, you can do the following:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator">
+    <escape>
+      <targetCharacterCode>10</targetCharacterCode>
+      <escapeSequence>\u2028</escapeSequence>
+    </escape>
+  </jsonFactoryDecorator>
+</encoder>
+```
+
+You can also disable all the default escape sequences by specifying `<includeStandardAsciiEscapesForJSON>false</includeStandardAsciiEscapesForJSON>` on the `CharacterEscapesJsonFactoryDecorator`.
+If you do this, then you will need to register custom escapes for each character that is illegal in JSON string values.  Otherwise, invalid JSON could be written.
 
 
 ## Customizing Logger Name Length
@@ -1349,7 +1427,12 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)</li>
+          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
+          <ul>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
+          </ul>
+          </li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>
@@ -1566,6 +1649,17 @@ For LoggingEvents, the available providers and their configuration properties (d
         </ul>
       </td>
     </tr>
+    <tr>
+      <td><tt>sequence</tt></td>
+      <td>
+        <p>
+          Outputs an incrementing sequence number for every log event.
+          Useful for tracking pottential message loss during transport (eg. UDP)
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li></ul>
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -1588,7 +1682,12 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)</li>
+          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
+          <ul>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
+            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
+          </ul>
+          </li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>
@@ -1950,6 +2049,38 @@ So the following pattern...
   "filtered_cookie": null
 }
 ```
+
+### Custom JSON Provider
+
+You can create your own JSON provider by implementing the [`JsonProvider`](src/main/java/net/logstash/logback/composite/JsonProvider.java) interface (or extending one of the existing classes that implements the `JsonProvider` interface).
+
+Then, add the provider to a `LoggingEventCompositeJsonEncoder` like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    ...
+    <provider class="your.provider.YourJsonProvider">
+        <!-- Any properties exposed by your provider can be set here -->
+    </provider>
+    ...
+  </providers>
+</encoder>
+```
+
+or a `LogstashEncoder` like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    ...
+    <provider class="your.provider.YourJsonProvider">
+        <!-- Any properties exposed by your provider can be set here -->
+    </provider>
+    ...
+</encoder>
+```
+
+You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEnceder` as well.
 
 ## Debugging
 

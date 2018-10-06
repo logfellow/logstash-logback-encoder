@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import net.logstash.logback.Logback11Support;
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
@@ -43,14 +44,20 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
@@ -60,15 +67,7 @@ import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Logback11Support.class)
+@RunWith(MockitoJUnitRunner.Silent.class)
 public class LogstashEncoderTest {
     
     private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
@@ -78,10 +77,15 @@ public class LogstashEncoderTest {
     private LogstashEncoder encoder = new LogstashEncoder();
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     
+    @Mock
+    private Logback11Support logback11Support;
+
     @Test
     public void basicsAreIncluded_logback11() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+
+        encoder.setLogback11Support(logback11Support);
+
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.init(outputStream);
         final long timestamp = System.currentTimeMillis();
@@ -100,8 +104,9 @@ public class LogstashEncoderTest {
 
     @Test
     public void basicsAreIncluded_logback12() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         final long timestamp = System.currentTimeMillis();
         
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
@@ -147,7 +152,7 @@ public class LogstashEncoderTest {
         assertThat(node.get("level").textValue()).isEqualTo("ERROR");
         assertThat(node.get("levelVal").intValue()).isEqualTo(40000);
     }
-    
+
     @Test
     public void customDecorators() throws Exception {
         encoder.stop();
@@ -219,8 +224,9 @@ public class LogstashEncoderTest {
     
     @Test
     public void closePutsSeparatorAtTheEnd_logback11() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        encoder.setLogback11Support(logback11Support);
+
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         encoder.init(outputStream);
 
@@ -439,7 +445,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void propertiesInContextAreNotIncludedIfSwitchedOFf() throws Exception {
+    public void propertiesInContextAreNotIncludedIfSwitchedOff() throws Exception {
         Map<String, String> propertyMap = new HashMap<String, String>();
         propertyMap.put("thing_one", "One");
         propertyMap.put("thing_two", "Three");
@@ -522,7 +528,23 @@ public class LogstashEncoderTest {
         
         assertThat(node.findValue("tags")).isNull();
     }
-    
+
+    @Test
+    public void markerNoneIncluded() throws Exception {
+        Marker marker = MarkerFactory.getMarker("bees");
+        marker.add(MarkerFactory.getMarker("knees"));
+        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
+        when(event.getMarker()).thenReturn(marker);
+
+        encoder.setIncludeTags(false);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.findValue("tags")).isNull();
+    }
+
     /**
      * Tests the old way of appending a json_message to the event.
      * 
@@ -736,6 +758,38 @@ public class LogstashEncoderTest {
         assertThat(encoder.getCustomFields()).isEqualTo(customFields);
         
     }
+    
+    @Test
+    public void unixTimestampAsNumber() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_NUMBER);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
+    }    
+    
+    @Test
+    public void unixTimestampAsString() throws Exception {
+        final long timestamp = System.currentTimeMillis();
+        
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getTimeStamp()).thenReturn(timestamp);
+        
+        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_STRING);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+        
+        JsonNode node = MAPPER.readTree(encoded);
+        
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
+    }    
     
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         String[] values = new String[jsonNode.size()];

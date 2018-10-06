@@ -335,7 +335,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
-            	// stack hashes are not computed/inlined on suppressed errors
+                // stack hashes are not computed/inlined on suppressed errors
                 appendRootCauseLast(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy, null);
             }
         }
@@ -369,7 +369,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
-            	// stack hashes are not computed/inlined on suppressed errors
+                // stack hashes are not computed/inlined on suppressed errors
                 appendRootCauseFirst(builder, CoreConstants.SUPPRESSED, indent + ThrowableProxyUtil.SUPPRESSED_EXCEPTION_INDENT, suppressedThrowableProxy, null);
             }
         }

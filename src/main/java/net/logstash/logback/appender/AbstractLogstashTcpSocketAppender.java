@@ -448,8 +448,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                          * This is a standard (non-keepAlive) event.
                          * Therefore, we need to send the event.
                          */
-                        if (Logback11Support.isLogback11OrBefore()) {
-                            Logback11Support.doEncode(encoder, logEvent.event);
+                        if (getLogback11Support().isLogback11OrBefore()) {
+                            getLogback11Support().doEncode(encoder, logEvent.event);
                         } else {
                             outputStream.write(encoder.encode(logEvent.event));
                         }
@@ -568,8 +568,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                             ? new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize)
                             : tempSocket.getOutputStream();
                     
-                    if (Logback11Support.isLogback11OrBefore()) {
-                        Logback11Support.init(encoder, tempOutputStream);
+                    if (getLogback11Support().isLogback11OrBefore()) {
+                        getLogback11Support().init(encoder, tempOutputStream);
                     }
                     
                     addInfo(peerId + "connection established.");
@@ -665,9 +665,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
         
         private void closeEncoder() {
-            if (Logback11Support.isLogback11OrBefore()) {
+            if (getLogback11Support().isLogback11OrBefore()) {
                 try {
-                    Logback11Support.close(encoder);
+                    getLogback11Support().close(encoder);
                 } catch (IOException ioe) {
                     addStatus(new ErrorStatus(
                             "Failed to close encoder", this, ioe));
@@ -885,6 +885,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
     
 
+    /*
+     * Visible for unit testing 
+     */
+    protected Logback11Support getLogback11Support() {
+        return Logback11Support.INSTANCE;
+    }
+    
     public Encoder<Event> getEncoder() {
         return encoder;
     }

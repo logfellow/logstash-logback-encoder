@@ -26,7 +26,6 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
@@ -59,9 +58,7 @@ import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
@@ -69,8 +66,7 @@ import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
 
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(Logback11Support.class)
+@RunWith(MockitoJUnitRunner.class)
 public class LogstashTcpSocketAppenderTest {
     
     private static final int VERIFICATION_TIMEOUT = 1000 * 10;
@@ -111,10 +107,17 @@ public class LogstashTcpSocketAppenderTest {
     @Mock
     private Random random;
     
+    @Mock
+    private Logback11Support logback11Support;
+    
     private class TestableLogstashTcpSocketAppender extends LogstashTcpSocketAppender {
         @Override
         protected Future<?> scheduleReaderCallable(Callable<Void> readerCallable) {
             return readableCallableFuture;
+        }
+        @Override
+        protected Logback11Support getLogback11Support() {
+            return logback11Support;
         }
     }
     
@@ -125,6 +128,7 @@ public class LogstashTcpSocketAppenderTest {
         when(socket.getOutputStream()).thenReturn(outputStream);
         when(encoder.encode(event1)).thenReturn("event1".getBytes("UTF-8"));
         appender.addListener(listener);
+        
     }
     
     @After
@@ -134,8 +138,7 @@ public class LogstashTcpSocketAppenderTest {
     
     @Test
     public void testEncoderCalled_logback11() throws Exception {
-        PowerMockito.mockStatic(Logback11Support.class);
-        when(Logback11Support.isLogback11OrBefore()).thenReturn(true);
+        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         
         appender.addDestination("localhost:10000");
         appender.setIncludeCallerData(true);
@@ -148,11 +151,9 @@ public class LogstashTcpSocketAppenderTest {
         
         verify(event1).getCallerData();
         
-        PowerMockito.verifyStatic(timeout(VERIFICATION_TIMEOUT));
-        Logback11Support.init(eq(encoder), any(OutputStream.class));
+        verify(logback11Support, timeout(2000L)).init(eq(encoder), any(OutputStream.class));
         
-        PowerMockito.verifyStatic(timeout(VERIFICATION_TIMEOUT));
-        Logback11Support.doEncode(encoder, event1);
+        verify(logback11Support, timeout(2000L)).doEncode(encoder, event1);
 
     }
 
@@ -606,18 +607,18 @@ public class LogstashTcpSocketAppenderTest {
     }
     
     private SocketAddress host(final String host, final int port) {
-    	return argThat(hasHostAndPort(host, port));
+        return argThat(hasHostAndPort(host, port));
     }
     
     private ArgumentMatcher<SocketAddress> hasHostAndPort(final String host, final int port) {
-    	return new ArgumentMatcher<SocketAddress>() {
+        return new ArgumentMatcher<SocketAddress>() {
 
-			@Override
-			public boolean matches(SocketAddress argument) {
-				InetSocketAddress sockAddr = (InetSocketAddress) argument;
-				return host.equals(sockAddr.getHostName()) && port==sockAddr.getPort();
-			}
+            @Override
+            public boolean matches(SocketAddress argument) {
+                InetSocketAddress sockAddr = (InetSocketAddress) argument;
+                return host.equals(sockAddr.getHostName()) && port == sockAddr.getPort();
+            }
 
-    	};
+        };
     }
 }

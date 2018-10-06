@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>5.1-SNAPSHOT</version>
+    <version>5.3-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
@@ -29,16 +29,15 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
-        <com.fasterxml.jackson.version>2.9.4</com.fasterxml.jackson.version>
-        <com.fasterxml.uuid.version>3.1.4</com.fasterxml.uuid.version>
+        <com.fasterxml.jackson.version>2.9.6</com.fasterxml.jackson.version>
+        <com.fasterxml.uuid.version>3.1.5</com.fasterxml.uuid.version>
         <commons.io.version>2.6</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.12</junit.version>
-        <org.assertj.version>2.9.0</org.assertj.version>
-        <org.mockito.version>2.9.0</org.mockito.version>
-        <org.powermock.version>1.7.3</org.powermock.version>
-        <com.lmax.disruptor.version>3.3.8</com.lmax.disruptor.version>
-        <org.codehaus.mojo.animal-sniffer.version>1.16</org.codehaus.mojo.animal-sniffer.version>
+        <org.assertj.version>2.9.1</org.assertj.version>
+        <org.mockito.version>2.22.0</org.mockito.version>
+        <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
+        <org.codehaus.mojo.animal-sniffer.version>1.17</org.codehaus.mojo.animal-sniffer.version>
     </properties>
 
     <licenses>
@@ -78,11 +77,6 @@
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-core</artifactId>
-            <version>${ch.qos.logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>${ch.qos.logback.version}</version>
             <!--
@@ -100,6 +94,17 @@
                Not needed if only logging regular ILoggingEvents with a Logger.
             -->
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${ch.qos.logback.version}</version>
+            <!--
+               "provided" since users of logstash-logback-encoder must also
+               directly depend on logback-classic or logback-access,
+               and both of those depend on logback-core transitively.
+            -->
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>
@@ -157,24 +162,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-module-junit4</artifactId>
-            <version>${org.powermock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-core</artifactId>
-            <version>${org.powermock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-api-mockito2</artifactId>
-            <version>${org.powermock.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>${commons.io.version}</version>
@@ -187,7 +174,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
+                <version>3.8.0</version>
                 <configuration>
                     <source>1.7</source>
                     <target>1.7</target>
@@ -241,7 +228,7 @@
                 <artifactId>maven-license-plugin</artifactId>
                 <version>1.9.0</version>
                 <configuration>
-                    <header>LICENSE</header>
+                    <header>license-header.txt</header>
                     <strictCheck>true</strictCheck>
                     <aggregate>true</aggregate>
                     <encoding>UTF-8</encoding>
@@ -304,7 +291,7 @@
                 <configuration>
                     <instructions>
                         <!-- packages to export -->
-                        <Export-Package>net.logstash.logback.encoder,net.logstash.logback.appender</Export-Package>
+                        <Export-Package>net.logstash.logback.encoder,net.logstash.logback.appender,net.logstash.logback.argument,net.logstash.logback.composite,net.logstash.logback.fieldnames</Export-Package>
                         <!-- attach to Logback bundle as fragment -->
                         <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
                         <!-- exclude following imports as required classes are relocated by shade plugin and ignore ch.qos.logback.[core,classic] because this is a fragment and gets them from parent. -->
