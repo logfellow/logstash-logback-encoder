@@ -1229,7 +1229,7 @@ Or customize object mapping like this:
 public class ISO8601DateDecorator implements JsonFactoryDecorator  {
 
 	@Override
-	public MappingJsonFactory decorate(MappingJsonFactory factory) {
+	public JsonFactory decorate(JsonFactory factory) {
 		ObjectMapper codec = factory.getCodec();
 		codec.setDateFormat(new ISO8601DateFormat());
 		return factory;
