@@ -27,6 +27,7 @@ import com.lmax.disruptor.LiteTimeoutBlockingWaitStrategy;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.TimeoutBlockingWaitStrategy;
+import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.YieldingWaitStrategy;
 
 public class WaitStrategyFactoryTest {
@@ -87,8 +88,8 @@ public class WaitStrategyFactoryTest {
         
         SleepingWaitStrategy waitStrategy = (SleepingWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" SLEEPING { 500, 1000 } ");
         
-        assertThat(getFieldValue(waitStrategy, SleepingWaitStrategy.class, "retries")).isEqualTo(500);
-        assertThat(getFieldValue(waitStrategy, SleepingWaitStrategy.class, "sleepTimeNs")).isEqualTo(1000L);
+        assertThat((int) getFieldValue(waitStrategy, SleepingWaitStrategy.class, "retries")).isEqualTo(500);
+        assertThat((long) getFieldValue(waitStrategy, SleepingWaitStrategy.class, "sleepTimeNs")).isEqualTo(1000L);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -122,9 +123,9 @@ public class WaitStrategyFactoryTest {
         
         PhasedBackoffWaitStrategy waitStrategy = (PhasedBackoffWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" PHASEDBACKOFF { 1, 2, SECONDS , blocking } ");
         
-        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "spinTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
-        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "yieldTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1 + 2));
-        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "fallbackStrategy")).isInstanceOf(BlockingWaitStrategy.class);
+        assertThat((long) getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "spinTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat((long) getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "yieldTimeoutNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1 + 2));
+        assertThat((WaitStrategy) getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "fallbackStrategy")).isInstanceOf(BlockingWaitStrategy.class);
         
     }
 
@@ -151,7 +152,7 @@ public class WaitStrategyFactoryTest {
     @Test
     public void testCreatePhasedBackoff_nested() {
         PhasedBackoffWaitStrategy waitStrategy = (PhasedBackoffWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}}");
-        assertThat(getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "fallbackStrategy")).isInstanceOf(PhasedBackoffWaitStrategy.class);
+        assertThat((WaitStrategy) getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "fallbackStrategy")).isInstanceOf(PhasedBackoffWaitStrategy.class);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -173,7 +174,7 @@ public class WaitStrategyFactoryTest {
         
         TimeoutBlockingWaitStrategy waitStrategy = (TimeoutBlockingWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" TIMEOUTBLOCKING { 1, SECONDS } ");
         
-        assertThat(getFieldValue(waitStrategy, TimeoutBlockingWaitStrategy.class, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat((long) getFieldValue(waitStrategy, TimeoutBlockingWaitStrategy.class, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
         
     }
 
@@ -206,7 +207,7 @@ public class WaitStrategyFactoryTest {
         
         LiteTimeoutBlockingWaitStrategy waitStrategy = (LiteTimeoutBlockingWaitStrategy) WaitStrategyFactory.createWaitStrategyFromString(" LITETIMEOUTBLOCKING { 1, SECONDS } ");
         
-        assertThat(getFieldValue(waitStrategy, LiteTimeoutBlockingWaitStrategy.class, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
+        assertThat((long) getFieldValue(waitStrategy, LiteTimeoutBlockingWaitStrategy.class, "timeoutInNanos")).isEqualTo(TimeUnit.SECONDS.toNanos(1));
         
     }
 

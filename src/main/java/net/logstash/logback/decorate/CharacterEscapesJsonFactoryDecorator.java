@@ -242,12 +242,18 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
     private CustomizedCharacterEscapes characterEscapes;
 
     @Override
+    @Deprecated
+    public MappingJsonFactory decorate(MappingJsonFactory factory) {
+        return (MappingJsonFactory) decorate((JsonFactory) factory);
+    }
+
+    @Override
     public JsonFactory decorate(JsonFactory factory) {
         if (needsInitialization) {
             characterEscapes = new CustomizedCharacterEscapes(includeStandardAsciiEscapesForJSON, escapes);
             needsInitialization = false;
         }
-        return (MappingJsonFactory) factory.setCharacterEscapes(characterEscapes);
+        return factory.setCharacterEscapes(characterEscapes);
     }
     
     public boolean isIncludeStandardAsciiEscapesForJSON() {

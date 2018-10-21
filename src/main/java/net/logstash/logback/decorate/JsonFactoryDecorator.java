@@ -16,6 +16,7 @@ package net.logstash.logback.decorate;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
  * Decorates the {@link JsonFactory} used by a
@@ -29,7 +30,43 @@ import com.fasterxml.jackson.core.JsonFactory;
  * So, the factory could be decorated multiple times if the formatter is restarted.
  */
 public interface JsonFactoryDecorator {
-    
-    JsonFactory decorate(JsonFactory factory);
+
+    /**
+     * Decorates the given {@link MappingJsonFactory}.
+     *
+     * By default, returns the given factory unchanged.
+     *
+     * @deprecated Override {@link #decorate(JsonFactory)} instead.
+     *             Will be removed in a future release.
+     *
+     * @return the decorated MappingJsonFactory
+     */
+    @Deprecated
+    default MappingJsonFactory decorate(MappingJsonFactory factory) {
+        return factory;
+    }
+
+    /**
+     * Decorates the given {@link JsonFactory}.
+     *
+     * By default, for backwards compatibility purposes,
+     * this assumes the given factory is a {@link MappingJsonFactory},
+     * and calls {@link #decorate(MappingJsonFactory)} so that existing
+     * implementations that only implemented {@link #decorate(MappingJsonFactory)} continue to work.
+     * In a future release, this will be changed to return the given factory by default,
+     * and {@link #decorate(MappingJsonFactory)} will be removed.
+     * It is recommended to only override {@link #decorate(JsonFactory)}.
+     * Existing implementations should migrate to only overriding {@link #decorate(JsonFactory)}
+     * so that they will continue to work after {@link #decorate(JsonFactory)} is removed.
+     *
+     * Note that the default {@link JsonFactory} created by logstash-logback-encoder
+     * is a {@link MappingJsonFactory}, but can be changed by {@link JsonFactoryDecorator}s
+     * to any subclass of {@link JsonFactory}.
+     *
+     * @return the decorated {@link JsonFactory}
+     */
+    default JsonFactory decorate(JsonFactory factory) {
+        return decorate((MappingJsonFactory) factory);
+    }
 
 }
