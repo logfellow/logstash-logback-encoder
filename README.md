@@ -1369,6 +1369,8 @@ When using the `LogstashEncoder`, `LogstashAccessEncoder` or a composite encoder
 
 Note that logback's xml configuration reader will [trim whitespace from xml element values](https://github.com/qos-ch/logback/blob/c2dcbfcfb4048d11d7e81cd9220efbaaccf931fa/logback-core/src/main/java/ch/qos/logback/core/joran/event/BodyEvent.java#L27-L37).  Therefore, if you want to end the prefix or suffix pattern with whitespace, first add the whitespace, and then add something like `%mdc{keyThatDoesNotExist}` after it.  For example `<pattern>your pattern %mdc{keyThatDoesNotExist}</pattern>`.  This will cause logback to output the whitespace as desired, and then a blank string for the MDC key that does not exist.
 
+> :warning: If you encounter the following warning: `A "net.logstash.logback.encoder.LogstashEncoder" object is not assignable to a "ch.qos.logback.core.Appender" variable.`, you are encountering a backwards incompatibilility introduced in logback 1.2.1.  Please vote for [LOGBACK-1326](https://jira.qos.ch/browse/LOGBACK-1326) and add a thumbs up to [PR#383](https://github.com/qos-ch/logback/pull/383) to try to get this addressed in logback.  In the meantime, the only solution is to downgrade logback-classic and logback-core to 1.2.0
+
 
 ## Composite Encoder/Layout
 
