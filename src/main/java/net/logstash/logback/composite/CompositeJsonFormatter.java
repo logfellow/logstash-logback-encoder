@@ -67,25 +67,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     /**
      * Used to create the necessary {@link JsonGenerator}s for generating JSON.
      */
-    private MappingJsonFactory jsonFactory = (MappingJsonFactory) new ObjectMapper()
-        /*
-         * Assume empty beans are ok.
-         */
-        .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS)
-        .getFactory()
-        /*
-         * When generators are flushed, don't flush the underlying outputStream.
-         * 
-         * This allows some streaming optimizations when using an encoder.
-         * 
-         * The encoder generally determines when the stream should be flushed
-         * by an 'immediateFlush' property.
-         * 
-         * The 'immediateFlush' property of the encoder can be set to false
-         * when the appender performs the flushes at appropriate times
-         * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
-         */
-        .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+    private MappingJsonFactory jsonFactory;
 
     /**
      * Decorates the {@link #jsonFactory}.
@@ -105,6 +87,8 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
     
     private JsonEncoding encoding = JsonEncoding.UTF8;
+
+    private boolean findAndRegisterJacksonModules = true;
     
     private volatile boolean started;
     
@@ -117,7 +101,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         if (jsonProviders.getProviders().isEmpty()) {
             addError("No providers configured");
         }
-        jsonFactory = this.jsonFactoryDecorator.decorate(this.jsonFactory);
+        jsonFactory = createJsonFactory();
         jsonProviders.setJsonFactory(jsonFactory);
         jsonProviders.setContext(context);
         jsonProviders.start();
@@ -134,7 +118,37 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     public boolean isStarted() {
         return started;
     }
-    
+
+    private MappingJsonFactory createJsonFactory() {
+        ObjectMapper objectMapper = new ObjectMapper()
+                /*
+                 * Assume empty beans are ok.
+                 */
+                .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+
+        if (findAndRegisterJacksonModules) {
+            objectMapper.findAndRegisterModules();
+        }
+
+        MappingJsonFactory jsonFactory = (MappingJsonFactory) objectMapper
+                .getFactory()
+                /*
+                 * When generators are flushed, don't flush the underlying outputStream.
+                 *
+                 * This allows some streaming optimizations when using an encoder.
+                 *
+                 * The encoder generally determines when the stream should be flushed
+                 * by an 'immediateFlush' property.
+                 *
+                 * The 'immediateFlush' property of the encoder can be set to false
+                 * when the appender performs the flushes at appropriate times
+                 * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
+                 */
+                .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+
+        return this.jsonFactoryDecorator.decorate(jsonFactory);
+    }
+
     public byte[] writeEventAsBytes(Event event) throws IOException {
         ByteArrayBuilder outputStream = new ByteArrayBuilder(getBufferRecycler());
 
@@ -203,7 +217,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     public JsonFactory getJsonFactory() {
         return jsonFactory;
     }
-    
+
     public JsonFactoryDecorator getJsonFactoryDecorator() {
         return jsonFactoryDecorator;
     }
@@ -241,5 +255,12 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     public void setProviders(JsonProviders<Event> jsonProviders) {
         this.jsonProviders = jsonProviders;
     }
-    
+
+    public boolean isFindAndRegisterJacksonModules() {
+        return findAndRegisterJacksonModules;
+    }
+
+    public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {
+        this.findAndRegisterJacksonModules = findAndRegisterJacksonModules;
+    }
 }

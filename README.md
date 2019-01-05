@@ -39,6 +39,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
 * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+* [Registering Jackson Modules](#registering-jackson-modules)
 * [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
@@ -1246,6 +1247,19 @@ and then specify the decorator in the logback.xml file like this:
 ```
 
 See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
+
+## Registering Jackson Modules
+
+By default, Jackson modules are dynamically registered via
+[`ObjectMapper.findAndRegisterModules()`](https://fasterxml.github.io/jackson-databind/javadoc/2.9/com/fasterxml/jackson/databind/ObjectMapper.html#findAndRegisterModules--).
+
+Therefore, you just need to add jackson modules (e.g. jackson-datatype-jdk8) to the classpath,
+and they will be dynamically registered.
+
+To disable automatic discovery, set `<findAndRegisterJacksonModules>false</findAndRegisterJacksonModules>` on the encoder/layout.
+
+If you have a module that Jackson is not able to dynamically discover,
+you can register it manually via a [`JsonFactoryDecorator`](#customizing-json-factory-and-generator).
 
 ## Customizing Character Escapes
 

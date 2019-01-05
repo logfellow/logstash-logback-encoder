@@ -346,6 +346,10 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         formatter.setEncoding(encodingName);
     }
 
+    public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {
+        formatter.setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
+    }
+
     public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
