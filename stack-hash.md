@@ -206,7 +206,7 @@ As a conclusion, stack hash computation applies the following rules:
 3. in order to stabilize the stack hash (over time and space), it's recommended to **exclude non-stable elements**
 
 
-## Using stack hash in `logstash-logaback-encoder` components
+## Using stack hash in `logstash-logback-encoder` components
 
 ### `StackHashJsonProvider`
 
