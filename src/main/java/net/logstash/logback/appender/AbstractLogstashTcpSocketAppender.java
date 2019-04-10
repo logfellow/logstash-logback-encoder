@@ -562,6 +562,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
                     
                     /*
+                     * Trigger SSL handshake immediately and declare the socket unconnected if it fails
+                     */
+                    if (tempSocket instanceof SSLSocket) {
+                    	((SSLSocket)tempSocket).startHandshake();
+                    }
+                    
+                    /*
                      * Issue #218, make buffering the output stream optional.
                      */
                     tempOutputStream = writeBufferSize > 0
