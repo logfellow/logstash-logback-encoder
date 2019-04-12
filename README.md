@@ -2096,7 +2096,7 @@ or a `LogstashEncoder` like this:
 </encoder>
 ```
 
-You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEnceder` as well.
+You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEnceder` as well, if your `JsonProvider` handles `IAccessEvent`s.
 
 ## Debugging
 
