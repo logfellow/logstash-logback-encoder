@@ -278,8 +278,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         }
         if (builder.length() > maxLength) {
-            builder.setLength(maxLength - ELLIPSIS.length());
-            builder.append(ELLIPSIS);
+            builder.setLength(maxLength - ELLIPSIS.length() - CoreConstants.LINE_SEPARATOR.length());
+            builder.append(ELLIPSIS).append(CoreConstants.LINE_SEPARATOR);
         }
         return builder.toString();
     }
