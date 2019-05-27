@@ -15,6 +15,7 @@ package net.logstash.logback.encoder;
 
 import net.logstash.logback.LogstashAccessFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.accessevent.HeaderFilter;
 import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
@@ -32,7 +33,11 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     protected LogstashAccessFormatter getFormatter() {
         return (LogstashAccessFormatter) super.getFormatter();
     }
-    
+
+    public void addProvider(JsonProvider<IAccessEvent> provider) {
+        getFormatter().addProvider(provider);
+    }
+
     public LogstashAccessFieldNames getFieldNames() {
         return getFormatter().getFieldNames();
     }

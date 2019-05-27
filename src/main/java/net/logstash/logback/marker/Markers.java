@@ -13,7 +13,10 @@
  */
 package net.logstash.logback.marker;
 
+import java.util.Collection;
 import java.util.Map;
+
+import org.slf4j.Marker;
 
 /**
  * Convenience class for constructing various {@link LogstashMarker}s used to add
@@ -72,5 +75,42 @@ public class Markers {
     public static LogstashMarker appendRaw(String fieldName, String rawJsonValue) {
         return new RawJsonAppendingMarker(fieldName, rawJsonValue);
     }
-    
+
+    /**
+     * Aggregates the given markers into a single marker.
+     * @param markers the markers to aggregate
+     * @return the aggregated marker.
+     */
+    public static LogstashMarker aggregate(Marker... markers) {
+        LogstashMarker m = empty();
+        if (markers != null) {
+            for (Marker marker : markers) {
+                m.add(marker);
+            }
+        }
+        return m;
+    }
+
+    /**
+     * Aggregates the given markers into a single marker.
+     * @param markers the markers to aggregate
+     * @return the aggregated marker.
+     */
+    public static LogstashMarker aggregate(Collection<? extends Marker> markers) {
+        LogstashMarker m = empty();
+        if (markers != null) {
+            for (Marker marker : markers) {
+                m.add(marker);
+            }
+        }
+        return m;
+    }
+
+    /**
+     * @see EmptyLogstashMarker
+     */
+    public static LogstashMarker empty() {
+        return new EmptyLogstashMarker();
+    }
+
 }

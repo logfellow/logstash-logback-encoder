@@ -122,7 +122,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
     /**
      * Return the value that should be included in the output of {@link #toString()}. 
      */
-    protected abstract Object getFieldValue();
+    public abstract Object getFieldValue();
 
     @Override
     public boolean equals(Object obj) {

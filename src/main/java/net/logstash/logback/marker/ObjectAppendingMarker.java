@@ -95,7 +95,7 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
     }
     
     @Override
-    protected Object getFieldValue() {
+    public Object getFieldValue() {
         return StructuredArguments.toString(object);
     }
     

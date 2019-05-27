@@ -270,6 +270,10 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
         logstashLayout.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
+    public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {
+        logstashLayout.setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
+    }
+
     public String getTimeZone() {
         return logstashLayout.getTimeZone();
     }

@@ -151,6 +151,10 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
+    public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {
+        formatter.setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
+    }
+
     protected CompositeJsonFormatter<Event> getFormatter() {
         return formatter;
     }

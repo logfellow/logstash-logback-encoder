@@ -155,7 +155,7 @@ public class ShortenedThrowableConverterTest {
             formatted = converter.convert(createEvent(e));
             
             Assert.assertEquals(totalLength - 10, formatted.length());
-            Assert.assertTrue(formatted.endsWith("..."));
+            Assert.assertTrue(formatted.endsWith("..." + System.getProperty("line.separator")));
             
         }
     }

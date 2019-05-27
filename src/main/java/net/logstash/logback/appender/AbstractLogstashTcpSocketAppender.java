@@ -148,7 +148,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * 
      * The interpretation of this list is up to the current {@link #connectionStrategy}.
      */
-    private List<InetSocketAddress> destinations = new ArrayList<InetSocketAddress>(2);
+    private List<InetSocketAddress> destinations = new ArrayList<>(2);
     
     /**
      * When connected, this is the index into {@link #destinations}
@@ -541,7 +541,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 /*
                  * Choose next server
                  */
-                InetSocketAddress currentDestination = getDestinations().get(destinationIndex);
+                InetSocketAddress currentDestination = destinations.get(destinationIndex);
                 try {
                     /*
                      * Choose next server and update peerId (for status message)
@@ -560,6 +560,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * must be created to resolve the hostname.
                      */
                     tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
+                    
+                    /*
+                     * Trigger SSL handshake immediately and declare the socket unconnected if it fails
+                     */
+                    if (tempSocket instanceof SSLSocket) {
+                    	((SSLSocket)tempSocket).startHandshake();
+                    }
                     
                     /*
                      * Issue #218, make buffering the output stream optional.
@@ -748,7 +755,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         CountDownLatch latch = this.shutdownLatch;
         return latch != null && latch.getCount() != 0;
     }
-        
+
+    @Override
     public synchronized void start() {
         if (isStarted()) {
             return;
@@ -762,7 +770,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         /*
          * Destinations can be configured via <remoteHost>/<port> OR <destination> but not both!
          */
-        if (destinations.size() > 0 && remoteHost != null) {
+        if (!destinations.isEmpty() && remoteHost != null) {
             errorCount++;
             addError("Use '<remoteHost>/<port>' or '<destination>' but not both");
         }

@@ -69,7 +69,7 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
     }
     
     @Override
-    protected Object getFieldValue() {
+    public Object getFieldValue() {
         return rawJson;
     }
     

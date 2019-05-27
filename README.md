@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.2).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.3).
 
 # Logback JSON encoder
 
@@ -39,6 +39,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
 * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+* [Registering Jackson Modules](#registering-jackson-modules)
 * [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
@@ -63,7 +64,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>5.2</version>
+    <version>5.3</version>
 </dependency>
 <!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
 <dependency>
@@ -1247,6 +1248,19 @@ and then specify the decorator in the logback.xml file like this:
 
 See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
 
+## Registering Jackson Modules
+
+By default, Jackson modules are dynamically registered via
+[`ObjectMapper.findAndRegisterModules()`](https://fasterxml.github.io/jackson-databind/javadoc/2.9/com/fasterxml/jackson/databind/ObjectMapper.html#findAndRegisterModules--).
+
+Therefore, you just need to add jackson modules (e.g. jackson-datatype-jdk8) to the classpath,
+and they will be dynamically registered.
+
+To disable automatic discovery, set `<findAndRegisterJacksonModules>false</findAndRegisterJacksonModules>` on the encoder/layout.
+
+If you have a module that Jackson is not able to dynamically discover,
+you can register it manually via a [`JsonFactoryDecorator`](#customizing-json-factory-and-generator).
+
 ## Customizing Character Escapes
 
 By default, when a string is written as a JSON string value, any character not allowed in a JSON string will be escaped.
@@ -1368,6 +1382,8 @@ When using the `LogstashEncoder`, `LogstashAccessEncoder` or a composite encoder
 ```
 
 Note that logback's xml configuration reader will [trim whitespace from xml element values](https://github.com/qos-ch/logback/blob/c2dcbfcfb4048d11d7e81cd9220efbaaccf931fa/logback-core/src/main/java/ch/qos/logback/core/joran/event/BodyEvent.java#L27-L37).  Therefore, if you want to end the prefix or suffix pattern with whitespace, first add the whitespace, and then add something like `%mdc{keyThatDoesNotExist}` after it.  For example `<pattern>your pattern %mdc{keyThatDoesNotExist}</pattern>`.  This will cause logback to output the whitespace as desired, and then a blank string for the MDC key that does not exist.
+
+> :warning: If you encounter the following warning: `A "net.logstash.logback.encoder.LogstashEncoder" object is not assignable to a "ch.qos.logback.core.Appender" variable.`, you are encountering a backwards incompatibilility introduced in logback 1.2.1.  Please vote for [LOGBACK-1326](https://jira.qos.ch/browse/LOGBACK-1326) and add a thumbs up to [PR#383](https://github.com/qos-ch/logback/pull/383) to try to get this addressed in logback.  In the meantime, the only solution is to downgrade logback-classic and logback-core to 1.2.0
 
 
 ## Composite Encoder/Layout
@@ -2080,7 +2096,7 @@ or a `LogstashEncoder` like this:
 </encoder>
 ```
 
-You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEnceder` as well.
+You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEnceder` as well, if your `JsonProvider` handles `IAccessEvent`s.
 
 ## Debugging
 

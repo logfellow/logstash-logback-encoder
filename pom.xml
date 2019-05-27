@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>5.3-SNAPSHOT</version>
+    <version>5.4-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
@@ -29,13 +29,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
-        <com.fasterxml.jackson.version>2.9.6</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.9.9</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>3.1.5</com.fasterxml.uuid.version>
         <commons.io.version>2.6</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.12</junit.version>
         <org.assertj.version>2.9.1</org.assertj.version>
-        <org.mockito.version>2.22.0</org.mockito.version>
+        <org.mockito.version>2.27.0</org.mockito.version>
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
         <org.codehaus.mojo.animal-sniffer.version>1.17</org.codehaus.mojo.animal-sniffer.version>
     </properties>
