@@ -27,16 +27,33 @@
     </prerequisites>
 
     <properties>
+        <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- runtime dependencies -->
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
         <com.fasterxml.jackson.version>2.9.9</com.fasterxml.jackson.version>
-        <com.fasterxml.uuid.version>3.1.5</com.fasterxml.uuid.version>
+        <com.fasterxml.uuid.version>3.2.0</com.fasterxml.uuid.version>
+
+        <!-- shaded runtime dependencies -->
+        <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
         <commons-lang3.version>3.9</commons-lang3.version>
+
+        <!-- test dependencies -->
         <junit.version>4.12</junit.version>
         <org.assertj.version>2.9.1</org.assertj.version>
         <org.mockito.version>2.27.0</org.mockito.version>
-        <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
-        <org.codehaus.mojo.animal-sniffer.version>1.17</org.codehaus.mojo.animal-sniffer.version>
+
+        <!-- maven plugins -->
+        <animal-sniffer-maven-plugin.version>1.18</animal-sniffer-maven-plugin.version>
+        <maven-bundle-plugin.version>4.2.0</maven-bundle-plugin.version>
+        <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+        <maven-enforcer-plugin.version>1.4.1</maven-enforcer-plugin.version>
+        <maven-jar-plugin.version>3.1.2</maven-jar-plugin.version>
+        <maven-license-plugin.version>1.9.0</maven-license-plugin.version>
+        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
+        <maven-source-plugin.version>3.1.0</maven-source-plugin.version>
     </properties>
 
     <licenses>
@@ -138,7 +155,7 @@
         <dependency>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>animal-sniffer-annotations</artifactId>
-            <version>${org.codehaus.mojo.animal-sniffer.version}</version>
+            <version>${animal-sniffer-maven-plugin.version}</version>
             <!-- provided since this is not needed at runtime -->
             <scope>provided</scope>
         </dependency>
@@ -167,16 +184,16 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>1.4</version>
+                <version>${maven-enforcer-plugin.version}</version>
                 <goals>
                     <goal>enforce</goal>
                 </goals>
@@ -191,11 +208,11 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <version>${org.codehaus.mojo.animal-sniffer.version}</version>
+                <version>${animal-sniffer-maven-plugin.version}</version>
                 <configuration>
                     <signature>
                         <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java17</artifactId>
+                        <artifactId>java18</artifactId>
                         <version>1.0</version>
                     </signature>
                 </configuration>
@@ -216,7 +233,7 @@
             <plugin>
                 <groupId>com.mycila.maven-license-plugin</groupId>
                 <artifactId>maven-license-plugin</artifactId>
-                <version>1.9.0</version>
+                <version>${maven-license-plugin.version}</version>
                 <configuration>
                     <header>license-header.txt</header>
                     <strictCheck>true</strictCheck>
@@ -241,7 +258,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.1.2</version>
+                <version>${maven-source-plugin.version}</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -253,7 +270,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.4</version>
+                <version>${maven-jar-plugin.version}</version>
                 <configuration>
                     <archive>
                         <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
@@ -267,7 +284,7 @@
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.7</version>
+                <version>${maven-bundle-plugin.version}</version>
                 <extensions>true</extensions>
                 <executions>
                     <execution>
@@ -295,7 +312,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-release-plugin</artifactId>
-                    <version>2.4.2</version>
+                    <version>${maven-release-plugin.version}</version>
                     <dependencies>
                         <dependency>
                             <groupId>org.apache.maven.scm</groupId>
@@ -316,7 +333,7 @@
                                     <pluginExecutionFilter>
                                         <groupId>com.mycila.maven-license-plugin</groupId>
                                         <artifactId>maven-license-plugin</artifactId>
-                                        <versionRange>[1.9.0,)</versionRange>
+                                        <versionRange>[${maven-license-plugin.version},)</versionRange>
                                         <goals>
                                             <goal>format</goal>
                                         </goals>
@@ -332,7 +349,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>2.4.1</version>
+                    <version>${maven-shade-plugin.version}</version>
                     <executions>
                         <execution>
                             <goals>
