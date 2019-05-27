@@ -13,19 +13,18 @@
  */
 package net.logstash.logback.encoder;
 
+import static ch.qos.logback.core.CoreConstants.LINE_SEPARATOR;
 import static net.logstash.logback.marker.Markers.append;
 import static net.logstash.logback.marker.Markers.appendEntries;
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.closeQuietly;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -39,8 +38,8 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.assertj.core.util.Files;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -95,7 +94,7 @@ public class LogstashEncoderTest {
         
         encoder.start();
         encoder.doEncode(event);
-        closeQuietly(outputStream);
+        outputStream.close();
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
@@ -235,7 +234,7 @@ public class LogstashEncoderTest {
         encoder.start();
         encoder.doEncode(event);
         encoder.close();
-        closeQuietly(outputStream);
+        outputStream.close();
         
         assertThat(outputStream.toString()).endsWith(LINE_SEPARATOR);
     }
@@ -724,16 +723,16 @@ public class LogstashEncoderTest {
     
     @Test
     public void testEncoderConfiguration() throws Exception {
+        File tempFile = new File(System.getProperty("java.io.tmpdir"), "test.log");
         // Empty the log file
-        PrintWriter writer = new PrintWriter(System.getProperty("java.io.tmpdir") + "/test.log");
+        PrintWriter writer = new PrintWriter(tempFile);
         writer.print("");
         writer.close();
         MDC.put("myMdcKey", "myMdcValue");
         LOG.info(append("appendedName", "appendedValue").and(append("n1", 2)), "Testing info logging.");
         MDC.remove("myMdcKey");
-        InputStream is = new FileInputStream(System.getProperty("java.io.tmpdir") + "/test.log");
-        
-        List<String> lines = IOUtils.readLines(is);
+
+        List<String> lines = Files.linesOf(tempFile, StandardCharsets.UTF_8);
         JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
 
         /*

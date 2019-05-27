@@ -31,7 +31,6 @@
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
         <com.fasterxml.jackson.version>2.9.9</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>3.1.5</com.fasterxml.uuid.version>
-        <commons.io.version>2.6</commons.io.version>
         <commons.lang.version>2.6</commons.lang.version>
         <junit.version>4.12</junit.version>
         <org.assertj.version>2.9.1</org.assertj.version>
@@ -159,12 +158,6 @@
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <version>${org.mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons.io.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

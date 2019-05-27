@@ -13,8 +13,7 @@
  */
 package net.logstash.logback.encoder;
 
-import static org.apache.commons.io.IOUtils.LINE_SEPARATOR;
-import static org.apache.commons.io.IOUtils.closeQuietly;
+import static ch.qos.logback.core.CoreConstants.LINE_SEPARATOR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -63,7 +62,7 @@ public class LogstashAccessEncoderTest {
         
         encoder.start();
         encoder.doEncode(event);
-        closeQuietly(outputStream);
+        outputStream.close();
         
         JsonNode node = MAPPER.readTree(outputStream.toByteArray());
         
@@ -123,7 +122,7 @@ public class LogstashAccessEncoderTest {
         encoder.start();
         encoder.doEncode(event);
         encoder.close();
-        closeQuietly(outputStream);
+        outputStream.close();
         
         assertThat(outputStream.toString()).endsWith(LINE_SEPARATOR);
     }
