@@ -14,13 +14,13 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import org.apache.commons.lang.Validate;
 import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -71,10 +71,8 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
     
     public SingleFieldAppendingMarker(String markerName, String fieldName, String messageFormatPattern) {
         super(markerName);
-        Validate.notNull(fieldName, "fieldName must not be null");
-        Validate.notNull(messageFormatPattern, "messageFormatPattern must not be null");
-        this.fieldName = fieldName;
-        this.messageFormatPattern = messageFormatPattern;
+        this.fieldName = Objects.requireNonNull(fieldName, "fieldName must not be null");
+        this.messageFormatPattern = Objects.requireNonNull(messageFormatPattern, "messageFormatPattern must not be null");
     }
     
     public String getFieldName() {

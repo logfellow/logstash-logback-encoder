@@ -14,7 +14,7 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.logstash.logback.argument.StructuredArgument;
@@ -22,7 +22,6 @@ import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -176,7 +175,7 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
         }
         
         ObjectFieldsAppendingMarker other = (ObjectFieldsAppendingMarker) obj;
-        return ObjectUtils.equals(this.object, other.object);
+        return Objects.equals(this.object, other.object);
     }
     
     @Override

@@ -31,7 +31,7 @@
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
         <com.fasterxml.jackson.version>2.9.9</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>3.1.5</com.fasterxml.uuid.version>
-        <commons.lang.version>2.6</commons.lang.version>
+        <commons-lang3.version>3.9</commons-lang3.version>
         <junit.version>4.12</junit.version>
         <org.assertj.version>2.9.1</org.assertj.version>
         <org.mockito.version>2.27.0</org.mockito.version>
@@ -126,9 +126,9 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>${commons.lang.version}</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>com.lmax</groupId>
@@ -354,8 +354,8 @@
                         </artifactSet>
                         <relocations>
                             <relocation>
-                                <pattern>org.apache.commons.lang</pattern>
-                                <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang</shadedPattern>
+                                <pattern>org.apache.commons.lang3</pattern>
+                                <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang3</shadedPattern>
                             </relocation>
                             <relocation>
                                 <pattern>com.lmax.disruptor</pattern>

@@ -15,12 +15,12 @@ package net.logstash.logback.marker;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import org.apache.commons.lang.ObjectUtils;
 import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -109,7 +109,7 @@ public class MapEntriesAppendingMarker extends LogstashMarker implements Structu
         }
         
         MapEntriesAppendingMarker other = (MapEntriesAppendingMarker) obj;
-        return ObjectUtils.equals(this.map, other.map);
+        return Objects.equals(this.map, other.map);
     }
     
     @Override

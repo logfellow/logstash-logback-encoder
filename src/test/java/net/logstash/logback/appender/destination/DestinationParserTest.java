@@ -70,7 +70,7 @@ public class DestinationParserTest {
 
     @Test
     public void testParse_Multiple() {
-        List<InetSocketAddress> destinations = DestinationParser.parse("localhost:2, localhost, localhost : 5 ", 1);
+        List<InetSocketAddress> destinations = DestinationParser.parse(" localhost:2, localhost, localhost : 5 ", 1);
         
         assertThat(destinations).containsExactly(
                 InetSocketAddress.createUnresolved("localhost", 2),

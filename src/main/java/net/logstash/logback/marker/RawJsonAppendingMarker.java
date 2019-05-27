@@ -14,13 +14,12 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import org.apache.commons.lang.ObjectUtils;
-import org.apache.commons.lang.Validate;
 import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -53,14 +52,12 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
     
     public RawJsonAppendingMarker(String fieldName, String rawJson) {
         super(MARKER_NAME, fieldName);
-        Validate.notNull(rawJson, "rawJson must not be null");
-        this.rawJson = rawJson;
+        this.rawJson = Objects.requireNonNull(rawJson, "rawJson must not be null");
     }
     
     public RawJsonAppendingMarker(String fieldName, String rawJson, String messageFormatPattern) {
         super(MARKER_NAME, fieldName, messageFormatPattern);
-        Validate.notNull(rawJson, "rawJson must not be null");
-        this.rawJson = rawJson;
+        this.rawJson = Objects.requireNonNull(rawJson, "rawJson must not be null");
     }
     
     @Override
@@ -83,7 +80,7 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
         }
         
         RawJsonAppendingMarker other = (RawJsonAppendingMarker) obj;
-        return ObjectUtils.equals(this.rawJson, other.rawJson);
+        return Objects.equals(this.rawJson, other.rawJson);
     }
     
     @Override

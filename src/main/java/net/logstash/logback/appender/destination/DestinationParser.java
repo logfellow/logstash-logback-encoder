@@ -19,8 +19,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
-
 import ch.qos.logback.core.CoreConstants;
 
 /**
@@ -48,7 +46,7 @@ public class DestinationParser {
         /*
          * Multiple destinations can be specified on one single line, separated by comma
          */
-        String[] destinationStrings = StringUtils.split(StringUtils.trimToEmpty(destinations), ',');
+        String[] destinationStrings = (destinations == null ? "" : destinations.trim()).split("\\s*,\\s*");
         
         List<InetSocketAddress> destinationList = new ArrayList<InetSocketAddress>(destinationStrings.length);
         

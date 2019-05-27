@@ -18,7 +18,7 @@ import java.util.TimeZone;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
-import org.apache.commons.lang.time.FastDateFormat;
+import org.apache.commons.lang3.time.FastDateFormat;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
