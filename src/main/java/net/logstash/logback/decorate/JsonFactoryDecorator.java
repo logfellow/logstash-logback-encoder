@@ -57,7 +57,7 @@ public interface JsonFactoryDecorator {
      * and {@link #decorate(MappingJsonFactory)} will be removed.
      * It is recommended to only override {@link #decorate(JsonFactory)}.
      * Existing implementations should migrate to only overriding {@link #decorate(JsonFactory)}
-     * so that they will continue to work after {@link #decorate(JsonFactory)} is removed.
+     * so that they will continue to work after {@link #decorate(MappingJsonFactory)} is removed.
      *
      * Note that the default {@link JsonFactory} created by logstash-logback-encoder
      * is a {@link MappingJsonFactory}, but can be changed by {@link JsonFactoryDecorator}s
