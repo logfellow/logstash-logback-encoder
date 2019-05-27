@@ -15,6 +15,7 @@ package net.logstash.logback.marker;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.slf4j.Marker;
 
@@ -104,6 +105,13 @@ public class Markers {
             }
         }
         return m;
+    }
+
+    /**
+     * @see DeferredLogstashMarker
+     */
+    public static LogstashMarker defer(Supplier<? extends LogstashMarker> logstashMarkerSupplier) {
+        return new DeferredLogstashMarker(logstashMarkerSupplier);
     }
 
     /**
