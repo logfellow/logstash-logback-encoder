@@ -52,6 +52,7 @@
             <includeMdcKeyName>included</includeMdcKeyName>
             <customFields>{"customName":"customValue"}</customFields>
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
+                <omitEmptyFields>true</omitEmptyFields>
                 <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
             </provider>
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventNestedJsonProvider">
@@ -145,6 +146,7 @@
                 <tags/>
                 <logstashMarkers/>
                 <pattern>
+                    <omitEmptyFields>true</omitEmptyFields>
                     <pattern>{"patternName":"patternValue","relativeTime":"#asLong{%relative}"}</pattern>
                 </pattern>
                 <provider class="net.logstash.logback.TestJsonProvider"/>

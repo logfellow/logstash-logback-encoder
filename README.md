@@ -1630,6 +1630,7 @@ For LoggingEvents, the available providers and their configuration properties (d
         </p>
         <ul>
           <li><tt>pattern</tt> - JSON object string (no default)</li>          
+          <li><tt>omitEmptyFields</tt> - whether to omit fields with empty values (<tt>false</tt>)</li>          
         </ul>
       </td>
     </tr>
@@ -1845,6 +1846,7 @@ For AccessEvents, the available providers and their configuration properties (de
         </p>
         <ul>
           <li><tt>pattern</tt> - JSON object string (no default)</li>          
+          <li><tt>omitEmptyFields</tt> - whether to omit fields with empty values (<tt>false</tt>)</li>          
         </ul>
       </td>
     </tr>
@@ -1979,6 +1981,47 @@ LOGGER.info("{\"type\":\"example\",\"msg\":\"example of json message with type\"
 Note that the value that is sent for `line_long` is a number even though in your pattern it is a quoted text.
 And the json_message field value is a json object, not a string.
 
+#### Omitting fields with empty values
+ 
+The pattern provider can be configured to omit fields with the following _empty_ values:
+* `null`
+* empty string (`""`)
+* empty array (`[]`)
+* empty object (`{}`)
+* objects containing only fields with empty values
+* arrays containing only empty values
+
+To omit fields with empty values, configure `omitEmptyFields` to `true` (default is `false`), like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+  <providers>
+    <pattern>
+      <omitEmptyFields>true</omitEmptyFields>
+      <pattern>
+        {
+          "logger": "%logger",
+          "level": "%level",
+          "thread": "%thread",
+          "message": "%message",
+          "traceId": "%mdc{traceId}"
+        }
+      </pattern>
+    </pattern>
+  </providers>
+</encoder>
+```
+
+If the MDC did not contain a `traceId` entry, then a JSON log event from the above pattern would not contain the `traceId` field...
+
+```
+{
+  "logger": "com.example...",
+  "level": "DEBUG",
+  "thread": "exec-1",
+  "message": "Hello World!"
+}
+```
 
 #### LoggingEvent patterns
 

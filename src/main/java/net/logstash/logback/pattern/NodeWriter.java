@@ -25,5 +25,22 @@ import java.io.IOException;
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 public interface NodeWriter<Event> {
+    /**
+     * Writes this node to the given generator
+     * @param generator the generator to which to write the node
+     * @param event the event from which to get data to write
+     */
     void write(JsonGenerator generator, Event event) throws IOException;
+
+    /**
+     * Returns true if this node should be written.
+     * If this returns true, then {@link #write(JsonGenerator, Object)} should not be called.
+     *
+     * This is used to potentially omit fields containing this node
+     * (e.g. for omitting empty values)
+     * @param generator
+     * @param event
+     * @return true if this node should be written.
+     */
+    boolean shouldWrite(JsonGenerator generator, Event event);
 }

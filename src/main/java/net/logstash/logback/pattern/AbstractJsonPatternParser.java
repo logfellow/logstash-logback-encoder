@@ -15,6 +15,7 @@ package net.logstash.logback.pattern;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -31,6 +32,7 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 /**
  * Parser that takes a JSON pattern, resolves all the conversion specifiers and returns an instance
@@ -47,7 +49,13 @@ public abstract class AbstractJsonPatternParser<Event> {
     private final ContextAware contextAware;
     private final JsonFactory jsonFactory;
     
-    private final Map<String, Operation> operations = new HashMap<String, Operation>();
+    private final Map<String, Operation> operations = new HashMap<>();
+
+    /**
+     * When true, fields whose values are considered empty ({@link #isEmptyValue(Object)}})
+     * will be omitted from json output.
+     */
+    private boolean omitEmptyFields;
 
     public AbstractJsonPatternParser(final ContextAware contextAware, final JsonFactory jsonFactory) {
         this.contextAware = contextAware;
@@ -91,7 +99,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         
         @Override
         public ValueGetter<?, Event> createValueGetter(String data) {
-            return new AsLongValueTransformer<Event>(makeLayoutValueGetter(data));
+            return new AsLongValueTransformer<>(makeLayoutValueGetter(data));
         }
     }
 
@@ -103,7 +111,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         
         @Override
         public ValueGetter<?, Event> createValueGetter(String data) {
-            return new AsDoubleValueTransformer<Event>(makeLayoutValueGetter(data));
+            return new AsDoubleValueTransformer<>(makeLayoutValueGetter(data));
         }
     }
 
@@ -250,10 +258,10 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
     }
 
-    protected static interface FieldWriter<Event> extends NodeWriter<Event> {
+    protected interface FieldWriter<Event> extends NodeWriter<Event> {
     }
 
-    protected static class ConstantValueWriter<Event> implements NodeWriter<Event> {
+    protected class ConstantValueWriter implements NodeWriter<Event> {
         private final Object value;
 
         public ConstantValueWriter(final Object value) {
@@ -263,9 +271,16 @@ public abstract class AbstractJsonPatternParser<Event> {
         public void write(JsonGenerator generator, Event event) throws IOException {
             generator.writeObject(value);
         }
+
+        @Override
+        public boolean shouldWrite(JsonGenerator generator, Event event) {
+            return !omitEmptyFields
+                    || (value != null
+                            && !(value instanceof JsonNode && ((JsonNode) value).getNodeType() == JsonNodeType.NULL));
+        }
     }
 
-    protected static class ListWriter<Event> implements NodeWriter<Event> {
+    protected class ListWriter<Event> implements NodeWriter<Event> {
         private final List<NodeWriter<Event>> items;
 
         public ListWriter(final List<NodeWriter<Event>> items) {
@@ -275,13 +290,30 @@ public abstract class AbstractJsonPatternParser<Event> {
         public void write(JsonGenerator generator, Event event) throws IOException {
             generator.writeStartArray();
             for (NodeWriter<Event> item : items) {
-                item.write(generator, event);
+                if (item.shouldWrite(generator, event)) {
+                    item.write(generator, event);
+                }
             }
             generator.writeEndArray();
         }
+
+        @Override
+        public boolean shouldWrite(JsonGenerator generator, Event event) {
+            if (!omitEmptyFields) {
+                return true;
+            }
+
+            for (NodeWriter<Event> item : items) {
+                if (item.shouldWrite(generator, event)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
-    protected static class ComputableValueWriter<Event> implements NodeWriter<Event> {
+    protected class ComputableValueWriter<Event> implements NodeWriter<Event> {
 
         private final ValueGetter<?, Event> getter;
 
@@ -293,9 +325,14 @@ public abstract class AbstractJsonPatternParser<Event> {
             Object value = getter.getValue(event);
             generator.writeObject(value);
         }
+
+        @Override
+        public boolean shouldWrite(JsonGenerator generator, Event event) {
+            return !omitEmptyFields || getter.getValue(event) != null;
+        }
     }
 
-    protected static class DelegatingObjectFieldWriter<Event> implements FieldWriter<Event> {
+    protected class DelegatingObjectFieldWriter<Event> implements FieldWriter<Event> {
 
         private final String name;
         private final NodeWriter<Event> delegate;
@@ -306,12 +343,19 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         public void write(JsonGenerator generator, Event event) throws IOException {
-            generator.writeFieldName(name);
-            delegate.write(generator, event);
+            if (delegate.shouldWrite(generator, event)) {
+                generator.writeFieldName(name);
+                delegate.write(generator, event);
+            }
+        }
+
+        @Override
+        public boolean shouldWrite(JsonGenerator generator, Event event) {
+            return delegate.shouldWrite(generator, event);
         }
     }
 
-    protected static class ComputableObjectFieldWriter<Event> implements FieldWriter<Event> {
+    protected class ComputableObjectFieldWriter<Event> implements FieldWriter<Event> {
 
         private final String name;
         private final ValueGetter<?, Event> getter;
@@ -323,12 +367,19 @@ public abstract class AbstractJsonPatternParser<Event> {
 
         public void write(JsonGenerator generator, Event event) throws IOException {
             Object value = getter.getValue(event);
-            generator.writeFieldName(name);
-            generator.writeObject(value);
+            if (!omitEmptyFields || value != null) {
+                generator.writeFieldName(name);
+                generator.writeObject(value);
+            }
+        }
+
+        @Override
+        public boolean shouldWrite(JsonGenerator generator, Event event) {
+            return !omitEmptyFields || !isEmptyValue(getter.getValue(event));
         }
     }
 
-    protected static class ObjectWriter<Event> implements NodeWriter<Event> {
+    protected class ObjectWriter<Event> implements NodeWriter<Event> {
 
         private final ChildrenWriter<Event> childrenWriter;
         
@@ -337,13 +388,20 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         public void write(JsonGenerator generator, Event event) throws IOException {
-            generator.writeStartObject();
-            this.childrenWriter.write(generator, event);
-            generator.writeEndObject();
+            if (childrenWriter.shouldWrite(generator, event)) {
+                generator.writeStartObject();
+                this.childrenWriter.write(generator, event);
+                generator.writeEndObject();
+            }
+        }
+
+        @Override
+        public boolean shouldWrite(JsonGenerator generator, Event event) {
+            return childrenWriter.shouldWrite(generator, event);
         }
     }
 
-    protected static class ChildrenWriter<Event> implements NodeWriter<Event> {
+    protected class ChildrenWriter<Event> implements NodeWriter<Event> {
 
         private final List<FieldWriter<Event>> items;
 
@@ -353,8 +411,24 @@ public abstract class AbstractJsonPatternParser<Event> {
 
         public void write(JsonGenerator generator, Event event) throws IOException {
             for (FieldWriter<Event> item : items) {
-                item.write(generator, event);
+                if (item.shouldWrite(generator, event)) {
+                    item.write(generator, event);
+                }
             }
+        }
+
+        @Override
+        public boolean shouldWrite(JsonGenerator generator, Event event) {
+            if (!omitEmptyFields) {
+                return true;
+            }
+
+            for (FieldWriter<Event> item : items) {
+                if (item.shouldWrite(generator, event)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -406,27 +480,27 @@ public abstract class AbstractJsonPatternParser<Event> {
             return parseObject(node);
         } else {
             // Anything else, we will be just writing as is (nulls, numbers, booleans and whatnot)
-            return new ConstantValueWriter<Event>(node);
+            return new ConstantValueWriter(node);
         }
     }
 
     private ListWriter<Event> parseArray(JsonNode node) {
 
-        List<NodeWriter<Event>> children = new ArrayList<NodeWriter<Event>>();
+        List<NodeWriter<Event>> children = new ArrayList<>();
         for (JsonNode item : node) {
             children.add(parseValue(item));
         }
 
-        return new ListWriter<Event>(children);
+        return new ListWriter<>(children);
     }
 
     private ObjectWriter<Event> parseObject(JsonNode node) {
 
-        return new ObjectWriter<Event>(parseChildren(node));
+        return new ObjectWriter<>(parseChildren(node));
     }
 
     private ChildrenWriter<Event> parseChildren(JsonNode node) {
-        List<FieldWriter<Event>> children = new ArrayList<FieldWriter<Event>>();
+        List<FieldWriter<Event>> children = new ArrayList<>();
         for (Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields(); nodeFields.hasNext(); ) {
             Map.Entry<String, JsonNode> field = nodeFields.next();
 
@@ -435,12 +509,12 @@ public abstract class AbstractJsonPatternParser<Event> {
 
             if (value.isTextual()) {
                 ValueGetter<?, Event> getter = makeComputableValueGetter(value.asText());
-                children.add(new ComputableObjectFieldWriter<Event>(key, getter));
+                children.add(new ComputableObjectFieldWriter<>(key, getter));
             } else {
-                children.add(new DelegatingObjectFieldWriter<Event>(key, parseValue(value)));
+                children.add(new DelegatingObjectFieldWriter<>(key, parseValue(value)));
             }
         }
-        return new ChildrenWriter<Event>(children);
+        return new ChildrenWriter<>(children);
     }
 
     public NodeWriter<Event> parse(String pattern) {
@@ -469,5 +543,56 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         return parseChildren(node);
+    }
+
+    /**
+     * Return true if the given value is considered to be "empty".
+     * @param value value to inspect
+     * @return true if the given value is considered to be "empty".
+     */
+    private boolean isEmptyValue(Object value) {
+        if (value == null) {
+            return true;
+        }
+        if (value instanceof String && ((String) value).isEmpty()) {
+            return true;
+        }
+        if (value instanceof Collection && ((Collection) value).isEmpty()) {
+            return true;
+        }
+        if (value instanceof Map && ((Map) value).isEmpty()) {
+            return true;
+        }
+
+        if (value instanceof JsonNode) {
+            JsonNode node = (JsonNode) value;
+            if (node.getNodeType() == JsonNodeType.NULL) {
+                return true;
+            }
+            if (node.isTextual() && node.textValue().isEmpty()) {
+                return true;
+            }
+            if (node.isContainerNode() && node.size() == 0) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    /**
+     * When true, fields whose values are considered empty ({@link #isEmptyValue(Object)}})
+     * will be omitted from json output.
+     */
+    public boolean isOmitEmptyFields() {
+        return omitEmptyFields;
+    }
+
+    /**
+     * When true, fields whose values are considered empty ({@link #isEmptyValue(Object)}})
+     * will be omitted from json output.
+     */
+    public void setOmitEmptyFields(boolean omitEmptyFields) {
+        this.omitEmptyFields = omitEmptyFields;
     }
 }

@@ -51,7 +51,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
 
     private Event event;
 
-    private AbstractJsonPatternParser<Event> parser;
+    protected AbstractJsonPatternParser<Event> parser;
 
     @Mock
     private Context context;
@@ -318,6 +318,91 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key2\": \"#asDouble\",\n"
                 + "    \"key3\": \"#something\",\n"
                 + "    \"key4\": \"#asJson{[1, 2]\"\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void shouldOmitNullConstants() throws IOException {
+        parser.setOmitEmptyFields(true);
+
+        String pattern = ""
+                + "{\n"
+                + "    \"const\": null\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void shouldOmitEmptyConstants() throws IOException {
+        parser.setOmitEmptyFields(true);
+
+        String pattern = ""
+                + "{\n"
+                + "    \"string\": \"\",\n"
+                + "    \"list\": [\n"
+                + "    ],\n"
+                + "    \"map\": {\n"
+                + "    }\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void shouldOmitEmptyJsonValues() throws IOException {
+        parser.setOmitEmptyFields(true);
+        String pattern = ""
+                + "{\n"
+                + "    \"null\": \"#asJson{null}\",\n"
+                + "    \"string\": \"#asJson{}\",\n"
+                + "    \"list\": \"#asJson{[]}\",\n"
+                + "    \"object\": \"#asJson{{}}\"\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void shouldOmitEmptyConstantsRecursively() throws IOException {
+        parser.setOmitEmptyFields(true);
+
+        String pattern = ""
+                + "{\n"
+                + "    \"object\": {\n"
+                + "        \"string\": \"\",\n"
+                + "        \"list\": [\n"
+                + "        ],\n"
+                + "        \"map\": {\n"
+                + "        }\n"
+                + "    },\n"
+                + "    \"list\": [\n"
+                + "        {\n"
+                + "            \"string\": \"\",\n"
+                + "            \"list\": [\n"
+                + "            ],\n"
+                + "            \"map\": {\n"
+                + "            }\n"
+                + "        }\n"
+                + "    ]\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
                 + "}";
 
         verifyFields(pattern, expected);

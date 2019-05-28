@@ -82,4 +82,22 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
 
         verifyFields(pattern, expected);
     }
+
+    @Test
+    public void shouldOmitNullMdcValue() throws IOException {
+        parser.setOmitEmptyFields(true);
+
+        String pattern = ""
+                + "{\n"
+                + "    \"mdc.key1\": \"%mdc{key1}\",\n"
+                + "    \"mdc.key3\": \"%mdc{key3}\"\n"
+                + "}";
+
+        String expected = ""
+                + "{\n"
+                + "    \"mdc.key1\": \"value1\"\n"
+                + "}";
+
+        verifyFields(pattern, expected);
+    }
 }

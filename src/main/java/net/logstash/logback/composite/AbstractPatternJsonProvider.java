@@ -43,6 +43,12 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
 
     protected JsonFactory jsonFactory;
 
+    /**
+     * When true, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
+     * will be omitted from json output.
+     */
+    private boolean omitEmptyFields;
+
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
         if (nodeWriter != null) {
@@ -76,8 +82,26 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
     private void parse() {
         if (pattern != null && jsonFactory != null) {
             AbstractJsonPatternParser<Event> parser = createParser();
+            parser.setOmitEmptyFields(omitEmptyFields);
             nodeWriter = parser.parse(pattern);
         }
     }
+
+    /**
+     * When true, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
+     * will be omitted from json output.
+     */
+    public boolean isOmitEmptyFields() {
+        return omitEmptyFields;
+    }
+
+    /**
+     * When true, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
+     * will be omitted from json output.
+     */
+    public void setOmitEmptyFields(boolean omitEmptyFields) {
+        this.omitEmptyFields = omitEmptyFields;
+    }
+
 
 }
