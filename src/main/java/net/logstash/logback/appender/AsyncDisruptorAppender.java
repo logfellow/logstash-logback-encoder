@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import ch.qos.logback.core.status.OnConsoleStatusListener;
 import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.AsyncAppender;
@@ -174,6 +175,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * value may not be honored.
      */
     private boolean useDaemonThread = true;
+
+    /**
+     * When true, if no status listener is registered, then a default {@link OnConsoleStatusListener}
+     * will be registered, so that error messages are seen on the console.
+     */
+    private boolean addDefaultStatusListener = true;
     
     /**
      * For every droppedWarnFrequency consecutive dropped events, log a warning.
@@ -355,6 +362,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     @SuppressWarnings("unchecked")
     @Override
     public void start() {
+        if (addDefaultStatusListener && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
+            OnConsoleStatusListener statusListener = new OnConsoleStatusListener();
+            statusListener.setContext(getContext());
+            statusListener.start();
+            getStatusManager().add(statusListener);
+            addInfo(String.format("%s added so that errors from the %s appender are visible.  To suppress this message, either add a logback status listener or set this appender's addDefaultStatusListener to false.", statusListener.getClass().getSimpleName(), getName()));
+        }
+
         if (this.eventHandler == null) {
             addError("No eventHandler was configured for appender " + name + ".");
             return;
@@ -624,4 +639,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.listeners.remove(listener);
     }
 
+    public boolean isAddDefaultStatusListener() {
+        return addDefaultStatusListener;
+    }
+
+    public void setAddDefaultStatusListener(boolean addDefaultStatusListener) {
+        this.addDefaultStatusListener = addDefaultStatusListener;
+    }
 }

@@ -53,7 +53,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
     * [LoggingEvent patterns](#loggingevent-patterns)
     * [AccessEvent patterns](#accessevent-patterns)
   * [Custom JSON Provider](#custom-json-provider)
-* [Debugging](#debugging)
+* [Status Listeners](#status-listeners)
 
 
 
@@ -2159,17 +2159,18 @@ or a `LogstashEncoder` like this:
 
 You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEnceder` as well, if your `JsonProvider` handles `IAccessEvent`s.
 
-## Debugging
+## Status Listeners
 
 During execution, the encoders/appenders/layouts provided in logstash-logback-encoder
 will add logback status messages to the logback `StatusManager`.
+These status messages are typically reported via a logback _status listener_.
 
-By default, logback only shows WARN/ERROR status messages on the console during configuration.
-No messages are output during actual operation (even if they are WARN/ERROR).
-
-If you are having trouble identifying causes of problems (e.g. events are not getting delivered),
-then you can enable logback debugging or add a status listener as specified in
-the [logback manual](http://logback.qos.ch/manual/configuration.html#automaticStatusPrinting).
+Since the [async appenders](#async-appenders) (especially the [tcp appenders](#tcp-appenders))
+report errors via the status manager, a default [`OnConsoleStatusListener`](https://logback.qos.ch/manual/configuration.html#dumpingStatusData)
+will be registered on startup if a status listener has not already been registered.
+To disable the automatic registering of the `OnConsoleStatusListener` by an appender, do one of the following:
+* register a different logback [status listener](https://logback.qos.ch/manual/configuration.html#dumpingStatusData), or
+* set `<addDefaultStatusListener>false</addDefaultStatusListener` in each async appender.
 
 ### Profiling
 
