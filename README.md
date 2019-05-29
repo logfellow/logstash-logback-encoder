@@ -13,6 +13,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 #### Contents:
 
 * [Including it in your project](#including-it-in-your-project)
+* [Java Version Requirements](#java-version-requirements)
 * [Usage](#usage)
   * [UDP Appender](#udp-appender)
   * [TCP Appenders](#tcp-appenders)
@@ -33,7 +34,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
     * [Global Custom Fields](#global-custom-fields)
     * [Event-specific Custom Fields](#event-specific-custom-fields)
 * [AccessEvent Fields](#accessevent-fields)
-  * [Standard Fields](#standard-fields)
+  * [Standard Fields](#standard-fields-1)
   * [Header Fields](#header-fields)
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
@@ -112,6 +113,15 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
         </dependencies>
     </dependencyManagement>
 ```
+
+## Java Version Requirements
+
+| logstash-logback-encoder | Minimum Java Version supported |
+| ------------------------ | -------------------------------|
+| &gt;= 6.0                | 1.8                            |
+| 5.x                      | 1.7                            |
+| &lt;= 4.x                | 1.6                            |
+
 
 ## Usage
 
