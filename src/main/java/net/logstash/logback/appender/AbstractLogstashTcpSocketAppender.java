@@ -676,8 +676,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 try {
                     getLogback11Support().close(encoder);
                 } catch (IOException ioe) {
-                    addStatus(new ErrorStatus(
-                            "Failed to close encoder", this, ioe));
+                    addError("Failed to close encoder", ioe);
                 }
             }
             
