@@ -657,12 +657,20 @@ See the two listener interfaces for the types of notifications that can be recei
 Some example use cases for a listener are:
 
 * Monitoring metrics for events per second, event processing durations, dropped events, connections successes / failures, etc.
-* Reporting event processing errors to a different appender (that perhaps appends to a different destination).
+* Logging event processing errors to a different appender (that perhaps appends to a different destination).
+  
+A [`FailureSummaryLoggingAppenderListener`](src/main/java/net/logstash/logback/appender/listener/FailureSummaryLoggingAppenderListener.java)
+is provided that will log a warning on the first success after a series of consecutive append/send/connect failures.
+The message includes summary details of the failures that occurred (such as the number of failures, duration of the failures, etc).
+To register it:
 
-To create a listener, create a new class that extends one of the `*ListenerImpl` classes or directly implements the `*Listener` interface.
-Extending the `*ListenerImpl` class will have better backwards compatibilty in the future in case new methods are added to the interfaces.
-(Logstash-logback-encoder still supports Java 7, so default interface methods cannot be used yet.)
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+      <listener class="net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener"/>
+  </appender>
+```
 
+To create your own listener, create a new class that extends one of the `*ListenerImpl` classes or directly implements the `*Listener` interface.
 Then register your listener class to an appender using the `listener` xml element like this:
 
 ```xml

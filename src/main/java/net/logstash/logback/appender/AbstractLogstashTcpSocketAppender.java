@@ -314,7 +314,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * Initialized when a socket is opened.
          */
         private Future<?> readerFuture;
-        
+
         /**
          * When run, if the {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
          * has elapsed since the last event was sent,
@@ -418,7 +418,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
                 if (readerFuture.isDone()) {
                     /*
-                     * Assume that if the destinatinon shuts down its output (our input),
+                     * Assume that if the destination shuts down its output (our input),
                      * then the destination is no longer listening to its input (our output).
                      * 
                      * Therefore, attempt reconnection.
@@ -595,7 +595,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                          */
                         updateCurrentThreadName();
                     }
-                    
+
                     this.readerFuture = scheduleReaderCallable(
                             new ReaderCallable(tempSocket.getInputStream()));
                     
