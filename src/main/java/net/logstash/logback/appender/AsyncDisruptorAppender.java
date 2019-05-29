@@ -362,7 +362,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     @SuppressWarnings("unchecked")
     @Override
     public void start() {
-        if (addDefaultStatusListener && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
+        if (addDefaultStatusListener && getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
             OnConsoleStatusListener statusListener = new OnConsoleStatusListener();
             statusListener.setContext(getContext());
             statusListener.start();
