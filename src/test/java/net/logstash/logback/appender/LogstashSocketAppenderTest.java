@@ -13,9 +13,32 @@
  */
 package net.logstash.logback.appender;
 
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.Layout;
+import ch.qos.logback.core.status.Status;
+import ch.qos.logback.core.status.StatusManager;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+
+@RunWith(MockitoJUnitRunner.class)
 public class LogstashSocketAppenderTest {
+
+    @Mock
+    private Layout<ILoggingEvent> layout;
+
+    @Mock
+    private Context context;
+
+    @Mock
+    private StatusManager statusManager;
     
     @Test
     public void testNoNullPointerWithNoCustomFields() throws Exception {
@@ -31,5 +54,15 @@ public class LogstashSocketAppenderTest {
         appender.setHost("foo.com");
         appender.setCustomFields("");
         appender.buildLayout();
+    }
+
+    @Test
+    public void testSetLayout() {
+        when(context.getStatusManager()).thenReturn(statusManager);
+        LogstashSocketAppender appender = new LogstashSocketAppender();
+        appender.setContext(context);
+        appender.setLayout(layout);
+        assertThat(appender.getLayout()).isNotEqualTo(layout);
+        verify(statusManager).add(any(Status.class));
     }
 }

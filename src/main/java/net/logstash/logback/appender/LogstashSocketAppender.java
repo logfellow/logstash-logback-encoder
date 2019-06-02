@@ -13,149 +13,59 @@
  */
 package net.logstash.logback.appender;
 
-import java.io.IOException;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.List;
 
-import net.logstash.logback.appender.listener.AppenderListener;
+import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Layout;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
-import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Layout;
-import ch.qos.logback.core.net.SyslogAppenderBase;
-import ch.qos.logback.core.net.SyslogOutputStream;
 
-public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
-    
-    private final LogstashLayout logstashLayout = new LogstashLayout();
-    
-    /**
-     * These listeners will be notified when certain events occur on this appender.
-     */
-    private final List<AppenderListener<ILoggingEvent>> listeners = new ArrayList<>();
-    
-    private SyslogOutputStream syslogOutputStream;  
+/**
+ * A {@link LogstashUdpSocketAppender} that uses a {@link LogstashLayout}
+ * and allows direct configuration of the {@link LogstashLayout} properties,
+ * rather than configuring a {@link LogstashLayout} separately.
+ *
+ * @deprecated Prefer using {@link LogstashUdpSocketAppender} with a {@link LogstashLayout} instead.
+ */
+@Deprecated
+public class LogstashSocketAppender extends LogstashUdpSocketAppender {
 
     public LogstashSocketAppender() {
-        setFacility("NEWS"); // NOTE: this value is never used
+        super.setLayout(new LogstashLayout());
     }
-    
-    @Override
-    public Layout<ILoggingEvent> buildLayout() {
-        logstashLayout.setContext(getContext());
-        return logstashLayout;
-    }
-    
-    @Override
-    public void start() {
-        super.start();
-        getLayout().start();
-        fireAppenderStarted();
-    }
-    
-    @Override
-    public void stop() {
-        super.stop();
-        getLayout().stop();
-        fireAppenderStopped();
-    }
-    
-    @Override
-    protected void append(ILoggingEvent eventObject) {
-        if (!isStarted()) {
-            return;
-        }
-        long startTime = System.nanoTime();
-        try {
-            /*
-             * This is a cut-and-paste of SyslogAppenderBase.append(E)
-             * so that we can fire the appropriate event.
-             */
-            String msg = getLayout().doLayout(eventObject);
-            if (msg == null) {
-                return;
-            }
-            if (msg.length() > getMaxMessageSize()) {
-                msg = msg.substring(0, getMaxMessageSize());
-            }
-            syslogOutputStream.write(msg.getBytes(getCharset()));
-            syslogOutputStream.flush();
-            postProcess(eventObject, syslogOutputStream);
-            
-            fireEventAppended(eventObject, System.nanoTime() - startTime);
-        } catch (IOException ioe) {
-            addError("Failed to send diagram to " + getSyslogHost(), ioe);
 
-            fireEventAppendFailed(eventObject, ioe);
-        }
-    }
-    
-    protected void fireAppenderStarted() {
-        for (AppenderListener<ILoggingEvent> listener : listeners) {
-            listener.appenderStarted(this);
-        }
-    }
-    
-    protected void fireAppenderStopped() {
-        for (AppenderListener<ILoggingEvent> listener : listeners) {
-            listener.appenderStopped(this);
-        }
-    }
-    
-    protected void fireEventAppended(ILoggingEvent event, long durationInNanos) {
-        for (AppenderListener<ILoggingEvent> listener : listeners) {
-            listener.eventAppended(this, event, durationInNanos);
-        }
-    }
-    
-    protected void fireEventAppendFailed(ILoggingEvent event, Throwable reason) {
-        for (AppenderListener<ILoggingEvent> listener : listeners) {
-            listener.eventAppendFailed(this, event, reason);
-        }
-    }
-    
     @Override
-    public int getSeverityForEvent(Object eventObject) {
-        return 0; // NOTE: this value is never used
+    public LogstashLayout getLayout() {
+        return (LogstashLayout) super.getLayout();
     }
-    
-    public String getHost() {
-        return getSyslogHost();
+
+    @Override
+    public void setLayout(Layout<ILoggingEvent> layout) {
+        addWarn("The layout of a LogstashSocketAppender cannot be set directly. Use LogstashUdpSocketAppender if you would like to use a custom layout when sending over UDP.");
     }
-    
-    /**
-     * Just an alias for syslogHost (since that name doesn't make much sense here)
-     * 
-     * @param host
-     */
-    public void setHost(String host) {
-        setSyslogHost(host);
-    }
-    
+
     public void addProvider(JsonProvider<ILoggingEvent> provider) {
-        logstashLayout.addProvider(provider);
+        getLayout().addProvider(provider);
     }
     
     public void setCustomFields(String customFields) {
-        logstashLayout.setCustomFields(customFields);
+        getLayout().setCustomFields(customFields);
     }
     
     public String getCustomFields() {
-        return logstashLayout.getCustomFields().toString();
+        return getLayout().getCustomFields().toString();
     }
     
     public boolean isIncludeCallerData() {
-        return logstashLayout.isIncludeCallerData();
+        return getLayout().isIncludeCallerData();
     }
     
     public void setIncludeCallerData(boolean includeCallerData) {
-        logstashLayout.setIncludeCallerData(includeCallerData);
+        getLayout().setIncludeCallerData(includeCallerData);
     }
     
     /**
@@ -163,7 +73,7 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
      */
     @Deprecated
     public boolean isIncludeCallerInfo() {
-        return logstashLayout.isIncludeCallerInfo();
+        return getLayout().isIncludeCallerInfo();
     }
     
     /**
@@ -171,149 +81,137 @@ public class LogstashSocketAppender extends SyslogAppenderBase<ILoggingEvent> {
      */
     @Deprecated
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
-        logstashLayout.setIncludeCallerInfo(includeCallerInfo);
+        getLayout().setIncludeCallerInfo(includeCallerInfo);
     }
     
     public LogstashFieldNames getFieldNames() {
-        return logstashLayout.getFieldNames();
+        return getLayout().getFieldNames();
     }
     
     public void setFieldNames(LogstashFieldNames fieldNames) {
-        logstashLayout.setFieldNames(fieldNames);
+        getLayout().setFieldNames(fieldNames);
     }
     
     public boolean isIncludeMdc() {
-        return logstashLayout.isIncludeMdc();
+        return getLayout().isIncludeMdc();
     }
     
     public void setIncludeMdc(boolean includeMdc) {
-        logstashLayout.setIncludeMdc(includeMdc);
+        getLayout().setIncludeMdc(includeMdc);
     }
     
     public List<String> getIncludeMdcKeyNames() {
-        return logstashLayout.getIncludeMdcKeyNames();
+        return getLayout().getIncludeMdcKeyNames();
     }
 
     public void addIncludeMdcKeyName(String includedMdcKeyName) {
-        logstashLayout.addIncludeMdcKeyName(includedMdcKeyName);
+        getLayout().addIncludeMdcKeyName(includedMdcKeyName);
     }
 
     public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
-        logstashLayout.setIncludeMdcKeyNames(includeMdcKeyNames);
+        getLayout().setIncludeMdcKeyNames(includeMdcKeyNames);
     }
 
     public List<String> getExcludeMdcKeyNames() {
-        return logstashLayout.getExcludeMdcKeyNames();
+        return getLayout().getExcludeMdcKeyNames();
     }
 
     public void addExcludeMdcKeyName(String excludedMdcKeyName) {
-        logstashLayout.addExcludeMdcKeyName(excludedMdcKeyName);
+        getLayout().addExcludeMdcKeyName(excludedMdcKeyName);
     }
 
     public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
-        logstashLayout.setExcludeMdcKeyNames(excludeMdcKeyNames);
+        getLayout().setExcludeMdcKeyNames(excludeMdcKeyNames);
     }
     
     public boolean isIncludeContext() {
-        return logstashLayout.isIncludeContext();
+        return getLayout().isIncludeContext();
     }
     
     public void setIncludeContext(boolean includeContext) {
-        logstashLayout.setIncludeContext(includeContext);
+        getLayout().setIncludeContext(includeContext);
     }
 
     public boolean isIncludeStructuredArguments() {
-        return logstashLayout.isIncludeStructuredArguments();
+        return getLayout().isIncludeStructuredArguments();
     }
 
     public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
-        logstashLayout.setIncludeStructuredArguments(includeStructuredArguments);
+        getLayout().setIncludeStructuredArguments(includeStructuredArguments);
     }
     
     public boolean isIncludeNonStructuredArguments() {
-        return logstashLayout.isIncludeNonStructuredArguments();
+        return getLayout().isIncludeNonStructuredArguments();
     }
 
     public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
-        logstashLayout.setIncludeNonStructuredArguments(includeNonStructuredArguments);
+        getLayout().setIncludeNonStructuredArguments(includeNonStructuredArguments);
     }
     
     public String getNonStructuredArgumentsFieldPrefix() {
-        return logstashLayout.getNonStructuredArgumentsFieldPrefix();
+        return getLayout().getNonStructuredArgumentsFieldPrefix();
     }
 
     public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
-        logstashLayout.setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
+        getLayout().setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
     }
 
     public int getShortenedLoggerNameLength() {
-        return logstashLayout.getShortenedLoggerNameLength();
+        return getLayout().getShortenedLoggerNameLength();
     }
 
     public void setShortenedLoggerNameLength(int length) {
-        logstashLayout.setShortenedLoggerNameLength(length);
+        getLayout().setShortenedLoggerNameLength(length);
     }
     
     public JsonFactoryDecorator getJsonFactoryDecorator() {
-        return logstashLayout.getJsonFactoryDecorator();
+        return getLayout().getJsonFactoryDecorator();
     }
 
     public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
-        logstashLayout.setJsonFactoryDecorator(jsonFactoryDecorator);
+        getLayout().setJsonFactoryDecorator(jsonFactoryDecorator);
     }
 
     public JsonGeneratorDecorator getJsonGeneratorDecorator() {
-        return logstashLayout.getJsonGeneratorDecorator();
+        return getLayout().getJsonGeneratorDecorator();
     }
 
     public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
-        logstashLayout.setJsonGeneratorDecorator(jsonGeneratorDecorator);
+        getLayout().setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
     public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {
-        logstashLayout.setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
+        getLayout().setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
     }
 
     public String getTimeZone() {
-        return logstashLayout.getTimeZone();
+        return getLayout().getTimeZone();
     }
 
     public void setTimeZone(String timeZoneId) {
-        logstashLayout.setTimeZone(timeZoneId);
+        getLayout().setTimeZone(timeZoneId);
     }
 
     public ThrowableHandlingConverter getThrowableConverter() {
-        return logstashLayout.getThrowableConverter();
+        return getLayout().getThrowableConverter();
     }
 
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
-        logstashLayout.setThrowableConverter(throwableConverter);
+        getLayout().setThrowableConverter(throwableConverter);
     }
     
     public Layout<ILoggingEvent> getPrefix() {
-        return logstashLayout.getPrefix();
+        return getLayout().getPrefix();
     }
     public void setPrefix(Layout<ILoggingEvent> prefix) {
-        logstashLayout.setPrefix(prefix);
+        getLayout().setPrefix(prefix);
     }
 
     public Layout<ILoggingEvent> getSuffix() {
-        return logstashLayout.getSuffix();
+        return getLayout().getSuffix();
     }
     public void setSuffix(Layout<ILoggingEvent> suffix) {
-        logstashLayout.setSuffix(suffix);
+        getLayout().setSuffix(suffix);
     }
 
-    public void addListener(AppenderListener<ILoggingEvent> listener) {
-        this.listeners.add(listener);
-    }
-    public void removeListener(AppenderListener<ILoggingEvent> listener) {
-        this.listeners.remove(listener);
-    }
-
-    @Override
-    public SyslogOutputStream createOutputStream() throws UnknownHostException, SocketException {
-        this.syslogOutputStream = new SyslogOutputStream(this.getHost(), this.getPort());
-        return this.syslogOutputStream;
-    }
 }

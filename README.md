@@ -134,7 +134,7 @@ The appenders, encoders, and layouts provided by the logstash-logback-encoder li
 
 | Format        | Protocol   | Function | LoggingEvent | AccessEvent
 |---------------|------------|----------| ------------ | -----------
-| Logstash JSON | Syslog/UDP | Appender | [`LogstashSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashSocketAppender.java) | n/a
+| Logstash JSON | Syslog/UDP | Appender | [`LogstashUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashUdpSocketAppender.java) | [`LogstashAccessUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessUdpSocketAppender.java)
 | Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
 | any           | any        | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
 | Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
@@ -163,39 +163,59 @@ These async appenders can delegate to any other underlying logback appender.
 ### UDP Appender
 
 To output JSON for LoggingEvents to a syslog/UDP channel,
-use the `LogstashSocketAppender` in your `logback.xml` like this:
+use the `LogstashUdpSocketAppender` with a `LogstashLayout` or `LoggingEventCompositeJsonLayout`
+in your `logback.xml`, like this:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+  <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
     <host>MyAwesomeSyslogServer</host>
     <!-- port is optional (default value shown) -->
     <port>514</port>
+    <!-- layout is required -->
+    <layout class="net.logstash.logback.layout.LogstashLayout"/>
   </appender>
   <root level="all">
     <appender-ref ref="stash" />
   </root>
 </configuration>
 ```
-Internally, the `LogstashSocketAppender` uses a `LogstashLayout` to perform the JSON formatting.
-Therefore, by default, the output will be logstash-compatible.
+You can further customize the JSON output by customizing the layout as described in later sections.
 
-You can further customize the JSON output of `LogstashSocketAppender`
-just like you can with a `LogstashLayout` or `LogstashEncoder` as described in later sections.
-It is not necessary to configure a `<layout>` or `<encoder>` sub-element
-within the `<appender>` element in the logback configuration.
-All the properties of `LogstashLayout` or `LogstashEncoder` can be set at the `<appender>` level.
 For example, to configure [global custom fields](#global-custom-fields), you can specify
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+  <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
     <host>MyAwesomeSyslogServer</host>
     <!-- port is optional (default value shown) -->
     <port>514</port>
-    <customFields>{"appname":"myWebservice"}</customFields>
+    <layout class="net.logstash.logback.layout.LogstashLayout"/>
+      <customFields>{"appname":"myWebservice"}</customFields>
+    </layout>
   </appender>
 ```
 
-There currently is no way to log AccessEvents over syslog/UDP.
+To output JSON for AccessEvents over UDP, use a `LogstashAccessUdpSocketAppender`
+with a `LogstashAccessLayout` or `AccessEventCompositeJsonLayout`
+in your `logback-access.xml`, like this:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessUdpSocketAppender">
+    <host>MyAwesomeSyslogServer</host>
+    <!-- port is optional (default value shown) -->
+    <port>514</port>
+
+    <layout class="net.logstash.logback.layout.LogstashAccessLayout">
+      <customFields>{"appname":"myWebservice"}</customFields>
+    </layout>
+  </appender>
+
+  <appender-ref ref="stash" />
+</configuration>
+```
+
 
 To receive syslog/UDP input in logstash, configure a [`syslog`](http://www.logstash.net/docs/latest/inputs/syslog) or [`udp`](http://www.logstash.net/docs/latest/inputs/udp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
 ```
@@ -210,9 +230,8 @@ input {
 ### TCP Appenders
 
 To output JSON for LoggingEvents over TCP, use a `LogstashTcpSocketAppender`
-with a `LogstashEncoder` or `LoggingEventCompositeJsonEncoder`.
-
-Example logging appender configuration in `logback.xml`:
+with a `LogstashEncoder` or `LoggingEventCompositeJsonEncoder`
+in your `logback.xml`, like this:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -232,9 +251,9 @@ Example logging appender configuration in `logback.xml`:
 
 
 To output JSON for AccessEvents over TCP, use a `LogstashAccessTcpSocketAppender`
-with a `LogstashAccessEncoder` or `AccessEventCompositeJsonEncoder`.
+with a `LogstashAccessEncoder` or `AccessEventCompositeJsonEncoder`
+in your `logback-access.xml`, like this:
 
-Example access appender in `logback-access.xml`
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -249,7 +268,7 @@ Example access appender in `logback-access.xml`
 </configuration>
 ```
 
-Unlike the [UDP appender](#udp), an encoder must be configured for the TCP appenders.
+The TCP appenders use an encoder, rather than a layout as the [UDP appenders](#udp) . 
 You can use a `Logstash*Encoder`, `*EventCompositeJsonEncoder`, or any other logback encoder.
 All of the output formatting options are configured at the encoder level.
 
@@ -1368,13 +1387,15 @@ For example, to add standard syslog headers for syslog over UDP, configure the f
 <configuration>
   <conversionRule conversionWord="syslogStart" converterClass="ch.qos.logback.classic.pattern.SyslogStartConverter"/>
 
-  <appender name="stash" class="net.logstash.logback.appender.LogstashSocketAppender">
+  <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
     <host>MyAwesomeSyslogServer</host>
     <!-- port is optional (default value shown) -->
     <port>514</port>
-    <prefix class="ch.qos.logback.classic.PatternLayout">
-      <pattern>%syslogStart{USER}</pattern>
-    </prefix>
+    <layout>
+      <prefix class="ch.qos.logback.classic.PatternLayout">
+        <pattern>%syslogStart{USER}</pattern>
+      </prefix>
+    </layout>
   </appender>
 
   ...
