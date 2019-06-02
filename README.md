@@ -1318,7 +1318,9 @@ To write YAML instead of JSON (follow a similar pattern for CBOR and Smile):
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <!-- Log in YAML format -->
   <jsonFactoryDecorator class="net.logstash.logback.decorate.yaml.YamlJsonFactoryDecorator"/>
+  <!-- Optionally enable/disable YAMLGenerator features -->
   <jsonGeneratorDecorator class="net.logstash.logback.decorate.yaml.YamlFeatureJsonGeneratorDecorator">
     <enable>MINIMIZE_QUOTES</enable>
   </jsonGeneratorDecorator>
