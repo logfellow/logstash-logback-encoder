@@ -2,7 +2,7 @@
 >
 > &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-5.3).
 
-# Logback JSON encoder
+# Logstash Logback Encoder
 
 Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON and [other formats supported by Jackson](#non-json-formats).
 
