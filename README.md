@@ -1314,7 +1314,7 @@ Decorators are provided for Smile, CBOR, or YAML by
 Generator decorators are also available to enable/disable generator features of each format.
 Other formats can be supported by custom decorators.
 
-To write YAML instead of JSON:
+To write YAML instead of JSON (follow a similar pattern for CBOR and Smile):
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
