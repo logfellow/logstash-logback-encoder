@@ -90,6 +90,18 @@
         </developer>
     </developers>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${com.fasterxml.jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -131,7 +143,30 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${com.fasterxml.jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-cbor</artifactId>
+            <!--
+                Only needed if net.logstash.logback.decorate.cbor is used.
+            -->
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-smile</artifactId>
+            <!--
+                Only needed if net.logstash.logback.decorate.smile is used.
+            -->
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <artifactId>jackson-dataformat-yaml</artifactId>
+            <!--
+                Only needed if net.logstash.logback.decorate.yaml is used.
+            -->
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
@@ -366,6 +401,7 @@
                                 <exclude>ch.qos.logback:*</exclude>
                                 <exclude>org.slf4j:*</exclude>
                                 <exclude>com.fasterxml.jackson.core:*</exclude>
+                                <exclude>com.fasterxml.jackson.dataformat:*</exclude>
                                 <exclude>com.fasterxml.uuid:*</exclude>
                             </excludes>
                         </artifactSet>

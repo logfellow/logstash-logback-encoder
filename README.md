@@ -4,11 +4,12 @@
 
 # Logback JSON encoder
 
-Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON format.
+Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON and [other formats supported by Jackson](#non-json-formats).
 
 Supports both regular _LoggingEvents_ (logged through a `Logger`) and _AccessEvents_ (logged via [logback-access](http://logback.qos.ch/access.html)).
 
-Originally written to support output in [logstash](http://logstash.net/)'s JSON format, but has evolved into a highly-configurable, general-purpose, JSON logging mechanism.  The structure of the JSON output, and the data it contains, is fully configurable.
+Originally written to support output in [logstash](http://logstash.net/)'s JSON format, but has evolved into a highly-configurable, general-purpose, structured logging mechanism for JSON and other Jackson dataformats.
+The structure of the output, and the data it contains, is fully configurable.
 
 #### Contents:
 
@@ -40,6 +41,7 @@ Originally written to support output in [logstash](http://logstash.net/)'s JSON 
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
 * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+  * [Non-JSON Formats](#non-json-formats)
 * [Registering Jackson Modules](#registering-jackson-modules)
 * [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
@@ -1283,7 +1285,48 @@ and then specify the decorator in the logback.xml file like this:
 </encoder>
 ```
 
+`JsonFactory` and `JsonGenerator` features can be enabled/disabled by using the
+`FeatureJsonFactoryDecorator` and `FeatureJsonGeneratorDecorator`, respectively.
+For example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.FeatureJsonFactoryDecorator">
+    <disable>USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING</disable>
+  </jsonFactoryDecorator>
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.FeatureJsonGeneratorDecorator">
+    <enable>WRITE_NUMBERS_AS_STRINGS</enable>
+  </jsonGeneratorDecorator>
+</encoder>
+``` 
+
 See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
+
+### Non-JSON Formats
+
+[JsonFactoryDecorators](#customizing-json-factory-and-generator) can be used to switch the output format
+to other formats supported by Jackson:
+* [text data formats](https://github.com/FasterXML/jackson-dataformats-text)
+* [binary data formats](https://github.com/FasterXML/jackson-dataformats-binary)
+
+Decorators are provided for Smile, CBOR, or YAML by
+`SmileJsonFactoryDecorator`, `CborJsonFactoryDecorator`, or `YamlJsonFactoryDecorator`.
+Generator decorators are also available to enable/disable generator features of each format.
+Other formats can be supported by custom decorators.
+
+To write YAML instead of JSON:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.yaml.YamlJsonFactoryDecorator"/>
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.yaml.YamlFeatureJsonGeneratorDecorator">
+    <enable>MINIMIZE_QUOTES</enable>
+  </jsonGeneratorDecorator>
+</encoder>
+``` 
+
+Be sure to include the appropriate jackson dataformat library on the runtime classpath
+(e.g. via maven/gradle dependency).  e.g. for YAML, include `jackson-dataformat-yaml`.
 
 ## Registering Jackson Modules
 
