@@ -480,8 +480,8 @@ and configuring the appender to use it like this:
 
 #### Reconnection Delay
 
-If connecting fails to all configured destinations, the TCP appender by default will wait
-30 seconds before reattempting to connect.
+By default, the TCP appender will wait 30 seconds between connection attempts to a single destination.
+The time between connection attempts to each destination is tracked separately.
 
 This amount of time to delay can be changed by setting the `reconnectionDelay` field.
 
