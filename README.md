@@ -1322,7 +1322,9 @@ to other formats supported by Jackson:
 * [binary data formats](https://github.com/FasterXML/jackson-dataformats-binary)
 
 Decorators are provided for Smile, CBOR, or YAML by
-`SmileJsonFactoryDecorator`, `CborJsonFactoryDecorator`, or `YamlJsonFactoryDecorator`.
+[`SmileJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/smile/SmileJsonFactoryDecorator.java),
+[`CborJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/cbor/CborJsonFactoryDecorator.java), or
+[`YamlJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlJsonFactoryDecorator.java).
 Generator decorators are also available to enable/disable generator features of each format.
 Other formats can be supported by custom decorators.
 
@@ -1340,7 +1342,7 @@ To write Smile instead of JSON (follow a similar pattern for CBOR and YAML):
 ``` 
 
 Be sure to include the appropriate jackson dataformat library on the runtime classpath
-(e.g. via maven/gradle dependency).  e.g. for YAML, include `jackson-dataformat-yaml`.
+(e.g. via maven/gradle dependency).  e.g. for Smile, include `jackson-dataformat-smile`.
 
 ## Registering Jackson Modules
 
