@@ -400,6 +400,7 @@
                             <excludes>
                                 <exclude>ch.qos.logback:*</exclude>
                                 <exclude>org.slf4j:*</exclude>
+                                <exclude>org.yaml:*</exclude>
                                 <exclude>com.fasterxml.jackson.core:*</exclude>
                                 <exclude>com.fasterxml.jackson.dataformat:*</exclude>
                                 <exclude>com.fasterxml.uuid:*</exclude>
