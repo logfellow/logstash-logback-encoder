@@ -45,6 +45,18 @@ public class PreferPrimaryDestinationConnectionStrategy implements DestinationCo
     private Duration secondaryConnectionTTL;
 
     /**
+     * The minimum amount of time that a connection must remain open
+     * before the primary is retried on the next reopen attempt.
+     *
+     * <p>This is used to prevent a connection storm against the primary if the primary
+     * accepts connections and then immediately closes them.</p>
+     *
+     * <p>When null, the primary will always be retried first,
+     * regardless of how long the previous connection remained open.</p>
+     */
+    private Duration minConnectionTimeBeforePrimary = Duration.buildBySeconds(10);
+
+    /**
      * The destinationIndex to be returned on the next call to {@link #selectNextDestinationIndex(int, int)}.
      */
     private volatile int nextDestinationIndex = PRIMARY_DESTINATION_INDEX;
@@ -54,9 +66,25 @@ public class PreferPrimaryDestinationConnectionStrategy implements DestinationCo
      * to force an attempt to reconnect to the primary server
      */
     private volatile long secondaryConnectionExpirationTime = Long.MAX_VALUE;
+
+    private volatile long lastSuccessfulConnectTime;
     
     @Override
     public int selectNextDestinationIndex(int previousDestinationIndex, int numDestinations) {
+        int candidateIndex = this.nextDestinationIndex; // volatile read
+        if (candidateIndex == PRIMARY_DESTINATION_INDEX
+                && minConnectionTimeBeforePrimary != null
+                && (System.currentTimeMillis() - lastSuccessfulConnectTime) < minConnectionTimeBeforePrimary.getMilliseconds()) {
+            /*
+             * If the connection didn't remain open for at least the minConnectionTimeBeforePrimary,
+             * then keep trying destinations in round-robin.
+             *
+             * This prevents a connection storm against the primary if the primary
+             * accepts connections and then immediately closes them.
+             */
+
+            return (previousDestinationIndex + 1) % numDestinations;
+        }
         return nextDestinationIndex;
     }
 
@@ -72,7 +100,8 @@ public class PreferPrimaryDestinationConnectionStrategy implements DestinationCo
         else {
             secondaryConnectionExpirationTime = Long.MAX_VALUE;
         }
-        
+
+        lastSuccessfulConnectTime = connectionStartTimeInMillis;
         nextDestinationIndex = PRIMARY_DESTINATION_INDEX;
     }
 
@@ -106,4 +135,24 @@ public class PreferPrimaryDestinationConnectionStrategy implements DestinationCo
         this.secondaryConnectionTTL = secondaryConnectionTTL;
     }
 
+    public Duration getMinConnectionTimeBeforePrimary() {
+        return minConnectionTimeBeforePrimary;
+    }
+
+    /**
+     * The minimum amount of time that a connection must remain open
+     * before the primary is retried on the next reopen attempt.
+     *
+     * <p>This is used to prevent a connection storm against the primary if the primary
+     * accepts connections and then immediately closes them.</p>
+     *
+     * <p>When null, the primary will always be retried first,
+     * regardless of how long the previous connection remained open.</p>
+     *
+     * @param minConnectionTimeBeforePrimary The minimum amount of time that a connection must remain open
+     *                                       before the primary is retried on the next reopen attempt.
+     */
+    public void setMinConnectionTimeBeforePrimary(Duration minConnectionTimeBeforePrimary) {
+        this.minConnectionTimeBeforePrimary = minConnectionTimeBeforePrimary;
+    }
 }

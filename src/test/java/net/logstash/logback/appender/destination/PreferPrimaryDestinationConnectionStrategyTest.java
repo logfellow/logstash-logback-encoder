@@ -86,4 +86,21 @@ public class PreferPrimaryDestinationConnectionStrategyTest {
         
     }
 
+    @Test
+    public void testMinConnectionTimeBeforePrimary_satisfied() {
+        strategy.setMinConnectionTimeBeforePrimary(new Duration(0));
+
+        assertThat(strategy.selectNextDestinationIndex(0, 3)).isEqualTo(0);
+        strategy.connectSuccess(System.currentTimeMillis(), 0, 3);
+        assertThat(strategy.selectNextDestinationIndex(0, 3)).isEqualTo(0);
+    }
+    @Test
+    public void testMinConnectionTimeBeforePrimary_tooShort() {
+        strategy.setMinConnectionTimeBeforePrimary(Duration.buildBySeconds(10));
+
+        assertThat(strategy.selectNextDestinationIndex(0, 3)).isEqualTo(0);
+        strategy.connectSuccess(System.currentTimeMillis(), 0, 3);
+        assertThat(strategy.selectNextDestinationIndex(0, 3)).isEqualTo(1);
+    }
+
 }

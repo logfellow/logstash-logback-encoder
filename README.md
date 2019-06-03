@@ -376,7 +376,11 @@ The first destination is considered the <em>primary</em> destination.
 Each additional destination is considered a <em>secondary</em> destination.
 This strategy prefers the primary destination, unless it is down.
 The appender will attempt to connect to each destination in the order in which they are configured.
-If a connection breaks, then the appender will again attempt to connect
+If a connection attempt fails, thes the appender will attempt to connect to the next destination.
+If a connection succeeds, and then closes <em>before</em> the <tt>minConnectionTimeBeforePrimary</tt>
+has elapsed, then the appender will attempt to connect to the next destination.
+If a connection succeeds, and then closes <em>after</em> the <tt>minConnectionTimeBeforePrimary</tt>
+has elapsed, then the appender will attempt to connect
 to the destinations in the order in which they are configured,
 starting at the first/primary destination.
 <br/><br/>
@@ -385,6 +389,14 @@ destinations after a specific duration.  This will force the
 the appender to reattempt to connect to the destinations in order again.
 The <tt>secondaryConnectionTTL</tt> value does not affect connections to the
 <em>primary</em> destination.
+<br/><br/>
+The <tt>minConnectionTimeBeforePrimary</tt> (10 seconds by default) specifies
+the minimum amount of time that a sucessfully established connection
+must remain open before the next connection attempt will try the primary.
+i.e. If a connection stays open less than this amount of time,
+then the next connection attempt will attempt the next destination (instead of the primary).
+This is used to prevent a connection storm to the primary in the case the
+primary accepts a connection, and then immediately closes it. 
 <br/><br/>
 Example:
 <pre>

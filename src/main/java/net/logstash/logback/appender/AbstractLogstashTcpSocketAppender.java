@@ -57,7 +57,6 @@ import ch.qos.logback.core.net.ssl.SSLConfigurableSocket;
 import ch.qos.logback.core.net.ssl.SSLConfiguration;
 import ch.qos.logback.core.net.ssl.SSLParametersConfiguration;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import ch.qos.logback.core.status.ErrorStatus;
 import ch.qos.logback.core.util.CloseUtil;
 import ch.qos.logback.core.util.Duration;
 
@@ -117,11 +116,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     public static final int DEFAULT_WRITE_BUFFER_SIZE = 8192;
     
-    /**
-     * The default connection strategy ({@link PreferPrimaryDestinationConnectionStrategy}).
-     */
-    private static final DestinationConnectionStrategy DEFAULT_DESTINATION_CONNECTION_STRATEGY = new PreferPrimaryDestinationConnectionStrategy();
-    
     private static final NotConnectedException NOT_CONNECTED_EXCEPTION = new NotConnectedException();
     private static final ShutdownInProgressException SHUTDOWN_IN_PROGRESS_EXCEPTION = new ShutdownInProgressException();
     static {
@@ -165,13 +159,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     
     /**
      * Strategy used to determine to which destination to connect, and when to reconnect. 
-     * Default is {@value #DEFAULT_DESTINATION_CONNECTION_STRATEGY}.
+     * Default is {@link PreferPrimaryDestinationConnectionStrategy}.
      */
-    private DestinationConnectionStrategy connectionStrategy = DEFAULT_DESTINATION_CONNECTION_STRATEGY;
+    private DestinationConnectionStrategy connectionStrategy = new PreferPrimaryDestinationConnectionStrategy();
 
     /**
-     * Time period for which to wait after a connection fails,
-     * before attempting to reconnect.
+     * Time period for which to wait after a connection fails to a specific destination
+     * before attempting to reconnect to that destination.
      * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
      */
     private Duration reconnectionDelay = new Duration(DEFAULT_RECONNECTION_DELAY);
@@ -297,6 +291,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * needs to be scheduled/sent.
          */
         private volatile long lastSentTimestamp;
+
+        /**
+         * The most recent time that a connection to each destination was attempted.
+         */
+        private long[] destinationAttemptStartTimes;
         
         /**
          * Future for the currently scheduled {@link #keepAliveRunnable}.
@@ -310,7 +309,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         private KeepAliveRunnable keepAliveRunnable;
         
         /**
-         * See {@link ReaderRunnable}.
+         * See {@link ReaderCallable}.
          * Initialized when a socket is opened.
          */
         private Future<?> readerFuture;
@@ -505,6 +504,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         @Override
         public void onStart() {
+            this.destinationAttemptStartTimes = new long[destinations.size()];
             openSocket();
             scheduleKeepAlive(System.currentTimeMillis());
         }
@@ -529,11 +529,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * then it should be able to be used to send.
          */
         private synchronized void openSocket() {
-            int retryCount = 0;
             int errorCount = 0;
             int destinationIndex = connectedDestinationIndex;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
-                destinationIndex = connectionStrategy.selectNextDestinationIndex(destinationIndex, destinations.size()); 
+                destinationIndex = connectionStrategy.selectNextDestinationIndex(destinationIndex, destinations.size());
                 long startTime = System.currentTimeMillis();
                 Socket tempSocket = null;
                 OutputStream tempOutputStream = null;
@@ -544,10 +543,35 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 InetSocketAddress currentDestination = destinations.get(destinationIndex);
                 try {
                     /*
-                     * Choose next server and update peerId (for status message)
+                     * Update peerId (for status message)
                      */
                     peerId = "Log destination " + currentDestination + ": ";
-                    
+
+                    /*
+                     * Delay the connection attempt if the last attempt to the selected destination
+                     * was less than the reconnectionDelay.
+                     */
+                    final long millisSinceLastAttempt = startTime - destinationAttemptStartTimes[destinationIndex];
+                    if (millisSinceLastAttempt < reconnectionDelay.getMilliseconds()) {
+                        final long sleepTime = reconnectionDelay.getMilliseconds() - millisSinceLastAttempt;
+                        if (errorCount < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
+                            addWarn(peerId + "Waiting " + sleepTime + "ms before attempting reconnection.");
+                        }
+                        try {
+                            shutdownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
+                            if (!isStarted()) {
+                                return;
+                            }
+                        } catch (InterruptedException ie) {
+                            Thread.currentThread().interrupt();
+                            addWarn(peerId + "connection interrupted. Will no longer attempt reconnection.");
+                            return;
+                        }
+                        // reset the start time to be after the wait period.
+                        startTime = System.currentTimeMillis();
+                    }
+                    destinationAttemptStartTimes[destinationIndex] = startTime;
+
                     /*
                      * Set the SO_TIMEOUT so that SSL handshakes will timeout if they take too long.
                      * 
@@ -611,42 +635,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     connectionStrategy.connectFailed(startTime, destinationIndex, destinations.size());
                     fireConnectionFailed(currentDestination, e);
                     
-                    
-                    if (++retryCount >= destinations.size()) {
-                        /*
-                         * After every destination.size() connection attempts, delay the next connection attempt
-                         */
-                        retryCount = 0;
-                        
-                        /*
-                         * If the connection timed out, then take the elapsed time into account
-                         * when calculating time to sleep
-                         */
-                        long sleepTime = Math.max(0, reconnectionDelay.getMilliseconds() - (System.currentTimeMillis() - startTime));
-                        
-                        /*
-                         * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
-                         */
-                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
-                            addWarn(peerId + "connection failed. Waiting " + sleepTime + "ms before attempting reconnection.", e);
-                        }
-                        
-                        if (sleepTime > 0) {
-                            try {
-                                shutdownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
-                            } catch (InterruptedException ie) {
-                                Thread.currentThread().interrupt();
-                                addWarn(peerId + "connection interrupted. Will no longer attempt reconnection.");
-                            }
-                        }
-                    }
-                    else {
-                        /*
-                         * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
-                         */
-                        if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
-                            addWarn(peerId + "connection failed.", e);
-                        }
+                    /*
+                     * Avoid spamming status messages by checking the MAX_REPEAT_CONNECTION_ERROR_LOG.
+                     */
+                    if (errorCount++ < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
+                        addWarn(peerId + "connection failed.", e);
                     }
                 }
             }

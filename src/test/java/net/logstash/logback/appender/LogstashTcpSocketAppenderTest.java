@@ -351,10 +351,14 @@ public class LogstashTcpSocketAppenderTest {
         doNothing()
             .doThrow(SocketTimeoutException.class)
             .when(socket).connect(host("localhost", 10000), anyInt());
-        
-        // First attempt of sending the event throws an exception while subsequent 
+
+        // Secondary refuses all attempts
+        doThrow(SocketTimeoutException.class)
+                .when(socket).connect(host("localhost", 10001), anyInt());
+
+        // First attempt of sending the event throws an exception while subsequent
         // attempts will succeed. This should force the appender to close the connection
-        // and attempt to reconnect starting from the first host of the list.
+        // and attempt to reconnect
         doThrow(new RuntimeException())
             .doReturn("event1".getBytes("UTF-8"))
             .when(encoder).encode(event1);
@@ -368,17 +372,14 @@ public class LogstashTcpSocketAppenderTest {
         appender.append(event1);
 
 
-        // THREE connection attempts must have been made in total
-        verify(socket, timeout(VERIFICATION_TIMEOUT).times(3)).connect(any(SocketAddress.class), anyInt());
+        // TWO connection attempts must have been made in total
+        verify(socket, timeout(VERIFICATION_TIMEOUT).times(2)).connect(any(SocketAddress.class), anyInt());
         InOrder inOrder = inOrder(socket);
 
         // 1) connected to primary at startup
         inOrder.verify(socket).connect(host("localhost", 10000), anyInt());
 
-        // 2) retry on primary after failed attempt to send event
-        inOrder.verify(socket).connect(host("localhost", 10000), anyInt());
-
-        // 3) connect to secondary
+        // 2) retry on secondary after failed attempt to send event
         inOrder.verify(socket).connect(host("localhost", 10001), anyInt());
     }
     
@@ -390,6 +391,7 @@ public class LogstashTcpSocketAppenderTest {
     public void testReconnectToPrimaryWhileOnSecondary() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
+        appender.setReconnectionDelay(new Duration(1));
         appender.setSecondaryConnectionTTL(Duration.buildByMilliseconds(100));
 
         // Primary refuses first connection to force the appender to go on the secondary.
@@ -518,11 +520,15 @@ public class LogstashTcpSocketAppenderTest {
         appender.setKeepAliveMessage("UNIX");
         appender.setKeepAliveDuration(Duration.buildByMilliseconds(100));
         
-        // Primary accepts first connection then refuse subsequent attemps
+        // Primary accepts first connection then refuse subsequent attempts
         doNothing()
             .doThrow(SocketTimeoutException.class)
             .when(socket).connect(host("localhost", 10000), anyInt());
-        
+
+        // Secondary refuses all attempts
+        doThrow(SocketTimeoutException.class)
+            .when(socket).connect(host("localhost", 10001), anyInt());
+
         // Throw an exception the first time the the appender attempts to write in the output stream.
         // This should cause the appender to initiate the reconnect sequence.
         doThrow(SocketException.class)
@@ -535,17 +541,14 @@ public class LogstashTcpSocketAppenderTest {
         verify(encoder).start();
 
         // Wait for a bit more than a single keep alive message.
-        // THREE connection attempts must have been made in total:
-        verify(socket, timeout(VERIFICATION_TIMEOUT).times(3)).connect(any(SocketAddress.class), anyInt());
+        // TWO connection attempts must have been made in total:
+        verify(socket, timeout(VERIFICATION_TIMEOUT).times(2)).connect(any(SocketAddress.class), anyInt());
         InOrder inOrder = inOrder(socket);
 
         // 1) connected to primary at startup
         inOrder.verify(socket).connect(host("localhost", 10000), anyInt());
 
-        // 2) retry on primary after failed attempt to send event
-        inOrder.verify(socket).connect(host("localhost", 10000), anyInt());
-
-        // 3) connect to secondary
+        // 2) retry on secondary after failed attempt to send event
         inOrder.verify(socket).connect(host("localhost", 10001), anyInt());
     }
     
@@ -619,6 +622,10 @@ public class LogstashTcpSocketAppenderTest {
                 return host.equals(sockAddr.getHostName()) && port == sockAddr.getPort();
             }
 
+            @Override
+            public String toString() {
+                return host + ":" + port;
+            }
         };
     }
 }
