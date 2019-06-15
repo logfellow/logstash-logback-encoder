@@ -46,4 +46,8 @@ public class EmptyLogstashMarker extends LogstashMarker {
         // no-op
     }
 
+    @Override
+    protected String toStringSelf() {
+        return "";
+    }
 }

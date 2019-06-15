@@ -15,7 +15,11 @@ package net.logstash.logback.marker;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.junit.Test;
+import org.slf4j.MarkerFactory;
 
 public class MarkersTest {
 
@@ -30,4 +34,56 @@ public class MarkersTest {
         assertThat(aggregate.contains(marker2)).isTrue();
     }
 
+    @Test
+    public void testToString() {
+
+        assertThat(Markers.empty().toString())
+                .isEqualTo("");
+
+        assertThat(Markers.empty()
+                .and(Markers.empty()).toString())
+                .isEqualTo("");
+
+        assertThat(Markers.empty()
+                .and(MarkerFactory.getMarker("name"))
+                .and(Markers.empty()).toString())
+                .isEqualTo("name");
+
+        assertThat(Markers.empty()
+                .and(Markers.append("fieldName1", "fieldValue1"))
+                .and(Markers.empty()).toString())
+                .isEqualTo("fieldName1=fieldValue1");
+
+        assertThat(Markers.empty()
+                .and(Markers.append("fieldName1", "fieldValue1")).toString())
+                .isEqualTo("fieldName1=fieldValue1");
+
+        assertThat(Markers.empty()
+                .and(Markers.append("fieldName1", "fieldValue1"))
+                .and(Markers.append("fieldName1", "fieldValue1")).toString())
+                .isEqualTo("fieldName1=fieldValue1");
+
+        assertThat(Markers.empty()
+                .and(Markers.append("fieldName1", "fieldValue1"))
+                .and(Markers.append("fieldName2", "fieldValue2")).toString())
+                .isEqualTo("fieldName1=fieldValue1, fieldName2=fieldValue2");
+
+        assertThat(Markers.aggregate(
+                Markers.append("fieldName1", "fieldValue1"),
+                Markers.append("fieldName2", "fieldValue2")).toString())
+                .isEqualTo("fieldName1=fieldValue1, fieldName2=fieldValue2");
+
+        assertThat(Markers.append("fieldName1", "fieldValue1").toString())
+                .isEqualTo("fieldName1=fieldValue1");
+
+        assertThat(Markers.appendRaw("fieldName1", "rawJsonValue1").toString())
+                .isEqualTo("fieldName1=rawJsonValue1");
+
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("fieldName1", "fieldValue1");
+        map.put("fieldName2", "fieldValue2");
+        assertThat(Markers.appendEntries(map).toString())
+                .isEqualTo("{fieldName1=fieldValue1, fieldName2=fieldValue2}");
+
+    }
 }

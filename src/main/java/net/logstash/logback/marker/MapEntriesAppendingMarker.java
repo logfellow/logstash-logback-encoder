@@ -95,7 +95,7 @@ public class MapEntriesAppendingMarker extends LogstashMarker implements Structu
     }
     
     @Override
-    public String toString() {
+    public String toStringSelf() {
         return String.valueOf(map);
     }
 

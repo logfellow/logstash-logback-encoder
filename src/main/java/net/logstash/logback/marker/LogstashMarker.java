@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * In particular these markers are used to write data into the logstash json event via {@link #writeTo(JsonGenerator)}.
  */
 @SuppressWarnings("serial")
-public abstract class LogstashMarker extends LogstashBasicMarker {
+public abstract class LogstashMarker extends LogstashBasicMarker implements Iterable<Marker> {
     
     public static final String MARKER_NAME_PREFIX = "LS_";
     
@@ -75,5 +75,53 @@ public abstract class LogstashMarker extends LogstashBasicMarker {
      * @throws IOException if there was an error writing to the generator
      */
     public abstract void writeTo(JsonGenerator generator) throws IOException;
-    
+
+    /**
+     * Returns a String in the form of
+     * <pre>
+     *     self, reference1, reference2, ...
+     * </pre>
+     *
+     * <p>Where <code>self</code> is the value returned by {@link #toStringSelf()},
+     * and <code>reference*</code> are the <code>toString()</code> values of any references.</p>
+     *
+     * <p>It is recommended that subclasses only override {@link #toStringSelf()},
+     * so that references are automatically included in the value returned from {@link #toString()}.</p>
+     *
+     * @return a string representation of the object, which includes references
+     */
+    @Override
+    public String toString() {
+        String self = toStringSelf();
+        if (!hasReferences()) {
+            return self;
+        }
+
+        StringBuilder sb = new StringBuilder(self);
+        boolean appendSeparator = !self.isEmpty();
+        for (Marker marker : this) {
+            if (appendSeparator) {
+                sb.append(", ");
+            }
+            String referenceToString = marker.toString();
+            sb.append(referenceToString);
+            appendSeparator = !referenceToString.isEmpty();
+        }
+
+        return sb.toString();
+    }
+
+    /**
+     * Returns a string representation of this object, without including any references.
+     *
+     * <p>Subclasses should override {@link #toStringSelf()} instead of {@link #toString()},
+     * since {@link #toString()} will automatically include the {@link #toStringSelf()} and references.</p>
+     *
+     * @return a string representation of this object, without including any references.
+     */
+    protected String toStringSelf() {
+        return getName();
+    }
+
+
 }

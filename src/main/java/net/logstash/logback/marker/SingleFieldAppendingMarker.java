@@ -97,7 +97,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
     protected abstract void writeFieldValue(JsonGenerator generator) throws IOException;
     
     @Override
-    public String toString() {
+    public String toStringSelf() {
         final String fieldValueString = StructuredArguments.toString(getFieldValue());
         /*
          * Optimize for commonly used messageFormatPattern

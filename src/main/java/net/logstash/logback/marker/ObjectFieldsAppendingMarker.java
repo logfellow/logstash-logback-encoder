@@ -110,7 +110,7 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
     }
     
     @Override
-    public String toString() {
+    public String toStringSelf() {
         return StructuredArguments.toString(object);
     }
     
