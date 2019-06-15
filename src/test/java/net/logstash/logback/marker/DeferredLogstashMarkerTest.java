@@ -71,6 +71,17 @@ public class DeferredLogstashMarkerTest {
         verify(supplier).get();
 
         assertThat(writer.toString()).isEqualTo("{\"myObject\":{\"myField\":\"value\"}}");
+
+        // execute again, to ensure that supplier is not invoked again
+        generator.writeStartObject();
+        marker.writeTo(generator);
+        generator.writeEndObject();
+        generator.flush();
+
+        verify(supplier).get();
+
+        assertThat(writer.toString()).isEqualTo("{\"myObject\":{\"myField\":\"value\"}} {\"myObject\":{\"myField\":\"value\"}}");
+
     }
 
     @Test
