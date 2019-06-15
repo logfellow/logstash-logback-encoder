@@ -2242,13 +2242,14 @@ You can do something similar for `AccessEventCompositeJsonEncoder` and `Logstash
 ## Status Listeners
 
 During execution, the encoders/appenders/layouts provided in logstash-logback-encoder
-will add logback status messages to the logback `StatusManager`.
-These status messages are typically reported via a logback _status listener_.
+will add logback status messages to the logback [`StatusManager`](https://logback.qos.ch/apidocs/ch/qos/logback/core/status/StatusManager.html).
+These status messages are typically reported via a logback [`StatusListener`](https://logback.qos.ch/apidocs/ch/qos/logback/core/status/StatusListener.html).
 
 Since the [async appenders](#async-appenders) (especially the [tcp appenders](#tcp-appenders))
-report errors via the status manager, a default [`OnConsoleStatusListener`](https://logback.qos.ch/manual/configuration.html#dumpingStatusData)
+report warnings and errors via the status manager, a default status listener that
+outputs WARN and ERROR level status messages to standard out
 will be registered on startup if a status listener has not already been registered.
-To disable the automatic registering of the `OnConsoleStatusListener` by an appender, do one of the following:
+To disable the automatic registering of the default status listener by an appender, do one of the following:
 * register a different logback [status listener](https://logback.qos.ch/manual/configuration.html#dumpingStatusData), or
 * set `<addDefaultStatusListener>false</addDefaultStatusListener` in each async appender.
 

@@ -26,12 +26,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import ch.qos.logback.core.status.OnConsoleStatusListener;
+import ch.qos.logback.core.status.Status;
 import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.status.LevelFilteringStatusListener;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.EventFactory;
@@ -363,11 +365,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     @Override
     public void start() {
         if (addDefaultStatusListener && getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
-            OnConsoleStatusListener statusListener = new OnConsoleStatusListener();
+            LevelFilteringStatusListener statusListener = new LevelFilteringStatusListener();
+            statusListener.setLevelValue(Status.WARN);
+            statusListener.setDelegate(new OnConsoleStatusListener());
             statusListener.setContext(getContext());
             statusListener.start();
             getStatusManager().add(statusListener);
-            addInfo(String.format("%s added so that errors from the %s appender are visible.  To suppress this message, either add a logback status listener or set this appender's addDefaultStatusListener to false.", statusListener.getClass().getSimpleName(), getName()));
         }
 
         if (this.eventHandler == null) {
