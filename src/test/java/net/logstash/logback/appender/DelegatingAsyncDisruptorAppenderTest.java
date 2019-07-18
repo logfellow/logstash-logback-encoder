@@ -13,8 +13,14 @@
  */
 package net.logstash.logback.appender;
 
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.io.OutputStream;
+
+import ch.qos.logback.core.OutputStreamAppender;
 import net.logstash.logback.appender.listener.AppenderListener;
 
 import org.junit.After;
@@ -38,11 +44,16 @@ public class DelegatingAsyncDisruptorAppenderTest {
     
     @Mock
     private ILoggingEvent event;
-    
+
     @Mock
     private Appender<ILoggingEvent> delegate;
-    
-    
+
+    @Mock
+    private OutputStreamAppender<ILoggingEvent> outputStreamDelegate;
+
+    @Mock
+    private OutputStream outputStream;
+
     @Before
     public void setup() {
         appender.addAppender(delegate);
@@ -52,17 +63,51 @@ public class DelegatingAsyncDisruptorAppenderTest {
     public void tearDown() {
         appender.stop();
     }
-    
+
     @Test
     public void testEventHandlerCalled() throws Exception {
         appender.start();
-        
+
         verify(delegate).start();
-        
+
         appender.append(event);
-        
+
         verify(delegate, timeout(VERIFICATION_TIMEOUT)).doAppend(event);
-        
+    }
+
+    @Test
+    public void testFlushed() throws Exception {
+
+        when(outputStreamDelegate.getOutputStream()).thenReturn(outputStream);
+
+        appender.addAppender(outputStreamDelegate);
+
+        appender.start();
+
+        verify(delegate).start();
+
+        appender.append(event);
+
+        verify(delegate, timeout(VERIFICATION_TIMEOUT)).doAppend(event);
+
+        verify(outputStream, timeout(VERIFICATION_TIMEOUT)).flush();
+    }
+
+    @Test
+    public void testNotFlushedWhenImmediateFlush() throws Exception {
+
+        when(outputStreamDelegate.isImmediateFlush()).thenReturn(true);
+
+        appender.addAppender(outputStreamDelegate);
+
+        appender.start();
+
+        verify(delegate).start();
+
+        appender.append(event);
+
+        verify(delegate, timeout(VERIFICATION_TIMEOUT)).doAppend(event);
+        verify(outputStream, never()).flush();
     }
 
 }

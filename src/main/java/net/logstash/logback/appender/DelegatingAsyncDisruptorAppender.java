@@ -16,6 +16,7 @@ package net.logstash.logback.appender;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 
+import ch.qos.logback.core.OutputStreamAppender;
 import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -52,8 +53,25 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
         @Override
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
             appenders.appendLoopOnAppenders(logEvent.event);
+
+            /*
+             * Optimization:
+             *
+             * If any of the delegate appenders are instances of OutputStreamAppender,
+             * then flush the OutputStreams at the end of the batch.
+             */
+            if (endOfBatch) {
+                for (Iterator<Appender<Event>> iter = appenders.iteratorForAppenders(); iter.hasNext(); ) {
+                    Appender<Event> appender = iter.next();
+                    if (appender instanceof OutputStreamAppender) {
+                        OutputStreamAppender outputStreamAppender = (OutputStreamAppender) appender;
+                        if (!outputStreamAppender.isImmediateFlush()) {
+                            outputStreamAppender.getOutputStream().flush();
+                        }
+                    }
+                }
+            }
         }
-        
     }
     
     public DelegatingAsyncDisruptorAppender() {
