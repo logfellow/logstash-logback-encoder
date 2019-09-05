@@ -191,7 +191,7 @@ For example, to configure [global custom fields](#global-custom-fields), you can
     <host>MyAwesomeSyslogServer</host>
     <!-- port is optional (default value shown) -->
     <port>514</port>
-    <layout class="net.logstash.logback.layout.LogstashLayout"/>
+    <layout class="net.logstash.logback.layout.LogstashLayout">
       <customFields>{"appname":"myWebservice"}</customFields>
     </layout>
   </appender>
