@@ -32,7 +32,7 @@
 
         <!-- runtime dependencies -->
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
-        <com.fasterxml.jackson.version>2.9.9</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.9.9.20190807</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>3.2.0</com.fasterxml.uuid.version>
 
         <!-- shaded runtime dependencies -->
