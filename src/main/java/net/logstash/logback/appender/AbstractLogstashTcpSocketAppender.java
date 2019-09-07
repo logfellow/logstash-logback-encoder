@@ -350,8 +350,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Publish a keep alive message to the RingBuffer.
                      *
                      * A null event indicates that this is a keep alive message.
+                     *
+                     * Use tryPublishEvent instead of publishEvent, because if the ring buffer is full,
+                     * there's really no need to send a keep alive, since
+                     * there are other messages waiting to be sent.
                      */
-                    getDisruptor().getRingBuffer().publishEvent(getEventTranslator(), null);
+                    getDisruptor().getRingBuffer().tryPublishEvent(getEventTranslator(), null);
                     scheduleKeepAlive(currentTime);
                 } else {
                     scheduleKeepAlive(lastSent);
