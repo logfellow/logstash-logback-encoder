@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -156,7 +157,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * previously connected index.
      */
     private volatile int connectedDestinationIndex = 0;
-    
+
+    /**
+     * When connected, this is the connected destination address.
+     * When not connected, this is null.
+     */
+    private volatile InetSocketAddress connectedDestination;
+
     /**
      * Strategy used to determine to which destination to connect, and when to reconnect. 
      * Default is {@link PreferPrimaryDestinationConnectionStrategy}.
@@ -610,7 +617,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
                     boolean shouldUpdateThreadName = (destinationIndex != connectedDestinationIndex);
                     connectedDestinationIndex = destinationIndex;
-                    
+                    connectedDestination = currentDestination;
+
                     connectionStrategy.connectSuccess(startTime, destinationIndex, destinations.size());
                     
                     if (shouldUpdateThreadName) {
@@ -628,7 +636,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     return;
                     
                 } catch (Exception e) {
-                    
                     CloseUtil.closeQuietly(tempOutputStream);
                     CloseUtil.closeQuietly(tempSocket);
                     
@@ -646,13 +653,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
         
         private synchronized void closeSocket() {
+            connectedDestination = null;
             CloseUtil.closeQuietly(outputStream);
             outputStream = null;
             
             CloseUtil.closeQuietly(socket);
             fireConnectionClosed(socket);
             socket = null;
-            
+
             if (this.readerFuture != null) {
                 /*
                  * This shouldn't be necessary, since closing the socket
@@ -1201,4 +1209,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         this.connectionStrategy = destinationConnectionStrategy;
     }
 
+    /**
+     * Returns the currently connected destination as an {@link Optional}.
+     * The {@link Optional} will be absent if the appender is not currently connected.
+     *
+     * @return the currently connected destination as an {@link Optional}.
+     *         The {@link Optional} will be absent if the appender is not currently connected.
+     */
+    public Optional<InetSocketAddress> getConnectedDestination() {
+        return Optional.ofNullable(this.connectedDestination);
+    }
 }

@@ -13,6 +13,7 @@
  */
 package net.logstash.logback.appender;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -191,6 +192,8 @@ public class LogstashTcpSocketAppenderTest {
         appender.append(event1);
         
         verify(encoder, timeout(VERIFICATION_TIMEOUT)).encode(event1);
+
+        assertThat(appender.getConnectedDestination()).isPresent();
         
         verify(listener).appenderStarted(appender);
         verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
@@ -201,6 +204,8 @@ public class LogstashTcpSocketAppenderTest {
         appender.stop();
         
         verify(listener).connectionClosed(appender, socket);
+
+        assertThat(appender.getConnectedDestination()).isNotPresent();
     }
 
     @Test
@@ -266,6 +271,9 @@ public class LogstashTcpSocketAppenderTest {
 
         // The only socket should be connected to primary
         verify(socket).connect(host("localhost", 10000), anyInt());
+
+        assertThat(appender.getConnectedDestination()).isPresent();
+
     }
     
     
