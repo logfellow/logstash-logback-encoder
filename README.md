@@ -1395,9 +1395,15 @@ Examples of how it is shortened can be found [here](http://logback.qos.ch/manual
 
 ## Customizing Stack Traces
 
-For LoggingEvents, stack traces are formatted using logback's `ExtendedThrowableProxyConverter` by default.
+When [logging exceptions](https://www.baeldung.com/slf4j-log-exceptions),
+stack traces are formatted using logback's `ExtendedThrowableProxyConverter` by default.
 However, you can configure the encoder to use any `ThrowableHandlingConverter`
 to format stacktraces.
+
+Note that the `ThrowableHandlingConverter` only applies to the
+[exception passed as an extra argument](https://www.baeldung.com/slf4j-log-exceptions)
+to the log method, the way you normally log an exception in slf4j.
+Do NOT use [structured arguments or markers](#event-specific-custom-fields) for exceptions.
 
 A powerful [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
 is included in the logstash-logback-encoder library to format stacktraces by:
