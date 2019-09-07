@@ -333,7 +333,7 @@
                 <configuration>
                     <instructions>
                         <!-- packages to export -->
-                        <Export-Package>net.logstash.logback.encoder,net.logstash.logback.appender,net.logstash.logback.argument,net.logstash.logback.composite,net.logstash.logback.fieldnames</Export-Package>
+                        <Export-Package>net.logstash.logback.*</Export-Package>
                         <!-- attach to Logback bundle as fragment -->
                         <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
                         <!-- exclude following imports as required classes are relocated by shade plugin and ignore ch.qos.logback.[core,classic] because this is a fragment and gets them from parent. -->
