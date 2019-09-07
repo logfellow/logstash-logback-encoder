@@ -506,7 +506,10 @@ You can adjust this by setting the appender's `writeBufferSize`.
 ```
 
 Buffering can be disabled by setting the `writeBufferSize` to `0`.
-If buffering is disabled, the writer thread can slow down, but it will also can prevent dropping events in the buffer on flaky connections.
+Consider disabling the write buffer if you are concerned about losing data from the buffer for flaky connections.
+Disabling the buffer can potentially slow down the writer thread due to increased system calls,
+but in some environments, this does not seem to affect overall performance.
+See [this discussion](https://github.com/logstash/logstash-logback-encoder/issues/342).
 
 #### SSL
 
