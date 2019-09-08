@@ -391,23 +391,52 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             @Override
             public Void call() throws Exception {
                 updateCurrentThreadName();
-                while (true) {
-                    try {
-                        if (inputStream.read() == -1) {
+                try {
+                    while (true) {
+                        try {
+                            if (inputStream.read() == -1) {
+                                /*
+                                 * End of stream reached, so we're done.
+                                 */
+                                return null;
+                            }
+                        } catch (SocketTimeoutException e) {
                             /*
-                             * End of stream reached, so we're done.
+                             * ignore, and try again
                              */
-                            return null;
+                        } catch (Exception e) {
+                            /*
+                             * Something else bad happened, so we're done.
+                             */
+                            throw e;
                         }
-                    } catch (SocketTimeoutException e) {
-                        /*
-                         * ignore, and try again
-                         */
-                    } catch (Exception e) {
-                        /*
-                         * Something else bad happened, so we're done.
-                         */
-                        throw e;
+                    }
+                } finally {
+                    if (!Thread.currentThread().isInterrupted()) {
+                        getExecutorService().submit(() -> {
+                            /*
+                             * https://github.com/logstash/logstash-logback-encoder/issues/341
+                             *
+                             * Pro-actively trigger the event handler's onEvent method in the handler thread
+                             * by publishing a null event (which usually means a keepAlive event).
+                             *
+                             * When onEvent handles the event in the handler thread,
+                             * it will detect that readerFuture.isDone() and reopen the socket.
+                             *
+                             * Without this, onEvent would not be called until the next event,
+                             * which might not occur for a while.
+                             * So, this is really just an optimization to reopen the socket as soon as possible.
+                             *
+                             * We can't reopen the socket from this thread,
+                             * since all socket open/close must be done from the event handler thread.
+                             *
+                             * There is a potential race condition here as well, since
+                             * onEvent could be triggered before the readerFuture completes.
+                             * We reduce (but not eliminate) the chance of that happening by
+                             * scheduling this task on the executorService.
+                             */
+                            getDisruptor().getRingBuffer().tryPublishEvent(getEventTranslator(), null);
+                        });
                     }
                 }
             }
@@ -451,7 +480,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     long currentTime = System.currentTimeMillis();
                     long startTime = System.nanoTime();
                     /*
-                     * A null event indicates that this is a keep alive message. 
+                     * A null event indicates that this is a keep alive message,
+                     * or an event sent from the ReaderCallable.
                      */
                     if (logEvent.event != null) {
                         /*
