@@ -100,7 +100,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * The default reconnection delay (30000 milliseconds or 30 seconds).
      */
     public static final int DEFAULT_RECONNECTION_DELAY = 30000;
-    
+
+    /**
+     * The default write timeout in milliseconds (0 means no write timeout).
+     */
+    public static final int DEFAULT_WRITE_TIMEOUT = 0;
+
     /**
      * Default size of the queue used to hold logging events that are destined
      * for the remote peer.
@@ -252,7 +257,26 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Populated at startup time.
      */
     private byte[] keepAliveBytes;
-    
+
+    /**
+     * Time period for which to wait for a write to complete before timing out
+     * and attempting to reconnect to that destination.
+     * Zero (the default) means no write timeout.
+     *
+     * <p>Used to detect connections where the receiver stops reading.</p>
+     *
+     * <p>Note that since a blocking java socket output stream
+     * does not have a concept of a write timeout,
+     * a task will be scheduled on the {@link #getExecutorService()}
+     * with the same frequency as the write timeout
+     * in order to detect stuck writes.
+     * It is recommended to use longer write timeouts (e.g. &gt; 30s, or minutes),
+     * rather than short write timeouts, so that this task does not execute too frequently.
+     * Also, this approach means that it could take up to two times the write timeout
+     * before a write timeout is detected.</p>
+     */
+    private Duration writeTimeout = new Duration(DEFAULT_WRITE_TIMEOUT);
+
     /**
      * Used to signal the socket reconnect thread that the shutdown has occurred.
      * The latch will be non-zero when started, and zero when shutdown.  
@@ -293,28 +317,44 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         private volatile OutputStream outputStream;
         
         /**
-         * Time at which the last event was sent.
+         * Time at which the last event send was started (e.g. before write/flush).
+         * Used to detect write timeouts.
+         */
+        private volatile long lastSendStartNanoTime;
+        /**
+         * Time at which the last event send was completed (e.g. after write/flush).
          * Used to calculate if a keep alive message
          * needs to be scheduled/sent.
          */
-        private volatile long lastSentTimestamp;
+        private volatile long lastSendEndNanoTime;
 
         /**
          * The most recent time that a connection to each destination was attempted.
          */
         private long[] destinationAttemptStartTimes;
-        
+
         /**
          * Future for the currently scheduled {@link #keepAliveRunnable}.
          */
         private ScheduledFuture<?> keepAliveFuture;
-        
+
         /**
          * See {@link KeepAliveRunnable}.
          * Initialized on startup if keep alive is enabled.
          */
         private KeepAliveRunnable keepAliveRunnable;
-        
+
+        /**
+         * Future for the currently scheduled {@link #writeTimeoutRunnable}.
+         */
+        private ScheduledFuture<?> writeTimeoutFuture;
+
+        /**
+         * See {@link WriteTimeoutRunnable}.
+         * Initialized on startup if write timeout is enabled.
+         */
+        private WriteTimeoutRunnable writeTimeoutRunnable;
+
         /**
          * See {@link ReaderCallable}.
          * Initialized when a socket is opened.
@@ -343,9 +383,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
             @Override
             public void run() {
-                long lastSent = lastSentTimestamp;
-                long currentTime = System.currentTimeMillis();
-                if (hasKeepAliveDurationElapsed(lastSent, currentTime)) {
+                long lastSendEnd = lastSendEndNanoTime;
+                long currentNanoTime = System.nanoTime();
+                if (hasKeepAliveDurationElapsed(lastSendEnd, currentNanoTime)) {
                     /*
                      * Publish a keep alive message to the RingBuffer.
                      *
@@ -356,9 +396,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * there are other messages waiting to be sent.
                      */
                     getDisruptor().getRingBuffer().tryPublishEvent(getEventTranslator(), null);
-                    scheduleKeepAlive(currentTime);
+                    scheduleKeepAlive(currentNanoTime);
                 } else {
-                    scheduleKeepAlive(lastSent);
+                    scheduleKeepAlive(lastSendEnd);
                 }
                 
                 if (previousDestinationIndex != connectedDestinationIndex) {
@@ -371,7 +411,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 previousDestinationIndex = connectedDestinationIndex;
             }
         }
-        
+
         /**
          * Keeps reading the {@link ReaderCallable#inputStream} until the
          * end of the stream is reached.
@@ -442,81 +482,86 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
 
         }
-        
+
+        /**
+         * Detects write timeouts by inspecting {@link #lastSendStartNanoTime} and {@link #lastSendEndNanoTime}
+         */
+        private class WriteTimeoutRunnable implements Runnable {
+
+            /**
+             * The lastSendStartNanoTime of the last detected timeout.
+             * Used to ensure we only detect a write timeout for a single write once
+             * (especially if the log rate is very low).
+             */
+            private volatile long lastDetectedStartNanoTime;
+
+            @Override
+            public void run() {
+                long lastSendStart = lastSendStartNanoTime; // volatile read
+                long lastSendEnd = lastSendEndNanoTime;     // volatile read
+
+                /*
+                 * A write is in progress if the start is greater than the end
+                 */
+                if (lastSendStart > lastSendEnd && lastSendStart != lastDetectedStartNanoTime) {
+
+                    long elapsedSendTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSendStart);
+                    if (elapsedSendTimeInMillis > writeTimeout.getMilliseconds()) {
+                        lastDetectedStartNanoTime = lastSendStart;
+                        addWarn(peerId + "Detected write timeout after " + elapsedSendTimeInMillis + "ms.  Write timeout=" + getWriteTimeout() + ".  Closing socket to force reconnect");
+                        closeSocket();
+                    }
+                }
+            }
+        }
+
         @Override
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
             
             Exception sendFailureException = null;
             for (int i = 0; i < MAX_REPEAT_WRITE_ATTEMPTS; i++) {
-                if (this.socket == null) {
+                /*
+                 * Save local references to the outputStream and socket
+                 * in case the WriteTimeoutRunnable closes the socket.
+                 */
+                Socket socket = this.socket; // volatile read
+                OutputStream outputStream = this.outputStream; // volatile read
+
+                if (socket == null && (!isStarted() || Thread.currentThread().isInterrupted())) {
                     /*
-                     * socket could be null if reconnect failed due to shutdown in progress.
+                     * Handle shutdown in progress
+                     *
+                     * This will occur if shutdown occurred during reopen()
                      */
                     sendFailureException = SHUTDOWN_IN_PROGRESS_EXCEPTION;
                     break;
                 }
-                if (readerFuture.isDone()) {
+
+                Future<?> readerFuture = this.readerFuture;  // volatile read
+                if (readerFuture.isDone() || socket == null) {
                     /*
-                     * Assume that if the destination shuts down its output (our input),
-                     * then the destination is no longer listening to its input (our output).
+                     * If readerFuture.isDone(), then the destination has shut down its output (our input),
+                     * and the destination is probably no longer listening to its input (our output).
+                     * This will be the case for Amazon's Elastic Load Balancers (ELB)
+                     * when an instance behind the ELB becomes unhealthy while we're connected to it.
+                     *
+                     * If socket == null here, it means that a write timed out,
+                     * and the socket was closed by the WriteTimeoutRunnable.
                      * 
                      * Therefore, attempt reconnection.
-                     * 
-                     * This will be the case for Amazon's Elastic Load Balancers (ELB)
-                     * when an instance behind the ELB becomes unhealthy
-                     * while we're connected to it.
                      */
                     addInfo(peerId + "destination terminated the connection. Reconnecting.");
+                    reopenSocket();
                     try {
                         readerFuture.get();
                         sendFailureException = NOT_CONNECTED_EXCEPTION;
                     } catch (Exception e) {
                         sendFailureException = e;
                     }
-                    reopenSocket();
                     continue;
                 }
                 try {
-                    long currentTime = System.currentTimeMillis();
-                    long startTime = System.nanoTime();
-                    /*
-                     * A null event indicates that this is a keep alive message,
-                     * or an event sent from the ReaderCallable.
-                     */
-                    if (logEvent.event != null) {
-                        /*
-                         * This is a standard (non-keepAlive) event.
-                         * Therefore, we need to send the event.
-                         */
-                        if (getLogback11Support().isLogback11OrBefore()) {
-                            getLogback11Support().doEncode(encoder, logEvent.event);
-                        } else {
-                            outputStream.write(encoder.encode(logEvent.event));
-                        }
-                    } else if (hasKeepAliveDurationElapsed(lastSentTimestamp, currentTime)){
-                        /*
-                         * This is a keep alive event, and the keepAliveDuration has passed,
-                         * Therefore, we need to send the keepAliveMessage.
-                         */
-                        outputStream.write(keepAliveBytes);
-                    }
-                    if (endOfBatch) {
-                        outputStream.flush();
-                    }
-                    lastSentTimestamp = currentTime;
-                    
-                    if (logEvent.event != null) {
-                        fireEventSent(this.socket, logEvent.event, System.nanoTime() - startTime);
-                    }
-                    
-                    /*
-                     * Should we close the current connection, and attempt to reconnect to another destination?
-                     */
-                    if (connectionStrategy.shouldReconnect(currentTime, connectedDestinationIndex, destinations.size())) {
-                        addInfo(peerId + "reestablishing connection.");
-                        outputStream.flush();
-                        reopenSocket();
-                    }
+                    writeEvent(socket, outputStream, logEvent, endOfBatch);
                     return;
                 } catch (Exception e) {
                     sendFailureException = e;
@@ -537,21 +582,68 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
 
+        private void writeEvent(Socket socket, OutputStream outputStream, LogEvent<Event> logEvent, boolean endOfBatch) throws IOException {
 
-        private boolean hasKeepAliveDurationElapsed(long lastSent, long currentTime) {
+            long startWallTime = System.currentTimeMillis();
+            long startNanoTime = System.nanoTime();
+            lastSendStartNanoTime = startNanoTime;
+            /*
+             * A null event indicates that this is a keep alive message,
+             * or an event sent from the ReaderCallable.
+             */
+            if (logEvent.event != null) {
+                /*
+                 * This is a standard (non-keepAlive) event.
+                 * Therefore, we need to send the event.
+                 */
+                if (getLogback11Support().isLogback11OrBefore()) {
+                    getLogback11Support().doEncode(encoder, logEvent.event);
+                } else {
+                    outputStream.write(encoder.encode(logEvent.event));
+                }
+            } else if (hasKeepAliveDurationElapsed(lastSendEndNanoTime, startNanoTime)){
+                /*
+                 * This is a keep alive event, and the keepAliveDuration has passed,
+                 * Therefore, we need to send the keepAliveMessage.
+                 */
+                outputStream.write(keepAliveBytes);
+            }
+            if (endOfBatch) {
+                outputStream.flush();
+            }
+            long endNanoTime = System.nanoTime();
+            lastSendEndNanoTime = endNanoTime;
+
+            if (logEvent.event != null) {
+                fireEventSent(socket, logEvent.event, endNanoTime - startNanoTime);
+            }
+
+            /*
+             * Should we close the current connection, and attempt to reconnect to another destination?
+             */
+            if (connectionStrategy.shouldReconnect(startWallTime, connectedDestinationIndex, destinations.size())) {
+                addInfo(peerId + "reestablishing connection.");
+                outputStream.flush();
+                reopenSocket();
+            }
+        }
+
+        private boolean hasKeepAliveDurationElapsed(long lastSentNanoTime, long currentNanoTime) {
             return isKeepAliveEnabled()
-                    && lastSent + keepAliveDuration.getMilliseconds() < currentTime;
+                    && lastSentNanoTime + TimeUnit.MILLISECONDS.toNanos(keepAliveDuration.getMilliseconds()) < currentNanoTime;
         }
 
         @Override
         public void onStart() {
             this.destinationAttemptStartTimes = new long[destinations.size()];
             openSocket();
-            scheduleKeepAlive(System.currentTimeMillis());
+            scheduleKeepAlive(System.nanoTime());
+            scheduleWriteTimeout();
         }
 
         @Override
         public void onShutdown() {
+            unscheduleWriteTimeout();
             unscheduleKeepAlive();
             closeEncoder();
             closeSocket();
@@ -574,7 +666,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             int destinationIndex = connectedDestinationIndex;
             while (isStarted() && !Thread.currentThread().isInterrupted()) {
                 destinationIndex = connectionStrategy.selectNextDestinationIndex(destinationIndex, destinations.size());
-                long startTime = System.currentTimeMillis();
+                long startWallTime = System.currentTimeMillis();
                 Socket tempSocket = null;
                 OutputStream tempOutputStream = null;
                 
@@ -592,7 +684,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Delay the connection attempt if the last attempt to the selected destination
                      * was less than the reconnectionDelay.
                      */
-                    final long millisSinceLastAttempt = startTime - destinationAttemptStartTimes[destinationIndex];
+                    final long millisSinceLastAttempt = startWallTime - destinationAttemptStartTimes[destinationIndex];
                     if (millisSinceLastAttempt < reconnectionDelay.getMilliseconds()) {
                         final long sleepTime = reconnectionDelay.getMilliseconds() - millisSinceLastAttempt;
                         if (errorCount < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
@@ -609,9 +701,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                             return;
                         }
                         // reset the start time to be after the wait period.
-                        startTime = System.currentTimeMillis();
+                        startWallTime = System.currentTimeMillis();
                     }
-                    destinationAttemptStartTimes[destinationIndex] = startTime;
+                    destinationAttemptStartTimes[destinationIndex] = startWallTime;
 
                     /*
                      * Set the SO_TIMEOUT so that SSL handshakes will timeout if they take too long.
@@ -653,7 +745,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     connectedDestinationIndex = destinationIndex;
                     connectedDestination = currentDestination;
 
-                    connectionStrategy.connectSuccess(startTime, destinationIndex, destinations.size());
+                    connectionStrategy.connectSuccess(startWallTime, destinationIndex, destinations.size());
                     
                     if (shouldUpdateThreadName) {
                         /*
@@ -673,7 +765,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     CloseUtil.closeQuietly(tempOutputStream);
                     CloseUtil.closeQuietly(tempSocket);
                     
-                    connectionStrategy.connectFailed(startTime, destinationIndex, destinations.size());
+                    connectionStrategy.connectFailed(startWallTime, destinationIndex, destinations.size());
                     fireConnectionFailed(currentDestination, e);
                     
                     /*
@@ -718,17 +810,17 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             encoder.stop();
         }
         
-        private synchronized void scheduleKeepAlive(long basedOnTime) {
+        private synchronized void scheduleKeepAlive(long basedOnNanoTime) {
             if (isKeepAliveEnabled() && !Thread.currentThread().isInterrupted()) {
                 if (keepAliveRunnable == null) {
                     keepAliveRunnable = new KeepAliveRunnable();
                 }
-                long delay = keepAliveDuration.getMilliseconds() - (System.currentTimeMillis() - basedOnTime);
+                long delay = TimeUnit.MILLISECONDS.toNanos(keepAliveDuration.getMilliseconds()) - (System.nanoTime() - basedOnNanoTime);
                 try {
                     keepAliveFuture = getExecutorService().schedule(
                         keepAliveRunnable,
                         delay,
-                        TimeUnit.MILLISECONDS);
+                        TimeUnit.NANOSECONDS);
                 } catch (RejectedExecutionException e) {
                     /*
                      * if scheduling failed, it means that the appender is shutting down.
@@ -742,6 +834,39 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 keepAliveFuture.cancel(true);
                 try {
                     keepAliveFuture.get();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    // ignore
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
+        }
+        private synchronized void scheduleWriteTimeout() {
+            if (isWriteTimeoutEnabled() && !Thread.currentThread().isInterrupted()) {
+                if (writeTimeoutRunnable == null) {
+                    writeTimeoutRunnable = new WriteTimeoutRunnable();
+                }
+                long delay = writeTimeout.getMilliseconds();
+                try {
+                    writeTimeoutFuture = getExecutorService().scheduleWithFixedDelay(
+                            writeTimeoutRunnable,
+                            delay,
+                            delay,
+                            TimeUnit.MILLISECONDS);
+                } catch (RejectedExecutionException e) {
+                    /*
+                     * if scheduling failed, it means that the appender is shutting down.
+                     */
+                    writeTimeoutFuture = null;
+                }
+            }
+        }
+        private synchronized void unscheduleWriteTimeout() {
+            if (writeTimeoutFuture != null) {
+                writeTimeoutFuture.cancel(true);
+                try {
+                    writeTimeoutFuture.get();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     // ignore
@@ -873,6 +998,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
              * Increase the core size to handle the keep alive thread 
              */
             if (keepAliveDuration != null) {
+                threadPoolCoreSize++;
+            }
+            /*
+             * Increase the core size to handle the write timeout detection thread
+             */
+            if (isWriteTimeoutEnabled()) {
                 threadPoolCoreSize++;
             }
             setThreadPoolCoreSize(threadPoolCoreSize);
@@ -1199,7 +1330,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         return this.keepAliveDuration != null
                 && this.keepAliveMessage != null;
     }
-    
+
+    public boolean isWriteTimeoutEnabled() {
+        return this.writeTimeout.getMilliseconds() > 0;
+    }
+
     public Charset getKeepAliveCharset() {
         return keepAliveCharset;
     }
@@ -1252,5 +1387,32 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     public Optional<InetSocketAddress> getConnectedDestination() {
         return Optional.ofNullable(this.connectedDestination);
+    }
+
+    public Duration getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    /**
+     * Sets the time period for which to wait for a write to complete before timing out
+     * and attempting to reconnect to that destination.
+     * Zero (the default) means no write timeout.
+     *
+     * <p>Used to detect connections where the receiver stops reading.</p>
+     *
+     * <p>Note that since a blocking java socket output stream
+     * does not have a concept of a write timeout,
+     * a task will be scheduled on the {@link #getExecutorService()}
+     * with the same frequency as the write timeout
+     * in order to detect stuck writes.
+     * It is recommended to use longer write timeouts (e.g. &gt; 30s, or minutes),
+     * rather than short write timeouts, so that this task does not execute too frequently.
+     * Also, this approach means that it could take up to two times the write timeout
+     * before a write timeout is detected.</p>
+     */
+    public void setWriteTimeout(Duration writeTimeout) {
+        this.writeTimeout = writeTimeout == null
+                ? new Duration(DEFAULT_WRITE_TIMEOUT)
+                : writeTimeout;
     }
 }

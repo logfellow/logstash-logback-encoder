@@ -22,6 +22,7 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Multiple Destinations](#multiple-destinations)
     * [Reconnection Delay](#reconnection-delay)
     * [Write buffer size](#write-buffer-size)
+    * [Write timeouts](#write-timeouts)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
   * [Appender Listeners](#appender-listeners)
@@ -510,6 +511,36 @@ Consider disabling the write buffer if you are concerned about losing data from 
 Disabling the buffer can potentially slow down the writer thread due to increased system calls,
 but in some environments, this does not seem to affect overall performance.
 See [this discussion](https://github.com/logstash/logstash-logback-encoder/issues/342).
+
+
+#### Write timeouts
+
+If a destination stops reading from its socket input, but does not close the connection,
+then writes from the TCP appender will eventually backup,
+causing the ring buffer to backup, causing events to be dropped.
+
+To detect this situation, you can enable a write timeout, so that "stuck" writes will
+eventually timeout, at which point the connection will be re-established.
+When the [write buffer](#write-buffer-size) is enabled, any buffered data will be lost
+when the connection is reestablished.
+
+By default there is no write timeout.  To enable a write timeout, do the following:
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      ...
+      <writeTimeout>1 minute</writeTimeout>
+  </appender>
+```
+
+Note that since the blocking java socket output stream used to send events does not have a concept of a write timeout,
+write timeouts are detected using a task scheduled periodically with the same frequency as the write timeout.
+For example, if the write timeout is set to 30 seconds, then a task will execute every 30 seconds
+to see if 30 seconds has elapsed since the start of the current write operation.
+Therefore, it is recommended to use longer write timeouts (e.g. > 30s, or minutes),
+rather than short write timeouts, so that this task does not execute too frequently.
+Also, this approach means that it could take up to two times the write timeout
+before a write timeout is detected.
 
 #### SSL
 

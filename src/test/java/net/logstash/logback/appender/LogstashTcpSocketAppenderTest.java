@@ -19,10 +19,12 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
@@ -40,16 +42,20 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.Charset;
 import java.util.Random;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
-
 import javax.net.SocketFactory;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.status.StatusManager;
+import ch.qos.logback.core.util.Duration;
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy;
 import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -60,12 +66,6 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
-import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.status.StatusManager;
-import ch.qos.logback.core.util.Duration;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LogstashTcpSocketAppenderTest {
@@ -512,8 +512,50 @@ public class LogstashTcpSocketAppenderTest {
         Thread.sleep(250);
         Assert.assertArrayEquals(expectedKeepAlivesBytes, bos.toByteArray());
     }
-    
-    
+
+    @Test
+    public void testWriteTimeout() throws Exception {
+
+        appender.addDestination("localhost");
+        appender.setWriteTimeout(new Duration(100));
+        appender.setReconnectionDelay(new Duration(1));
+        appender.setWriteBufferSize(0);
+
+        Socket badSocket = mock(Socket.class, "badSocket");
+        Socket goodSocket = mock(Socket.class, "goodSocket");
+
+        when(socketFactory.createSocket())
+                .thenReturn(badSocket)
+                .thenReturn(goodSocket);
+
+        OutputStream badOutputStream = mock(OutputStream.class, "badOutputStream");
+        when(badSocket.getOutputStream()).thenReturn(badOutputStream);
+
+        CountDownLatch closeLatch = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            closeLatch.countDown();
+            return null;
+        }).when(badSocket).close();
+
+        doAnswer(invocation -> {
+            closeLatch.await();
+            throw new SocketException("socket closed");
+        }).when(badOutputStream).write(any());
+
+        OutputStream goodOutputStream = mock(OutputStream.class, "goodOutputStream");
+        when(goodSocket.getOutputStream()).thenReturn(goodOutputStream);
+
+        // Start the appender and verify it is actually started
+        // At this point, it should be connected to primary.
+        appender.start();
+        verify(encoder).start();
+
+        appender.append(event1);
+
+        verify(goodOutputStream, timeout(1000)).write(any());
+        verify(goodOutputStream, timeout(1000)).flush();
+    }
+
     /**
      * Make sure keep alive messages trigger reconnect to another host upon failure.
      * 
