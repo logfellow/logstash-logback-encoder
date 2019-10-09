@@ -14,11 +14,12 @@
 package net.logstash.logback.composite;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
-
-import org.apache.commons.lang3.time.FastDateFormat;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
@@ -27,7 +28,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 /**
  * Writes the timestamp field as either:
  * <ul>
- *      <li>A string value formatted by a {@link FastDateFormat} pattern</li>
+ *      <li>A string value formatted by a {@link Instant} pattern</li>
  *      <li>A string value representing the number of milliseconds since unix epoch  (designated by specifying the pattern value as {@value #UNIX_TIMESTAMP_AS_STRING})</li>
  *      <li>A number value of the milliseconds since unix epoch  (designated by specifying the pattern value as {@value #UNIX_TIMESTAMP_AS_NUMBER})</li>
  * </ul>
@@ -55,7 +56,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
      * The pattern in which to format the timestamp.
      * Setting this value to {@value #UNIX_TIMESTAMP_AS_NUMBER} will cause the timestamp to be written as a number value of the milliseconds since unix epoch. 
      * Setting this value to {@value #UNIX_TIMESTAMP_AS_STRING} will cause the timestamp to be written as a string value representing the number value of the milliseconds since unix epoch.
-     * Any other value will be used as a pattern for formatting the timestamp by a {@link FastDateFormat} 
+     * Any other value will be used as a pattern for formatting the timestamp by a {@link Instant}
      */
     private String pattern = DEFAULT_PATTERN;
     
@@ -68,8 +69,8 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     /**
      * Writes the timestamp to the JsonGenerator.
      */
-    private TimestampWriter timestampWriter = new PatternTimestampWriter(FastDateFormat.getInstance(pattern, timeZone));
-    
+    private DateTimeFormatter timestampWriter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
+
     /**
      * Writes the timestamp to the JsonGenerator
      */
@@ -84,9 +85,9 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
      */
     private static class PatternTimestampWriter implements TimestampWriter {
 
-        private final FastDateFormat formatter;
-        
-        public PatternTimestampWriter(FastDateFormat formatter) {
+        private final DateTimeFormatter formatter;
+
+        public PatternTimestampWriter(DateTimeFormatter formatter) {
             this.formatter = formatter;
         }
 
@@ -98,7 +99,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
 
         @Override
         public String getTimestampAsString(long timestampInMillis) {
-            return formatter.format(timestampInMillis);
+            return formatter.format(Instant.ofEpochMilli(timestampInMillis));
         }
     }
     
@@ -146,11 +147,12 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
-        timestampWriter.writeTo(generator, getFieldName(), getTimestampAsMillis(event));
+        String formattedTime = timestampWriter.format(Instant.ofEpochMilli(getTimestampAsMillis(event)));
+        generator.writeStringField(getFieldName(), formattedTime);
     }
 
     protected String getFormattedTimestamp(Event event) {
-        return timestampWriter.getTimestampAsString(getTimestampAsMillis(event));
+        return timestampWriter.format(Instant.ofEpochMilli(getTimestampAsMillis(event)));
     }
 
     protected abstract long getTimestampAsMillis(Event event);
@@ -160,11 +162,11 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
      */
     private void updateTimestampWriter() {
         if (UNIX_TIMESTAMP_AS_NUMBER.equals(pattern)) {
-            timestampWriter = new NumberTimestampWriter();
+            timestampWriter = DateTimeFormatter.ofPattern("n");
         } else if (UNIX_TIMESTAMP_AS_STRING.equals(pattern)) {
-            timestampWriter = new StringTimestampWriter();
+            timestampWriter = DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
         } else {
-            timestampWriter = new PatternTimestampWriter(FastDateFormat.getInstance(pattern, timeZone));
+            timestampWriter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
         }
     }
     
