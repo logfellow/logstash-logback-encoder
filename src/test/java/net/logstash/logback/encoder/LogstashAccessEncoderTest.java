@@ -23,6 +23,7 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -90,10 +91,10 @@ public class LogstashAccessEncoderTest {
     }
     
     protected void verifyBasics(final long timestamp, IAccessEvent event, JsonNode node) {
-        assertThat(node.get("timestamp").textValue()).isEqualTo(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(Instant.ofEpochMilli(timestamp)));
+        assertThat(node.get("timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("message").textValue()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(Instant.ofEpochMilli(event.getTimeStamp())), event.getRequestURL(), event.getStatusCode(),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(event.getTimeStamp())), event.getRequestURL(), event.getStatusCode(),
                 event.getContentLength()));
         
         assertThat(node.get("method").textValue()).isEqualTo(event.getMethod());
@@ -199,7 +200,7 @@ public class LogstashAccessEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
         
-        assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
+        assertThat(node.get("@timestamp").asLong()).isEqualTo(timestamp);
     }    
     
     @Test

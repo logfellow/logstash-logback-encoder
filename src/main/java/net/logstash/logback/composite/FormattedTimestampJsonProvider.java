@@ -69,72 +69,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     /**
      * Writes the timestamp to the JsonGenerator.
      */
-    private DateTimeFormatter timestampWriter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
-
-    /**
-     * Writes the timestamp to the JsonGenerator
-     */
-    private static interface TimestampWriter {
-        void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException;
-        
-        String getTimestampAsString(long timestampInMillis);
-    }
-    
-    /**
-     * Writes the timestamp to the JsonGenerator as a string formatted by the pattern.
-     */
-    private static class PatternTimestampWriter implements TimestampWriter {
-
-        private final DateTimeFormatter formatter;
-
-        public PatternTimestampWriter(DateTimeFormatter formatter) {
-            this.formatter = formatter;
-        }
-
-        
-        @Override
-        public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
-            JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestampInMillis));
-        }
-
-        @Override
-        public String getTimestampAsString(long timestampInMillis) {
-            return formatter.format(Instant.ofEpochMilli(timestampInMillis));
-        }
-    }
-    
-    /**
-     * Writes the timestamp to the JsonGenerator as a number of milliseconds since unix epoch.
-     */
-    private static class NumberTimestampWriter implements TimestampWriter {
-
-        @Override
-        public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
-            JsonWritingUtils.writeNumberField(generator, fieldName, timestampInMillis);
-        }
-        
-        @Override
-        public String getTimestampAsString(long timestampInMillis) {
-            return Long.toString(timestampInMillis);
-        }
-    }
-    
-    /**
-     * Writes the timestamp to the JsonGenerator as a string representation of the of milliseconds since unix epoch.
-     */
-    private static class StringTimestampWriter implements TimestampWriter {
-
-        @Override
-        public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
-            JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestampInMillis));
-        }
-        
-        @Override
-        public String getTimestampAsString(long timestampInMillis) {
-            return Long.toString(timestampInMillis);
-        }
-        
-    }
+    private DateTimeFormatter timestampWriter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault()).withZone(timeZone != null ? timeZone.toZoneId() : TimeZone.getDefault().toZoneId());
     
     public FormattedTimestampJsonProvider() {
         setFieldName(FIELD_TIMESTAMP);
@@ -147,8 +82,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
-        String formattedTime = timestampWriter.format(Instant.ofEpochMilli(getTimestampAsMillis(event)));
-        generator.writeStringField(getFieldName(), formattedTime);
+        generator.writeStringField(getFieldName(), String.valueOf(getTimestampAsMillis(event)));
     }
 
     protected String getFormattedTimestamp(Event event) {
@@ -162,11 +96,11 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
      */
     private void updateTimestampWriter() {
         if (UNIX_TIMESTAMP_AS_NUMBER.equals(pattern)) {
-            timestampWriter = DateTimeFormatter.ofPattern("n");
+            timestampWriter = null;
         } else if (UNIX_TIMESTAMP_AS_STRING.equals(pattern)) {
-            timestampWriter = DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
+            timestampWriter = DateTimeFormatter.ofPattern(DEFAULT_PATTERN).withZone(TimeZone.getDefault().toZoneId());
         } else {
-            timestampWriter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault());
+            timestampWriter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault()).withZone(TimeZone.getDefault().toZoneId());
         }
     }
     

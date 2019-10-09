@@ -26,10 +26,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
@@ -118,7 +116,7 @@ public class LogstashEncoderTest {
     }
 
     protected void verifyBasics(final long timestamp, JsonNode node) {
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(Instant.ofEpochMilli(timestamp).toString());
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
@@ -140,7 +138,7 @@ public class LogstashEncoderTest {
 
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(Instant.ofEpochMilli(timestamp).toString());
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
@@ -180,7 +178,7 @@ public class LogstashEncoderTest {
 
         assertThat(output).isEqualTo(String.format(
                 "{%n"
-                + "  @timestamp : \"" + Instant.ofEpochMilli(timestamp).toString() + "\",%n"
+                + "  @timestamp : \"" + String.valueOf(timestamp) + "\",%n"
                 + "  @version : \"1\",%n"
                 + "  message : \"My message\",%n"
                 + "  logger_name : \"LoggerName\",%n"
@@ -208,7 +206,7 @@ public class LogstashEncoderTest {
 
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(Instant.ofEpochMilli(timestamp).toString());
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo(shortenedLoggerName);
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
@@ -616,7 +614,7 @@ public class LogstashEncoderTest {
 
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(Instant.ofEpochMilli(timestamp).toString());
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
@@ -766,7 +764,7 @@ public class LogstashEncoderTest {
 
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(String.valueOf(timestamp));
     }
 
     @Test
