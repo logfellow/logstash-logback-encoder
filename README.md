@@ -1336,6 +1336,8 @@ and then specify the decorator in the logback.xml file like this:
 </encoder>
 ```
 
+Or, you could enable masking sensitive information for your logs by using the [MaskingJsonGeneratorDecorator](/src/main/java/net/logstash/logback/decorate/MaskingJsonGeneratorDecorator.java)
+
 `JsonFactory` and `JsonGenerator` features can be enabled/disabled by using the
 `FeatureJsonFactoryDecorator` and `FeatureJsonGeneratorDecorator`, respectively.
 For example:
