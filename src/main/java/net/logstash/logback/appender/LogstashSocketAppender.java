@@ -21,6 +21,7 @@ import ch.qos.logback.core.Layout;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
 
@@ -213,5 +214,13 @@ public class LogstashSocketAppender extends LogstashUdpSocketAppender {
     public void setSuffix(Layout<ILoggingEvent> suffix) {
         getLayout().setSuffix(suffix);
     }
+
+    public String getLineSeparator() {
+        return getLayout().getLineSeparator();
+    }
+    public void setLineSeparator(String lineSeparator) {
+        getLayout().setLineSeparator(lineSeparator);
+    }
+
 
 }

@@ -61,7 +61,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     private final CompositeJsonFormatter<Event> formatter;
     
-    private String lineSeparator = System.getProperty("line.separator");
+    private String lineSeparator = System.lineSeparator();
     
     private byte[] lineSeparatorBytes;
     

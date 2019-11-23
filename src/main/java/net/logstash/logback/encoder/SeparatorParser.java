@@ -34,7 +34,7 @@ public class SeparatorParser {
             return null;
         }
         if (separator.equalsIgnoreCase("SYSTEM")) {
-            return System.getProperty("line.separator");
+            return System.lineSeparator();
         }
         if (separator.equalsIgnoreCase("UNIX")) {
             return "\n";

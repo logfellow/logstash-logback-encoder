@@ -108,4 +108,14 @@ public class CompositeJsonLayoutTest extends TestCase {
         assertThat(layoutResult).isEqualTo("prefix:event:suffix");
 
     }
+
+    @Test
+    public void testDoLayoutWithPrefixWithLineSeparator() {
+        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        layout.setLineSeparator("SYSTEM");
+
+        String layoutResult = layout.doLayout(event);
+
+        assertThat(layoutResult).isEqualTo("event" + System.lineSeparator());
+    }
 }

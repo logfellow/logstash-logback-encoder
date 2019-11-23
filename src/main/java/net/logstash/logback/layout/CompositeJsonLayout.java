@@ -23,6 +23,8 @@ import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.encoder.CompositeJsonEncoder;
+import net.logstash.logback.encoder.SeparatorParser;
 
 
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
@@ -31,7 +33,16 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     
     private Layout<Event> prefix;
     private Layout<Event> suffix;
-    
+
+    /**
+     * Separator to use between events.
+     *
+     * <p>By default, this is null (for backwards compatibility), indicating no separator.
+     * Note that this default is different than the default of {@link CompositeJsonEncoder#lineSeparator}.
+     * In a future major release, the default will likely change to be the same as {@link CompositeJsonEncoder#lineSeparator}.</p>
+     */
+    private String lineSeparator;
+
     private final CompositeJsonFormatter<Event> formatter;
     
     public CompositeJsonLayout() {
@@ -50,7 +61,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             return null;
         }
         
-        if (prefix == null && suffix == null) {
+        if (prefix == null && suffix == null && lineSeparator == null) {
             return result;
         }
         
@@ -59,7 +70,8 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         
         int size = result.length()
                 + (prefixResult == null ? 0 : prefixResult.length())
-                + (suffixResult == null ? 0 : suffixResult.length());
+                + (suffixResult == null ? 0 : suffixResult.length())
+                + (lineSeparator == null ? 0 : lineSeparator.length());
         
         StringBuilder stringBuilder = new StringBuilder(size);
         if (prefixResult != null) {
@@ -68,6 +80,9 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         stringBuilder.append(result);
         if (suffixResult != null) {
             stringBuilder.append(suffixResult);
+        }
+        if (lineSeparator != null) {
+            stringBuilder.append(lineSeparator);
         }
         return stringBuilder.toString();
     }
@@ -171,6 +186,27 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     }
     public void setSuffix(Layout<Event> suffix) {
         this.suffix = suffix;
+    }
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+
+    /**
+     * Sets which lineSeparator to use between events.
+     * <p>
+     *
+     * The following values have special meaning:
+     * <ul>
+     * <li><tt>null</tt> or empty string = no new line. (default)</li>
+     * <li>"<tt>SYSTEM</tt>" = operating system new line.</li>
+     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
+     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * </ul>
+     * <p>
+     * Any other value will be used as given as the lineSeparator.
+     */
+    public void setLineSeparator(String lineSeparator) {
+        this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
     }
 
 }

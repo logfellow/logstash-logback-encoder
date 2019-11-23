@@ -52,7 +52,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
-* [Prefix/Suffix](#prefixsuffix)
+* [Prefix/Suffix/Separator](#prefixsuffixseparator)
 * [Composite Encoder/Layout](#composite-encoderlayout)
   * [Providers for LoggingEvents](#providers-for-loggingevents)
   * [Providers for AccessEvents](#providers-for-accessevents)
@@ -1476,9 +1476,11 @@ For example:
 can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
 
 
-## Prefix/Suffix
+## Prefix/Suffix/Separator
 
-You can specify a prefix (written before the JSON object) and/or suffix (written after the JSON object),
+You can specify a prefix (written before the JSON object),
+suffix (written after the JSON object),
+and/or line separator (written after suffix),
 which may be required for the log pipeline you are using, such as:
 
 * If you are using the Common Event Expression (CEE) format for syslog, you need to add the `@cee:` prefix.
@@ -1528,6 +1530,25 @@ Note that logback's xml configuration reader will [trim whitespace from xml elem
 
 > :warning: If you encounter the following warning: `A "net.logstash.logback.encoder.LogstashEncoder" object is not assignable to a "ch.qos.logback.core.Appender" variable.`, you are encountering a backwards incompatibilility introduced in logback 1.2.1.  Please vote for [LOGBACK-1326](https://jira.qos.ch/browse/LOGBACK-1326) and add a thumbs up to [PR#383](https://github.com/qos-ch/logback/pull/383) to try to get this addressed in logback.  In the meantime, the only solution is to downgrade logback-classic and logback-core to 1.2.0
 
+The line separator, which is written after the suffix, can be specified as:
+* `SYSTEM` (uses the system default)
+* `UNIX` (uses `\n`)
+* `WINDOWS` (uses `\r\n`), or
+* any other string.
+
+For example:
+
+```xml
+<configuration>
+  ...
+  <appender ...>
+    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+      ...
+      <lineSeparator>UNIX</lineSeparator>
+    </encoder>
+  </appender>
+</configuration>
+```
 
 ## Composite Encoder/Layout
 
