@@ -28,7 +28,7 @@
 
         <!-- runtime dependencies -->
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
-        <com.fasterxml.jackson.version>2.10.0</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.10.1</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>3.2.0</com.fasterxml.uuid.version>
 
         <!-- shaded runtime dependencies -->
@@ -37,19 +37,19 @@
 
         <!-- test dependencies -->
         <junit.version>4.12</junit.version>
-        <org.assertj.version>3.13.2</org.assertj.version>
-        <org.mockito.version>2.28.2</org.mockito.version>
+        <org.assertj.version>3.14.0</org.assertj.version>
+        <org.mockito.version>3.1.0</org.mockito.version>
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.18</animal-sniffer-maven-plugin.version>
         <maven-bundle-plugin.version>4.2.1</maven-bundle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-enforcer-plugin.version>1.4.1</maven-enforcer-plugin.version>
-        <maven-jar-plugin.version>3.1.2</maven-jar-plugin.version>
+        <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-license-plugin.version>1.9.0</maven-license-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
-        <maven-source-plugin.version>3.1.0</maven-source-plugin.version>
+        <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
     </properties>
 
     <licenses>
