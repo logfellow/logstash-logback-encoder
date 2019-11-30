@@ -1,0 +1,16 @@
+<configuration>
+
+    <appender name="APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+            </providers>
+            <jsonGeneratorDecorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator"/>
+        </encoder>
+    </appender>
+
+    <root>
+        <appender-ref ref="APPENDER" />
+    </root>
+
+</configuration>

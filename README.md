@@ -48,6 +48,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Timestamp](#customizing-timestamp)
 * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
   * [Non-JSON Formats](#non-json-formats)
+  * [Masking](#masking)
 * [Registering Jackson Modules](#registering-jackson-modules)
 * [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
@@ -1351,7 +1352,8 @@ For example:
 </encoder>
 ``` 
 
-See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
+See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package
+and sub-packages for other decorators.
 
 ### Non-JSON Formats
 
@@ -1382,6 +1384,103 @@ To write Smile instead of JSON (follow a similar pattern for CBOR and YAML):
 
 Be sure to include the appropriate jackson dataformat library on the runtime classpath
 (e.g. via maven/gradle dependency).  e.g. for Smile, include `jackson-dataformat-smile`.
+
+
+### Masking
+
+The [`MaskingJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/mask/MaskingJsonGeneratorDecorator.java)
+can be used to mask sensitive values (e.g. personally identifiable information (PII) or financial data).
+
+Data to be masked can be identified by [path](#identifying-field-values-to-mask-by-path)
+and/or by [value](#identifying-field-values-to-mask-by-value).
+
+#### Identifying field values to mask by path
+
+Paths of fields to mask can be specified in several ways, as shown in the following example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator">
+
+    <!--
+      The default mask string can optionally be specified by <defaultMask>.
+      When the default mask string is not specified, **** is used.
+    -->
+    <defaultMask>****</defaultMask>
+
+    <!-- Field paths to mask added via <path> will use the default mask string -->
+    <path>singleFieldName</path>
+    <path>/absolute/path/to/mask</path>
+    <path>partial/path/to/mask</path>
+    <path>partial/path/with/*/wildcard</path>
+    <path>tilde~0slash~1escapedPath</path>
+
+    <!-- Field paths to mask added via <pathMask> can use a non-default mask string -->
+    <pathMask>
+      <path>some/path</path>
+      <path>some/other/path</path>
+      <mask>[masked]</mask>
+    </pathMask>
+    <pathMask>
+      <path>anotherFieldName</path>
+      <mask>**anotherCustomMask**</mask>
+    </pathMask>
+
+    <!-- Custom implementations of net.logstash.logback.decorate.mask.FieldMasker
+         can be used for more advanced masking behavior-->
+    <fieldMasker class="your.custom.FieldMaskerA"/>
+    <fieldMasker class="your.custom.FieldMaskerB"/>
+  </jsonGeneratorDecorator>
+</encoder>
+```
+
+See [`PathBasedFieldMasker`](src/main/java/net/logstash/logback/decorate/mask/PathBasedFieldMasker.java)
+for the path string format and more examples.  But in general:
+
+* Paths follow a format similar to (but not _exactly_ same as) a [JSON Pointer](http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-03).
+* Absolute paths start with `/` and are absolute to the root of the JSON output event (e.g. `/@timestamp` would mask the default timestamp field)
+* Partial paths do not start with `/` and match anywhere that path sequence is seen in the output.
+* A path with a single token (i.e. no `/` characters) will match all occurrences of a field with the given name
+* A wildcard token (`*`) will match anything at that location within the path
+* Use `~1` to escape `/` within a token
+* Use `~0` to escape `~` within a token
+
+#### Identifying field values to mask by value
+
+Specific values to be masked can be specified in several ways, as seen in the following example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator">
+
+    <!--
+      The default mask string can optionally be specified by <defaultMask>.
+      When the default mask string is not specified, **** is used.
+    -->
+    <defaultMask>****</defaultMask>
+
+    <!-- Values to mask added via <value> will use the  default mask string -->
+    <value>^foo$</value>
+    <value>^bar$</value>
+
+    <!-- Values to mask added via <valueMask> can use a non-default mask string
+         The mask string here can reference regex capturing groups if needed -->
+    <valueMask>
+      <value>^(foo)-.*$</value>
+      <value>^(bar)-.*$</value>
+      <mask>\1****</mask>
+    </valueMask>
+
+    <!-- Custom implementations of net.logstash.logback.decorate.mask.ValueMasker
+         can be used for more advanced masking behavior-->
+    <valueMasker class="your.custom.ValueMaskerA"/>
+    <valueMasker class="your.custom.ValueMaskerB"/>
+  </jsonGeneratorDecorator>
+</encoder>
+```
+
+Identifying data to mask by value is much more expensive than identifying data to mask by [path](#identifying-field-values-to-mask-by-path).
+Therefore, prefer identifying data to mask by path.
 
 ## Registering Jackson Modules
 
