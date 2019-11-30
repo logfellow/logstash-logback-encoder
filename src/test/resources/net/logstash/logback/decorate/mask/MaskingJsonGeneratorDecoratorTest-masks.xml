@@ -8,14 +8,16 @@
             <jsonGeneratorDecorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator">
                 <path>fieldA</path>
                 <path>fieldB</path>
+                <paths>fieldC,fieldD</paths>
                 <pathMask>
-                    <path>fieldC</path>
+                    <path>fieldE</path>
                     <mask>[masked]</mask>
                 </pathMask>
                 <fieldMasker class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecoratorTest$TestFieldMasker"/>
 
-                <value>^valueX$</value>
-                <value>^valueY$</value>
+                <value>^value0$</value>
+                <value>^value1$</value>
+                <values>^value2$,^value3$</values>
                 <valueMask>
                     <value>^(value-).*$</value>
                     <mask>$1masked</mask>

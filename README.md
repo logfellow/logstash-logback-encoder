@@ -1415,6 +1415,9 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
     <path>partial/path/with/*/wildcard</path>
     <path>tilde~0slash~1escapedPath</path>
 
+    <!-- Multiple field paths can be specified as a comma separated string in the <paths> element. -->
+    <paths>path1,path2,path3</paths>
+
     <!-- Field paths to mask added via <pathMask> can use a non-default mask string -->
     <pathMask>
       <path>some/path</path>
@@ -1422,7 +1425,7 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
       <mask>[masked]</mask>
     </pathMask>
     <pathMask>
-      <path>anotherFieldName</path>
+      <paths>anotherFieldName,anotherFieldName2</paths>
       <mask>**anotherCustomMask**</mask>
     </pathMask>
 
@@ -1462,6 +1465,9 @@ Specific values to be masked can be specified in several ways, as seen in the fo
     <!-- Values to mask added via <value> will use the  default mask string -->
     <value>^foo$</value>
     <value>^bar$</value>
+
+    <!-- Multiple values can be specified as a comma separated string in the <values> element. -->
+    <values>^baz$,^blah$</values>
 
     <!-- Values to mask added via <valueMask> can use a non-default mask string
          The mask string here can reference regex capturing groups if needed -->

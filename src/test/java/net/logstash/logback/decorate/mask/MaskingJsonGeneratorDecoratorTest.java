@@ -155,12 +155,12 @@ public class MaskingJsonGeneratorDecoratorTest {
 
         JsonGeneratorDecorator masks = configure("masks");
         test(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\",\"fieldD\":\"valueD\",\"testfield\":\"valueE\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"[masked]\",\"fieldD\":\"valueD\",\"testfield\":\"[maskedtestfield]\"}",
+                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\",\"fieldD\":\"valueD\",\"fieldE\":\"valueE\",\"testfield\":\"valueE\"}",
+                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"****\",\"fieldD\":\"****\",\"fieldE\":\"[masked]\",\"testfield\":\"[maskedtestfield]\"}",
                 masks);
         test(
-                "{\"fieldX\":\"valueX\",\"fieldY\":\"valueY\",\"field-Z\":\"value-Z\",\"fieldD\":\"valueD\",\"fieldE\":\"testvalue\"}",
-                "{\"fieldX\":\"****\",\"fieldY\":\"****\",\"field-Z\":\"value-masked\",\"fieldD\":\"valueD\",\"fieldE\":\"[maskedtestvalue]\"}",
+                "{\"field0\":\"value0\",\"field1\":\"value1\",\"field2\":\"value2\",\"field3\":\"value3\",\"field-Z\":\"value-Z\",\"field4\":\"value4\",\"field5\":\"testvalue\"}",
+                "{\"field0\":\"****\",\"field1\":\"****\",\"field2\":\"****\",\"field3\":\"****\",\"field-Z\":\"value-masked\",\"field4\":\"value4\",\"field5\":\"[maskedtestvalue]\"}",
                 masks);
     }
 
@@ -333,6 +333,10 @@ public class MaskingJsonGeneratorDecoratorTest {
         Arrays.stream(pathsToMask).forEach(decoratorByPath::addPath);
         test(unmasked, masked, decoratorByPath);
 
+        MaskingJsonGeneratorDecorator decoratorByPaths = new MaskingJsonGeneratorDecorator();
+        decoratorByPaths.addPaths(String.join(",", pathsToMask));
+        test(unmasked, masked, decoratorByPaths);
+
         MaskingJsonGeneratorDecorator decoratorByPathWithDifferentDefault = new MaskingJsonGeneratorDecorator();
         decoratorByPathWithDifferentDefault.setDefaultmask("[masked]");
         Arrays.stream(pathsToMask).forEach(decoratorByPathWithDifferentDefault::addPath);
@@ -354,6 +358,10 @@ public class MaskingJsonGeneratorDecoratorTest {
         MaskingJsonGeneratorDecorator decoratorByValue = new MaskingJsonGeneratorDecorator();
         Arrays.stream(valuesToMask).forEach(decoratorByValue::addValue);
         test(unmasked, masked, decoratorByValue);
+
+        MaskingJsonGeneratorDecorator decoratorByValues = new MaskingJsonGeneratorDecorator();
+        decoratorByValues.addValues(String.join(",", valuesToMask));
+        test(unmasked, masked, decoratorByValues);
 
         MaskingJsonGeneratorDecorator decoratorByValueWithDifferentDefault = new MaskingJsonGeneratorDecorator();
         decoratorByValueWithDifferentDefault.setDefaultmask("[masked]");

@@ -14,6 +14,7 @@
 package net.logstash.logback.decorate.mask;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -108,6 +109,16 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
         }
 
         /**
+         * @param paths a comma-separated string of absolute or partial field paths to mask (see {@link PathBasedFieldMasker} for format)
+         */
+        public void addPaths(String paths) {
+            Arrays.stream(paths.split(","))
+                    .map(String::trim)
+                    .filter(path -> !path.isEmpty())
+                    .forEach(this::addPath);
+        }
+
+        /**
          * @param mask the value to write as a mask for any paths that match the {@link #paths}.
          */
         public void setMask(String mask) {
@@ -143,6 +154,16 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
          */
         public void addValue(String value) {
             this.values.add(Objects.requireNonNull(value));
+        }
+
+        /**
+         * @param values a comma-separated string of regexes to mask
+         */
+        public void addValues(String paths) {
+            Arrays.stream(paths.split(","))
+                    .map(String::trim)
+                    .filter(value -> !value.isEmpty())
+                    .forEach(this::addValue);
         }
 
         /**
@@ -256,6 +277,17 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
     }
 
     /**
+     * Adds the given comma separated paths to the paths that will be masked.
+     *
+     * <p>The {@link #setDefaultmask(String) default mask} value will be substituted for values at the given paths.</p>
+     *
+     * @param pathsToMask comma separate string of paths to mask. See {@link PathBasedFieldMasker} for the format.
+     */
+    public void addPaths(String pathsToMask) {
+        pathsWithDefaultMask.addPaths(pathsToMask);
+    }
+
+    /**
      * Adds the given path and mask that will be used to determine if a field should be masked.
      *
      * <p>The {@link PathMask#setMask(String) mask} value will be written for any of the {@link PathMask#addPath(String) paths}.</p>
@@ -284,6 +316,17 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
      */
     public void addValue(String valueToMask) {
         valuesWithDefaultMask.addValue(valueToMask);
+    }
+
+    /**
+     * Adds the comma separated string of value regexes to the regexes that will be used to determine if a field value should be masked.
+     *
+     * <p>The {@link #setDefaultmask(String) default mask} value will be substituted for values that match the given regexes.</p>
+     *
+     * @param valuesToMask comma-separated string of regular expressions used to determine if a value should be masked.
+     */
+    public void addValues(String valuesToMask) {
+        valuesWithDefaultMask.addValues(valuesToMask);
     }
 
     /**
