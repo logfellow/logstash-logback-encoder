@@ -50,6 +50,7 @@
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
         <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
     </properties>
 
     <licenses>
@@ -184,13 +185,6 @@
             <version>${com.lmax.disruptor.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>animal-sniffer-annotations</artifactId>
-            <version>${animal-sniffer-maven-plugin.version}</version>
-            <!-- provided since this is not needed at runtime -->
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
@@ -263,6 +257,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
+                <version>${maven-release-plugin.version}</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.scm</groupId>
+                        <artifactId>maven-scm-provider-gitexe</artifactId>
+                        <version>1.9</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>com.mycila.maven-license-plugin</groupId>
@@ -290,19 +292,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>${maven-source-plugin.version}</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven-jar-plugin.version}</version>
                 <configuration>
@@ -314,6 +303,39 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+                <version>${maven-shade-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <shadedArtifactAttached>false</shadedArtifactAttached>
+                    <createDependencyReducedPom>true</createDependencyReducedPom>
+                    <minimizeJar>true</minimizeJar>
+                    <artifactSet>
+                        <excludes>
+                            <exclude>ch.qos.logback:*</exclude>
+                            <exclude>org.slf4j:*</exclude>
+                            <exclude>org.yaml:*</exclude>
+                            <exclude>com.fasterxml.jackson.core:*</exclude>
+                            <exclude>com.fasterxml.jackson.dataformat:*</exclude>
+                            <exclude>com.fasterxml.uuid:*</exclude>
+                        </excludes>
+                    </artifactSet>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.apache.commons.lang3</pattern>
+                            <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang3</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.lmax.disruptor</pattern>
+                            <shadedPattern>${project.groupId}.encoder.com.lmax.disruptor</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
@@ -345,99 +367,23 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-release-plugin</artifactId>
-                    <version>${maven-release-plugin.version}</version>
-                    <dependencies>
-                        <dependency>
-                            <groupId>org.apache.maven.scm</groupId>
-                            <artifactId>maven-scm-provider-gitexe</artifactId>
-                            <version>1.9</version>
-                        </dependency>
-                    </dependencies>
-                </plugin>
-                <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself. -->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>1.0.0</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>com.mycila.maven-license-plugin</groupId>
-                                        <artifactId>maven-license-plugin</artifactId>
-                                        <versionRange>[${maven-license-plugin.version},)</versionRange>
-                                        <goals>
-                                            <goal>format</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore />
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-shade-plugin</artifactId>
-                    <version>${maven-shade-plugin.version}</version>
-                    <executions>
-                        <execution>
-                            <goals>
-                                <goal>shade</goal>
-                            </goals>
-                        </execution>
-                    </executions>
+                    <artifactId>maven-javadoc-plugin</artifactId>
+                    <version>${maven-javadoc-plugin.version}</version>
                     <configuration>
-                        <shadedArtifactAttached>false</shadedArtifactAttached>
-                        <createDependencyReducedPom>true</createDependencyReducedPom>
-                        <minimizeJar>true</minimizeJar>
-                        <artifactSet>
-                            <excludes>
-                                <exclude>ch.qos.logback:*</exclude>
-                                <exclude>org.slf4j:*</exclude>
-                                <exclude>org.yaml:*</exclude>
-                                <exclude>com.fasterxml.jackson.core:*</exclude>
-                                <exclude>com.fasterxml.jackson.dataformat:*</exclude>
-                                <exclude>com.fasterxml.uuid:*</exclude>
-                            </excludes>
-                        </artifactSet>
-                        <relocations>
-                            <relocation>
-                                <pattern>org.apache.commons.lang3</pattern>
-                                <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang3</shadedPattern>
-                            </relocation>
-                            <relocation>
-                                <pattern>com.lmax.disruptor</pattern>
-                                <shadedPattern>${project.groupId}.encoder.com.lmax.disruptor</shadedPattern>
-                            </relocation>
-                        </relocations>
+                        <doclint>none</doclint>
+                        <links>
+                            <link>http://logback.qos.ch/apidocs</link>
+                            <link>https://fasterxml.github.io/jackson-core/javadoc/2.10</link>
+                            <link>https://fasterxml.github.io/jackson-databind/javadoc/2.10</link>
+                        </links>
                     </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
     </build>
-    <profiles>
-        <profile>
-            <id>doclint-java8-disable</id>
-            <activation>
-                <jdk>[1.8,)</jdk>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.0.0</version>
-                        <configuration>
-                            <doclint>none</doclint>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

@@ -191,7 +191,7 @@ public class StructuredArguments {
      * non array object using {@link String#valueOf}.
      * <p>
      *
-     * @see org.slf4j.helpers.MessageFormatter#deeplyAppendParameter(StringBuilder, Object, Map)}.
+     * see org.slf4j.helpers.MessageFormatter#deeplyAppendParameter(StringBuilder, Object, Map)}.
      */
     public static String toString(Object arg) {
 

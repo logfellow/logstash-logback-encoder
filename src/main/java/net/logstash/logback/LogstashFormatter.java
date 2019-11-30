@@ -181,6 +181,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
 
     /**
      * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses)
+     * @return true if the caller info should be included
      */
     @Deprecated
     public boolean isIncludeCallerInfo() {
@@ -189,6 +190,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     
     /**
      * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
+     * @param includeCallerInfo true if the caller info should be included
      */
     @Deprecated
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
@@ -361,6 +363,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     
     /**
      * @deprecated Use {@link #isWriteVersionAsInteger()}
+     * @return true if the version should be written as a string
      */
     @Deprecated
     public boolean isWriteVersionAsString() {
@@ -368,6 +371,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     }
     /**
      * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
+     * @param writeVersionAsString true if the version should be written as a string
      */
     @Deprecated
     public void setWriteVersionAsString(boolean writeVersionAsString) {
@@ -383,6 +387,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
+     * @return true if the last Map argument should be appended
      */
     @Deprecated
     public boolean isEnableContextMap() {
@@ -391,6 +396,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
+     * @param enableContextMap true if the last Map argument should be appended
      */
     @Deprecated
     public void setEnableContextMap(boolean enableContextMap) {

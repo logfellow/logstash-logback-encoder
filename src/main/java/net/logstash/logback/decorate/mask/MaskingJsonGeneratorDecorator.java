@@ -159,8 +159,8 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
         /**
          * @param values a comma-separated string of regexes to mask
          */
-        public void addValues(String paths) {
-            Arrays.stream(paths.split(","))
+        public void addValues(String values) {
+            Arrays.stream(values.split(","))
                     .map(String::trim)
                     .filter(value -> !value.isEmpty())
                     .forEach(this::addValue);
@@ -255,7 +255,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
      * Sets the default mask value to use for any paths added via {@link #addPath(String)}
      * and values added via {@link #addValue(String)}.
      *
-     * <p>By default, this is {@value MaskingJsonGenerator#MASK}.</p>
+     * <p>By default, this is {@value net.logstash.logback.decorate.mask.MaskingJsonGenerator#MASK}.</p>
      *
      * @param defaultMask the default mask value to be used to mask real values.
      */

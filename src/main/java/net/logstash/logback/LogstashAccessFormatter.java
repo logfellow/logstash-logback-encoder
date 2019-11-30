@@ -188,7 +188,8 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     }
 
     /**
-     * When true, names of headers will be written to JSON output in lowercase. 
+     * When true, names of headers will be written to JSON output in lowercase.
+     * @param lowerCaseHeaderNames When true, names of headers will be written to JSON output in lowercase.
      */
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         this.requestHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
@@ -223,6 +224,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     
     /**
      * @deprecated Use {@link #isWriteVersionAsInteger()}
+     * @return true if the version should be written as a string
      */
     @Deprecated
     public boolean isWriteVersionAsString() {
@@ -230,6 +232,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     }
     /**
      * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
+     * @param writeVersionAsString true if the version should be written as a string
      */
     @Deprecated
     public void setWriteVersionAsString(boolean writeVersionAsString) {

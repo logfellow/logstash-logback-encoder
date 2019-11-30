@@ -46,7 +46,7 @@ public interface FieldMasker {
      * @return A non-null masked value to write if the current field should be masked.
      *         Otherwise null if the current field should not be masked.
      *         To write a JSON null value as the masked value, return {@link NullNode#instance}.
-     *         To write {@value MaskingJsonGenerator#MASK}, the return {@link MaskingJsonGenerator#MASK MaskingJsonGenerator.MASK}
+     *         To write {@value net.logstash.logback.decorate.mask.MaskingJsonGenerator#MASK}, the return {@link MaskingJsonGenerator#MASK MaskingJsonGenerator.MASK}
      */
     Object mask(JsonStreamContext context);
 }

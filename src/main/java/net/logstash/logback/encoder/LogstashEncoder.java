@@ -165,8 +165,7 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
      * <p>
      * If set to true the encoder will search logging event array and if the last item is a Map, entries will be included in the message.
      * </p>
-     * <p>
-     * Example:
+     * <p>Example:</p>
      * 
      * <pre>
      * log.info(&quot;Service started in {} seconds&quot;, duration / 1000, Collections.singletonMap(&quot;duration&quot;, duration))
@@ -182,8 +181,6 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
      *     "duration": 8496
      *     ...
      * </pre>
-     * 
-     * </p>
      * 
      * @param enableContextMap <code>true</code> to enable context map
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.

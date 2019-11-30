@@ -81,6 +81,8 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
      * If this returns null, then the caller data fields will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
      * <p>
      * If this returns non-null, then the caller data fields will be written inside an object with field name returned by this method
+     *
+     * @return The name of the caller object field.
      */
     public String getCaller() {
         return caller;
@@ -144,6 +146,8 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
      * If this returns null, then the mdc fields will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
      * <p>
      * If this returns non-null, then the mdc fields will be written inside an object with field name returned by this method
+     *
+     * @return The name of the mdc object field.
      */
     public String getMdc() {
         return mdc;
@@ -159,6 +163,7 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
      * If this returns null, then the context fields will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
      * <p>
      * If this returns non-null, then the context fields will be written inside an object with field name returned by this method
+     * @return The name of the context object field.
      */
     public String getContext() {
         return context;
@@ -174,6 +179,7 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
      * If this returns null, then the arguments will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
      * <p>
      * If this returns non-null, then the arguments will be written inside an object with field name returned by this method
+     * @return The name of the arguments object field.
      */
     public String getArguments() {
         return arguments;
