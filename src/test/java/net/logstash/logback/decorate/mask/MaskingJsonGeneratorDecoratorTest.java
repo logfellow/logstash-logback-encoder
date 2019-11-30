@@ -16,21 +16,66 @@ package net.logstash.logback.decorate.mask;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.joran.spi.JoranException;
+import ch.qos.logback.core.spi.LifeCycle;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.encoder.CompositeJsonEncoder;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 
 public class MaskingJsonGeneratorDecoratorTest {
 
     private static final JsonFactory FACTORY = new MappingJsonFactory();
+
+    public static class TestFieldMasker implements FieldMasker {
+
+        @Override
+        public Object mask(JsonStreamContext context) {
+            return context.hasCurrentName() && context.getCurrentName().equals("testfield")
+                    ? "[maskedtestfield]"
+                    : null;
+        }
+    }
+    public static class TestValueMasker implements ValueMasker {
+
+        @Override
+        public Object mask(JsonStreamContext context, Object value) {
+            return "testvalue".equals(value)
+                    ? "[maskedtestvalue]"
+                    : null;
+        }
+    }
+
+    JsonGeneratorDecorator configure(String file) {
+        LoggerContext loggerContext = new LoggerContext();
+        JoranConfigurator jc = new JoranConfigurator();
+        jc.setContext(loggerContext);
+        try (InputStream is = getClass().getResourceAsStream("/" + getClass().getName().replaceAll("\\.", "/") + "-" + file + ".xml")) {
+            jc.doConfigure(is);
+        } catch (IOException | JoranException e) {
+            throw new RuntimeException(e);
+        }
+        Logger logger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
+        ConsoleAppender<ILoggingEvent> appender = (ConsoleAppender<ILoggingEvent>) logger.getAppender("APPENDER");
+        CompositeJsonEncoder<ILoggingEvent> encoder = (CompositeJsonEncoder<ILoggingEvent>) appender.getEncoder();
+        return encoder.getJsonGeneratorDecorator();
+    }
 
     @Test
     public void maskedAndUnmaskedField() throws IOException {
@@ -90,6 +135,33 @@ public class MaskingJsonGeneratorDecoratorTest {
                 "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
                 "{\"fieldA\":\"****\",\"fieldB\":\"****\"}",
                 "*");
+    }
+
+    @Test
+    public void maskNothing() throws IOException {
+        testMaskByPath(
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}");
+    }
+
+    @Test
+    public void configuration() throws IOException {
+        JsonGeneratorDecorator noMasks = configure("noMasks");
+        test(
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                noMasks);
+
+
+        JsonGeneratorDecorator masks = configure("masks");
+        test(
+                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\",\"fieldD\":\"valueD\",\"testfield\":\"valueE\"}",
+                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"[masked]\",\"fieldD\":\"valueD\",\"testfield\":\"[maskedtestfield]\"}",
+                masks);
+        test(
+                "{\"fieldX\":\"valueX\",\"fieldY\":\"valueY\",\"field-Z\":\"value-Z\",\"fieldD\":\"valueD\",\"fieldE\":\"testvalue\"}",
+                "{\"fieldX\":\"****\",\"fieldY\":\"****\",\"field-Z\":\"value-masked\",\"fieldD\":\"valueD\",\"fieldE\":\"[maskedtestvalue]\"}",
+                masks);
     }
 
     @Test
@@ -297,8 +369,10 @@ public class MaskingJsonGeneratorDecoratorTest {
         test(unmasked, masked, decoratorByValueMasker);
     }
 
-    private void test(String unmasked, String masked, MaskingJsonGeneratorDecorator decorator) throws IOException {
-        decorator.start();
+    private void test(String unmasked, String masked, JsonGeneratorDecorator decorator) throws IOException {
+        if (decorator instanceof LifeCycle) {
+            ((LifeCycle) decorator).start();
+        }
 
         StringWriter maskedWriter = new StringWriter();
         JsonGenerator maskingGenerator = decorator.decorate(FACTORY.createGenerator(maskedWriter));

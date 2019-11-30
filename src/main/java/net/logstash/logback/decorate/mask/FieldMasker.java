@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.node.NullNode;
  *     <li>{@link ValueMasker}s can mask element values within an array.  {@link FieldMasker}s can only mask field values.
  * </ul>
  */
+@FunctionalInterface
 public interface FieldMasker {
 
     /**
