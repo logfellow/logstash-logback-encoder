@@ -338,17 +338,17 @@ public class MaskingJsonGeneratorDecoratorTest {
         test(unmasked, masked, decoratorByPaths);
 
         MaskingJsonGeneratorDecorator decoratorByPathWithDifferentDefault = new MaskingJsonGeneratorDecorator();
-        decoratorByPathWithDifferentDefault.setDefaultmask("[masked]");
+        decoratorByPathWithDifferentDefault.setDefaultMask("[masked]");
         Arrays.stream(pathsToMask).forEach(decoratorByPathWithDifferentDefault::addPath);
         test(unmasked, masked.replace(MaskingJsonGenerator.MASK, "[masked]"), decoratorByPathWithDifferentDefault);
 
         MaskingJsonGeneratorDecorator decoratorByPathMask = new MaskingJsonGeneratorDecorator();
-        decoratorByPathMask.setDefaultmask("foo");
+        decoratorByPathMask.setDefaultMask("foo");
         Arrays.stream(pathsToMask).forEach(pathToMask -> decoratorByPathMask.addPathMask(new MaskingJsonGeneratorDecorator.PathMask(pathToMask, MaskingJsonGenerator.MASK)));
         test(unmasked, masked, decoratorByPathMask);
 
         MaskingJsonGeneratorDecorator decoratorByPathMasker = new MaskingJsonGeneratorDecorator();
-        decoratorByPathMasker.setDefaultmask("foo");
+        decoratorByPathMasker.setDefaultMask("foo");
         Arrays.stream(pathsToMask).forEach(pathToMask -> decoratorByPathMasker.addFieldMasker(new PathBasedFieldMasker(pathToMask, MaskingJsonGenerator.MASK)));
         test(unmasked, masked, decoratorByPathMasker);
 
@@ -364,7 +364,7 @@ public class MaskingJsonGeneratorDecoratorTest {
         test(unmasked, masked, decoratorByValues);
 
         MaskingJsonGeneratorDecorator decoratorByValueWithDifferentDefault = new MaskingJsonGeneratorDecorator();
-        decoratorByValueWithDifferentDefault.setDefaultmask("[masked]");
+        decoratorByValueWithDifferentDefault.setDefaultMask("[masked]");
         Arrays.stream(valuesToMask).forEach(decoratorByValueWithDifferentDefault::addValue);
         test(unmasked, masked.replace(MaskingJsonGenerator.MASK, "[masked]"), decoratorByValueWithDifferentDefault);
 
