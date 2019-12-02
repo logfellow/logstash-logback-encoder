@@ -19,21 +19,21 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.SerializableString;
 import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.SerializedString;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.core.json.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonFactoryBuilder;
 
 /**
- * A {@link JsonFactoryDecorator} that can be used to customize the {@link JsonFactory#setCharacterEscapes(CharacterEscapes)}.
+ * A {@link TokenStreamFactoryBuilderDecorator} that can be used to customize the {@link JsonFactoryBuilder#characterEscapes(CharacterEscapes)}.
  * 
  * For example, you could change the escape sequence used for newline characters from '\n' to '\u2028'
  */
-public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorator {
+public class CharacterEscapesJsonFactoryBuilderDecorator implements TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder> {
 
     /**
-     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryDecorator#escapes}
+     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryBuilderDecorator#escapes}
      */
     private static class CustomizedCharacterEscapes extends CharacterEscapes {
 
@@ -232,30 +232,24 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
     private final List<Escape> escapes = new ArrayList<>();
 
     /**
-     * Indicates when the {@link CharacterEscapesJsonFactoryDecorator#characterEscapes} field needs to be re-initialized.
+     * Indicates when the {@link CharacterEscapesJsonFactoryBuilderDecorator#characterEscapes} field needs to be re-initialized.
      */
     private boolean needsInitialization = true;
     
     /**
-     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryDecorator#escapes}
+     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryBuilderDecorator#escapes}
      */
     private CustomizedCharacterEscapes characterEscapes;
 
     @Override
-    @Deprecated
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        return (MappingJsonFactory) decorate((JsonFactory) factory);
-    }
-
-    @Override
-    public JsonFactory decorate(JsonFactory factory) {
+    public JsonFactoryBuilder decorate(JsonFactoryBuilder builder) {
         if (needsInitialization) {
             characterEscapes = new CustomizedCharacterEscapes(includeStandardAsciiEscapesForJSON, escapes);
             needsInitialization = false;
         }
-        return factory.setCharacterEscapes(characterEscapes);
+        return builder.characterEscapes(characterEscapes);
     }
-    
+
     public boolean isIncludeStandardAsciiEscapesForJSON() {
         return includeStandardAsciiEscapesForJSON;
     }

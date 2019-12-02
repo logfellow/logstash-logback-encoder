@@ -66,7 +66,8 @@ public class ThrowableClassNameJsonProviderTest {
     public void testNoThrowable() throws IOException {
         provider.writeTo(generator, event);
 
-        verify(generator, times(0)).writeStringField(anyString(), anyString());
+        verify(generator, times(0)).writeFieldName(anyString());
+        verify(generator, times(0)).writeString(anyString());
     }
 
     @Test
@@ -77,7 +78,8 @@ public class ThrowableClassNameJsonProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(ThrowableClassNameJsonProvider.FIELD_NAME, throwable.getClass().getName());
+        verify(generator).writeFieldName(ThrowableClassNameJsonProvider.FIELD_NAME);
+        verify(generator).writeString(throwable.getClass().getName());
     }
 
 }

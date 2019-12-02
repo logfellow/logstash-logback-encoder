@@ -13,33 +13,12 @@
  */
 package net.logstash.logback.decorate;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * Combines a list of decorators into a single decorator, so multiple decorators can be used together.
  */
-public class CompositeJsonGeneratorDecorator implements JsonGeneratorDecorator {
-    
-    private final List<JsonGeneratorDecorator> decorators = new ArrayList<JsonGeneratorDecorator>();
-    
-    @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        JsonGenerator decoratedGenerator = generator;
-        for (JsonGeneratorDecorator decorator : decorators) {
-            decoratedGenerator = decorator.decorate(decoratedGenerator);
-        }
-        return decoratedGenerator;
-    }
-    
-    public void addDecorator(JsonGeneratorDecorator decorator) {
-        decorators.add(decorator);
-    }
-    
-    public boolean removeDecorator(JsonGeneratorDecorator decorator) {
-        return decorators.remove(decorator);
-    }
-
+public class CompositeJsonGeneratorDecorator<G extends JsonGenerator>
+        extends CompositeDecorator<G, JsonGeneratorDecorator<G>>
+        implements JsonGeneratorDecorator<G> {
 }

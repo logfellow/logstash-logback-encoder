@@ -19,23 +19,24 @@ import java.io.StringWriter;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.core.json.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
-public class CharacterEscapesJsonFactoryDecoratorTest {
+public class CharacterEscapesJsonFactoryBuilderDecoratorTest {
 
     @Test
     public void basicEscape() throws Exception {
-        CharacterEscapesJsonFactoryDecorator decorator = new CharacterEscapesJsonFactoryDecorator();
-        decorator.addEscape(new CharacterEscapesJsonFactoryDecorator.Escape("\n", "_"));
-        decorator.addEscape(new CharacterEscapesJsonFactoryDecorator.Escape(" ", "==="));
-        decorator.addEscape(new CharacterEscapesJsonFactoryDecorator.Escape("y", "!"));
-        decorator.addEscape(new CharacterEscapesJsonFactoryDecorator.Escape("ё", "?"));
+        CharacterEscapesJsonFactoryBuilderDecorator decorator = new CharacterEscapesJsonFactoryBuilderDecorator();
+        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape("\n", "_"));
+        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape(" ", "==="));
+        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape("y", "!"));
+        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape("ё", "?"));
         
         StringWriter writer = new StringWriter();
-        JsonFactory factory = decorator.decorate(new MappingJsonFactory());
-        JsonGenerator generator = factory.createGenerator(writer);
+        ObjectMapper objectMapper = JsonMapper.builder(decorator.decorate(JsonFactory.builder()).build()).build();
+        JsonGenerator generator = objectMapper.createGenerator(writer);
         
         generator.writeStartObject();
         generator.writeStringField("message", "My message\nМоё сообщение");
@@ -47,16 +48,16 @@ public class CharacterEscapesJsonFactoryDecoratorTest {
 
     @Test
     public void noEscapeSequence() throws Exception {
-        CharacterEscapesJsonFactoryDecorator.Escape noEscapeSequence = new CharacterEscapesJsonFactoryDecorator.Escape();
+        CharacterEscapesJsonFactoryBuilderDecorator.Escape noEscapeSequence = new CharacterEscapesJsonFactoryBuilderDecorator.Escape();
         noEscapeSequence.setTarget("z");
 
-        CharacterEscapesJsonFactoryDecorator decorator = new CharacterEscapesJsonFactoryDecorator();
+        CharacterEscapesJsonFactoryBuilderDecorator decorator = new CharacterEscapesJsonFactoryBuilderDecorator();
         decorator.addEscape(noEscapeSequence);
-        decorator.addEscape(new CharacterEscapesJsonFactoryDecorator.Escape(10, "==="));
+        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape(10, "==="));
 
         StringWriter writer = new StringWriter();
-        JsonFactory factory = decorator.decorate(new MappingJsonFactory());
-        JsonGenerator generator = factory.createGenerator(writer);
+        ObjectMapper objectMapper = JsonMapper.builder(decorator.decorate(JsonFactory.builder()).build()).build();
+        JsonGenerator generator = objectMapper.createGenerator(writer);
         
         generator.writeStartObject();
         generator.writeStringField("message", ".z.\n.y.");
@@ -68,12 +69,12 @@ public class CharacterEscapesJsonFactoryDecoratorTest {
 
     @Test
     public void noStandard() throws Exception {
-        CharacterEscapesJsonFactoryDecorator decorator = new CharacterEscapesJsonFactoryDecorator();
+        CharacterEscapesJsonFactoryBuilderDecorator decorator = new CharacterEscapesJsonFactoryBuilderDecorator();
         decorator.setIncludeStandardAsciiEscapesForJSON(false);
         
         StringWriter writer = new StringWriter();
-        JsonFactory factory = decorator.decorate(new MappingJsonFactory());
-        JsonGenerator generator = factory.createGenerator(writer);
+        ObjectMapper objectMapper = JsonMapper.builder(decorator.decorate(JsonFactory.builder()).build()).build();
+        JsonGenerator generator = objectMapper.createGenerator(writer);
         
         generator.writeStartObject();
         generator.writeStringField("message", "foo\nbar");

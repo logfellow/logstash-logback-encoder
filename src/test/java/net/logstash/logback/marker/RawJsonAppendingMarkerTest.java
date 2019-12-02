@@ -20,13 +20,13 @@ import java.io.StringWriter;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.core.json.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 
 public class RawJsonAppendingMarkerTest {
     
-    private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+    private static final JsonFactory FACTORY = JsonFactory.builder().enable(JsonWriteFeature.ESCAPE_NON_ASCII).build();
     
     @Test
     public void testWriteTo() throws IOException {

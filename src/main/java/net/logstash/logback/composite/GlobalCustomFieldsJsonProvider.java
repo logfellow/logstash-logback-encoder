@@ -19,11 +19,11 @@ import java.util.Map.Entry;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> implements JsonFactoryAware {
+public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> implements ObjectMapperAware {
     
     /**
      * The un-parsed custom fields string to use to initialize customFields
@@ -36,7 +36,7 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
      */
     private JsonNode customFieldsNode;
     
-    private JsonFactory jsonFactory;
+    private ObjectMapper objectMapper;
 
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
@@ -63,9 +63,9 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     }
     
     private void initializeCustomFields() {
-        if (this.customFields != null && jsonFactory != null) {
+        if (this.customFields != null && objectMapper != null) {
             try {
-                this.customFieldsNode = this.jsonFactory
+                this.customFieldsNode = this.objectMapper
                     .createParser(customFields).readValueAsTree();
             } catch (IOException e) {
                 addError("Failed to parse custom fields [" + customFields + "]", e);
@@ -94,9 +94,9 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
             this.customFields = this.customFieldsNode.toString();
         }
     }
-    
+
     @Override
-    public void setJsonFactory(JsonFactory jsonFactory) {
-        this.jsonFactory = jsonFactory;
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
     }
 }

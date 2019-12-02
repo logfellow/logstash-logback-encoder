@@ -21,17 +21,13 @@ import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
-
 import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.ObjectWriteContext;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
-import com.fasterxml.jackson.databind.ser.ResolvableSerializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 
 /**
@@ -91,8 +87,7 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
      * Since apps will typically serialize the same types of objects repeatedly, they shouldn't grow too much.
      */
     private static final ConcurrentHashMap<Class<?>, JsonSerializer<Object>> beanSerializers = new ConcurrentHashMap<Class<?>, JsonSerializer<Object>>();
-    private static final ConcurrentHashMap<ObjectMapper, SerializerProvider> serializerProviders = new ConcurrentHashMap<ObjectMapper, SerializerProvider>();
-    
+
     public ObjectFieldsAppendingMarker(Object object) {
         super(MARKER_NAME);
         this.object = object;
@@ -101,14 +96,23 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
     @Override
     public void writeTo(JsonGenerator generator) throws IOException {
         if (object != null) {
-            ObjectMapper mapper = (ObjectMapper) generator.getCodec();
-            JsonSerializer<Object> serializer = getBeanSerializer(mapper);
-            if (serializer.isUnwrappingSerializer()) {
-                serializer.serialize(object, generator, getSerializerProvider(mapper));
+            SerializerProvider serializerProvider = getSerializerProvider(generator);
+            if (serializerProvider != null) {
+                JsonSerializer<Object> serializer = getBeanSerializer(serializerProvider);
+                if (serializer.isUnwrappingSerializer()) {
+                    serializer.serialize(object, generator, serializerProvider);
+                }
             }
         }
     }
-    
+
+    private SerializerProvider getSerializerProvider(JsonGenerator generator) {
+        ObjectWriteContext objectWriteContext = generator.getObjectWriteContext();
+        return objectWriteContext instanceof SerializerProvider
+                ? (SerializerProvider) objectWriteContext
+                : null;
+    }
+
     @Override
     public String toStringSelf() {
         return StructuredArguments.toString(object);
@@ -117,52 +121,27 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
     /**
      * Gets a serializer that will write the {@link #object} unwrapped. 
      */
-    private JsonSerializer<Object> getBeanSerializer(ObjectMapper mapper) throws JsonMappingException {
-        
-        JsonSerializer<Object> jsonSerializer = beanSerializers.get(object.getClass());
-        
-        if (jsonSerializer == null) {
-            SerializerProvider serializerProvider = getSerializerProvider(mapper);
-            JsonSerializer<Object> newSerializer = mapper.getSerializerFactory().createSerializer(
-                    serializerProvider,
-                    mapper.getSerializationConfig().constructType(object.getClass()))
-                .unwrappingSerializer(NameTransformer.NOP);
-            
-            if (newSerializer instanceof ResolvableSerializer) {
-                ((ResolvableSerializer) newSerializer).resolve(serializerProvider);
-            }
-            
-            JsonSerializer<Object> existingSerializer = beanSerializers.putIfAbsent(
+    private JsonSerializer<Object> getBeanSerializer(SerializerProvider serializerProvider) throws JsonMappingException {
+        try {
+            return beanSerializers.computeIfAbsent(
                     object.getClass(),
-                    newSerializer);
-            
-            jsonSerializer = (existingSerializer == null) ? newSerializer : existingSerializer;
-        }
-        return jsonSerializer;
-        
-    }
+                    clazz -> {
+                        try {
+                            JsonSerializer<Object> newSerializer = serializerProvider.findTypedValueSerializer(object.getClass(), true)
+                                    .unwrappingSerializer(NameTransformer.NOP);
 
-    /**
-     * Gets a {@link SerializerProvider} configured with the {@link ObjectMapper}'s {@link SerializationConfig}
-     * ({@link ObjectMapper#getSerializationConfig()}) to be used for serialization.
-     * <p>
-     * Note that the {@link ObjectMapper}'s {@link SerializerProvider} ({@link ObjectMapper#getSerializerProvider()})
-     * cannot be used directly, because the {@link SerializerProvider}'s {@link SerializationConfig} ({@link SerializerProvider#getConfig()}) is null,
-     * which causes NullPointerExceptions when it is used.
-     */
-    private SerializerProvider getSerializerProvider(ObjectMapper mapper) {
-        
-        SerializerProvider provider = serializerProviders.get(mapper);
-        if (provider == null) {
-            
-            SerializerProvider newProvider = ((DefaultSerializerProvider) mapper.getSerializerProvider())
-                    .createInstance(mapper.getSerializationConfig(), mapper.getSerializerFactory());
-            
-            SerializerProvider existingProvider = serializerProviders.putIfAbsent(mapper, newProvider);
-            
-            provider = (existingProvider == null) ? newProvider : existingProvider;
+                            newSerializer.resolve(serializerProvider);
+                            return newSerializer;
+                        } catch (JsonMappingException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+        } catch (RuntimeException e) {
+            if (e.getCause() instanceof JsonMappingException) {
+                throw (JsonMappingException) e.getCause();
+            }
+            throw e;
         }
-        return provider;
     }
 
     @Override

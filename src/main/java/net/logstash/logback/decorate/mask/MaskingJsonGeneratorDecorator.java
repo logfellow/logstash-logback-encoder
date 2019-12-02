@@ -34,7 +34,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * A {@link JsonGeneratorDecorator} that wraps a {@link JsonGenerator} with a {@link MaskingJsonGenerator},
  * so that sensitive field values can be masked.
  */
-public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, LifeCycle {
+public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<JsonGenerator>, LifeCycle {
 
     /**
      * Paths to mask with the default mask
@@ -70,7 +70,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
      * The decorator to be used to decorate the {@link JsonGenerator}.
      * Will be updated during {@link #start()}.
      */
-    private JsonGeneratorDecorator delegate;
+    private JsonGeneratorDecorator<JsonGenerator> delegate;
 
     /**
      * True if this decorator is currently started.
@@ -259,7 +259,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
      *
      * @param defaultMask the default mask value to be used to mask real values.
      */
-    public void setDefaultmask(String defaultMask) {
+    public void setDefaultMask(String defaultMask) {
         Objects.requireNonNull(defaultMask, "defaultMask must not be null");
         this.valuesWithDefaultMask.setMask(defaultMask);
         this.pathsWithDefaultMask.setMask(defaultMask);
@@ -268,7 +268,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
     /**
      * Adds the given path to the paths that will be masked.
      *
-     * <p>The {@link #setDefaultmask(String) default mask} value will be substituted for values at the given path.</p>
+     * <p>The {@link #setDefaultMask(String) default mask} value will be substituted for values at the given path.</p>
      *
      * @param pathToMask the path to mask. See {@link PathBasedFieldMasker} for the format.
      */
@@ -279,7 +279,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
     /**
      * Adds the given comma separated paths to the paths that will be masked.
      *
-     * <p>The {@link #setDefaultmask(String) default mask} value will be substituted for values at the given paths.</p>
+     * <p>The {@link #setDefaultMask(String) default mask} value will be substituted for values at the given paths.</p>
      *
      * @param pathsToMask comma separate string of paths to mask. See {@link PathBasedFieldMasker} for the format.
      */
@@ -310,7 +310,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
     /**
      * Adds the given value regex to the regexes that will be used to determine if a field value should be masked.
      *
-     * <p>The {@link #setDefaultmask(String) default mask} value will be substituted for values that match the given regex.</p>
+     * <p>The {@link #setDefaultMask(String) default mask} value will be substituted for values that match the given regex.</p>
      *
      * @param valueToMask a regular expression used to determine if a value should be masked.
      */
@@ -321,7 +321,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
     /**
      * Adds the comma separated string of value regexes to the regexes that will be used to determine if a field value should be masked.
      *
-     * <p>The {@link #setDefaultmask(String) default mask} value will be substituted for values that match the given regexes.</p>
+     * <p>The {@link #setDefaultMask(String) default mask} value will be substituted for values that match the given regexes.</p>
      *
      * @param valuesToMask comma-separated string of regular expressions used to determine if a value should be masked.
      */

@@ -13,26 +13,25 @@
  */
 package net.logstash.logback.pattern;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.Map;
+
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.ContextAware;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.Map;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
@@ -43,7 +42,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
     @Mock
     protected ContextAware contextAware;
 
-    protected JsonFactory jsonFactory;
+    protected ObjectMapper objectMapper;
 
     private JsonGenerator jsonGenerator;
 
@@ -63,8 +62,8 @@ public abstract class AbstractJsonPatternParserTest<Event> {
 
         given(contextAware.getContext()).willReturn(context);
 
-        jsonFactory = new MappingJsonFactory();
-        jsonGenerator = jsonFactory.createGenerator(buffer);
+        objectMapper = JsonMapper.builder().build();
+        jsonGenerator = objectMapper.createGenerator(buffer);
 
         parser = createParser();
     }
@@ -74,7 +73,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
     abstract protected AbstractJsonPatternParser<Event> createParser();
 
     private Map<String, Object> parseJson(final String text) throws IOException {
-        return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() { });
+        return objectMapper.readValue(text, new TypeReference<Map<String, Object>>() { });
     }
 
     protected void verifyFields(String patternJson, String expectedJson) throws IOException {

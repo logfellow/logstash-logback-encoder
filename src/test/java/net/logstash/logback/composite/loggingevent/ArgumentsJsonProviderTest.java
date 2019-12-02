@@ -21,9 +21,8 @@ import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.argument.StructuredArguments;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
-
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,22 +30,19 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 
 public class ArgumentsJsonProviderTest {
 
+    private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
 
     private ArgumentsJsonProvider provider = new ArgumentsJsonProvider();
-
-    private JsonFactory factory = new MappingJsonFactory();
 
     private StringWriter writer = new StringWriter();
 
@@ -68,7 +64,7 @@ public class ArgumentsJsonProviderTest {
     @Before
     public void setup() throws IOException {
         
-        generator = factory.createGenerator(writer);
+        generator = MAPPER.createGenerator(writer);
         
         Map<String, String> map = new LinkedHashMap<String, String>();
         map.put("k4", "v4");

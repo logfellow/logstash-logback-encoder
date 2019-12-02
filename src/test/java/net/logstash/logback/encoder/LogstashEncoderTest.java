@@ -31,13 +31,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
+import ch.qos.logback.core.Context;
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.decorate.PrettyPrintingMapperBuilderDecorator;
+import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
-
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.assertj.core.util.Files;
 import org.junit.Assert;
@@ -51,28 +57,20 @@ import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.json.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonFactoryBuilder;
+import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxyUtil;
-import ch.qos.logback.core.Context;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 @RunWith(MockitoJUnitRunner.Silent.class)
 public class LogstashEncoderTest {
     
     private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
-    
-    private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
-    private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
+
+    private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     private LogstashEncoder encoder = new LogstashEncoder();
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     
@@ -155,22 +153,12 @@ public class LogstashEncoderTest {
     @Test
     public void customDecorators() throws Exception {
         encoder.stop();
-        encoder.setJsonFactoryDecorator(new JsonFactoryDecorator() {
-            
-            @Override
-            public JsonFactory decorate(JsonFactory factory) {
-                return factory.disable(JsonGenerator.Feature.QUOTE_FIELD_NAMES);
-            }
-        });
-        
-        encoder.setJsonGeneratorDecorator(new JsonGeneratorDecorator() {
-            
-            @Override
-            public JsonGenerator decorate(JsonGenerator generator) {
-                return generator.useDefaultPrettyPrinter();
-            }
-        });
-        
+
+        encoder.addDecorator((TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder>) builder ->
+                builder.disable(JsonWriteFeature.QUOTE_FIELD_NAMES));
+
+        encoder.addDecorator(new PrettyPrintingMapperBuilderDecorator());
+
         encoder.start();
         final long timestamp = System.currentTimeMillis();
         
@@ -631,7 +619,7 @@ public class LogstashEncoderTest {
     }
     
     public JsonNode parse(String string) throws JsonParseException, IOException {
-        return FACTORY.createParser(string).readValueAsTree();
+        return MAPPER.createParser(string).readValueAsTree();
     }
     
     @Test

@@ -20,22 +20,21 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 
 /**
- * A {@link JsonGeneratorDecorator} that allows enabling/disabling of {@link SmileGenerator} features.
+ * A {@link JsonGeneratorDecorator} that allows enabling/disabling of {@link SmileGenerator.Feature} features.
  *
  * <p>Only valid for {@link SmileGenerator}s.
- * Use in conjunction with {@link SmileJsonFactoryDecorator}.</p>
+ * Use in conjunction with {@link SmileDataFormatFactory}.</p>
  */
-public class SmileFeatureJsonGeneratorDecorator extends FeatureDecorator<SmileGenerator, SmileGenerator.Feature> implements JsonGeneratorDecorator {
+public class SmileGeneratorFeatureDecorator
+        extends FeatureDecorator<SmileGenerator, SmileGenerator.Feature>
+        implements JsonGeneratorDecorator<SmileGenerator> {
 
-    public SmileFeatureJsonGeneratorDecorator() {
-        super(SmileGenerator.Feature.class, SmileGenerator::enable, SmileGenerator::disable);
+    public SmileGeneratorFeatureDecorator() {
+        super(SmileGenerator.Feature.class);
     }
 
     @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        if (!(generator instanceof SmileGenerator)) {
-            throw new ClassCastException("Expected generator to be of type " + SmileGenerator.class.getName() +".  See " + SmileJsonFactoryDecorator.class.getName());
-        }
-        return super.decorate((SmileGenerator) generator);
+    protected SmileGenerator configure(SmileGenerator generator, SmileGenerator.Feature feature, boolean state) {
+        return generator.configure(feature, state);
     }
 }

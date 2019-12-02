@@ -16,26 +16,24 @@ package net.logstash.logback.decorate.yaml;
 import net.logstash.logback.decorate.FeatureDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 /**
- * A {@link JsonGeneratorDecorator} that allows enabling/disabling of {@link YAMLGenerator} features.
+ * A {@link JsonGeneratorDecorator} that allows enabling/disabling of {@link YAMLGenerator.Feature} features.
  *
  * <p>Only valid for {@link YAMLGenerator}s.
- * Use in conjunction with {@link YamlJsonFactoryDecorator}.</p>
+ * Use in conjunction with {@link YamlDataFormatFactory}.</p>
  */
-public class YamlFeatureJsonGeneratorDecorator extends FeatureDecorator<YAMLGenerator, YAMLGenerator.Feature> implements JsonGeneratorDecorator {
+public class YamlGeneratorFeatureDecorator
+        extends FeatureDecorator<YAMLGenerator, YAMLGenerator.Feature>
+        implements JsonGeneratorDecorator<YAMLGenerator> {
 
-    public YamlFeatureJsonGeneratorDecorator() {
-        super(YAMLGenerator.Feature.class, YAMLGenerator::enable, YAMLGenerator::disable);
+    public YamlGeneratorFeatureDecorator() {
+        super(YAMLGenerator.Feature.class);
     }
 
     @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        if (!(generator instanceof YAMLGenerator)) {
-            throw new ClassCastException("Expected generator to be of type " + YAMLGenerator.class.getName() +".  See " + YamlJsonFactoryDecorator.class.getName());
-        }
-        return super.decorate((YAMLGenerator) generator);
+    protected YAMLGenerator configure(YAMLGenerator generator, YAMLGenerator.Feature feature, boolean state) {
+        return generator.configure(feature, state);
     }
 }

@@ -15,7 +15,7 @@ package net.logstash.logback.decorate.mask;
 
 import java.util.Objects;
 
-import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.TokenStreamContext;
 
 /**
  * Masks values of an absolute or partial path within a JSON stream.
@@ -194,8 +194,8 @@ public class PathBasedFieldMasker implements FieldMasker {
     }
 
     @Override
-    public Object mask(JsonStreamContext context) {
-        JsonStreamContext currentContext = context;
+    public Object mask(TokenStreamContext context) {
+        TokenStreamContext currentContext = context;
         for (int i = tokens.length; --i >= 0; currentContext = currentContext.getParent()) {
             if (!currentLeafMatches(currentContext, tokens[i])) {
                 return null;
@@ -207,7 +207,7 @@ public class PathBasedFieldMasker implements FieldMasker {
                 : null;
     }
 
-    private boolean currentLeafMatches(JsonStreamContext context, String leafName) {
+    private boolean currentLeafMatches(TokenStreamContext context, String leafName) {
         if (context != null) {
             if (WILDCARD_TOKEN.equals(leafName)) {
                 return true;

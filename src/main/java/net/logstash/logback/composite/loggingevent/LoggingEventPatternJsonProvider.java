@@ -25,7 +25,7 @@ public class LoggingEventPatternJsonProvider extends AbstractPatternJsonProvider
     
     @Override
     protected AbstractJsonPatternParser<ILoggingEvent> createParser() {
-        return new LoggingEventJsonPatternParser(this, this.jsonFactory);
+        return new LoggingEventJsonPatternParser(this, this.objectMapper);
     }
 
 }

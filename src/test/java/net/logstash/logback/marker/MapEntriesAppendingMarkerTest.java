@@ -22,13 +22,13 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 public class MapEntriesAppendingMarkerTest {
-    
-    private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+
+    private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     
     @Test
     public void testWriteTo() throws IOException {
@@ -37,7 +37,7 @@ public class MapEntriesAppendingMarkerTest {
         map.put("myField", "value");
         
         StringWriter writer = new StringWriter();
-        JsonGenerator generator = FACTORY.createGenerator(writer);
+        JsonGenerator generator = MAPPER.createGenerator(writer);
         
         LogstashMarker marker = Markers.appendEntries(map);
         generator.writeStartObject();

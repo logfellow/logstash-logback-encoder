@@ -16,26 +16,24 @@ package net.logstash.logback.decorate.cbor;
 import net.logstash.logback.decorate.FeatureDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.dataformat.cbor.CBORGenerator;
 
 /**
- * A {@link JsonGeneratorDecorator} that allows enabling/disabling of {@link CBORGenerator} features.
+ * A {@link JsonGeneratorDecorator} that allows enabling/disabling of {@link CBORGenerator.Feature} features.
  *
  * <p>Only valid for {@link CBORGenerator}s.
- * Use in conjunction with {@link CborJsonFactoryDecorator}.</p>
+ * Use in conjunction with {@link CborDataFormatFactory}.</p>
  */
-public class CborFeatureJsonGeneratorDecorator extends FeatureDecorator<CBORGenerator, CBORGenerator.Feature> implements JsonGeneratorDecorator {
+public class CborGeneratorFeatureDecorator
+        extends FeatureDecorator<CBORGenerator, CBORGenerator.Feature>
+        implements JsonGeneratorDecorator<CBORGenerator> {
 
-    public CborFeatureJsonGeneratorDecorator() {
-        super(CBORGenerator.Feature.class, CBORGenerator::enable, CBORGenerator::disable);
+    public CborGeneratorFeatureDecorator() {
+        super(CBORGenerator.Feature.class);
     }
 
     @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        if (!(generator instanceof CBORGenerator)) {
-            throw new ClassCastException("Expected generator to be of type " + CBORGenerator.class.getName() +".  See " + CborJsonFactoryDecorator.class.getName());
-        }
-        return super.decorate((CBORGenerator) generator);
+    protected CBORGenerator configure(CBORGenerator generator, CBORGenerator.Feature feature, boolean state) {
+        return generator.configure(feature, state);
     }
 }

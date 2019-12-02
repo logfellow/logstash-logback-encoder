@@ -11,19 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate;
+package net.logstash.logback.composite;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * A {@link JsonGeneratorDecorator} that doesn't do any decoration.
- * It just returns the generator as-is.
+ * Can be implemented by {@link JsonProvider}s to indicate that 
+ * the provider needs to be injected with the {@link ObjectMapper}.
  */
-public class NullJsonGeneratorDecorator implements JsonGeneratorDecorator {
+public interface ObjectMapperAware {
 
-    @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        return generator;
-    }
-
+    void setObjectMapper(ObjectMapper objectMapper);
 }

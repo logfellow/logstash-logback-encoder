@@ -5,7 +5,7 @@
             <providers>
                 <timestamp/>
             </providers>
-            <jsonGeneratorDecorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator"/>
+            <decorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator"/>
         </encoder>
     </appender>
 

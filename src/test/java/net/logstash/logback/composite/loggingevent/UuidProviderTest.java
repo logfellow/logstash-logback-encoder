@@ -13,19 +13,17 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.matches;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
@@ -48,7 +46,8 @@ public class UuidProviderTest
     public void testDefaultName() throws IOException {
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq(UuidProvider.FIELD_UUID), matches(UUID));
+        verify(generator).writeFieldName(UuidProvider.FIELD_UUID);
+        verify(generator).writeString(matches(UUID));
     }
 
     @Test
@@ -57,7 +56,8 @@ public class UuidProviderTest
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq("newFieldName"), matches(UUID));
+        verify(generator).writeFieldName("newFieldName");
+        verify(generator).writeString(matches(UUID));
     }
 
     @Test
@@ -66,7 +66,8 @@ public class UuidProviderTest
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq("uuid"), matches(UUID));
+        verify(generator).writeFieldName("uuid");
+        verify(generator).writeString(matches(UUID));
     }
 
     @Test
@@ -76,6 +77,7 @@ public class UuidProviderTest
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq("uuid"), matches(UUID));
+        verify(generator).writeFieldName("uuid");
+        verify(generator).writeString(matches(UUID));
     }
 }

@@ -13,7 +13,7 @@
  */
 package net.logstash.logback.decorate.mask;
 
-import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.TokenStreamContext;
 import com.fasterxml.jackson.databind.node.NullNode;
 
 /**
@@ -49,5 +49,5 @@ public interface ValueMasker {
      *         To write a JSON null value as the masked value, return {@link NullNode#instance}.
      *         To write {@value net.logstash.logback.decorate.mask.MaskingJsonGenerator#MASK}, the return {@link MaskingJsonGenerator#MASK MaskingJsonGenerator.MASK}
      */
-    Object mask(JsonStreamContext context, Object value);
+    Object mask(TokenStreamContext context, Object value);
 }

@@ -13,16 +13,17 @@
  */
 package net.logstash.logback.decorate;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.cfg.MapperBuilder;
 
 /**
- * Enables pretty printing on the {@link JsonGenerator}
+ * Enables pretty printing on the {@link MapperBuilder}
  */
-public class PrettyPrintingJsonGeneratorDecorator implements JsonGeneratorDecorator {
+public class PrettyPrintingMapperBuilderDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>> implements MapperBuilderDecorator<M, B> {
 
     @Override
-    public JsonGenerator decorate(JsonGenerator generator) {
-        return generator.useDefaultPrettyPrinter();
+    public B decorate(B builder) {
+        return builder.enable(SerializationFeature.INDENT_OUTPUT);
     }
-
 }

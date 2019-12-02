@@ -18,18 +18,24 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
-import com.fasterxml.jackson.databind.annotation.JsonValueInstantiator;
-
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
+import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
+import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
+import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.decorate.Decorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.decorate.MapperBuilderDecorator;
+import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
         extends EncoderBase<Event> {
@@ -321,19 +327,39 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     public void setImmediateFlush(boolean immediateFlush) {
         this.logback11ImmediateFlush = immediateFlush;
     }
-    
-    public JsonFactoryDecorator getJsonFactoryDecorator() {
-        return formatter.getJsonFactoryDecorator();
+
+    public String getDataFormat() {
+        return formatter.getDataFormat();
     }
 
-    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
-        formatter.setJsonFactoryDecorator(jsonFactoryDecorator);
+    public void setDataFormat(String dataFormat) {
+        formatter.setDataFormat(dataFormat);
     }
 
-    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+    public DataFormatFactory getDataFormatFactory() {
+        return formatter.getDataFormatFactory();
+    }
+
+    public void setDataFormatFactory(DataFormatFactory dataFormatFactory) {
+        formatter.setDataFormatFactory(dataFormatFactory);
+    }
+
+    public void addDecorator(Decorator<?> decorator) {
+        formatter.addDecorator(decorator);
+    }
+
+    public CompositeTokenStreamFactoryBuilderDecorator getTokenStreamFactoryBuilderDecorator() {
+        return formatter.getTokenStreamFactoryBuilderDecorator();
+    }
+
+    public CompositeMapperBuilderDecorator getMapperBuilderDecorator() {
+        return formatter.getMapperBuilderDecorator();
+    }
+
+    public CompositeJsonGeneratorDecorator getJsonGeneratorDecorator() {
         return formatter.getJsonGeneratorDecorator();
     }
-    
+
     public String getEncoding() {
         return formatter.getEncoding();
     }
@@ -350,10 +376,6 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         formatter.setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
     }
 
-    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
-        formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
-    }
-    
     public String getLineSeparator() {
         return lineSeparator;
     }

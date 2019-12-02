@@ -15,14 +15,14 @@ package net.logstash.logback.composite;
 
 import java.io.IOException;
 
-import net.logstash.logback.pattern.AbstractJsonPatternParser;
-import net.logstash.logback.pattern.NodeWriter;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.pattern.AbstractJsonPatternParser;
+import net.logstash.logback.pattern.NodeWriter;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Transforms an string containing patterns understood by PatternLayouts into JSON output.
@@ -35,13 +35,13 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessingAware>
-        extends AbstractJsonProvider<Event> implements JsonFactoryAware {
+        extends AbstractJsonProvider<Event> implements ObjectMapperAware {
 
     private NodeWriter<Event> nodeWriter;
     
     private String pattern;
 
-    protected JsonFactory jsonFactory;
+    protected ObjectMapper objectMapper;
 
     /**
      * When true, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
@@ -66,10 +66,10 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
         this.pattern = pattern;
         parse();
     }
-    
+
     @Override
-    public void setJsonFactory(JsonFactory jsonFactory) {
-        this.jsonFactory = jsonFactory;
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
         parse();
     }
 
@@ -80,7 +80,7 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
      * before the Formatter has had an opportunity to set the jsonFactory.
      */
     private void parse() {
-        if (pattern != null && jsonFactory != null) {
+        if (pattern != null && objectMapper != null) {
             AbstractJsonPatternParser<Event> parser = createParser();
             parser.setOmitEmptyFields(omitEmptyFields);
             nodeWriter = parser.parse(pattern);

@@ -41,7 +41,7 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
 
     @Override
     protected AbstractJsonPatternParser<IAccessEvent> createParser() {
-        return new AccessEventJsonPatternParser(contextAware, jsonFactory);
+        return new AccessEventJsonPatternParser(contextAware, objectMapper);
     }
 
     @Test

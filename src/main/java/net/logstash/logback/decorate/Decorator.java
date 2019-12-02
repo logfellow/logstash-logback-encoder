@@ -13,14 +13,18 @@
  */
 package net.logstash.logback.decorate;
 
-import com.fasterxml.jackson.core.JsonFactory;
-
 /**
- * A {@link JsonFactoryDecorator} that allows enabling/disabling of {@link JsonFactory} features.
+ * Decorates an object.
+ *
+ * @param <T> the type of object to decorate
  */
-public class FeatureJsonFactoryDecorator extends FeatureDecorator<JsonFactory, JsonFactory.Feature> implements JsonFactoryDecorator {
+public interface Decorator<T> {
 
-    public FeatureJsonFactoryDecorator() {
-        super(JsonFactory.Feature.class, JsonFactory::enable, JsonFactory::disable);
-    }
+    /**
+     * Decorates the given {@code decoratable}.
+     *
+     * @param decoratable the object to decorate
+     * @return the decorated object (can be a different than the object passed in as an arg)
+     */
+    T decorate(T decoratable);
 }

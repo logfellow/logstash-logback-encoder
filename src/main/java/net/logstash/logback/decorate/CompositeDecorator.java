@@ -15,37 +15,30 @@ package net.logstash.logback.decorate;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.BiFunction;
 
 /**
  * Combines a list of decorators into a single decorator, so multiple decorators can be used together.
  */
-public class CompositeJsonFactoryDecorator implements JsonFactoryDecorator {
+public class CompositeDecorator<T, D extends Decorator<T>> implements Decorator<T> {
     
-    private final List<JsonFactoryDecorator> decorators = new ArrayList<JsonFactoryDecorator>();
+    private final List<D> decorators = new CopyOnWriteArrayList<>();
 
-    @Override
-    @Deprecated
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        return (MappingJsonFactory) decorate((JsonFactory) factory);
-    }
-
-    @Override
-    public JsonFactory decorate(JsonFactory factory) {
-        JsonFactory decoratedFactory = factory;
-        for (JsonFactoryDecorator decorator : decorators) {
-            decoratedFactory = decorator.decorate(decoratedFactory);
+    public T decorate(T decoratable) {
+        T decorated = decoratable;
+        for (Decorator<T> decorator : decorators) {
+            decorated = decorator.decorate(decorated);
         }
-        return decoratedFactory;
+        return decorated;
     }
-    
-    public void addDecorator(JsonFactoryDecorator decorator) {
+
+    public void addDecorator(D decorator) {
         decorators.add(decorator);
     }
     
-    public boolean removeDecorator(JsonFactoryDecorator decorator) {
+    public boolean removeDecorator(D decorator) {
         return decorators.remove(decorator);
     }
 

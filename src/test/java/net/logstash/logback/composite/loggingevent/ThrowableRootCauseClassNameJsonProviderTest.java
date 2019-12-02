@@ -74,6 +74,7 @@ public class ThrowableRootCauseClassNameJsonProviderTest {
     public void testNoThrowable() throws IOException {
         provider.writeTo(generator, event);
 
-        verify(generator, times(0)).writeStringField(anyString(), anyString());
+        verify(generator, times(0)).writeFieldName(anyString());
+        verify(generator, times(0)).writeString(anyString());
     }
 }

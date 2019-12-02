@@ -48,7 +48,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
 
     @Override
     protected AbstractJsonPatternParser<ILoggingEvent> createParser() {
-        return new LoggingEventJsonPatternParser(contextAware, jsonFactory);
+        return new LoggingEventJsonPatternParser(contextAware, objectMapper);
     }
 
     @Test

@@ -15,19 +15,19 @@ package net.logstash.logback.composite;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A {@link JsonProvider} that nests other providers within a subobject.
  * 
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
-public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements JsonFactoryAware {
+public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements ObjectMapperAware {
     
     public static final String FIELD_NESTED = "nested";
     
@@ -70,10 +70,10 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     }
 
     @Override
-    public void setJsonFactory(final JsonFactory jsonFactory) {
-        getProviders().setJsonFactory(jsonFactory);
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        getProviders().setObjectMapper(objectMapper);
     }
-    
+
     @Override
     public void prepareForDeferredProcessing(Event event) {
         super.prepareForDeferredProcessing(event);

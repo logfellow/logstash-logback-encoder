@@ -13,14 +13,12 @@
  */
 package net.logstash.logback.decorate;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.TokenStreamFactory;
 
 /**
- * A {@link JsonGeneratorDecorator} that allows enabling/disabling of {@link JsonGenerator} features.
+ * Combines a list of decorators into a single decorator, so multiple decorators can be used together.
  */
-public class FeatureJsonGeneratorDecorator extends FeatureDecorator<JsonGenerator, JsonGenerator.Feature> implements JsonGeneratorDecorator {
-
-    public FeatureJsonGeneratorDecorator() {
-        super(JsonGenerator.Feature.class, JsonGenerator::enable, JsonGenerator::disable);
-    }
+public class CompositeTokenStreamFactoryBuilderDecorator<F extends TokenStreamFactory, B extends TokenStreamFactory.TSFBuilder<F, B>>
+        extends CompositeDecorator<B, TokenStreamFactoryBuilderDecorator<F, B>>
+        implements TokenStreamFactoryBuilderDecorator<F, B> {
 }

@@ -18,8 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.io.StringWriter;
 
-import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
-
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -27,11 +26,9 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 public class GlobalCustomFieldsJsonProviderTest {
     
@@ -43,7 +40,7 @@ public class GlobalCustomFieldsJsonProviderTest {
     @Mock
     private ILoggingEvent event;
     
-    private JsonFactory factory = new MappingJsonFactory();
+    private ObjectMapper objectMapper = JsonMapper.builder().build();
     
     private StringWriter writer = new StringWriter();
     
@@ -52,10 +49,10 @@ public class GlobalCustomFieldsJsonProviderTest {
     @Before
     public void setup() throws IOException {
         provider.setCustomFields("{\"name\":\"value\"}");
-        provider.setJsonFactory(factory);
+        provider.setObjectMapper(objectMapper);
         provider.start();
         
-        generator = factory.createGenerator(writer);
+        generator = objectMapper.createGenerator(writer);
     }
     
     

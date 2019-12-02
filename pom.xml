@@ -23,7 +23,7 @@
 
         <!-- runtime dependencies -->
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
-        <com.fasterxml.jackson.version>2.10.1</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>3.0.0-SNAPSHOT</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>3.2.0</com.fasterxml.uuid.version>
 
         <!-- shaded runtime dependencies -->
@@ -427,4 +427,10 @@
         </repository>
     </distributionManagement>
 
+    <repositories>
+        <repository>
+            <id>ossrh-snapshot</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+    </repositories>
 </project>

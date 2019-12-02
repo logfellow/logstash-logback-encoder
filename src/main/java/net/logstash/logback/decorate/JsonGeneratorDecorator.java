@@ -20,16 +20,5 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * <p>
  * Allows you to customize the {@link JsonGenerator}.
  */
-public interface JsonGeneratorDecorator {
-
-    /**
-     * Decorates the given generator, and returns the decorated generator.
-     *
-     * <p>The returned decorator does not need to be the same object as the given generator.</p>
-     *
-     * @param generator the generator to decorate
-     * @return the decorated generator
-     */
-    JsonGenerator decorate(JsonGenerator generator);
-
+public interface JsonGeneratorDecorator<G extends JsonGenerator> extends Decorator<G> {
 }

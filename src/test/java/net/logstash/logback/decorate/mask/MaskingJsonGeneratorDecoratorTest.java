@@ -32,21 +32,21 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.core.TokenStreamContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 
 public class MaskingJsonGeneratorDecoratorTest {
 
-    private static final JsonFactory FACTORY = new MappingJsonFactory();
+    private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
     public static class TestFieldMasker implements FieldMasker {
 
         @Override
-        public Object mask(JsonStreamContext context) {
+        public Object mask(TokenStreamContext context) {
             return context.hasCurrentName() && context.getCurrentName().equals("testfield")
                     ? "[maskedtestfield]"
                     : null;
@@ -55,7 +55,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     public static class TestValueMasker implements ValueMasker {
 
         @Override
-        public Object mask(JsonStreamContext context, Object value) {
+        public Object mask(TokenStreamContext context, Object value) {
             return "testvalue".equals(value)
                     ? "[maskedtestvalue]"
                     : null;
@@ -338,17 +338,17 @@ public class MaskingJsonGeneratorDecoratorTest {
         test(unmasked, masked, decoratorByPaths);
 
         MaskingJsonGeneratorDecorator decoratorByPathWithDifferentDefault = new MaskingJsonGeneratorDecorator();
-        decoratorByPathWithDifferentDefault.setDefaultmask("[masked]");
+        decoratorByPathWithDifferentDefault.setDefaultMask("[masked]");
         Arrays.stream(pathsToMask).forEach(decoratorByPathWithDifferentDefault::addPath);
         test(unmasked, masked.replace(MaskingJsonGenerator.MASK, "[masked]"), decoratorByPathWithDifferentDefault);
 
         MaskingJsonGeneratorDecorator decoratorByPathMask = new MaskingJsonGeneratorDecorator();
-        decoratorByPathMask.setDefaultmask("foo");
+        decoratorByPathMask.setDefaultMask("foo");
         Arrays.stream(pathsToMask).forEach(pathToMask -> decoratorByPathMask.addPathMask(new MaskingJsonGeneratorDecorator.PathMask(pathToMask, MaskingJsonGenerator.MASK)));
         test(unmasked, masked, decoratorByPathMask);
 
         MaskingJsonGeneratorDecorator decoratorByPathMasker = new MaskingJsonGeneratorDecorator();
-        decoratorByPathMasker.setDefaultmask("foo");
+        decoratorByPathMasker.setDefaultMask("foo");
         Arrays.stream(pathsToMask).forEach(pathToMask -> decoratorByPathMasker.addFieldMasker(new PathBasedFieldMasker(pathToMask, MaskingJsonGenerator.MASK)));
         test(unmasked, masked, decoratorByPathMasker);
 
@@ -364,7 +364,7 @@ public class MaskingJsonGeneratorDecoratorTest {
         test(unmasked, masked, decoratorByValues);
 
         MaskingJsonGeneratorDecorator decoratorByValueWithDifferentDefault = new MaskingJsonGeneratorDecorator();
-        decoratorByValueWithDifferentDefault.setDefaultmask("[masked]");
+        decoratorByValueWithDifferentDefault.setDefaultMask("[masked]");
         Arrays.stream(valuesToMask).forEach(decoratorByValueWithDifferentDefault::addValue);
         test(unmasked, masked.replace(MaskingJsonGenerator.MASK, "[masked]"), decoratorByValueWithDifferentDefault);
 
@@ -377,18 +377,18 @@ public class MaskingJsonGeneratorDecoratorTest {
         test(unmasked, masked, decoratorByValueMasker);
     }
 
-    private void test(String unmasked, String masked, JsonGeneratorDecorator decorator) throws IOException {
+    private void test(String unmasked, String masked, JsonGeneratorDecorator<JsonGenerator> decorator) throws IOException {
         if (decorator instanceof LifeCycle) {
             ((LifeCycle) decorator).start();
         }
 
         StringWriter maskedWriter = new StringWriter();
-        JsonGenerator maskingGenerator = decorator.decorate(FACTORY.createGenerator(maskedWriter));
+        JsonGenerator maskingGenerator = decorator.decorate(MAPPER.createGenerator(maskedWriter));
 
         /*
          * Read through the unmasked string, while writing to the maskedWriter
          */
-        JsonParser parser = FACTORY.createParser(new StringReader(unmasked));
+        JsonParser parser = MAPPER.createParser(new StringReader(unmasked));
 
         while (parser.nextToken() != null) {
             maskingGenerator.copyCurrentEvent(parser);

@@ -25,7 +25,7 @@ public class AccessEventPatternJsonProvider extends AbstractPatternJsonProvider<
 
     @Override
     protected AbstractJsonPatternParser<IAccessEvent> createParser() {
-        return new AccessEventJsonPatternParser(this, this.jsonFactory);
+        return new AccessEventJsonPatternParser(this, this.objectMapper);
     }
 
 }

@@ -17,14 +17,22 @@ import java.io.IOException;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
+import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
+import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
+import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.decorate.Decorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.decorate.MapperBuilderDecorator;
+import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import net.logstash.logback.encoder.SeparatorParser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
@@ -149,21 +157,37 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     public void setImmediateFlush(boolean immediateFlush) {
         this.immediateFlush = immediateFlush;
     }
-    
-    public JsonFactoryDecorator getJsonFactoryDecorator() {
-        return formatter.getJsonFactoryDecorator();
+
+    public String getDataFormat() {
+        return formatter.getDataFormat();
     }
 
-    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
-        formatter.setJsonFactoryDecorator(jsonFactoryDecorator);
+    public void setDataFormat(String dataFormat) {
+        formatter.setDataFormat(dataFormat);
     }
 
-    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+    public DataFormatFactory getDataFormatFactory() {
+        return formatter.getDataFormatFactory();
+    }
+
+    public void setDataFormatFactory(DataFormatFactory dataFormatFactory) {
+        formatter.setDataFormatFactory(dataFormatFactory);
+    }
+
+    public void addDecorator(Decorator<?> decorator) {
+        formatter.addDecorator(decorator);
+    }
+
+    public CompositeTokenStreamFactoryBuilderDecorator getTokenStreamFactoryBuilderDecorator() {
+        return formatter.getTokenStreamFactoryBuilderDecorator();
+    }
+
+    public CompositeMapperBuilderDecorator getMapperBuilderDecorator() {
+        return formatter.getMapperBuilderDecorator();
+    }
+
+    public CompositeJsonGeneratorDecorator getJsonGeneratorDecorator() {
         return formatter.getJsonGeneratorDecorator();
-    }
-
-    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
-        formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
     public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {

@@ -24,7 +24,7 @@ import java.util.Collections;
 
 import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.TokenStreamContext;
 import com.fasterxml.jackson.core.SerializableString;
 import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
@@ -408,13 +408,6 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     }
 
     @Override
-    public void writeStartArray(int size) throws IOException {
-        if (!maskingInProgress()) {
-            super.writeStartArray(size);
-        }
-    }
-
-    @Override
     public void writeStartArray() throws IOException {
         if (!maskingInProgress()) {
             super.writeStartArray();
@@ -517,7 +510,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
      *         otherwise returns null.
      */
     private Object getMaskedValueForCurrentPath() {
-        JsonStreamContext context = getOutputContext();
+        TokenStreamContext context = getOutputContext();
         for (FieldMasker fieldMasker : fieldMaskers) {
             Object maskedValue = fieldMasker.mask(context);
             if (maskedValue != null) {
@@ -532,7 +525,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
      *         otherwise returns null.
      */
     private Object getMaskedValueForCurrentPathAndValue(Object value) {
-        JsonStreamContext context = getOutputContext();
+        TokenStreamContext context = getOutputContext();
         for (ValueMasker valueMasker : valueMaskers) {
             Object maskedValue = valueMasker.mask(context, value);
             if (maskedValue != null) {

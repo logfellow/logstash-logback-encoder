@@ -58,7 +58,8 @@ public class StackHashJsonProviderTest {
         provider.writeTo(generator, event);
         // THEN
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        verify(generator).writeStringField(eq(StackHashJsonProvider.FIELD_NAME), hashCaptor.capture());
+        verify(generator).writeFieldName(StackHashJsonProvider.FIELD_NAME);
+        verify(generator).writeString(hashCaptor.capture());
         Assert.assertTrue("Did not produce an hexadecimal integer: "+hashCaptor.getValue(), HEX_PATTERN.matcher(hashCaptor.getValue()).matches());
     }
 
@@ -72,7 +73,8 @@ public class StackHashJsonProviderTest {
         provider.writeTo(generator, event);
         // THEN
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        verify(generator).writeStringField(eq("newFieldName"), hashCaptor.capture());
+        verify(generator).writeFieldName("newFieldName");
+        verify(generator).writeString(hashCaptor.capture());
         Assert.assertTrue("Did not produce an hexadecimal integer: "+hashCaptor.getValue(), HEX_PATTERN.matcher(hashCaptor.getValue()).matches());
     }
 }

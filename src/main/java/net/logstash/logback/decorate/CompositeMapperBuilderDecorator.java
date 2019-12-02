@@ -13,17 +13,13 @@
  */
 package net.logstash.logback.decorate;
 
-import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.cfg.MapperBuilder;
 
 /**
- * A {@link JsonFactoryDecorator} that doesn't do any decoration.
- * It just returns the factory as-is.
+ * Combines a list of decorators into a single decorator, so multiple decorators can be used together.
  */
-public class NullJsonFactoryDecorator implements JsonFactoryDecorator {
-
-    @Override
-    public JsonFactory decorate(JsonFactory factory) {
-        return factory;
-    }
-
+public class CompositeMapperBuilderDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>>
+        extends CompositeDecorator<B, MapperBuilderDecorator<M, B>>
+        implements MapperBuilderDecorator<M, B> {
 }

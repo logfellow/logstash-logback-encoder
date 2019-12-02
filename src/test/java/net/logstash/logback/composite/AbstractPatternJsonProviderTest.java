@@ -21,19 +21,17 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
+import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.NodeWriter;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import ch.qos.logback.core.spi.DeferredProcessingAware;
-
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * This test just verifies that AbstractPatternJsonProvider delegates all the work to Parser.
@@ -55,7 +53,7 @@ public abstract class AbstractPatternJsonProviderTest<Event extends DeferredProc
     private JsonGenerator generator;
 
     @Mock
-    private JsonFactory jsonFactory;
+    private ObjectMapper objectMapper;
     
     private AbstractJsonPatternParser<Event> parser;
 
@@ -82,7 +80,7 @@ public abstract class AbstractPatternJsonProviderTest<Event extends DeferredProc
         // pattern used does not matter because decorated "parser" will always generate TEST_NODEWRITER_RESULT
         final String pattern = "{\"key\":\"value\"}";
         provider.setPattern(pattern);
-        provider.setJsonFactory(jsonFactory);
+        provider.setObjectMapper(objectMapper);
         provider.start();
 
         // should actually invoke parser with the pattern requested

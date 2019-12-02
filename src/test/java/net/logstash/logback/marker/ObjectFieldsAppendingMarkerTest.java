@@ -20,13 +20,13 @@ import java.io.StringWriter;
 
 import org.junit.Test;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 public class ObjectFieldsAppendingMarkerTest {
-    
-    private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+
+    private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     
     public static class MyClass {
         private String myField;
@@ -50,7 +50,7 @@ public class ObjectFieldsAppendingMarkerTest {
         MyClass myObject = new MyClass("value");
         
         StringWriter writer = new StringWriter();
-        JsonGenerator generator = FACTORY.createGenerator(writer);
+        JsonGenerator generator = MAPPER.createGenerator(writer);
         
         LogstashMarker marker = Markers.appendFields(myObject);
         generator.writeStartObject();
@@ -65,7 +65,7 @@ public class ObjectFieldsAppendingMarkerTest {
     public void testWriteTo_nonUnwrappable() throws IOException {
         
         StringWriter writer = new StringWriter();
-        JsonGenerator generator = FACTORY.createGenerator(writer);
+        JsonGenerator generator = MAPPER.createGenerator(writer);
         
         LogstashMarker marker = Markers.appendFields(Long.valueOf(1L));
         generator.writeStartObject();

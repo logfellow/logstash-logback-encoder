@@ -11,27 +11,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.pattern;
+package net.logstash.logback.decorate;
 
-import ch.qos.logback.classic.PatternLayout;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.pattern.PatternLayoutBase;
-import ch.qos.logback.core.spi.ContextAware;
-
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.cfg.MapperBuilder;
 
 /**
- * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
+ * A {@link MapperBuilderDecorator} that allows enabling/disabling of {@link MapperFeature} features.
  */
-public class LoggingEventJsonPatternParser extends AbstractJsonPatternParser<ILoggingEvent> {
+public class MapperFeatureDecorator<M extends ObjectMapper, B extends MapperBuilder<M,B>>
+        extends FeatureDecorator<B, MapperFeature>
+        implements MapperBuilderDecorator<M, B> {
 
-    public LoggingEventJsonPatternParser(final ContextAware contextAware, final ObjectMapper objectMapper) {
-        super(contextAware, objectMapper);
+    public MapperFeatureDecorator() {
+        super(MapperFeature.class);
     }
 
     @Override
-    protected PatternLayoutBase<ILoggingEvent> createLayout() {
-        return new PatternLayout();
+    protected B configure(B builder, MapperFeature feature, boolean state) {
+        return builder.configure(feature, state);
     }
-
 }

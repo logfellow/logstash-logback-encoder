@@ -19,10 +19,18 @@ import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Layout;
 import net.logstash.logback.composite.JsonProvider;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
+import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
+import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
+import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.decorate.Decorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.decorate.MapperBuilderDecorator;
+import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A {@link LogstashUdpSocketAppender} that uses a {@link LogstashLayout}
@@ -163,22 +171,39 @@ public class LogstashSocketAppender extends LogstashUdpSocketAppender {
     public void setShortenedLoggerNameLength(int length) {
         getLayout().setShortenedLoggerNameLength(length);
     }
-    
-    public JsonFactoryDecorator getJsonFactoryDecorator() {
-        return getLayout().getJsonFactoryDecorator();
+
+    public String getDataFormat() {
+        return getLayout().getDataFormat();
     }
 
-    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
-        getLayout().setJsonFactoryDecorator(jsonFactoryDecorator);
+    public void setDataFormat(String dataFormat) {
+        getLayout().setDataFormat(dataFormat);
     }
 
-    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+    public DataFormatFactory getDataFormatFactory() {
+        return getLayout().getDataFormatFactory();
+    }
+
+    public void setDataFormatFactory(DataFormatFactory dataFormatFactory) {
+        getLayout().setDataFormatFactory(dataFormatFactory);
+    }
+
+    public void addDecorator(Decorator<?> decorator) {
+        getLayout().addDecorator(decorator);
+    }
+
+    public CompositeTokenStreamFactoryBuilderDecorator getTokenStreamFactoryBuilderDecorator() {
+        return getLayout().getTokenStreamFactoryBuilderDecorator();
+    }
+
+    public CompositeMapperBuilderDecorator getMapperBuilderDecorator() {
+        return getLayout().getMapperBuilderDecorator();
+    }
+
+    public CompositeJsonGeneratorDecorator getJsonGeneratorDecorator() {
         return getLayout().getJsonGeneratorDecorator();
     }
 
-    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
-        getLayout().setJsonGeneratorDecorator(jsonGeneratorDecorator);
-    }
 
     public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {
         getLayout().setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);

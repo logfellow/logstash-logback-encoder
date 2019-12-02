@@ -15,6 +15,7 @@ package net.logstash.logback.decorate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,31 +25,31 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonFactory;
+import com.fasterxml.jackson.core.json.JsonFactoryBuilder;
 
-public class FeatureJsonFactoryDecoratorTest {
+public class JsonFactoryFeatureDecoratorTest {
 
     @Rule
     public MockitoRule rule = MockitoJUnit.rule();
 
     @Mock
-    private JsonFactory jsonFactory;
+    private JsonFactoryBuilder jsonFactoryBuilder;
 
     @Test
     public void test() {
-        FeatureJsonFactoryDecorator decorator = new FeatureJsonFactoryDecorator();
+        JsonFactoryFeatureDecorator decorator = new JsonFactoryFeatureDecorator();
         decorator.addDisable(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES.name());
         decorator.addEnable(JsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW.name());
 
-        when(jsonFactory.enable(any(JsonFactory.Feature.class))).thenReturn(jsonFactory);
-        when(jsonFactory.disable(any(JsonFactory.Feature.class))).thenReturn(jsonFactory);
+        when(jsonFactoryBuilder.configure(any(JsonFactory.Feature.class), anyBoolean())).thenReturn(jsonFactoryBuilder);
 
-        JsonFactory decoratedFactory = decorator.decorate(jsonFactory);
+        JsonFactoryBuilder decoratedFactory = decorator.decorate(jsonFactoryBuilder);
 
-        verify(jsonFactory).disable(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES);
-        verify(jsonFactory).enable(JsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW);
+        verify(jsonFactoryBuilder).configure(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES, false);
+        verify(jsonFactoryBuilder).configure(JsonFactory.Feature.FAIL_ON_SYMBOL_HASH_OVERFLOW, true);
 
-        assertThat(decoratedFactory).isSameAs(jsonFactory);
+        assertThat(decoratedFactory).isSameAs(jsonFactoryBuilder);
     }
 
 }

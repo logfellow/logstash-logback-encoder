@@ -55,7 +55,7 @@ public class FailureSummaryLoggingAppenderListenerTest {
 
     @Test
     public void appendFailures() {
-        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<>();
+        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<ILoggingEvent>();
 
         listener.eventAppended(appender, event, 10L);
         listener.eventAppended(appender, event, 10L);
@@ -95,7 +95,7 @@ public class FailureSummaryLoggingAppenderListenerTest {
 
     @Test
     public void sendFailures() {
-        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<>();
+        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<ILoggingEvent>();
 
         listener.eventSent(appender, socket, event, 10L);
         listener.eventSent(appender, socket, event, 10L);
@@ -135,7 +135,7 @@ public class FailureSummaryLoggingAppenderListenerTest {
 
     @Test
     public void connectFailures() {
-        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<>();
+        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<ILoggingEvent>();
 
         listener.connectionOpened(appender, socket);
         listener.connectionOpened(appender, socket);
@@ -175,7 +175,7 @@ public class FailureSummaryLoggingAppenderListenerTest {
 
     @Test
     public void allFailures() {
-        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<>();
+        FailureSummaryLoggingAppenderListener<ILoggingEvent> listener = new FailureSummaryLoggingAppenderListener<ILoggingEvent>();
 
         listener.connectionOpened(appender, socket);
         listener.connectionOpened(appender, socket);

@@ -26,12 +26,12 @@ import java.util.regex.Pattern;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.ContextAware;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 
 /**
@@ -47,8 +47,8 @@ public abstract class AbstractJsonPatternParser<Event> {
     public static final Pattern OPERATION_PATTERN = Pattern.compile("\\# (\\w+) (?: \\{ (.*) \\} )?", Pattern.COMMENTS);
     
     private final ContextAware contextAware;
-    private final JsonFactory jsonFactory;
-    
+    private final ObjectMapper objectMapper;
+
     private final Map<String, Operation> operations = new HashMap<>();
 
     /**
@@ -57,9 +57,9 @@ public abstract class AbstractJsonPatternParser<Event> {
      */
     private boolean omitEmptyFields;
 
-    public AbstractJsonPatternParser(final ContextAware contextAware, final JsonFactory jsonFactory) {
+    public AbstractJsonPatternParser(final ContextAware contextAware, final ObjectMapper objectMapper) {
         this.contextAware = contextAware;
-        this.jsonFactory = jsonFactory;
+        this.objectMapper = objectMapper;
         addOperation(new AsLongOperation());
         addOperation(new AsDoubleOperation());
         addOperation(new AsJsonOperation());
@@ -228,7 +228,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         protected JsonNode transform(final String value) throws IOException {
-            return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
+            return objectMapper.readTree(objectMapper.createParser(value));
         }
     }
     
@@ -241,8 +241,8 @@ public abstract class AbstractJsonPatternParser<Event> {
         protected Object transform(final String value) throws IOException {
             try {
                 final String trimmedValue = value.trim();
-                final JsonParser parser = jsonFactory.createParser(trimmedValue);
-                final TreeNode tree = jsonFactory.getCodec().readTree(parser);
+                final JsonParser parser = objectMapper.createParser(trimmedValue);
+                final TreeNode tree = objectMapper.readTree(parser);
                 if (parser.getCurrentLocation().getCharOffset() < trimmedValue.length()) {
                     /*
                      * If the full trimmed string was not read, then the full trimmed string contains a json value plus other text.
@@ -526,7 +526,7 @@ public abstract class AbstractJsonPatternParser<Event> {
 
         JsonNode node;
         try {
-            node = jsonFactory.createParser(pattern).readValueAsTree();
+            node = objectMapper.createParser(pattern).readValueAsTree();
         } catch (IOException e) {
             contextAware.addError("Failed to parse pattern [" + pattern + "]", e);
             return null;
