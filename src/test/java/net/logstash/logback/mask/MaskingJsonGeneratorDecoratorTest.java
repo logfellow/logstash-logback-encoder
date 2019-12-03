@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate.mask;
+package net.logstash.logback.mask;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,6 +30,12 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.spi.LifeCycle;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
+import net.logstash.logback.mask.FieldMasker;
+import net.logstash.logback.mask.MaskingJsonGenerator;
+import net.logstash.logback.mask.MaskingJsonGeneratorDecorator;
+import net.logstash.logback.mask.PathBasedFieldMasker;
+import net.logstash.logback.mask.RegexValueMasker;
+import net.logstash.logback.mask.ValueMasker;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;

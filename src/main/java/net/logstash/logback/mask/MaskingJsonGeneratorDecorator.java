@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate.mask;
+package net.logstash.logback.mask;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -255,7 +255,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
      * Sets the default mask value to use for any paths added via {@link #addPath(String)}
      * and values added via {@link #addValue(String)}.
      *
-     * <p>By default, this is {@value net.logstash.logback.decorate.mask.MaskingJsonGenerator#MASK}.</p>
+     * <p>By default, this is {@value MaskingJsonGenerator#MASK}.</p>
      *
      * @param defaultMask the default mask value to be used to mask real values.
      */
