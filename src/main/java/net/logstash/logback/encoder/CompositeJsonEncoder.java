@@ -24,18 +24,13 @@ import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
 import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
 import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
-import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.dataformat.DataFormatFactory;
 import net.logstash.logback.decorate.Decorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import net.logstash.logback.decorate.MapperBuilderDecorator;
-import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
         extends EncoderBase<Event> {

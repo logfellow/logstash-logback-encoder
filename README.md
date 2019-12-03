@@ -1254,7 +1254,7 @@ To use one these formats, specify the `<dataFormat>` like this:
 ```
 
 Other data formats can be used by implementing
-[`net.logstash.logback.decorate.DataFormatFactory`](src/main/java/net/logstash/logback/decorate/DataFormatFactory.java),
+[`net.logstash.logback.dataformat.DataFormatFactory`](src/main/java/net/logstash/logback/decorate/DataFormatFactory.java),
 and configuring it like this:
 
 ```xml
@@ -1274,7 +1274,7 @@ For example:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <dataFormat>smile</dataFormat>
-  <decorator class="net.logstash.logback.decorate.smile.SmileGeneratorFeatureDecorator">
+  <decorator class="net.logstash.logback.dataformat.smile.SmileGeneratorFeatureDecorator">
     <disable>WRITE_HEADER</disable>
   </decorator>
 </encoder>
@@ -1305,24 +1305,24 @@ and then specify the decorators in the logback.xml file like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <decorator class="net.logstash.logback.decorate.PrettyPrintingMapperBuilderDecorator"/>
+  <decorator class="net.logstash.logback.decorate.PrettyPrintingDecorator"/>
   <decorator class="your.package.MixInDecorator"/>
 </encoder>
 ```
 
 Jackson features can be enabled/disabled by using the following feature decorators:
 
-| Jackson Feature Enum         | Feature Decorator                                                    |
-| --------------------         | -----------------                                                    |
-| `TokenStreamFactory.Feature` | `net.logstash.logback.decorate.TokenStreamFactoryFeatureDecorator`   |
-| `JsonFactory.Feature`        | `net.logstash.logback.decorate.JsonFactoryFeatureDecorator`          |
-| `MapperFeature`              | `net.logstash.logback.decorate.MapperFeatureDecorator`               |
-| `SerializationFeature`       | `net.logstash.logback.decorate.SerializationFeatureDecorator`        |
-| `StreamWriteFeature`         | `net.logstash.logback.decorate.StreamWriteFeatureDecorator`          |
-| `JsonWriteFeature`           | `net.logstash.logback.decorate.JsonWriteFeatureDecorator`            |
-| `SmileGenerator.Feature`     | `net.logstash.logback.decorate.smile.SmileGeneratorFeatureDecorator` |
-| `YAMLGenerator.Feature`      | `net.logstash.logback.decorate.yaml.YamlGeneratorFeatureDecorator`   |
-| `CBORGenerator.Feature`      | `net.logstash.logback.decorate.cbor.CborGeneratorFeatureDecorator`   |
+| Jackson Feature Enum         | Feature Decorator                                                      |
+| --------------------         | -----------------                                                      |
+| `TokenStreamFactory.Feature` | `net.logstash.logback.decorate.TokenStreamFactoryFeatureDecorator`     |
+| `JsonFactory.Feature`        | `net.logstash.logback.dataformat.json.JsonFactoryFeatureDecorator`     |
+| `MapperFeature`              | `net.logstash.logback.decorate.MapperFeatureDecorator`                 |
+| `SerializationFeature`       | `net.logstash.logback.decorate.SerializationFeatureDecorator`          |
+| `StreamWriteFeature`         | `net.logstash.logback.decorate.StreamWriteFeatureDecorator`            |
+| `JsonWriteFeature`           | `net.logstash.logback.dataformat.json.JsonWriteFeatureDecorator`       |
+| `SmileGenerator.Feature`     | `net.logstash.logback.dataformat.smile.SmileGeneratorFeatureDecorator` |
+| `YAMLGenerator.Feature`      | `net.logstash.logback.dataformat.yaml.YamlGeneratorFeatureDecorator`   |
+| `CBORGenerator.Feature`      | `net.logstash.logback.dataformat.cbor.CborGeneratorFeatureDecorator`   |
 
 
 For example:
@@ -1332,7 +1332,7 @@ For example:
   <decorator class="net.logstash.logback.decorate.TokenStreamFactoryFeatureDecorator">
     <disable>USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING</disable>
   </decorator>
-  <decorator class="net.logstash.logback.decorate.JsonWriteFeatureDecorator">
+  <decorator class="net.logstash.logback.dataformat.json.JsonWriteFeatureDecorator">
     <enable>WRITE_NUMBERS_AS_STRINGS</enable>
   </decorator>
 </encoder>
@@ -1359,13 +1359,13 @@ you can register it manually via a [`MapperBuilderDecorator`](#customizing-token
 By default, when a string is written as a JSON string value, any character not allowed in a JSON string will be escaped.
 For example, the newline character (ASCII 10) will be escaped as `\n`.
 
-To customize these escape sequences, use the `net.logstash.logback.decorate.CharacterEscapesJsonFactoryBuilderDecorator`.
+To customize these escape sequences, use the `net.logstash.logback.dataformat.json.CharacterEscapesDecorator`.
 
 For example, if you want to use something other than `\n` as the escape sequence for the newline character, you can do the following:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <decorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryBuilderDecorator">
+  <decorator class="net.logstash.logback.dataformat.json.CharacterEscapesDecorator">
     <escape>
       <targetCharacterCode>10</targetCharacterCode>
       <escapeSequence>\u2028</escapeSequence>

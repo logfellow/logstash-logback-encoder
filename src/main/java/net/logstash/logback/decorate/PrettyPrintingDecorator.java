@@ -18,9 +18,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.cfg.MapperBuilder;
 
 /**
- * Enables pretty printing on the {@link MapperBuilder}
+ * Enables pretty printing on the {@link MapperBuilder}.
  */
-public class PrettyPrintingMapperBuilderDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>> implements MapperBuilderDecorator<M, B> {
+public class PrettyPrintingDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>> implements MapperBuilderDecorator<M, B> {
 
     @Override
     public B decorate(B builder) {

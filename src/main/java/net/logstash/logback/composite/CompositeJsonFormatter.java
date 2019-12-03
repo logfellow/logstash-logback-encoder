@@ -32,9 +32,9 @@ import ch.qos.logback.core.spi.LifeCycle;
 import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
 import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
 import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
-import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.dataformat.DataFormatFactory;
 import net.logstash.logback.decorate.Decorator;
-import net.logstash.logback.decorate.JsonDataFormatFactory;
+import net.logstash.logback.dataformat.json.JsonDataFormatFactory;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.MapperBuilderDecorator;
 import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
@@ -69,10 +69,10 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     private static final Map<String, String> DATA_FORMATS;
     static {
         Map<String, String> dataFormats = new HashMap<>();
-        dataFormats.put(DataFormatFactory.JSON, "net.logstash.logback.decorate.JsonDataFormatFactory");
-        dataFormats.put(DataFormatFactory.YAML, "net.logstash.logback.decorate.yaml.YamlDataFormatFactory");
-        dataFormats.put(DataFormatFactory.CBOR, "net.logstash.logback.decorate.cbor.CborDataFormatFactory");
-        dataFormats.put(DataFormatFactory.SMILE, "net.logstash.logback.decorate.smile.SmileDataFormatFactory");
+        dataFormats.put(DataFormatFactory.JSON, "net.logstash.logback.dataformat.json.JsonDataFormatFactory");
+        dataFormats.put(DataFormatFactory.YAML, "net.logstash.logback.dataformat.yaml.YamlDataFormatFactory");
+        dataFormats.put(DataFormatFactory.CBOR, "net.logstash.logback.dataformat.cbor.CborDataFormatFactory");
+        dataFormats.put(DataFormatFactory.SMILE, "net.logstash.logback.dataformat.smile.SmileDataFormatFactory");
         DATA_FORMATS = Collections.unmodifiableMap(dataFormats);
     }
 

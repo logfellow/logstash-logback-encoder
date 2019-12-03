@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate.cbor;
+package net.logstash.logback.dataformat.cbor;
 
 import net.logstash.logback.decorate.FeatureDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;

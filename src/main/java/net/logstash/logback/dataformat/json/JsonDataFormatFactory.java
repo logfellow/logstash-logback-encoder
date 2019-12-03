@@ -11,24 +11,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate;
+package net.logstash.logback.dataformat.json;
+
+import net.logstash.logback.dataformat.DataFormatFactory;
 
 import com.fasterxml.jackson.core.json.JsonFactory;
 import com.fasterxml.jackson.core.json.JsonFactoryBuilder;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 /**
- * A {@link TokenStreamFactoryBuilderDecorator} that allows enabling/disabling of {@link JsonFactory.Feature} features.
+ * A {@link DataFormatFactory} for the JSON data format.
  */
-public class JsonFactoryFeatureDecorator
-        extends FeatureDecorator<JsonFactoryBuilder, JsonFactory.Feature>
-        implements TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder> {
+public class JsonDataFormatFactory implements DataFormatFactory<JsonFactory, JsonFactoryBuilder, JsonMapper, JsonMapper.Builder> {
 
-    public JsonFactoryFeatureDecorator() {
-        super(JsonFactory.Feature.class);
+    @Override
+    public String getName() {
+        return JSON;
     }
 
     @Override
-    protected JsonFactoryBuilder configure(JsonFactoryBuilder builder, JsonFactory.Feature feature, boolean state) {
-        return builder.configure(feature, state);
+    public JsonFactoryBuilder createTokenStreamFactoryBuilder() {
+        return JsonFactory.builder();
+    }
+
+    @Override
+    public JsonMapper.Builder createMapperBuilder(JsonFactory factory) {
+        return JsonMapper.builder(factory);
     }
 }

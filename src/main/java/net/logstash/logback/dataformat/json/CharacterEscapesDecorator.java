@@ -11,13 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate;
+package net.logstash.logback.dataformat.json;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 
 import com.fasterxml.jackson.core.SerializableString;
 import com.fasterxml.jackson.core.io.CharacterEscapes;
@@ -30,10 +32,10 @@ import com.fasterxml.jackson.core.json.JsonFactoryBuilder;
  * 
  * For example, you could change the escape sequence used for newline characters from '\n' to '\u2028'
  */
-public class CharacterEscapesJsonFactoryBuilderDecorator implements TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder> {
+public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder> {
 
     /**
-     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryBuilderDecorator#escapes}
+     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesDecorator#escapes}
      */
     private static class CustomizedCharacterEscapes extends CharacterEscapes {
 
@@ -232,12 +234,12 @@ public class CharacterEscapesJsonFactoryBuilderDecorator implements TokenStreamF
     private final List<Escape> escapes = new ArrayList<>();
 
     /**
-     * Indicates when the {@link CharacterEscapesJsonFactoryBuilderDecorator#characterEscapes} field needs to be re-initialized.
+     * Indicates when the {@link CharacterEscapesDecorator#characterEscapes} field needs to be re-initialized.
      */
     private boolean needsInitialization = true;
     
     /**
-     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryBuilderDecorator#escapes}
+     * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesDecorator#escapes}
      */
     private CustomizedCharacterEscapes characterEscapes;
 

@@ -11,9 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate.yaml;
+package net.logstash.logback.dataformat.yaml;
 
-import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.dataformat.DataFormatFactory;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactoryBuilder;

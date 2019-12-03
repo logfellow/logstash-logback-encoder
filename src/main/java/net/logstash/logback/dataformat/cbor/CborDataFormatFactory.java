@@ -11,9 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate.cbor;
+package net.logstash.logback.dataformat.cbor;
 
-import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.dataformat.DataFormatFactory;
 
 import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 import com.fasterxml.jackson.dataformat.cbor.CBORFactoryBuilder;

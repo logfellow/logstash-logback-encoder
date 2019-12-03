@@ -22,15 +22,10 @@ import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
 import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
 import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
-import net.logstash.logback.decorate.DataFormatFactory;
+import net.logstash.logback.dataformat.DataFormatFactory;
 import net.logstash.logback.decorate.Decorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
-import net.logstash.logback.decorate.MapperBuilderDecorator;
-import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.layout.LogstashLayout;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A {@link LogstashUdpSocketAppender} that uses a {@link LogstashLayout}

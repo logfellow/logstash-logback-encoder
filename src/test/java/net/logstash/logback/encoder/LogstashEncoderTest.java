@@ -40,7 +40,7 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-import net.logstash.logback.decorate.PrettyPrintingMapperBuilderDecorator;
+import net.logstash.logback.decorate.PrettyPrintingDecorator;
 import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
@@ -157,7 +157,7 @@ public class LogstashEncoderTest {
         encoder.addDecorator((TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder>) builder ->
                 builder.disable(JsonWriteFeature.QUOTE_FIELD_NAMES));
 
-        encoder.addDecorator(new PrettyPrintingMapperBuilderDecorator());
+        encoder.addDecorator(new PrettyPrintingDecorator());
 
         encoder.start();
         final long timestamp = System.currentTimeMillis();

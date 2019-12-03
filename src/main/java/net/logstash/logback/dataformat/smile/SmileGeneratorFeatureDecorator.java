@@ -11,12 +11,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate.smile;
+package net.logstash.logback.dataformat.smile;
 
 import net.logstash.logback.decorate.FeatureDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.dataformat.smile.SmileGenerator;
 
 /**

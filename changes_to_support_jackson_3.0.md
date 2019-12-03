@@ -66,17 +66,17 @@ Feature enums were refactored drastically in Jackson 3.0.
 As a result, the decorators used to configure features have changed.
 The following table shows which feature decorator to use to configure each Jackson feature type. 
 
-| Jackson Feature Enum         | Feature Decorator                                                    |
-| --------------------         | -----------------                                                    |
-| `TokenStreamFactory.Feature` | `net.logstash.logback.decorate.TokenStreamFactoryFeatureDecorator`   |
-| `JsonFactory.Feature`        | `net.logstash.logback.decorate.JsonFactoryFeatureDecorator`          |
-| `MapperFeature`              | `net.logstash.logback.decorate.MapperFeatureDecorator`               |
-| `SerializationFeature`       | `net.logstash.logback.decorate.SerializationFeatureDecorator`        |
-| `StreamWriteFeature`         | `net.logstash.logback.decorate.StreamWriteFeatureDecorator`          |
-| `JsonWriteFeature`           | `net.logstash.logback.decorate.JsonWriteFeatureDecorator`            |
-| `SmileGenerator.Feature`     | `net.logstash.logback.decorate.smile.SmileGeneratorFeatureDecorator` |
-| `YAMLGenerator.Feature`      | `net.logstash.logback.decorate.yaml.YamlGeneratorFeatureDecorator`   |
-| `CBORGenerator.Feature`      | `net.logstash.logback.decorate.cbor.CborGeneratorFeatureDecorator`   |
+| Jackson Feature Enum         | Feature Decorator                                                      |
+| --------------------         | -----------------                                                      |
+| `TokenStreamFactory.Feature` | `net.logstash.logback.decorate.TokenStreamFactoryFeatureDecorator`     |
+| `MapperFeature`              | `net.logstash.logback.decorate.MapperFeatureDecorator`                 |
+| `SerializationFeature`       | `net.logstash.logback.decorate.SerializationFeatureDecorator`          |
+| `StreamWriteFeature`         | `net.logstash.logback.decorate.StreamWriteFeatureDecorator`            |
+| `JsonFactory.Feature`        | `net.logstash.logback.dataformat.json.JsonFactoryFeatureDecorator`     |
+| `JsonWriteFeature`           | `net.logstash.logback.dataformat.json.JsonWriteFeatureDecorator`       |
+| `SmileGenerator.Feature`     | `net.logstash.logback.dataformat.smile.SmileGeneratorFeatureDecorator` |
+| `YAMLGenerator.Feature`      | `net.logstash.logback.dataformat.yaml.YamlGeneratorFeatureDecorator`   |
+| `CBORGenerator.Feature`      | `net.logstash.logback.dataformat.cbor.CborGeneratorFeatureDecorator`   |
 
 The following old decorators were replaced by one or more of the above feature decorators
 (depending on where the feature moved in Jackson 3.0):
@@ -106,7 +106,7 @@ For example:
 Or: 
 
 ```xml
- <dataFormatFactory class="net.logstash.logback.decorate.smile.SmileDataFormatFactory"/>
+ <dataFormatFactory class="net.logstash.logback.dataformat.smile.SmileDataFormatFactory"/>
 ```
 
 

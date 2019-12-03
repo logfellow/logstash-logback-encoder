@@ -11,22 +11,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate;
+package net.logstash.logback.dataformat.json;
+
+import net.logstash.logback.decorate.FeatureDecorator;
+import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 
 import com.fasterxml.jackson.core.json.JsonFactory;
 import com.fasterxml.jackson.core.json.JsonFactoryBuilder;
 import com.fasterxml.jackson.core.json.JsonWriteFeature;
 
 /**
- * Enables the {@link com.fasterxml.jackson.core.json.JsonWriteFeature#ESCAPE_NON_ASCII} feature on the {@link JsonFactory}.
- * 
- * Prior to 5.0, {@link com.fasterxml.jackson.core.json.JsonWriteFeature#ESCAPE_NON_ASCII} was enabled by default.
- * In 5.0, the feature is disabled by default, and can be re-enabled with this decorator.
+ * A {@link TokenStreamFactoryBuilderDecorator} that allows enabling/disabling of {@link JsonWriteFeature} features.
  */
-public class EscapeNonAsciiJsonFactoryBuilderDecorator implements TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder> {
+public class JsonWriteFeatureDecorator
+        extends FeatureDecorator<JsonFactoryBuilder, JsonWriteFeature>
+        implements TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder> {
+
+    public JsonWriteFeatureDecorator() {
+        super(JsonWriteFeature.class);
+    }
 
     @Override
-    public JsonFactoryBuilder decorate(JsonFactoryBuilder builder) {
-        return builder.enable(JsonWriteFeature.ESCAPE_NON_ASCII);
+    protected JsonFactoryBuilder configure(JsonFactoryBuilder builder, JsonWriteFeature feature, boolean state) {
+        return builder.configure(feature, state);
     }
 }

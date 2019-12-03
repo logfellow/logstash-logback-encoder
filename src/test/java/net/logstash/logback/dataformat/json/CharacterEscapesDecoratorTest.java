@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate;
+package net.logstash.logback.dataformat.json;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,15 +24,15 @@ import com.fasterxml.jackson.core.json.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
-public class CharacterEscapesJsonFactoryBuilderDecoratorTest {
+public class CharacterEscapesDecoratorTest {
 
     @Test
     public void basicEscape() throws Exception {
-        CharacterEscapesJsonFactoryBuilderDecorator decorator = new CharacterEscapesJsonFactoryBuilderDecorator();
-        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape("\n", "_"));
-        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape(" ", "==="));
-        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape("y", "!"));
-        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape("ё", "?"));
+        CharacterEscapesDecorator decorator = new CharacterEscapesDecorator();
+        decorator.addEscape(new CharacterEscapesDecorator.Escape("\n", "_"));
+        decorator.addEscape(new CharacterEscapesDecorator.Escape(" ", "==="));
+        decorator.addEscape(new CharacterEscapesDecorator.Escape("y", "!"));
+        decorator.addEscape(new CharacterEscapesDecorator.Escape("ё", "?"));
         
         StringWriter writer = new StringWriter();
         ObjectMapper objectMapper = JsonMapper.builder(decorator.decorate(JsonFactory.builder()).build()).build();
@@ -48,12 +48,12 @@ public class CharacterEscapesJsonFactoryBuilderDecoratorTest {
 
     @Test
     public void noEscapeSequence() throws Exception {
-        CharacterEscapesJsonFactoryBuilderDecorator.Escape noEscapeSequence = new CharacterEscapesJsonFactoryBuilderDecorator.Escape();
+        CharacterEscapesDecorator.Escape noEscapeSequence = new CharacterEscapesDecorator.Escape();
         noEscapeSequence.setTarget("z");
 
-        CharacterEscapesJsonFactoryBuilderDecorator decorator = new CharacterEscapesJsonFactoryBuilderDecorator();
+        CharacterEscapesDecorator decorator = new CharacterEscapesDecorator();
         decorator.addEscape(noEscapeSequence);
-        decorator.addEscape(new CharacterEscapesJsonFactoryBuilderDecorator.Escape(10, "==="));
+        decorator.addEscape(new CharacterEscapesDecorator.Escape(10, "==="));
 
         StringWriter writer = new StringWriter();
         ObjectMapper objectMapper = JsonMapper.builder(decorator.decorate(JsonFactory.builder()).build()).build();
@@ -69,7 +69,7 @@ public class CharacterEscapesJsonFactoryBuilderDecoratorTest {
 
     @Test
     public void noStandard() throws Exception {
-        CharacterEscapesJsonFactoryBuilderDecorator decorator = new CharacterEscapesJsonFactoryBuilderDecorator();
+        CharacterEscapesDecorator decorator = new CharacterEscapesDecorator();
         decorator.setIncludeStandardAsciiEscapesForJSON(false);
         
         StringWriter writer = new StringWriter();
