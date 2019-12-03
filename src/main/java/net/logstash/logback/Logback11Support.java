@@ -41,8 +41,8 @@ public class Logback11Support {
     private static final boolean IS_LOGBACK_1_1 = ENCODER_INIT_METHOD != null;
 
     /**
-     * Returns true if logback 1.1.x or earlier is on the runtime classpath.
-     * Returns false if logback 1.2.x or later is on the runtime classpath
+     * @return true if logback 1.1.x or earlier is on the runtime classpath.
+     *         false if logback 1.2.x or later is on the runtime classpath
      */
     public boolean isLogback11OrBefore() {
         return IS_LOGBACK_1_1;
@@ -51,7 +51,7 @@ public class Logback11Support {
     /**
      * Called by logic that should only execute if logback 1.1.x or earlier is on the runtime classpath.
      * 
-     * @throws IllegalStateException if the logback version is >= 1.2 
+     * @throws IllegalStateException if the logback version is &gt;= 1.2
      */
     public void verifyLogback11OrBefore() {
         if (!isLogback11OrBefore()) {
@@ -61,7 +61,7 @@ public class Logback11Support {
     /**
      * Called by logic that should only execute if logback 1.2.x or later is on the runtime classpath.
      * 
-     * @throws IllegalStateException if the logback version is < 1.2 
+     * @throws IllegalStateException if the logback version is &lt; 1.2
      */
     public void verifyLogback12OrAfter() {
         if (isLogback11OrBefore()) {
@@ -71,6 +71,10 @@ public class Logback11Support {
     
     /**
      * Invokes the init method of a logback 1.1 encoder, with the given outputStream as the argument.
+     *
+     * @param encoder the encoder to initialize
+     * @param outputStream the output stream with which to initialize the encoder
+     * @throws IOException if an exception occurs during initialization
      */
     public void init(Encoder<?> encoder, OutputStream outputStream) throws IOException {
         verifyLogback11OrBefore();
@@ -93,6 +97,9 @@ public class Logback11Support {
     
     /**
      * Invokes the doEncode method of a logback 1.1 encoder, with the given event as the argument.
+     * @param encoder the encoder to use to encode the event
+     * @param event the event to encode
+     * @throws IOException if an exception occurs during encoding
      */
     public void doEncode(Encoder<?> encoder, Object event) throws IOException {
         verifyLogback11OrBefore();
@@ -115,6 +122,9 @@ public class Logback11Support {
     
     /**
      * Invokes the close method of a logback 1.1 encoder.
+     *
+     * @param encoder the encoder to close
+     * @throws IOException if an exception occurs during close
      */
     public void close(Encoder<?> encoder) throws IOException {
         verifyLogback11OrBefore();
@@ -137,6 +147,11 @@ public class Logback11Support {
 
     /**
      * Returns the specified method of the given class, or null if it can't be found.
+     *
+     * @param clazz the class from which to retrieve the method
+     * @param methodName the name of the method to retrieve
+     * @param parameterTypes the parameter types of the method to retrieve
+     * @return the method from the class with the given methodName and parameterTypes (or null if not found)
      */
     private static Method getMethod(Class<?> clazz, String methodName, Class<?>... parameterTypes) {
         try {

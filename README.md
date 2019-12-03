@@ -4,12 +4,12 @@
 
 # Logstash Logback Encoder
 
-[![Build](https://travis-ci.org/logstash/logstash-logback-encoder.svg?branch=master)](https://travis-ci.org/logstash/logstash-logback-encoder)
+[![Build](https://github.com/logstash/logstash-logback-encoder/workflows/build/badge.svg?branch=master)](https://github.com/logstash/logstash-logback-encoder/actions)
 [![Javadocs](http://www.javadoc.io/badge/net.logstash.logback/logstash-logback-encoder.svg)](http://www.javadoc.io/doc/net.logstash.logback/logstash-logback-encoder)
 [![Maven Central](https://img.shields.io/maven-central/v/net.logstash.logback/logstash-logback-encoder)](https://search.maven.org/artifact/net.logstash.logback/logstash-logback-encoder)
 [![Release Notes](https://img.shields.io/github/v/release/logstash/logstash-logback-encoder?label=release%20notes)](https://github.com/logstash/logstash-logback-encoder/releases/latest)
 
-Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON and [other formats supported by Jackson](#non-json-formats).
+Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON and [other formats supported by Jackson](#data-format).
 
 Supports both regular _LoggingEvents_ (logged through a `Logger`) and _AccessEvents_ (logged via [logback-access](http://logback.qos.ch/access.html)).
 
@@ -43,13 +43,15 @@ The structure of the output, and the data it contains, is fully configurable.
 * [AccessEvent Fields](#accessevent-fields)
   * [Standard Fields](#standard-fields-1)
   * [Header Fields](#header-fields)
+* [Customizing Jackson](#customizing-jackson)
+  * [Data Format](#data-format)
+  * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+  * [Registering Jackson Modules](#registering-jackson-modules)
+  * [Customizing Character Escapes](#customizing-character-escapes)
+* [Masking](#masking)
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
-* [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
-  * [Non-JSON Formats](#non-json-formats)
-* [Registering Jackson Modules](#registering-jackson-modules)
-* [Customizing Character Escapes](#customizing-character-escapes)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
@@ -979,7 +981,7 @@ to avoid the object construction if the log level is disabled.
 Examples using `StructuredArguments`:
 
 ```java
-import static net.logstash.logback.argument.StructuredArguments.*
+import static net.logstash.logback.argument.StructuredArguments.*;
 
 /*
  * Add "name":"value" to the JSON output,
@@ -1074,7 +1076,7 @@ For example, instead of `keyValue(key, value)`, you can use `kv(key, value)`.
 Examples using `Markers`:
 
 ```java
-import static net.logstash.logback.marker.Markers.*
+import static net.logstash.logback.marker.Markers.*;
 
 /*
  * Add "name":"value" to the JSON output.
@@ -1207,6 +1209,7 @@ The `IncludeExcludeHeaderFilter` can be configured like this:
     <include>Content-Type</include>
   </requestHeaderFilter>
 </encoder>
+```
 
 Custom filters implementing [`HeaderFilter`](/src/main/java/net/logstash/logback/composite/accessevent/HeaderFilter.java)
 can be used by specifying the filter class like this:
@@ -1214,6 +1217,247 @@ can be used by specifying the filter class like this:
 ```xml
   <requestHeaderFilter class="your.package.YourFilterClass"/>
 ```
+
+## Customizing Jackson
+
+Logstash-logback-encoder uses [Jackson](https://github.com/FasterXML/jackson) to encode log and access events.
+
+Logstash-logback-encoder provides sensible defaults for Jackson, but gives you full control over the Jackson configuration.
+
+For example, you can:
+* specify the [data format](#data-format)
+* customize the [`JsonFactory` and `JsonGenerator`](#customizing-json-factory-and-generator)
+* register [jackson modules](#registering-jackson-modules)
+* configure [character escapes](#customizing-character-escapes) 
+
+### Data Format
+
+JSON is used by default, but other data formats supported by Jackson can be used.
+* [text data formats](https://github.com/FasterXML/jackson-dataformats-text)
+* [binary data formats](https://github.com/FasterXML/jackson-dataformats-binary)
+
+> :warning: When using non-JSON data formats, you must include the appropriate jackson dataformat library on the runtime classpath,
+> typically via a  maven/gradle dependency  (e.g. for Smile, include `jackson-dataformat-smile`).
+
+[Decorators](#customizing-json-factory-and-generator) are provided for the following data formats:
+* `cbor` - [`CborJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/cbor/CborJsonFactoryDecorator.java)
+* `smile` - [`SmileJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/smile/SmileJsonFactoryDecorator.java)
+* `yaml` - [`YamlJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlJsonFactoryDecorator.java)
+
+To use one these formats, specify the `<jsonFactoryDecorator>` like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
+</encoder>
+```
+Other data formats can be used by implementing a custom
+[`net.logstash.logback.decorate.JsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java).
+
+
+The following [decorators](#customizing-json-factory-and-generator)
+can be used to configure data-format-specific generator features:
+* [`SmileFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/smile/SmileFeatureJsonGeneratorDecorator.java)
+* [`CborFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/cbor/CborFeatureJsonGeneratorDecorator.java)
+* [`YamlFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlFeatureJsonGeneratorDecorator.java)
+
+For example:
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.smile.SmileFeatureJsonGeneratorDecorator">
+    <disable>WRITE_HEADER</disable>
+  </jsonGeneratorDecorator>
+</encoder>
+``` 
+
+### Customizing JSON Factory and Generator
+
+The `JsonFactory` and `JsonGenerator` used to write output can be customized by instances of:
+* [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
+* [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java)
+
+For example, you could enable pretty printing by using the
+[PrettyPrintingJsonGeneratorDecorator](/src/main/java/net/logstash/logback/decorate/PrettyPrintingJsonGeneratorDecorator.java)
+
+Or customize object mapping like this:
+
+```java
+public class ISO8601DateDecorator implements JsonFactoryDecorator  {
+
+	@Override
+	public JsonFactory decorate(JsonFactory factory) {
+		ObjectMapper codec = (ObjectMapper) factory.getCodec();
+		codec.setDateFormat(new ISO8601DateFormat());
+		return factory;
+	}
+}
+```
+and then specify the decorators in the logback.xml file like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
+  <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
+</encoder>
+```
+
+`JsonFactory` and `JsonGenerator` features can be enabled/disabled by using the
+`FeatureJsonFactoryDecorator` and `FeatureJsonGeneratorDecorator`, respectively.
+For example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.FeatureJsonFactoryDecorator">
+    <disable>USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING</disable>
+  </jsonFactoryDecorator>
+  <jsonGeneratorDecorator class="net.logstash.logback.decorate.FeatureJsonGeneratorDecorator">
+    <enable>WRITE_NUMBERS_AS_STRINGS</enable>
+  </jsonGeneratorDecorator>
+</encoder>
+``` 
+
+See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package
+and sub-packages for other decorators.
+
+### Registering Jackson Modules
+
+By default, Jackson modules are dynamically registered via
+[`ObjectMapper.findAndRegisterModules()`](https://fasterxml.github.io/jackson-databind/javadoc/2.9/com/fasterxml/jackson/databind/ObjectMapper.html#findAndRegisterModules--).
+
+Therefore, you just need to add jackson modules (e.g. jackson-datatype-jdk8) to the classpath,
+and they will be dynamically registered.
+
+To disable automatic discovery, set `<findAndRegisterJacksonModules>false</findAndRegisterJacksonModules>` on the encoder/layout.
+
+If you have a module that Jackson is not able to dynamically discover,
+you can register it manually via a [`JsonFactoryDecorator`](#customizing-json-factory-and-generator).
+
+### Customizing Character Escapes
+
+By default, when a string is written as a JSON string value, any character not allowed in a JSON string will be escaped.
+For example, the newline character (ASCII 10) will be escaped as `\n`.
+
+To customize these escape sequences, use the `net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator`.
+
+For example, if you want to use something other than `\n` as the escape sequence for the newline character, you can do the following:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonFactoryDecorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator">
+    <escape>
+      <targetCharacterCode>10</targetCharacterCode>
+      <escapeSequence>\u2028</escapeSequence>
+    </escape>
+  </jsonFactoryDecorator>
+</encoder>
+```
+
+You can also disable all the default escape sequences by specifying `<includeStandardAsciiEscapesForJSON>false</includeStandardAsciiEscapesForJSON>` on the `CharacterEscapesJsonFactoryDecorator`.
+If you do this, then you will need to register custom escapes for each character that is illegal in JSON string values.  Otherwise, invalid JSON could be written.
+
+## Masking
+
+The [`MaskingJsonGeneratorDecorator`](src/main/java/net/logstash/logback/mask/MaskingJsonGeneratorDecorator.java)
+can be used to mask sensitive values (e.g. personally identifiable information (PII) or financial data).
+
+Data to be masked can be identified by [path](#identifying-field-values-to-mask-by-path)
+and/or by [value](#identifying-field-values-to-mask-by-value).
+
+### Identifying field values to mask by path
+
+Paths of fields to mask can be specified in several ways, as shown in the following example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+
+    <!--
+      The default mask string can optionally be specified by <defaultMask>.
+      When the default mask string is not specified, **** is used.
+    -->
+    <defaultMask>****</defaultMask>
+
+    <!-- Field paths to mask added via <path> will use the default mask string -->
+    <path>singleFieldName</path>
+    <path>/absolute/path/to/mask</path>
+    <path>partial/path/to/mask</path>
+    <path>partial/path/with/*/wildcard</path>
+    <path>tilde~0slash~1escapedPath</path>
+
+    <!-- Multiple field paths can be specified as a comma separated string in the <paths> element. -->
+    <paths>path1,path2,path3</paths>
+
+    <!-- Field paths to mask added via <pathMask> can use a non-default mask string -->
+    <pathMask>
+      <path>some/path</path>
+      <path>some/other/path</path>
+      <mask>[masked]</mask>
+    </pathMask>
+    <pathMask>
+      <paths>anotherFieldName,anotherFieldName2</paths>
+      <mask>**anotherCustomMask**</mask>
+    </pathMask>
+
+    <!-- Custom implementations of net.logstash.logback.mask.FieldMasker
+         can be used for more advanced masking behavior-->
+    <fieldMasker class="your.custom.FieldMaskerA"/>
+    <fieldMasker class="your.custom.FieldMaskerB"/>
+  </jsonGeneratorDecorator>
+</encoder>
+```
+
+See [`PathBasedFieldMasker`](src/main/java/net/logstash/logback/mask/PathBasedFieldMasker.java)
+for the path string format and more examples.  But in general:
+
+* Paths follow a format similar to (but not _exactly_ same as) a [JSON Pointer](http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-03).
+* Absolute paths start with `/` and are absolute to the root of the JSON output event (e.g. `/@timestamp` would mask the default timestamp field)
+* Partial paths do not start with `/` and match anywhere that path sequence is seen in the output.
+* A path with a single token (i.e. no `/` characters) will match all occurrences of a field with the given name
+* A wildcard token (`*`) will match anything at that location within the path
+* Use `~1` to escape `/` within a token
+* Use `~0` to escape `~` within a token
+
+### Identifying field values to mask by value
+
+Specific values to be masked can be specified in several ways, as seen in the following example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+
+    <!--
+      The default mask string can optionally be specified by <defaultMask>.
+      When the default mask string is not specified, **** is used.
+    -->
+    <defaultMask>****</defaultMask>
+
+    <!-- Values to mask added via <value> will use the  default mask string -->
+    <value>^foo$</value>
+    <value>^bar$</value>
+
+    <!-- Multiple values can be specified as a comma separated string in the <values> element. -->
+    <values>^baz$,^blah$</values>
+
+    <!-- Values to mask added via <valueMask> can use a non-default mask string
+         The mask string here can reference regex capturing groups if needed -->
+    <valueMask>
+      <value>^(foo)-.*$</value>
+      <value>^(bar)-.*$</value>
+      <mask>\1****</mask>
+    </valueMask>
+
+    <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
+         can be used for more advanced masking behavior-->
+    <valueMasker class="your.custom.ValueMaskerA"/>
+    <valueMasker class="your.custom.ValueMaskerB"/>
+  </jsonGeneratorDecorator>
+</encoder>
+```
+
+Identifying data to mask by value is much more expensive than identifying data to mask by [path](#identifying-field-values-to-mask-by-path).
+Therefore, prefer identifying data to mask by path.
+
 
 ## Customizing Standard Field Names
 
@@ -1300,122 +1544,6 @@ You can change the timezone like this:
 ```
 
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
-
-
-## Customizing JSON Factory and Generator
-
-The `JsonFactory` and `JsonGenerator` used to serialize output can be customized by
-instances of [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
-or [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java), respectively.
-
-For example, you could enable pretty printing by using the
-[PrettyPrintingJsonGeneratorDecorator](/src/main/java/net/logstash/logback/decorate/PrettyPrintingJsonGeneratorDecorator.java)
-
-Or customize object mapping like this:
-
-```java
-public class ISO8601DateDecorator implements JsonFactoryDecorator  {
-
-	@Override
-	public JsonFactory decorate(JsonFactory factory) {
-		ObjectMapper codec = (ObjectMapper) factory.getCodec();
-		codec.setDateFormat(new ISO8601DateFormat());
-		return factory;
-	}
-}
-```
-and then specify the decorator in the logback.xml file like this:
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
-  <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
-</encoder>
-```
-
-`JsonFactory` and `JsonGenerator` features can be enabled/disabled by using the
-`FeatureJsonFactoryDecorator` and `FeatureJsonGeneratorDecorator`, respectively.
-For example:
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonFactoryDecorator class="net.logstash.logback.decorate.FeatureJsonFactoryDecorator">
-    <disable>USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING</disable>
-  </jsonFactoryDecorator>
-  <jsonGeneratorDecorator class="net.logstash.logback.decorate.FeatureJsonGeneratorDecorator">
-    <enable>WRITE_NUMBERS_AS_STRINGS</enable>
-  </jsonGeneratorDecorator>
-</encoder>
-``` 
-
-See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package for other decorators.
-
-### Non-JSON Formats
-
-[JsonFactoryDecorators](#customizing-json-factory-and-generator) can be used to switch the output format
-to other formats supported by Jackson:
-* [text data formats](https://github.com/FasterXML/jackson-dataformats-text)
-* [binary data formats](https://github.com/FasterXML/jackson-dataformats-binary)
-
-Decorators are provided for Smile, CBOR, or YAML by
-[`SmileJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/smile/SmileJsonFactoryDecorator.java),
-[`CborJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/cbor/CborJsonFactoryDecorator.java), or
-[`YamlJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlJsonFactoryDecorator.java).
-Generator decorators are also available to enable/disable generator features of each format.
-Other formats can be supported by custom decorators.
-
-To write Smile instead of JSON (follow a similar pattern for CBOR and YAML):
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <!-- Log in Smile format -->
-  <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
-  <!-- Optionally enable/disable SmileGenerator features -->
-  <jsonGeneratorDecorator class="net.logstash.logback.decorate.smile.SmileFeatureJsonGeneratorDecorator">
-    <disable>WRITE_HEADER</disable>
-  </jsonGeneratorDecorator>
-</encoder>
-``` 
-
-Be sure to include the appropriate jackson dataformat library on the runtime classpath
-(e.g. via maven/gradle dependency).  e.g. for Smile, include `jackson-dataformat-smile`.
-
-## Registering Jackson Modules
-
-By default, Jackson modules are dynamically registered via
-[`ObjectMapper.findAndRegisterModules()`](https://fasterxml.github.io/jackson-databind/javadoc/2.9/com/fasterxml/jackson/databind/ObjectMapper.html#findAndRegisterModules--).
-
-Therefore, you just need to add jackson modules (e.g. jackson-datatype-jdk8) to the classpath,
-and they will be dynamically registered.
-
-To disable automatic discovery, set `<findAndRegisterJacksonModules>false</findAndRegisterJacksonModules>` on the encoder/layout.
-
-If you have a module that Jackson is not able to dynamically discover,
-you can register it manually via a [`JsonFactoryDecorator`](#customizing-json-factory-and-generator).
-
-## Customizing Character Escapes
-
-By default, when a string is written as a JSON string value, any character not allowed in a JSON string will be escaped.
-For example, the newline character (ASCII 10) will be escaped as `\n`.
-
-To customize these escape sequences, use the `net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator`.
-
-For example, if you want to use something other than `\n` as the escape sequence for the newline character, you can do the following:
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonFactoryDecorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator">
-    <escape>
-      <targetCharacterCode>10</targetCharacterCode>
-      <escapeSequence>\u2028</escapeSequence>
-    </escape>
-  </jsonFactoryDecorator>
-</encoder>
-```
-
-You can also disable all the default escape sequences by specifying `<includeStandardAsciiEscapesForJSON>false</includeStandardAsciiEscapesForJSON>` on the `CharacterEscapesJsonFactoryDecorator`.
-If you do this, then you will need to register custom escapes for each character that is illegal in JSON string values.  Otherwise, invalid JSON could be written.
-
 
 ## Customizing Logger Name Length
 

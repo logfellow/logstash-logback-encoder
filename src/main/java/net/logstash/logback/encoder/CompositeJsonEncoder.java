@@ -87,7 +87,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * This method is not part of the {@link Encoder} interface in logback 1.2,
      * therefore, logback 1.2+ will not call this method.
      * 
-     * @throws IllegalStateException if the logback version is >= 1.2 
+     * @throws IllegalStateException if the logback version is &gt;= 1.2
      */
     public void init(OutputStream outputStream) throws IOException {
         logback11Support.verifyLogback11OrBefore();
@@ -152,7 +152,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * This method is not part of the {@link Encoder} interface in logback 1.2,
      * therefore, logback 1.2+ will not call this method.
      *   
-     * @throws IllegalStateException if the logback version is >= 1.2 
+     * @throws IllegalStateException if the logback version is &gt;= 1.2
      */
     @SuppressWarnings("unchecked")
     public void doEncode(Object event) throws IOException {
@@ -167,7 +167,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * This method is not part of the {@link Encoder} interface in logback 1.2,
      * therefore, logback 1.2+ will not call this method.
      *   
-     * @throws IllegalStateException if the logback version is >= 1.2 
+     * @throws IllegalStateException if the logback version is &gt;= 1.2
      */
     public void doEncode(Event event) throws IOException {
         logback11Support.verifyLogback11OrBefore();
@@ -275,7 +275,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * This method is not part of the {@link Encoder} interface in logback 1.2,
      * therefore, logback 1.2+ will not call this method.
      *   
-     * @throws IllegalStateException if the logback version is >= 1.2 
+     * @throws IllegalStateException if the logback version is &gt;= 1.2
      */
     public void close() throws IOException {
         logback11Support.verifyLogback11OrBefore();

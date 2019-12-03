@@ -1,0 +1,34 @@
+<configuration debug="true">
+
+    <appender name="APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp/>
+            </providers>
+            <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+                <path>fieldA</path>
+                <path>fieldB</path>
+                <paths>fieldC,fieldD</paths>
+                <pathMask>
+                    <path>fieldE</path>
+                    <mask>[masked]</mask>
+                </pathMask>
+                <fieldMasker class="net.logstash.logback.mask.MaskingJsonGeneratorDecoratorTest$TestFieldMasker"/>
+
+                <value>^value0$</value>
+                <value>^value1$</value>
+                <values>^value2$,^value3$</values>
+                <valueMask>
+                    <value>^(value-).*$</value>
+                    <mask>$1masked</mask>
+                </valueMask>
+                <valueMasker class="net.logstash.logback.mask.MaskingJsonGeneratorDecoratorTest$TestValueMasker"/>
+            </jsonGeneratorDecorator>
+        </encoder>
+    </appender>
+
+    <root>
+        <appender-ref ref="APPENDER" />
+    </root>
+
+</configuration>

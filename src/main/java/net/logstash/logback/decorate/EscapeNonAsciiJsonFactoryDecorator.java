@@ -18,9 +18,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
- * Enables the {@link JsonGenerator.Feature#ESCAPE_NON_ASCII} feature on the {@link JsonFactory}.
+ * Enables the {@link com.fasterxml.jackson.core.JsonGenerator.Feature#ESCAPE_NON_ASCII} feature on the {@link JsonFactory}.
  * 
- * Prior to 5.0, {@link JsonGenerator.Feature#ESCAPE_NON_ASCII} was enabled by default.
+ * Prior to 5.0, {@link com.fasterxml.jackson.core.JsonGenerator.Feature#ESCAPE_NON_ASCII} was enabled by default.
  * In 5.0, the feature is disabled by default, and can be re-enabled with this decorator.
  */
 public class EscapeNonAsciiJsonFactoryDecorator implements JsonFactoryDecorator {

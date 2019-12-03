@@ -23,7 +23,7 @@ import com.fasterxml.jackson.core.JsonFactory;
  * A generic decorator that allows enabling/disabling of Jackson features.
  *
  * @param <T> Type of object being decorated (e.g. {@link JsonFactory})
- * @param <E> Feature enum type (e.g. {@link JsonFactory.Feature})
+ * @param <F> Feature enum type (e.g. {@link com.fasterxml.jackson.core.JsonFactory.Feature})
  */
 public class FeatureDecorator<T, F extends Enum<F>> {
 

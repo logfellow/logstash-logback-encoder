@@ -1,0 +1,21 @@
+# Note: the LAST match wins!  (Not the first match, which be would be intuitive)
+
+# Allow git to intelligently detect the type of file, and to do whatever it thinks best
+# To override this for specific files, make sure you add those rules AFTER this line.
+* text=auto
+
+*.gitattributes text
+*.gitignore text
+*.java text
+*.md text
+*.properties text
+*.txt text
+*.xml text
+*.yml text
+
+*.jar binary
+
+*.sh eol=lf
+mvnw eol=lf
+mvnw.cmd eol=crlf
+

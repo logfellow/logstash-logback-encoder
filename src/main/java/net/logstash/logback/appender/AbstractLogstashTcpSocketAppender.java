@@ -49,8 +49,6 @@ import net.logstash.logback.appender.destination.PreferPrimaryDestinationConnect
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
 
-import org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement;
-
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
@@ -1162,7 +1160,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Returns the host string from the given destination,
      * avoiding a DNS hit if possible.
      */
-    @IgnoreJRERequirement
     protected String getHostString(InetSocketAddress destination) {
         
         /*

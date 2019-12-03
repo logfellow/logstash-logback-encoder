@@ -20,7 +20,7 @@ import ch.qos.logback.core.status.StatusListener;
 /**
  * A {@link DelegatingStatusListener} that filters {@link Status} events based on their level
  * (e.g. {@link Status#INFO}, {@link Status#WARN}, {@link Status#ERROR})
- * before forwarding the status event to the delegate.</p>
+ * before forwarding the status event to the delegate.
  *
  * <p>Only those {@link Status} events whose level is greater than or equal to
  * the configured level will be forwarded to the delegate {@link StatusListener}.

@@ -39,7 +39,7 @@ public class FailureSummaryLoggingAppenderListener<Event extends DeferredProcess
     private volatile Logger logger = LoggerFactory.getLogger(FailureSummaryLoggingAppenderListener.class);
 
     /**
-     * Logs a message with the details from the given {@link FailureSummary}
+     * Logs a message with the details from the given {@link FailureSummaryAppenderListener.FailureSummary}
      * with the given callback type.
      *
      * @param failureSummary contains summary details of all the consecutive failures
