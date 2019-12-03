@@ -9,7 +9,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/net.logstash.logback/logstash-logback-encoder)](https://search.maven.org/artifact/net.logstash.logback/logstash-logback-encoder)
 [![Release Notes](https://img.shields.io/github/v/release/logstash/logstash-logback-encoder?label=release%20notes)](https://github.com/logstash/logstash-logback-encoder/releases/latest)
 
-Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON and [other formats supported by Jackson](#non-json-formats).
+Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON and [other formats supported by Jackson](#data-format).
 
 Supports both regular _LoggingEvents_ (logged through a `Logger`) and _AccessEvents_ (logged via [logback-access](http://logback.qos.ch/access.html)).
 
@@ -1240,10 +1240,10 @@ JSON is used by default, but other data formats supported by Jackson can be used
 > typically via a  maven/gradle dependency  (e.g. for Smile, include `jackson-dataformat-smile`).
 
 The following data formats are directly supported:
-* `json` (the default)
-* `yaml`
 * `cbor`
+* `json` (the default)
 * `smile`
+* `yaml`
 
 To use one these formats, specify the `<dataFormat>` like this:
 
