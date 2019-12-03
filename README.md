@@ -1399,7 +1399,8 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
       <mask>**anotherCustomMask**</mask>
     </pathMask>
 
-    net.logstash.logback.mask.FieldMasker
+    <!-- Custom implementations of net.logstash.logback.mask.FieldMasker
+         can be used for more advanced masking behavior-->
     <fieldMasker class="your.custom.FieldMaskerA"/>
     <fieldMasker class="your.custom.FieldMaskerB"/>
   </jsonGeneratorDecorator>
