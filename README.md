@@ -1446,7 +1446,7 @@ Specific values to be masked can be specified in several ways, as seen in the fo
       <mask>\1****</mask>
     </valueMask>
 
-    <!-- Custom implementations of net.logstash.logback.decorate.mask.ValueMasker
+    <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
          can be used for more advanced masking behavior-->
     <valueMasker class="your.custom.ValueMaskerA"/>
     <valueMasker class="your.custom.ValueMaskerB"/>
