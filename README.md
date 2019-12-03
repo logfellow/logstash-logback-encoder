@@ -1379,7 +1379,7 @@ If you do this, then you will need to register custom escapes for each character
 
 ## Masking
 
-The [`MaskingJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/mask/MaskingJsonGeneratorDecorator.java)
+The [`MaskingJsonGeneratorDecorator`](src/main/java/net/logstash/logback/mask/MaskingJsonGeneratorDecorator.java)
 can be used to mask sensitive values (e.g. personally identifiable information (PII) or financial data).
 
 Data to be masked can be identified by [path](#identifying-field-values-to-mask-by-path)
@@ -1391,7 +1391,7 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <decorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator">
+  <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
 
     <!--
       The default mask string can optionally be specified by <defaultMask>.
@@ -1420,7 +1420,7 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
       <mask>**anotherCustomMask**</mask>
     </pathMask>
 
-    <!-- Custom implementations of net.logstash.logback.decorate.mask.FieldMasker
+    <!-- Custom implementations of net.logstash.logback.mask.FieldMasker
          can be used for more advanced masking behavior-->
     <fieldMasker class="your.custom.FieldMaskerA"/>
     <fieldMasker class="your.custom.FieldMaskerB"/>
@@ -1428,7 +1428,7 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
 </encoder>
 ```
 
-See [`PathBasedFieldMasker`](src/main/java/net/logstash/logback/decorate/mask/PathBasedFieldMasker.java)
+See [`PathBasedFieldMasker`](src/main/java/net/logstash/logback/mask/PathBasedFieldMasker.java)
 for the path string format and more examples.  But in general:
 
 * Paths follow a format similar to (but not _exactly_ same as) a [JSON Pointer](http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-03).
@@ -1445,7 +1445,7 @@ Specific values to be masked can be specified in several ways, as seen in the fo
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <decorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator">
+  <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
 
     <!--
       The default mask string can optionally be specified by <defaultMask>.
@@ -1468,7 +1468,7 @@ Specific values to be masked can be specified in several ways, as seen in the fo
       <mask>\1****</mask>
     </valueMask>
 
-    <!-- Custom implementations of net.logstash.logback.decorate.mask.ValueMasker
+    <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
          can be used for more advanced masking behavior-->
     <valueMasker class="your.custom.ValueMaskerA"/>
     <valueMasker class="your.custom.ValueMaskerB"/>

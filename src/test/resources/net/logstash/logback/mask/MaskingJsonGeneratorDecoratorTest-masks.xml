@@ -5,7 +5,7 @@
             <providers>
                 <timestamp/>
             </providers>
-            <decorator class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecorator">
+            <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
                 <path>fieldA</path>
                 <path>fieldB</path>
                 <paths>fieldC,fieldD</paths>
@@ -13,7 +13,7 @@
                     <path>fieldE</path>
                     <mask>[masked]</mask>
                 </pathMask>
-                <fieldMasker class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecoratorTest$TestFieldMasker"/>
+                <fieldMasker class="net.logstash.logback.mask.MaskingJsonGeneratorDecoratorTest$TestFieldMasker"/>
 
                 <value>^value0$</value>
                 <value>^value1$</value>
@@ -22,7 +22,7 @@
                     <value>^(value-).*$</value>
                     <mask>$1masked</mask>
                 </valueMask>
-                <valueMasker class="net.logstash.logback.decorate.mask.MaskingJsonGeneratorDecoratorTest$TestValueMasker"/>
+                <valueMasker class="net.logstash.logback.mask.MaskingJsonGeneratorDecoratorTest$TestValueMasker"/>
             </decorator>
         </encoder>
     </appender>

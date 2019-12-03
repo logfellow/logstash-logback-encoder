@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.decorate.mask;
+package net.logstash.logback.mask;
 
 import com.fasterxml.jackson.core.TokenStreamContext;
 import com.fasterxml.jackson.databind.node.NullNode;
@@ -46,7 +46,7 @@ public interface FieldMasker {
      * @return A non-null masked value to write if the current field should be masked.
      *         Otherwise null if the current field should not be masked.
      *         To write a null value as the masked value, return {@link NullNode#instance}.
-     *         To write {@value net.logstash.logback.decorate.mask.MaskingJsonGenerator#MASK}, the return {@link MaskingJsonGenerator#MASK MaskingJsonGenerator.MASK}
+     *         To write {@value net.logstash.logback.mask.MaskingJsonGenerator#MASK}, the return {@link MaskingJsonGenerator#MASK MaskingJsonGenerator.MASK}
      */
     Object mask(TokenStreamContext context);
 }
