@@ -30,12 +30,6 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.spi.LifeCycle;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
-import net.logstash.logback.mask.FieldMasker;
-import net.logstash.logback.mask.MaskingJsonGenerator;
-import net.logstash.logback.mask.MaskingJsonGeneratorDecorator;
-import net.logstash.logback.mask.PathBasedFieldMasker;
-import net.logstash.logback.mask.RegexValueMasker;
-import net.logstash.logback.mask.ValueMasker;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -65,6 +59,22 @@ public class MaskingJsonGeneratorDecoratorTest {
             return "testvalue".equals(value)
                     ? "[maskedtestvalue]"
                     : null;
+        }
+    }
+
+    public static class TestFieldMaskSupplier implements MaskingJsonGeneratorDecorator.PathMaskSupplier {
+
+        @Override
+        public MaskingJsonGeneratorDecorator.PathMask get() {
+            return new MaskingJsonGeneratorDecorator.PathMask("fieldF");
+        }
+    }
+
+    public static class TestValueMaskSupplier implements MaskingJsonGeneratorDecorator.ValueMaskSupplier {
+
+        @Override
+        public MaskingJsonGeneratorDecorator.ValueMask get() {
+            return new MaskingJsonGeneratorDecorator.ValueMask("value6");
         }
     }
 
@@ -161,12 +171,12 @@ public class MaskingJsonGeneratorDecoratorTest {
 
         JsonGeneratorDecorator masks = configure("masks");
         test(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\",\"fieldD\":\"valueD\",\"fieldE\":\"valueE\",\"testfield\":\"valueE\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"****\",\"fieldD\":\"****\",\"fieldE\":\"[masked]\",\"testfield\":\"[maskedtestfield]\"}",
+                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\",\"fieldD\":\"valueD\",\"fieldE\":\"valueE\",\"fieldF\":\"valueF\",\"testfield\":\"valueE\"}",
+                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"****\",\"fieldD\":\"****\",\"fieldE\":\"[masked]\",\"fieldF\":\"****\",\"testfield\":\"[maskedtestfield]\"}",
                 masks);
         test(
-                "{\"field0\":\"value0\",\"field1\":\"value1\",\"field2\":\"value2\",\"field3\":\"value3\",\"field-Z\":\"value-Z\",\"field4\":\"value4\",\"field5\":\"testvalue\"}",
-                "{\"field0\":\"****\",\"field1\":\"****\",\"field2\":\"****\",\"field3\":\"****\",\"field-Z\":\"value-masked\",\"field4\":\"value4\",\"field5\":\"[maskedtestvalue]\"}",
+                "{\"field0\":\"value0\",\"field1\":\"value1\",\"field2\":\"value2\",\"field3\":\"value3\",\"field-Z\":\"value-Z\",\"field4\":\"value4\",\"field5\":\"testvalue\",\"field6\":\"value6\"}",
+                "{\"field0\":\"****\",\"field1\":\"****\",\"field2\":\"****\",\"field3\":\"****\",\"field-Z\":\"value-masked\",\"field4\":\"value4\",\"field5\":\"[maskedtestvalue]\",\"field6\":\"****\"}",
                 masks);
     }
 
@@ -353,6 +363,11 @@ public class MaskingJsonGeneratorDecoratorTest {
         Arrays.stream(pathsToMask).forEach(pathToMask -> decoratorByPathMask.addPathMask(new MaskingJsonGeneratorDecorator.PathMask(pathToMask, MaskingJsonGenerator.MASK)));
         test(unmasked, masked, decoratorByPathMask);
 
+        MaskingJsonGeneratorDecorator decoratorByPathMaskProvider = new MaskingJsonGeneratorDecorator();
+        decoratorByPathMaskProvider.setDefaultMask("foo");
+        Arrays.stream(pathsToMask).forEach(pathToMask -> decoratorByPathMaskProvider.addPathMaskSupplier(() -> new MaskingJsonGeneratorDecorator.PathMask(pathToMask, MaskingJsonGenerator.MASK)));
+        test(unmasked, masked, decoratorByPathMaskProvider);
+
         MaskingJsonGeneratorDecorator decoratorByPathMasker = new MaskingJsonGeneratorDecorator();
         decoratorByPathMasker.setDefaultMask("foo");
         Arrays.stream(pathsToMask).forEach(pathToMask -> decoratorByPathMasker.addFieldMasker(new PathBasedFieldMasker(pathToMask, MaskingJsonGenerator.MASK)));
@@ -377,6 +392,10 @@ public class MaskingJsonGeneratorDecoratorTest {
         MaskingJsonGeneratorDecorator decoratorByValueMask = new MaskingJsonGeneratorDecorator();
         Arrays.stream(valuesToMask).forEach(value -> decoratorByValueMask.addValueMask(new MaskingJsonGeneratorDecorator.ValueMask(value, MaskingJsonGenerator.MASK)));
         test(unmasked, masked, decoratorByValueMask);
+
+        MaskingJsonGeneratorDecorator decoratorByValueMaskProvider = new MaskingJsonGeneratorDecorator();
+        Arrays.stream(valuesToMask).forEach(value -> decoratorByValueMaskProvider.addValueMaskSupplier(() -> new MaskingJsonGeneratorDecorator.ValueMask(value, MaskingJsonGenerator.MASK)));
+        test(unmasked, masked, decoratorByValueMaskProvider);
 
         MaskingJsonGeneratorDecorator decoratorByValueMasker = new MaskingJsonGeneratorDecorator();
         Arrays.stream(valuesToMask).forEach(value -> decoratorByValueMasker.addValueMasker(new RegexValueMasker(value, MaskingJsonGenerator.MASK)));

@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-6.2).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-6.3).
 
 # Logstash Logback Encoder
 
@@ -75,7 +75,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>6.2</version>
+    <version>6.3</version>
 </dependency>
 <!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
 <dependency>
@@ -1399,6 +1399,9 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
       <mask>**anotherCustomMask**</mask>
     </pathMask>
 
+    <!-- Field paths to mask can be supplied dynamically with an implementation of MaskingJsonGeneratorDecorator.PathMaskSupplier -->
+    <pathMaskSupplier class="your.custom.PathMaskSupplierA"/>
+
     <!-- Custom implementations of net.logstash.logback.mask.FieldMasker
          can be used for more advanced masking behavior-->
     <fieldMasker class="your.custom.FieldMaskerA"/>
@@ -1446,6 +1449,9 @@ Specific values to be masked can be specified in several ways, as seen in the fo
       <value>^(bar)-.*$</value>
       <mask>\1****</mask>
     </valueMask>
+
+    <!-- Values to mask can be supplied dynamically with an implementation of MaskingJsonGeneratorDecorator.ValueMaskSupplier -->
+    <pathMaskSupplier class="your.custom.ValueMaskSupplierA"/>
 
     <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
          can be used for more advanced masking behavior-->
