@@ -22,9 +22,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import ch.qos.logback.core.spi.ContextAware;
+import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
@@ -42,9 +45,9 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
     private final PathMask pathsWithDefaultMask = new PathMask();
 
     /**
-     * Paths to mask with specific masks.
+     * Suppliers of {@link PathMask}s.
      */
-    private final List<PathMask> pathMasks = new ArrayList<>();
+    private final List<PathMaskSupplier> pathMaskSuppliers = new ArrayList<>();
 
     /**
      * Custom {@link FieldMasker}s.
@@ -59,7 +62,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
     /**
      * Values to mask with specific masks.
      */
-    private final List<ValueMask> valueMasks = new ArrayList<>();
+    private final List<ValueMaskSupplier> valueMaskSuppliers = new ArrayList<>();
 
     /**
      * Custom {@link ValueMasker}s.
@@ -77,6 +80,19 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
      */
     private boolean started;
 
+    /**
+     * Supplies a {@link PathMask} dynamically at runtime.
+     *
+     * <p>Use this if the list of paths to mask should be determined
+     * from somewhere other than the logback configuration.
+     * E.g. by dynamically loading them from classes on the classpath.</p>
+     */
+    public interface PathMaskSupplier extends Supplier<PathMask> {
+    }
+
+    /**
+     * Paths to mask, and the value to write as the mask.
+     */
     public static class PathMask {
         /**
          * The absolute or partial field paths to mask (see {@link PathBasedFieldMasker} for format)
@@ -91,8 +107,16 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
         public PathMask() {
         }
 
-        public PathMask(String field, String mask) {
-            this(Collections.singletonList(field), mask);
+        public PathMask(String path) {
+            this(path, MaskingJsonGenerator.MASK);
+        }
+
+        public PathMask(String path, String mask) {
+            this(Collections.singletonList(path), mask);
+        }
+
+        public PathMask(List<String> paths) {
+            this(paths, MaskingJsonGenerator.MASK);
         }
 
         public PathMask(List<String> paths, String mask) {
@@ -126,6 +150,19 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
         }
     }
 
+    /**
+     * Supplies a {@link ValueMask} dynamically at runtime.
+     *
+     * <p>Use this if the list of values to mask should be determined
+     * from somewhere other than the logback configuration.
+     * E.g. by dynamically loading them from classes on the classpath.</p>
+     */
+    public interface ValueMaskSupplier extends Supplier<ValueMask> {
+    }
+
+    /**
+     * Values to mask, and the value to write as the mask.
+     */
     public static class ValueMask {
         /**
          * The regexes used to identify values to mask.
@@ -140,8 +177,16 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
         public ValueMask() {
         }
 
-        public ValueMask(String values, String mask) {
-            this(Collections.singletonList(values), mask);
+        public ValueMask(String values) {
+            this(values, MaskingJsonGenerator.MASK);
+        }
+
+        public ValueMask(String value, String mask) {
+            this(Collections.singletonList(value), mask);
+        }
+
+        public ValueMask(List<String> values) {
+            this(values, MaskingJsonGenerator.MASK);
         }
 
         public ValueMask(List<String> values, String mask) {
@@ -207,7 +252,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
 
         List<FieldMasker> pathFieldMaskers = new ArrayList<>();
 
-        Stream.concat(Stream.of(pathsWithDefaultMask), pathMasks.stream())
+        Stream.concat(Stream.of(pathsWithDefaultMask), pathMaskSuppliers.stream().map(Supplier::get))
                 .forEach(pathMask ->
                     pathMask.paths.forEach(path -> {
                         String mask = pathMask.mask;
@@ -238,7 +283,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
 
     private List<ValueMasker> getEffectiveValueMaskers() {
         return Collections.unmodifiableList(Stream.concat(
-                        Stream.concat(Stream.of(valuesWithDefaultMask), valueMasks.stream())
+                        Stream.concat(Stream.of(valuesWithDefaultMask), valueMaskSuppliers.stream().map(Supplier::get))
                                 .flatMap(valueMask -> valueMask.values.stream()
                                         .map(value -> new RegexValueMasker(value, valueMask.mask))),
                         valueMaskers.stream())
@@ -288,14 +333,25 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
     }
 
     /**
-     * Adds the given path and mask that will be used to determine if a field should be masked.
+     * Adds the given paths and mask that will be used to determine if a field should be masked.
      *
      * <p>The {@link PathMask#setMask(String) mask} value will be written for any of the {@link PathMask#addPath(String) paths}.</p>
      *
-     * @param pathMask a path used to determine if a value should be masked, and its corresponding mask value.
+     * @param pathMask a paths used to determine if a value should be masked, and their corresponding mask value.
      */
     public void addPathMask(PathMask pathMask) {
-        pathMasks.add(pathMask);
+        addPathMaskSupplier(() -> pathMask);
+    }
+
+    /**
+     * Adds the given supplier of paths and mask that will be used to determine if a field should be masked.
+     *
+     * <p>The {@link PathMask#setMask(String) mask} value will be written for any of the {@link PathMask#addPath(String) paths}.</p>
+     *
+     * @param pathMaskSupplier a supplier of paths used to determine if a value should be masked, and their corresponding mask value.
+     */
+    public void addPathMaskSupplier(PathMaskSupplier pathMaskSupplier) {
+        this.pathMaskSuppliers.add(pathMaskSupplier);
     }
 
     /**
@@ -330,14 +386,25 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator<Jso
     }
 
     /**
-     * Adds the given value regex and mask to the regexes that will be used to determine if a field value should be masked.
+     * Adds the given value regexes and mask to the regexes that will be used to determine if a field value should be masked.
      *
      * <p>The {@link ValueMask#setMask(String) mask} value will be written for values that match any of the {@link ValueMask#addValue(String) value regexes}.</p>
      *
-     * @param valueMask a regular expression used to determine if a value should be masked, and its corresponding mask value
+     * @param valueMask regular expressions used to determine if a value should be masked, and their corresponding mask value
      */
     public void addValueMask(ValueMask valueMask) {
-        valueMasks.add(valueMask);
+        addValueMaskSupplier(() -> valueMask);
+    }
+
+    /**
+     * Adds the given supplier of value regexes and mask to the regexes that will be used to determine if a field value should be masked.
+     *
+     * <p>The {@link ValueMask#setMask(String) mask} value will be written for values that match any of the {@link ValueMask#addValue(String) value regexes}.</p>
+     *
+     * @param valueMaskSupplier a supplier of regular expressions used to determine if a value should be masked, and their corresponding mask value
+     */
+    public void addValueMaskSupplier(ValueMaskSupplier valueMaskSupplier) {
+        valueMaskSuppliers.add(valueMaskSupplier);
     }
 
     /**
