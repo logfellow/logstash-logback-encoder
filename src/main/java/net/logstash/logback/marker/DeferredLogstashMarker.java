@@ -60,10 +60,11 @@ public class DeferredLogstashMarker extends LogstashMarker {
         if (suppliedValue == null) {
             synchronized (this) {
                 if (suppliedValue == null) {
-                    suppliedValue = logstashMarkerSupplier.get();
-                    if (suppliedValue == null) {
-                        suppliedValue = Markers.empty();
+                    LogstashMarker logstashMarker = logstashMarkerSupplier.get();
+                    if (logstashMarker == null) {
+                        logstashMarker = Markers.empty();
                     }
+                    suppliedValue = logstashMarker;
                 }
             }
         }

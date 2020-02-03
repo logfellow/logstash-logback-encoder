@@ -303,7 +303,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                     ErrorStatus errorStatus = new ErrorStatus(
                         String.format("Exception thrown for evaluator named [%s]", evaluator.getName()), this, eex);
                     errorStatus.add(new ErrorStatus(
-                        "This was the last warning about this evaluator's errors."
+                        "This was the last warning about this evaluator's errors. "
                             + "We don't want the StatusManager to get flooded.",
                         this));
                     addStatus(errorStatus);

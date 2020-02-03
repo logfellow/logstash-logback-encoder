@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
 import java.lang.ref.SoftReference;
+import java.util.ServiceConfigurationError;
 
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
@@ -126,7 +127,11 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
         if (findAndRegisterJacksonModules) {
-            objectMapper.findAndRegisterModules();
+            try {
+                objectMapper.findAndRegisterModules();
+            } catch (ServiceConfigurationError serviceConfigurationError) {
+                addError("Error occurred while dynamically loading jackson modules", serviceConfigurationError);
+            }
         }
 
         JsonFactory jsonFactory = objectMapper
