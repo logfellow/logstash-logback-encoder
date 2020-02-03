@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.ServiceConfigurationError;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -163,7 +164,11 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
                 .disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
         if (findAndRegisterJacksonModules) {
-            mapperBuilder = mapperBuilder.findAndAddModules();
+            try {
+                mapperBuilder = mapperBuilder.findAndAddModules();
+            } catch (ServiceConfigurationError serviceConfigurationError) {
+                addError("Error occurred while dynamically loading jackson modules", serviceConfigurationError);
+            }
         }
 
         mapperBuilder = (MapperBuilder) this.mapperBuilderDecorator.decorate(mapperBuilder);

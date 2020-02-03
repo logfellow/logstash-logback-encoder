@@ -56,7 +56,7 @@ public class LevelFilteringStatusListener extends DelegatingStatusListener {
 
     public void setLevelValue(int levelValue) {
         if (levelValue < Status.INFO || levelValue > Status.ERROR) {
-            throw new IllegalArgumentException(String.format("Unknown level: %d. Must be between %d and %d, inclusive", Status.INFO, Status.ERROR));
+            throw new IllegalArgumentException(String.format("Unknown level: %d. Must be between %d and %d, inclusive", levelValue, Status.INFO, Status.ERROR));
         }
         statusLevel = levelValue;
     }
