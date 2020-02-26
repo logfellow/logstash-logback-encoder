@@ -59,6 +59,9 @@ public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
         event.getCallerData();
     }
     private StackTraceElement extractCallerData(final ILoggingEvent event) {
+        if (!event.hasCallerData()) {
+            return null;
+        }
         final StackTraceElement[] ste = event.getCallerData();
         if (ste == null || ste.length == 0) {
             return null;
