@@ -23,12 +23,12 @@ import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 
 public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
-    
+
     @Override
     protected CompositeJsonFormatter<IAccessEvent> createFormatter() {
         return new LogstashAccessFormatter(this);
     }
-    
+
     @Override
     protected LogstashAccessFormatter getFormatter() {
         return (LogstashAccessFormatter) super.getFormatter();
@@ -41,7 +41,7 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     public LogstashAccessFieldNames getFieldNames() {
         return getFormatter().getFieldNames();
     }
-    
+
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
         getFormatter().setFieldNames(fieldNames);
     }
@@ -53,51 +53,59 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     public void setTimeZone(String timeZoneId) {
         getFormatter().setTimeZone(timeZoneId);
     }
-    
+
     public String getTimestampPattern() {
         return getFormatter().getTimestampPattern();
     }
     public void setTimestampPattern(String pattern) {
         getFormatter().setTimestampPattern(pattern);
     }
-    
+
     public void setCustomFields(String customFields) {
         getFormatter().setCustomFieldsFromString(customFields);
     }
-    
+
     public String getCustomFields() {
         return getFormatter().getCustomFieldsAsString();
     }
-    
+
     public boolean getLowerCaseHeaderNames() {
         return getFormatter().getLowerCaseHeaderNames();
     }
 
     /**
-     * When true, names of headers will be written to JSON output in lowercase. 
+     * When true, names of headers will be written to JSON output in lowercase.
      */
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         getFormatter().setLowerCaseHeaderNames(lowerCaseHeaderNames);
     }
-    
+
     public HeaderFilter getRequestHeaderFilter() {
         return getFormatter().getRequestHeaderFilter();
     }
-    
+
     @DefaultClass(IncludeExcludeHeaderFilter.class)
     public void setRequestHeaderFilter(HeaderFilter filter) {
         getFormatter().setRequestHeaderFilter(filter);
     }
-    
+
     public HeaderFilter getResponseHeaderFilter() {
         return getFormatter().getResponseHeaderFilter();
     }
-    
+
     @DefaultClass(IncludeExcludeHeaderFilter.class)
     public void setResponseHeaderFilter(HeaderFilter filter) {
         getFormatter().setResponseHeaderFilter(filter);
     }
-    
+
+    public boolean isIncludeContext() {
+        return getFormatter().isIncludeContext();
+    }
+
+    public void setIncludeContext(boolean includeContext) {
+        getFormatter().setIncludeContext(includeContext);
+    }
+
     public String getVersion() {
         return getFormatter().getVersion();
     }
@@ -105,7 +113,6 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
         getFormatter().setVersion(version);
     }
 
-    
     /**
      * @deprecated Use {@link #isWriteVersionAsInteger()}
      */
@@ -120,12 +127,12 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         getFormatter().setWriteVersionAsString(writeVersionAsString);
     }
-    
+
     public boolean isWriteVersionAsInteger() {
         return getFormatter().isWriteVersionAsInteger();
     }
     public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
         getFormatter().setWriteVersionAsInteger(writeVersionAsInteger);
     }
-    
+
 }
