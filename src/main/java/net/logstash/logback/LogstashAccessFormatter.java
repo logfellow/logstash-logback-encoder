@@ -13,7 +13,6 @@
  */
 package net.logstash.logback;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
