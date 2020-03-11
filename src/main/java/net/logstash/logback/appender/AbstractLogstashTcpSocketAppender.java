@@ -23,6 +23,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
@@ -248,7 +249,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * The charset to use when writing the {@link #keepAliveMessage}.
      * Defaults to UTF-8.
      */
-    private Charset keepAliveCharset = Charset.forName("UTF-8");
+    private Charset keepAliveCharset = StandardCharsets.UTF_8;
     
     /**
      * The {@link #keepAliveMessage} translated to bytes using the {@link #keepAliveCharset}.

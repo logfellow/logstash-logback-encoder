@@ -115,7 +115,7 @@ public class LogstashBasicMarker implements Marker {
         if (refereceList != null) {
             return refereceList.iterator();
         } else {
-            return Collections.EMPTY_LIST.iterator();
+            return Collections.emptyIterator();
         }
     }
 

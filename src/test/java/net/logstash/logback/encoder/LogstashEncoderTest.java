@@ -179,7 +179,7 @@ public class LogstashEncoderTest {
         
         byte[] encoded = encoder.encode(event);
         
-        String output = new String(encoded, "UTF-8");
+        String output = new String(encoded, StandardCharsets.UTF_8);
         
         assertThat(output).isEqualTo(String.format(
                 "{%n"
@@ -733,7 +733,7 @@ public class LogstashEncoderTest {
         MDC.remove("myMdcKey");
 
         List<String> lines = Files.linesOf(tempFile, StandardCharsets.UTF_8);
-        JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
+        JsonNode node = MAPPER.readTree(lines.get(0).getBytes(StandardCharsets.UTF_8));
 
         /*
          * The configuration suppresses the version field,
