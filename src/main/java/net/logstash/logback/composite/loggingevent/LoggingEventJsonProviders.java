@@ -64,6 +64,9 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addStackTrace(StackTraceJsonProvider provider) {
         addProvider(provider);
     }
+    public void addRootStackTraceElement(RootStackTraceElementJsonProvider provider) {
+        addProvider(provider);
+    }
     public void addStackHash(StackHashJsonProvider provider) {
         addProvider(provider);
     }
