@@ -1818,7 +1818,7 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>classFieldName</tt> - Field name for class name (<tt>caller_class_name</tt>)</li>
           <li><tt>methodFieldName</tt> - Field name for method name (<tt>caller_method_name</tt>)</li>
           <li><tt>fileFieldName</tt> - Field name for file name (<tt>caller_file_name</tt>)</li>
-          <li><tt>lineFieldName</tt> - Field name for lin number (<tt>caller_line_number</tt>)</li>
+          <li><tt>lineFieldName</tt> - Field name for line number (<tt>caller_line_number</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1828,6 +1828,15 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
           <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>rootStackTraceElement</tt></td>
+      <td><p>(Only if a throwable was logged) Outputs details (class and method name) for the root stack trace element.</p>
+        <p>This helps when indexing.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>root_stack_trace_element</tt>)</li>
         </ul>
       </td>
     </tr>
