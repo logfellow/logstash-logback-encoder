@@ -402,6 +402,13 @@ public class MaskingJsonGeneratorDecoratorTest {
         test(unmasked, masked, decoratorByValueMasker);
     }
 
+    @Test
+    public void testReplacementGroup() throws IOException {
+        MaskingJsonGeneratorDecorator decorator = new MaskingJsonGeneratorDecorator();
+        decorator.addValueMask(new MaskingJsonGeneratorDecorator.ValueMask("(hello)? world", "$1 bob"));
+        test("{\"field\":\"hello world\"}", "{\"field\":\"hello bob\"}", decorator);
+    }
+
     private void test(String unmasked, String masked, JsonGeneratorDecorator decorator) throws IOException {
         if (decorator instanceof LifeCycle) {
             ((LifeCycle) decorator).start();

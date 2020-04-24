@@ -1447,7 +1447,7 @@ Specific values to be masked can be specified in several ways, as seen in the fo
     <valueMask>
       <value>^(foo)-.*$</value>
       <value>^(bar)-.*$</value>
-      <mask>\1****</mask>
+      <mask>$1****</mask>
     </valueMask>
 
     <!-- Values to mask can be supplied dynamically with an implementation of MaskingJsonGeneratorDecorator.ValueMaskSupplier -->
