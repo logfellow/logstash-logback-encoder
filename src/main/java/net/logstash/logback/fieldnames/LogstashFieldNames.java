@@ -38,6 +38,7 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String callerFile = CallerDataJsonProvider.FIELD_CALLER_FILE_NAME;
     private String callerLine = CallerDataJsonProvider.FIELD_CALLER_LINE_NUMBER;
     private String stackTrace = StackTraceJsonProvider.FIELD_STACK_TRACE;
+    private String rootStackTraceElement = RootStackTraceElementJsonProvider.FIELD_STACKTRACE_ELEMENT;
     private String rootStackTraceElementClass = RootStackTraceElementJsonProvider.FIELD_CLASS_NAME;
     private String rootStackTraceElementMethod = RootStackTraceElementJsonProvider.FIELD_METHOD_NAME;
     private String tags = TagsJsonProvider.FIELD_TAGS;
@@ -197,6 +198,14 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getRootStackTraceElement() {
+        return rootStackTraceElement;
+    }
+
+    public void setRootStackTraceElement(String rootStackTraceElement) {
+        this.rootStackTraceElement = rootStackTraceElement;
     }
 
     public String getRootStackTraceElementMethod() {

@@ -25,8 +25,9 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 import java.io.IOException;
 
 /**
- * A JSON provider that adds a {@code rootStackTraceElement} Json field on a log with a stack trace
- * <p>
+ * A JSON provider that, for any log event with a stack trace,
+ * adds a {@code root_stack_trace_element} JSON object field
+ * containing the class name and method name where the outer-most exception was thrown.
  *
  * @author Daniel Albuquerque
  */
@@ -35,8 +36,9 @@ public class RootStackTraceElementJsonProvider extends AbstractFieldJsonProvider
     public static final String FIELD_CLASS_NAME = "class_name";
     public static final String FIELD_METHOD_NAME = "method_name";
     public static final String FIELD_STACKTRACE_ELEMENT = "root_stack_trace_element";
-    private String fieldClassName = FIELD_CLASS_NAME;
-    private String fieldMethodName = FIELD_METHOD_NAME;
+
+    private String classFieldName = FIELD_CLASS_NAME;
+    private String methodFieldName = FIELD_METHOD_NAME;
 
     public RootStackTraceElementJsonProvider() {
         setFieldName(FIELD_STACKTRACE_ELEMENT);
@@ -50,8 +52,8 @@ public class RootStackTraceElementJsonProvider extends AbstractFieldJsonProvider
                 StackTraceElement stackTraceElement = throwableProxy.getStackTraceElementProxyArray()[0].getStackTraceElement();
 
                 generator.writeObjectFieldStart(getFieldName());
-                JsonWritingUtils.writeStringField(generator, fieldClassName, stackTraceElement.getClassName());
-                JsonWritingUtils.writeStringField(generator, fieldMethodName, stackTraceElement.getMethodName());
+                JsonWritingUtils.writeStringField(generator, classFieldName, stackTraceElement.getClassName());
+                JsonWritingUtils.writeStringField(generator, methodFieldName, stackTraceElement.getMethodName());
                 generator.writeEndObject();
             }
         }
@@ -59,15 +61,16 @@ public class RootStackTraceElementJsonProvider extends AbstractFieldJsonProvider
 
     @Override
     public void setFieldNames(LogstashFieldNames fieldNames) {
-        setFieldClassName(fieldNames.getRootStackTraceElementClass());
-        setFieldMethodName(fieldNames.getRootStackTraceElementMethod());
+        setFieldName(fieldNames.getRootStackTraceElement());
+        setClassFieldName(fieldNames.getRootStackTraceElementClass());
+        setMethodFieldName(fieldNames.getRootStackTraceElementMethod());
     }
 
-    private void setFieldClassName(String fieldClassName) {
-        this.fieldClassName = fieldClassName;
+    public void setClassFieldName(String classFieldName) {
+        this.classFieldName = classFieldName;
     }
 
-    private void setFieldMethodName(String fieldMethodName) {
-        this.fieldMethodName = fieldMethodName;
+    public void setMethodFieldName(String methodFieldName) {
+        this.methodFieldName = methodFieldName;
     }
 }

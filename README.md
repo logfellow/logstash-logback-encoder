@@ -1833,10 +1833,11 @@ For LoggingEvents, the available providers and their configuration properties (d
     </tr>
     <tr>
       <td><tt>rootStackTraceElement</tt></td>
-      <td><p>(Only if a throwable was logged) Outputs details (class and method name) for the root stack trace element.</p>
-        <p>This helps when indexing.</p>
+      <td><p>(Only if a throwable was logged) Outputs a JSON Object containing the class and method name from which the outer-most exception was thrown.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>root_stack_trace_element</tt>)</li>
+          <li><tt>classFieldName</tt> - Field name containing the class name from which the outermost exception was thrown (<tt>class_name</tt>)</li>
+          <li><tt>methodFieldName</tt> - Field name containing the method name from which the outermost exception was thrown (<tt>method_name</tt>)</li>
         </ul>
       </td>
     </tr>
