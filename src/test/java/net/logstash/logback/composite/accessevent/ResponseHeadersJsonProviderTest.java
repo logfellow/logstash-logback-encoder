@@ -66,8 +66,7 @@ public class ResponseHeadersJsonProviderTest {
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeFieldName("fieldName");
-        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeObjectFieldStart("fieldName");
         inOrder.verify(generator).writeStringField("headerA", "valueA");
         inOrder.verify(generator).writeStringField("headerB", "valueB");
         inOrder.verify(generator).writeEndObject();
@@ -80,8 +79,7 @@ public class ResponseHeadersJsonProviderTest {
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeFieldName("fieldName");
-        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeObjectFieldStart("fieldName");
         inOrder.verify(generator).writeStringField("headera", "valueA");
         inOrder.verify(generator).writeStringField("headerb", "valueB");
         inOrder.verify(generator).writeEndObject();
@@ -99,8 +97,7 @@ public class ResponseHeadersJsonProviderTest {
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeFieldName("fieldName");
-        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeObjectFieldStart("fieldName");
         inOrder.verify(generator).writeStringField("headerb", "valueB");
         inOrder.verify(generator).writeEndObject();
         inOrder.verifyNoMoreInteractions();

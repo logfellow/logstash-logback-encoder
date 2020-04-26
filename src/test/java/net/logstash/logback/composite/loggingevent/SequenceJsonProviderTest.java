@@ -43,7 +43,7 @@ public class SequenceJsonProviderTest {
     public void testDefaultName() throws IOException {
         provider.writeTo(generator, event);
 
-        verify(generator).writeNumberField(eq(SequenceJsonProvider.FIELD_SEQUENCE),1);
+        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
 
     }
 
@@ -53,6 +53,6 @@ public class SequenceJsonProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeNumberField(eq("newFieldName"), 1);
+        verify(generator).writeNumberField("newFieldName", 1L);
     }
 }
