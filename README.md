@@ -1062,7 +1062,10 @@ logger.info("log message {}", fields(myobject));
 
 /*
  * In order to normalize a field object name, static helper methods can be created.
- * For example, `foo(Foo)` calls `value("foo" , foo)`
+ * For example:
+ *     public static StructuredArgument foo(Foo foo) {
+ *         return StructuredArguments.value("foo", foo);
+ *     }
  */
 logger.info("log message {}", foo(foo));
 
