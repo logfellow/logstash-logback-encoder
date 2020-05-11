@@ -888,6 +888,15 @@ When key names are specified for inclusion, then all other fields will be exclud
 When key names are specified for exclusion, then all other fields will be included.
 It is a configuration error to specify both included and excluded key names.
 
+By default, the MDC key is used as the field name in the output.
+To use an alternative field name in the output for an MDC entry,
+specify`<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`: 
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <mdcKeyFieldName>key1=alternateFieldNameForKey1</mdcKeyFieldName>
+</encoder>
+```
 
 ### Context fields
 
@@ -1902,6 +1911,8 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
           <li><tt>includeMdcKeyName</tt> - Name of keys to include (all)</li>
           <li><tt>excludeMdcKeyName</tt> - Name of keys to include (none)</li>
+          <li><tt>mdcKeyFieldName</tt> - Strings in the form <tt>mdcKeyName=fieldName</tt>
+              that specify an alternate field name to output for specific MDC key (none)</li>
         </ul>
       </td>
     </tr>

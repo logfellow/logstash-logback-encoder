@@ -24,7 +24,6 @@ import org.slf4j.MDC;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
-import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -33,9 +32,9 @@ import com.fasterxml.jackson.core.JsonGenerator;
 /**
  * Includes {@link MDC} properties in the JSON output according to
  * {@link #includeMdcKeyNames} and {@link #excludeMdcKeyNames}.
- * <p>
- * There are three valid combinations of {@link #includeMdcKeyNames}
- * and {@link #excludeMdcKeyNames}:
+ *
+ * <p>There are three valid combinations of {@link #includeMdcKeyNames}
+ * and {@link #excludeMdcKeyNames}:</p>
  * 
  * <ol>
  * <li>When {@link #includeMdcKeyNames} and {@link #excludeMdcKeyNames}
@@ -48,25 +47,30 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *     with key names in {@link #excludeMdcKeyNames} will be included.</li>
  * </ol>
  * 
- * It is a configuration error for both {@link #includeMdcKeyNames}
- * and {@link #excludeMdcKeyNames} to be not empty.
- * <p>
- *   
- * If the fieldName is set, then the properties will be written 
+ * <p>It is a configuration error for both {@link #includeMdcKeyNames}
+ * and {@link #excludeMdcKeyNames} to be not empty.</p>
+ *
+ * <p>By default, for each entry in the MDC, the MDC key is output as the field name.
+ * This can be changed by specifying an explicit field name to use for an MDC key
+ * via {@link #addMdcKeyFieldName(String)}</p>
+ *
+ * <p>If the fieldName is set, then the properties will be written
  * to that field as a subobject.
- * Otherwise, the properties are written inline. 
+ * Otherwise, the properties are written inline.</p>
  */
 public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
     /**
      * See {@link MdcJsonProvider}.
      */
-    private List<String> includeMdcKeyNames = new ArrayList<String>();
+    private List<String> includeMdcKeyNames = new ArrayList<>();
     
     /**
      * See {@link MdcJsonProvider}.
      */
-    private List<String> excludeMdcKeyNames = new ArrayList<String>();
+    private List<String> excludeMdcKeyNames = new ArrayList<>();
+
+    private final Map<String, String> mdcKeyFieldNames = new HashMap<>();
     
     @Override
     public void start() {
@@ -80,19 +84,27 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         Map<String, String> mdcProperties = event.getMDCPropertyMap();
         if (mdcProperties != null && !mdcProperties.isEmpty()) {
-            if (getFieldName() != null) {
-                generator.writeObjectFieldStart(getFieldName());
+
+            boolean hasWrittenStart = false;
+
+            for (Map.Entry<String, String> entry : mdcProperties.entrySet()) {
+                if (entry.getKey() != null && entry.getValue() != null
+                        && (includeMdcKeyNames.isEmpty() || includeMdcKeyNames.contains(entry.getKey()))
+                        && (excludeMdcKeyNames.isEmpty() || !excludeMdcKeyNames.contains(entry.getKey()))) {
+
+                    String fieldName = mdcKeyFieldNames.get(entry.getKey());
+                    if (fieldName == null) {
+                        fieldName = entry.getKey();
+                    }
+                    if (!hasWrittenStart && getFieldName() != null) {
+                        generator.writeObjectFieldStart(getFieldName());
+                        hasWrittenStart = true;
+                    }
+                    generator.writeFieldName(fieldName);
+                    generator.writeObject(entry.getValue());
+                }
             }
-            if (!includeMdcKeyNames.isEmpty()) {
-                mdcProperties = new HashMap<String, String>(mdcProperties);
-                mdcProperties.keySet().retainAll(includeMdcKeyNames);
-            }
-            if (!excludeMdcKeyNames.isEmpty()) {
-                mdcProperties = new HashMap<String, String>(mdcProperties);
-                mdcProperties.keySet().removeAll(excludeMdcKeyNames);
-            }
-            JsonWritingUtils.writeMapEntries(generator, mdcProperties);
-            if (getFieldName() != null) {
+            if (hasWrittenStart) {
                 generator.writeEndObject();
             }
         }
@@ -120,7 +132,25 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
         this.excludeMdcKeyNames.add(excludedMdcKeyName);
     }
     public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
-        this.excludeMdcKeyNames = new ArrayList<String>(excludeMdcKeyNames);
+        this.excludeMdcKeyNames = new ArrayList<>(excludeMdcKeyNames);
+    }
+
+    public Map<String, String> getMdcKeyFieldNames() {
+        return mdcKeyFieldNames;
+    }
+
+    /**
+     * Adds the given mdcKeyFieldName entry in the form mdcKeyName=fieldName
+     * to use an alternative field name for an MDC key.
+     *
+     * @param mdcKeyFieldName a string in the form mdcKeyName=fieldName that identifies what field name to use for a specific MDC key.
+     */
+    public void addMdcKeyFieldName(String mdcKeyFieldName) {
+        String[] split = mdcKeyFieldName.split("=");
+        if (split.length != 2) {
+            throw new IllegalArgumentException("mdcKeyFieldName (" + mdcKeyFieldName + ") must be in the form mdcKeyName=fieldName");
+        }
+        mdcKeyFieldNames.put(split[0], split[1]);
     }
     
 }

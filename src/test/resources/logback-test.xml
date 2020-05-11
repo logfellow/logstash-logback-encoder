@@ -50,6 +50,7 @@
                 <inlineHash>true</inlineHash>
             </throwableConverter>
             <includeMdcKeyName>included</includeMdcKeyName>
+            <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
             <customFields>{"customName":"customValue"}</customFields>
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
                 <omitEmptyFields>true</omitEmptyFields>
@@ -138,6 +139,7 @@
                 <jsonMessage/>
                 <mdc>
                     <includeMdcKeyName>included</includeMdcKeyName>
+                    <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
                 </mdc>
                 <contextMap/>
                 <globalCustomFields>

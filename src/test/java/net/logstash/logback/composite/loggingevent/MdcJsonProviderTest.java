@@ -139,4 +139,18 @@ public class MdcJsonProviderTest {
         verify(generator).writeObject("value3");
     }
 
+    @Test
+    public void testAlternateFieldName() throws IOException {
+        provider.addMdcKeyFieldName("name1=alternateName1");
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeFieldName("alternateName1");
+        verify(generator).writeObject("value1");
+        verify(generator).writeFieldName("name2");
+        verify(generator).writeObject("value2");
+        verify(generator).writeFieldName("name3");
+        verify(generator).writeObject("value3");
+    }
+
 }

@@ -170,6 +170,7 @@ public class ConfigurationTest {
         MdcJsonProvider mdcJsonProvider = getInstance(providers, MdcJsonProvider.class);
         Assert.assertNotNull(mdcJsonProvider);
         Assert.assertEquals("included", mdcJsonProvider.getIncludeMdcKeyNames().get(0));
+        Assert.assertEquals("renamedKey", mdcJsonProvider.getMdcKeyFieldNames().get("key"));
 
         Assert.assertNotNull(getInstance(providers, ContextMapJsonProvider.class));
 
