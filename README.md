@@ -1910,7 +1910,7 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
           <li><tt>includeMdcKeyName</tt> - Name of keys to include (all)</li>
-          <li><tt>excludeMdcKeyName</tt> - Name of keys to include (none)</li>
+          <li><tt>excludeMdcKeyName</tt> - Name of keys to exclude (none)</li>
           <li><tt>mdcKeyFieldName</tt> - Strings in the form <tt>mdcKeyName=fieldName</tt>
               that specify an alternate field name to output for specific MDC key (none)</li>
         </ul>
