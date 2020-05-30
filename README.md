@@ -52,6 +52,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
+* [Customizing Message](#customizing-message)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
@@ -847,9 +848,9 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).
-| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
-| `message`     | Formatted log message of the event
+| `@timestamp`  | Time of the log event (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`) - see [Customizing Timestamp](#customizing-timestamp)
+| `@version`    | Logstash format version (e.g. `1`) - see [Customizing Version](#customizing-version)
+| `message`     | Formatted log message of the event - see [Customizing Message](#customizing-message)
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
 | `level`       | String name of the level of the event
@@ -1509,7 +1510,6 @@ For AccessEvents, see [`LogstashAccessFieldNames`](/src/main/java/net/logstash/l
 for all the field names that can be customized. Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `fieldsMethod`, `fieldsProtocol`).
 
 
-
 ## Customizing Version
 
 The version field value by default is the string value `1`.
@@ -1563,6 +1563,41 @@ For example:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <timestampPattern>[UNIX_TIMESTAMP_AS_NUMBER]</timestampPattern>
+</encoder>
+```
+
+
+## Customizing Message
+
+By default, messages are written as JSON strings. Any characters not allowed in a JSON string, such as newlines, are escaped.
+See the [Customizing Character Escapes](#customizing-character-escapes) section for details.
+
+You can also write messages as JSON arrays instead of strings, by specifying a `messageSplitRegex` to split the message text.
+This configuration element can take the following values:
+
+* any valid regex pattern
+* `SYSTEM` (uses the system-default line separator)
+* `UNIX` (uses `\n`)
+* `WINDOWS` (uses `\r\n`)
+
+If you split the log message by the origin system's line separator, the written message does not contain any embedded line separators.
+The target system can unambiguously parse the message without any knowledge of the origin system's line separators.
+
+For example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <messageSplitRegex>SYSTEM</messageSplitRegex>
+</encoder>
+```
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <messageSplitRegex>\r?\n</messageSplitRegex>
+</encoder>
+```
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <messageSplitRegex>#+</messageSplitRegex>
 </encoder>
 ```
 
@@ -1778,6 +1813,9 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>Formatted log event message</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
+          <li><tt>messageSplitRegex</tt> - If null or empty, write the message text as is (the default behavior).
+              Otherwise, split the message text using the specified regex and write it as an array.
+              See the <a href="#customizing-message">Customizing Message</a> section for details.</li>
         </ul>
       </td>
     </tr>

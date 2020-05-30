@@ -62,6 +62,19 @@ public class JsonWritingUtils {
     }
     
     /**
+     * Writes an array of strings to the generator if and only if the fieldName and values are not null.
+     */
+    public static void writeStringArrayField(JsonGenerator generator, String fieldName, String[] fieldValues) throws IOException {
+        if (shouldWriteField(fieldName) && fieldValues != null && fieldValues.length > 0) {
+            generator.writeArrayFieldStart(fieldName);
+            for (String fieldValue : fieldValues) {
+                generator.writeString(fieldValue);
+            }
+            generator.writeEndArray();
+        }
+    }
+
+    /**
      * Writes the field to the generator if and only if the fieldName and fieldValue are not null.
      */
     public static void writeStringField(JsonGenerator generator, String fieldName, String fieldValue) throws IOException {
