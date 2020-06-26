@@ -1464,7 +1464,7 @@ Specific values to be masked can be specified in several ways, as seen in the fo
     </valueMask>
 
     <!-- Values to mask can be supplied dynamically with an implementation of MaskingJsonGeneratorDecorator.ValueMaskSupplier -->
-    <pathMaskSupplier class="your.custom.ValueMaskSupplierA"/>
+    <valueMaskSupplier class="your.custom.ValueMaskSupplierA"/>
 
     <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
          can be used for more advanced masking behavior-->
