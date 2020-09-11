@@ -28,7 +28,7 @@
 
         <!-- shaded runtime dependencies -->
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
-        <commons-lang3.version>3.10</commons-lang3.version>
+        <commons-lang3.version>3.11</commons-lang3.version>
 
         <!-- test dependencies -->
         <junit.version>4.13</junit.version>
