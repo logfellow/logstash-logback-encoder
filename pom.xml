@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>6.4-SNAPSHOT</version>
+    <version>6.5-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
@@ -28,25 +28,25 @@
 
         <!-- shaded runtime dependencies -->
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
-        <commons-lang3.version>3.9</commons-lang3.version>
+        <commons-lang3.version>3.11</commons-lang3.version>
 
         <!-- test dependencies -->
-        <junit.version>4.12</junit.version>
-        <org.assertj.version>3.14.0</org.assertj.version>
-        <org.mockito.version>3.2.0</org.mockito.version>
+        <junit.version>4.13</junit.version>
+        <org.assertj.version>3.17.2</org.assertj.version>
+        <org.mockito.version>3.5.13</org.mockito.version>
 
         <!-- maven plugins -->
-        <animal-sniffer-maven-plugin.version>1.18</animal-sniffer-maven-plugin.version>
-        <maven-bundle-plugin.version>4.2.1</maven-bundle-plugin.version>
+        <animal-sniffer-maven-plugin.version>1.19</animal-sniffer-maven-plugin.version>
+        <maven-bundle-plugin.version>5.1.1</maven-bundle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-enforcer-plugin.version>1.4.1</maven-enforcer-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
+        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
         <maven-license-plugin.version>1.9.0</maven-license-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
-        <maven-source-plugin.version>3.2.0</maven-source-plugin.version>
+        <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
+        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
     </properties>
 
@@ -92,6 +92,11 @@
                 <version>${com.fasterxml.jackson.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>${junit.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -184,7 +189,6 @@
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>

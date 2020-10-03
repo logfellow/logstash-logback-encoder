@@ -14,10 +14,12 @@
 package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
+import java.util.regex.Pattern;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -27,13 +29,20 @@ public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent
     
     public static final String FIELD_MESSAGE = "message";
 
+    private Pattern messageSplitPattern = null;
+
     public MessageJsonProvider() {
         setFieldName(FIELD_MESSAGE);
     }
 
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        JsonWritingUtils.writeStringField(generator, getFieldName(), event.getFormattedMessage());
+        if (messageSplitPattern != null) {
+            String[] multiLineMessage = messageSplitPattern.split(event.getFormattedMessage());
+            JsonWritingUtils.writeStringArrayField(generator, getFieldName(), multiLineMessage);
+        } else {
+            JsonWritingUtils.writeStringField(generator, getFieldName(), event.getFormattedMessage());
+        }
     }
     
     @Override
@@ -41,4 +50,51 @@ public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent
         setFieldName(fieldNames.getMessage());
     }
 
+    /**
+     * Write the message as a JSON array by splitting the message text using the specified regex.
+     *
+     * @return The regex used to split the message text
+     */
+    public String getMessageSplitRegex() {
+        return messageSplitPattern != null ? messageSplitPattern.pattern() : null;
+    }
+
+    /**
+     * Write the message as a JSON array by splitting the message text using the specified regex.
+     *
+     * <p>
+     * The allowed values are:
+     * <ul>
+     *     <li>Null/Empty : Disable message splitting. This is also the default behavior.</li>
+     *     <li>Any valid regex : Use the specified regex.</li>
+     *     <li><tt>SYSTEM</tt> : Use the system-default line separator.</li>
+     *     <li><tt>UNIX</tt> : Use <tt>\n</tt>.</li>
+     *     <li><tt>WINDOWS</tt> : Use <tt>\r\n</tt>.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * For example, if this parameter is set to the regex {@code #+}, then the logging statement:
+     * <pre>
+     * log.info("First line##Second line###Third line")
+     * </pre>
+     * will produce:
+     * <pre>
+     * {
+     *     ...
+     *     "message": [
+     *         "First line",
+     *         "Second line",
+     *         "Third line"
+     *     ],
+     *     ...
+     * }
+     * </pre>
+     * </p>
+     *
+     * @param messageSplitRegex The regex used to split the message text
+     */
+    public void setMessageSplitRegex(String messageSplitRegex) {
+        String parsedMessageSplitRegex = SeparatorParser.parseSeparator(messageSplitRegex);
+        this.messageSplitPattern = parsedMessageSplitRegex != null ? Pattern.compile(parsedMessageSplitRegex) : null;
+    }
 }

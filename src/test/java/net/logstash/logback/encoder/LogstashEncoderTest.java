@@ -17,6 +17,11 @@ import static ch.qos.logback.core.CoreConstants.LINE_SEPARATOR;
 import static net.logstash.logback.marker.Markers.append;
 import static net.logstash.logback.marker.Markers.appendEntries;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +51,6 @@ import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.assertj.core.util.Files;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
@@ -167,7 +171,7 @@ public class LogstashEncoderTest {
         
         byte[] encoded = encoder.encode(event);
         
-        String output = new String(encoded, "UTF-8");
+        String output = new String(encoded, StandardCharsets.UTF_8);
         
         assertThat(output).isEqualTo(String.format(
                 "{%n"
@@ -591,8 +595,8 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
         
         assertThat(node.get("appname").textValue()).isEqualTo("damnGodWebservice");
-        Assert.assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
-        Assert.assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
+        assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
     
     @Test
@@ -721,7 +725,7 @@ public class LogstashEncoderTest {
         MDC.remove("myMdcKey");
 
         List<String> lines = Files.linesOf(tempFile, StandardCharsets.UTF_8);
-        JsonNode node = MAPPER.readTree(lines.get(0).getBytes("UTF-8"));
+        JsonNode node = MAPPER.readTree(lines.get(0).getBytes(StandardCharsets.UTF_8));
 
         /*
          * The configuration suppresses the version field,
@@ -734,8 +738,8 @@ public class LogstashEncoderTest {
         assertThat(node.get("appendedName").textValue()).isEqualTo("appendedValue");
         assertThat(node.get("myMdcKey")).isNull();
         assertThat(node.get("logger").textValue()).isEqualTo(LogstashEncoderTest.class.getName());
-        Assert.assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
-        Assert.assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
+        assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
     }
     
     @Test
@@ -778,13 +782,58 @@ public class LogstashEncoderTest {
         assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
     }    
     
+    @Test
+    public void testMessageSplitEnabled() throws Exception {
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getFormattedMessage()).thenReturn(buildMultiLineMessage("###"));
+        encoder.setMessageSplitRegex("#+");
+        assertEquals("#+", encoder.getMessageSplitRegex());
+
+        encoder.start();
+        JsonNode node = MAPPER.readTree(encoder.encode(event));
+        encoder.stop();
+
+        assertJsonArray(node.path("message"), "line1", "line2", "line3");
+    }
+
+    @Test
+    public void testMessageSplitDisabled() throws Exception {
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getFormattedMessage()).thenReturn(buildMultiLineMessage(System.lineSeparator()));
+        encoder.setMessageSplitRegex(null);
+        assertNull(encoder.getMessageSplitRegex());
+
+        encoder.start();
+        JsonNode node = MAPPER.readTree(encoder.encode(event));
+        encoder.stop();
+
+        assertTrue(node.path("message").isTextual());
+        assertEquals(node.path("message").textValue(), buildMultiLineMessage(System.lineSeparator()));
+    }
+
+    @Test
+    public void testMessageSplitDisabledByDefault() throws Exception {
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        when(event.getFormattedMessage()).thenReturn(buildMultiLineMessage(System.lineSeparator()));
+        assertNull(encoder.getMessageSplitRegex());
+
+        encoder.start();
+        JsonNode node = MAPPER.readTree(encoder.encode(event));
+        encoder.stop();
+
+        assertTrue(node.path("message").isTextual());
+        assertEquals(node.path("message").textValue(), buildMultiLineMessage(System.lineSeparator()));
+    }
+
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
+        assertNotNull(jsonNode);
+        assertTrue(jsonNode.isArray());
+
         String[] values = new String[jsonNode.size()];
         for (int i = 0; i < values.length; i++) {
             values[i] = jsonNode.get(i).asText();
         }
-        
-        Assert.assertArrayEquals(expected, values);
+        assertArrayEquals(expected, values);
     }
     
     private ILoggingEvent mockBasicILoggingEvent(Level level) {
@@ -796,4 +845,7 @@ public class LogstashEncoderTest {
         return event;
     }
     
+    private static String buildMultiLineMessage(String lineSeparator) {
+        return String.join(lineSeparator, "line1", "line2", "line3");
+    }
 }

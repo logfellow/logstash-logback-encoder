@@ -34,6 +34,8 @@ public class CborGeneratorFeatureDecorator
 
     @Override
     protected CBORGenerator configure(CBORGenerator generator, CBORGenerator.Feature feature, boolean state) {
-        return generator.configure(feature, state);
+        return state
+                ? generator.enable(feature)
+                : generator.disable(feature);
     }
 }

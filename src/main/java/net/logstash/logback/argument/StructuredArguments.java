@@ -15,18 +15,17 @@ package net.logstash.logback.argument;
 
 import java.util.Arrays;
 import java.util.Map;
-
-import net.logstash.logback.marker.MapEntriesAppendingMarker;
-import net.logstash.logback.marker.ObjectAppendingMarker;
-import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
-import net.logstash.logback.marker.RawJsonAppendingMarker;
-
-import org.slf4j.ILoggerFactory;
-import org.slf4j.LoggerFactory;
+import java.util.function.Supplier;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.WarnStatus;
+import net.logstash.logback.marker.MapEntriesAppendingMarker;
+import net.logstash.logback.marker.ObjectAppendingMarker;
+import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
+import net.logstash.logback.marker.RawJsonAppendingMarker;
+import org.slf4j.ILoggerFactory;
+import org.slf4j.LoggerFactory;
 
 /**
  * Factory for creating {@link StructuredArgument}s.
@@ -182,7 +181,14 @@ public class StructuredArguments {
     public static StructuredArgument r(String fieldName, String rawJsonValue) {
         return raw(fieldName, rawJsonValue);
     }
-    
+
+    /**
+     * @see DeferredStructuredArgument
+     */
+    public static StructuredArgument defer(Supplier<? extends StructuredArgument> structuredArgumentSupplier) {
+        return new DeferredStructuredArgument(structuredArgumentSupplier);
+    }
+
     /**
      * Format the argument into a string.
      * <p>

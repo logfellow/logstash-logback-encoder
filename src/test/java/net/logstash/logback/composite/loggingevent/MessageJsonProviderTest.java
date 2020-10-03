@@ -13,6 +13,8 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -78,4 +80,106 @@ public class MessageJsonProviderTest {
         verify(generator).writeStringField("newFieldName", "message");
     }
 
+    @Test
+    public void testMessageSplitDisabledByDefault() throws Exception {
+        assertNull(provider.getMessageSplitRegex());
+
+        mockEventMessage("###");
+        provider.writeTo(generator, event);
+
+        verifySingleLineMessageGenerated("###");
+    }
+
+    @Test
+    public void testMessageSplitDisabledForNullRegex() throws Exception {
+        provider.setMessageSplitRegex(null);
+        assertNull(provider.getMessageSplitRegex());
+
+        mockEventMessage("###");
+        provider.writeTo(generator, event);
+
+        verifySingleLineMessageGenerated("###");
+    }
+
+    @Test
+    public void testMessageSplitDisabledForEmptyRegex() throws Exception {
+        provider.setMessageSplitRegex("");
+        assertNull(provider.getMessageSplitRegex());
+
+        mockEventMessage("###");
+        provider.writeTo(generator, event);
+
+        verifySingleLineMessageGenerated("###");
+    }
+
+    @Test
+    public void testMessageSplitWithSystemSeparator() throws IOException {
+        provider.setMessageSplitRegex("SYSTEM");
+        assertEquals(System.lineSeparator(), provider.getMessageSplitRegex());
+
+        mockEventMessage(System.lineSeparator());
+        provider.writeTo(generator, event);
+
+        verifyMultiLineMessageGenerated();
+    }
+
+    @Test
+    public void testMessageSplitWithUnixSeparator() throws IOException {
+        provider.setMessageSplitRegex("UNIX");
+        assertEquals("\n", provider.getMessageSplitRegex());
+
+        mockEventMessage("\n");
+        provider.writeTo(generator, event);
+
+        verifyMultiLineMessageGenerated();
+    }
+
+    @Test
+    public void testMessageSplitWithWindowsSeparator() throws IOException {
+        provider.setMessageSplitRegex("WINDOWS");
+        assertEquals("\r\n", provider.getMessageSplitRegex());
+
+        mockEventMessage("\r\n");
+        provider.writeTo(generator, event);
+
+        verifyMultiLineMessageGenerated();
+    }
+
+    @Test
+    public void testMessageSplitWithCustomRegex() throws IOException {
+        provider.setMessageSplitRegex("#+");
+        assertEquals("#+", provider.getMessageSplitRegex());
+
+        mockEventMessage("###");
+        provider.writeTo(generator, event);
+
+        verifyMultiLineMessageGenerated();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testMessageSplitWithInvalidRegex() {
+        provider.setMessageSplitRegex("++");
+    }
+
+    private void mockEventMessage(String lineSeparator) {
+        String message = buildMultiLineMessage(lineSeparator);
+        when(event.getFormattedMessage()).thenReturn(message);
+    }
+
+    private void verifySingleLineMessageGenerated(String lineSeparator) throws IOException {
+        String message = buildMultiLineMessage(lineSeparator);
+        verify(generator).writeStringField(MessageJsonProvider.FIELD_MESSAGE, message);
+    }
+
+    private void verifyMultiLineMessageGenerated() throws IOException {
+        verify(generator).writeArrayFieldStart(MessageJsonProvider.FIELD_MESSAGE);
+        verify(generator).writeString("line1");
+        verify(generator).writeString("line2");
+        verify(generator).writeString("line3");
+        verify(generator).writeEndArray();
+    }
+
+    private static String buildMultiLineMessage(String lineSeparator) {
+        return String.join(lineSeparator, "line1", "line2", "line3");
+    }
 }

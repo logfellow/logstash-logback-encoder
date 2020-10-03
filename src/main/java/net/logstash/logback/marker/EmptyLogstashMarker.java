@@ -15,6 +15,7 @@ package net.logstash.logback.marker;
 
 import java.io.IOException;
 
+import net.logstash.logback.argument.StructuredArgument;
 import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -33,7 +34,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *     }
  * </pre>
  */
-public class EmptyLogstashMarker extends LogstashMarker {
+public class EmptyLogstashMarker extends LogstashMarker implements StructuredArgument {
 
     public static final String EMPTY_MARKER_NAME = "EMPTY";
 
