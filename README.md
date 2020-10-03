@@ -1488,6 +1488,7 @@ For example:
   <fieldNames>
     <timestamp>time</timestamp>
     <message>msg</message>
+    <stackTrace>stacktrace</stackTrace>
     ...
   </fieldNames>
 </encoder>
