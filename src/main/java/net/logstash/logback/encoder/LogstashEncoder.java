@@ -120,6 +120,10 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setExcludeMdcKeyNames(excludeMdcKeyNames);
     }
 
+    public void addMdcKeyFieldName(String mdcKeyFieldName) {
+        getFormatter().addMdcKeyFieldName(mdcKeyFieldName);
+    }
+
     public boolean isIncludeTags() {
         return getFormatter().isIncludeTags();
     }
@@ -251,5 +255,50 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setWriteVersionAsInteger(writeVersionAsInteger);
     }
     
+    /**
+     * Write the message as a JSON array by splitting the message text using the specified regex.
+     *
+     * @return The regex used to split the message text
+     */
+    public String getMessageSplitRegex() {
+        return getFormatter().getMessageSplitRegex();
+    }
 
+    /**
+     * Write the message as a JSON array by splitting the message text using the specified regex.
+     *
+     * <p>
+     * The allowed values are:
+     * <ul>
+     *     <li>Null/Empty : Disable message splitting. This is also the default behavior.</li>
+     *     <li>Any valid regex : Use the specified regex.</li>
+     *     <li><tt>SYSTEM</tt> : Use the system-default line separator.</li>
+     *     <li><tt>UNIX</tt> : Use <tt>\n</tt>.</li>
+     *     <li><tt>WINDOWS</tt> : Use <tt>\r\n</tt>.</li>
+     * </ul>
+     * </p>
+     * <p>
+     * For example, if this parameter is set to the regex {@code #+}, then the logging statement:
+     * <pre>
+     * log.info("First line##Second line###Third line")
+     * </pre>
+     * will produce:
+     * <pre>
+     * {
+     *     ...
+     *     "message": [
+     *         "First line",
+     *         "Second line",
+     *         "Third line"
+     *     ],
+     *     ...
+     * }
+     * </pre>
+     * </p>
+     *
+     * @param messageSplitRegex The regex used to split the message text
+     */
+    public void setMessageSplitRegex(String messageSplitRegex) {
+        getFormatter().setMessageSplitRegex(messageSplitRegex);
+    }
 }

@@ -105,7 +105,7 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeNumberField(FormattedTimestampJsonProvider.FIELD_TIMESTAMP, 0);
+        verify(generator).writeNumberField(FormattedTimestampJsonProvider.FIELD_TIMESTAMP, 0L);
     }
 
     @Test

@@ -46,24 +46,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * A {@link AccessEventCompositeJsonFormatter} that contains a common
  * pre-defined set of {@link JsonProvider}s.
- * 
+ *
  * The included providers are configured via properties on this
  * formatter, rather than configuring the providers directly.
- * This leads to a somewhat simpler configuration definitions. 
- * 
+ * This leads to a somewhat simpler configuration definitions.
+ *
  * You cannot remove any of the pre-defined providers, but
  * you can add additional providers via {@link #addProvider(JsonProvider)}.
- * 
+ *
  * If you would like full control over the providers, you
  * should instead use {@link AccessEventCompositeJsonFormatter} directly.
  */
 public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
-    
+
     /**
      * The field names to use when writing the access event fields
      */
     protected LogstashAccessFieldNames fieldNames = new LogstashAccessFieldNames();
-    
+
     private final AccessEventFormattedTimestampJsonProvider timestampProvider = new AccessEventFormattedTimestampJsonProvider();
     private final LogstashVersionJsonProvider<IAccessEvent> versionProvider = new LogstashVersionJsonProvider<IAccessEvent>();
     private final AccessMessageJsonProvider messageProvider = new AccessMessageJsonProvider();
@@ -78,12 +78,12 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     private final ElapsedTimeJsonProvider elapsedTimeProvider = new ElapsedTimeJsonProvider();
     private final RequestHeadersJsonProvider requestHeadersProvider = new RequestHeadersJsonProvider();
     private final ResponseHeadersJsonProvider responseHeadersProvider = new ResponseHeadersJsonProvider();
-    private final ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
+    private ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
     private GlobalCustomFieldsJsonProvider<IAccessEvent> globalCustomFieldsProvider;
-    
+
     public LogstashAccessFormatter(ContextAware declaredOrigin) {
         super(declaredOrigin);
-        
+
         getProviders().addTimestamp(this.timestampProvider);
         getProviders().addVersion(this.versionProvider);
         getProviders().addAccessMessage(this.messageProvider);
@@ -100,7 +100,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         getProviders().addResponseHeaders(this.responseHeadersProvider);
         getProviders().addContext(this.contextProvider);
     }
-    
+
     @Override
     public void start() {
         configureProviderFieldNames();
@@ -119,12 +119,12 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     public void addProvider(JsonProvider<IAccessEvent> provider) {
         getProviders().addProvider(provider);
     }
-    
+
     @Override
     public AccessEventJsonProviders getProviders() {
         return (AccessEventJsonProviders) super.getProviders();
     }
-    
+
     public LogstashAccessFieldNames getFieldNames() {
         return fieldNames;
     }
@@ -139,7 +139,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     public void setTimeZone(String timeZoneId) {
         this.timestampProvider.setTimeZone(timeZoneId);
         this.messageProvider.setTimeZone(timeZoneId);
-    }    
+    }
     public String getTimestampPattern() {
         return timestampProvider.getPattern();
     }
@@ -152,7 +152,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
                 ? null
                 : globalCustomFieldsProvider.getCustomFields();
     }
-    
+
     public void setCustomFieldsFromString(String customFields) {
         if (customFields == null || customFields.length() == 0) {
             getProviders().removeProvider(globalCustomFieldsProvider);
@@ -164,7 +164,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
             globalCustomFieldsProvider.setCustomFields(customFields);
         }
     }
-    
+
     public void setCustomFields(JsonNode customFields) {
         if (customFields == null) {
             getProviders().removeProvider(globalCustomFieldsProvider);
@@ -176,13 +176,13 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
             globalCustomFieldsProvider.setCustomFieldsNode(customFields);
         }
     }
-    
+
     public JsonNode getCustomFields() {
         return globalCustomFieldsProvider == null
                 ? null
                 : globalCustomFieldsProvider.getCustomFieldsNode();
     }
-    
+
     public boolean getLowerCaseHeaderNames() {
         return this.requestHeadersProvider.getLowerCaseHeaderNames();
     }
@@ -195,25 +195,41 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         this.requestHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
         this.responseHeadersProvider.setLowerCaseHeaderNames(lowerCaseHeaderNames);
     }
-    
+
     public HeaderFilter getRequestHeaderFilter() {
         return this.requestHeadersProvider.getFilter();
     }
-    
+
     @DefaultClass(IncludeExcludeHeaderFilter.class)
     public void setRequestHeaderFilter(HeaderFilter filter) {
         this.requestHeadersProvider.setFilter(filter);
     }
-    
+
     public HeaderFilter getResponseHeaderFilter() {
         return this.responseHeadersProvider.getFilter();
     }
-    
+
     @DefaultClass(IncludeExcludeHeaderFilter.class)
     public void setResponseHeaderFilter(HeaderFilter filter) {
         this.responseHeadersProvider.setFilter(filter);
     }
-    
+
+    public boolean isIncludeContext() {
+        return contextProvider != null;
+    }
+
+    public void setIncludeContext(boolean includeContext) {
+        if (isIncludeContext() != includeContext) {
+            getProviders().removeProvider(contextProvider);
+            if (includeContext) {
+                contextProvider = new ContextJsonProvider<IAccessEvent>();
+                getProviders().addContext(contextProvider);
+            } else {
+                contextProvider = null;
+            }
+        }
+    }
+
     public String getVersion() {
         return this.versionProvider.getVersion();
     }
@@ -221,7 +237,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         this.versionProvider.setVersion(version);
     }
 
-    
+
     /**
      * @deprecated Use {@link #isWriteVersionAsInteger()}
      * @return true if the version should be written as a string
@@ -238,14 +254,14 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         this.versionProvider.setWriteAsString(writeVersionAsString);
     }
-    
+
     public boolean isWriteVersionAsInteger() {
         return this.versionProvider.isWriteAsInteger();
     }
     public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
         this.versionProvider.setWriteAsInteger(writeVersionAsInteger);
     }
-    
+
 
     @Override
     public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {

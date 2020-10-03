@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-6.3).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-6.4).
 
 # Logstash Logback Encoder
 
@@ -52,6 +52,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
+* [Customizing Message](#customizing-message)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
@@ -75,7 +76,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>6.3</version>
+    <version>6.4</version>
 </dependency>
 <!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
 <dependency>
@@ -847,9 +848,9 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).
-| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
-| `message`     | Formatted log message of the event
+| `@timestamp`  | Time of the log event (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`) - see [Customizing Timestamp](#customizing-timestamp)
+| `@version`    | Logstash format version (e.g. `1`) - see [Customizing Version](#customizing-version)
+| `message`     | Formatted log message of the event - see [Customizing Message](#customizing-message)
 | `logger_name` | Name of the logger that logged the event
 | `thread_name` | Name of the thread that logged the event
 | `level`       | String name of the level of the event
@@ -888,6 +889,15 @@ When key names are specified for inclusion, then all other fields will be exclud
 When key names are specified for exclusion, then all other fields will be included.
 It is a configuration error to specify both included and excluded key names.
 
+By default, the MDC key is used as the field name in the output.
+To use an alternative field name in the output for an MDC entry,
+specify`<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`: 
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <mdcKeyFieldName>key1=alternateFieldNameForKey1</mdcKeyFieldName>
+</encoder>
+```
 
 ### Context fields
 
@@ -1062,7 +1072,10 @@ logger.info("log message {}", fields(myobject));
 
 /*
  * In order to normalize a field object name, static helper methods can be created.
- * For example, `foo(Foo)` calls `value("foo" , foo)`
+ * For example:
+ *     public static StructuredArgument foo(Foo foo) {
+ *         return StructuredArguments.value("foo", foo);
+ *     }
  */
 logger.info("log message {}", foo(foo));
 
@@ -1447,11 +1460,11 @@ Specific values to be masked can be specified in several ways, as seen in the fo
     <valueMask>
       <value>^(foo)-.*$</value>
       <value>^(bar)-.*$</value>
-      <mask>\1****</mask>
+      <mask>$1****</mask>
     </valueMask>
 
     <!-- Values to mask can be supplied dynamically with an implementation of MaskingJsonGeneratorDecorator.ValueMaskSupplier -->
-    <pathMaskSupplier class="your.custom.ValueMaskSupplierA"/>
+    <valueMaskSupplier class="your.custom.ValueMaskSupplierA"/>
 
     <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
          can be used for more advanced masking behavior-->
@@ -1475,6 +1488,7 @@ For example:
   <fieldNames>
     <timestamp>time</timestamp>
     <message>msg</message>
+    <stackTrace>stacktrace</stackTrace>
     ...
   </fieldNames>
 </encoder>
@@ -1495,7 +1509,6 @@ names for `caller`, `mdc`, and `context`, respectively.
 
 For AccessEvents, see [`LogstashAccessFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashAccessFieldNames.java)
 for all the field names that can be customized. Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `fieldsMethod`, `fieldsProtocol`).
-
 
 
 ## Customizing Version
@@ -1550,6 +1563,41 @@ You can change the timezone like this:
 ```
 
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
+
+
+## Customizing Message
+
+By default, messages are written as JSON strings. Any characters not allowed in a JSON string, such as newlines, are escaped.
+See the [Customizing Character Escapes](#customizing-character-escapes) section for details.
+
+You can also write messages as JSON arrays instead of strings, by specifying a `messageSplitRegex` to split the message text.
+This configuration element can take the following values:
+
+* any valid regex pattern
+* `SYSTEM` (uses the system-default line separator)
+* `UNIX` (uses `\n`)
+* `WINDOWS` (uses `\r\n`)
+
+If you split the log message by the origin system's line separator, the written message does not contain any embedded line separators.
+The target system can unambiguously parse the message without any knowledge of the origin system's line separators.
+
+For example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <messageSplitRegex>SYSTEM</messageSplitRegex>
+</encoder>
+```
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <messageSplitRegex>\r?\n</messageSplitRegex>
+</encoder>
+```
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <messageSplitRegex>#+</messageSplitRegex>
+</encoder>
+```
 
 ## Customizing Logger Name Length
 
@@ -1758,6 +1806,9 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>Formatted log event message</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
+          <li><tt>messageSplitRegex</tt> - If null or empty, write the message text as is (the default behavior).
+              Otherwise, split the message text using the specified regex and write it as an array.
+              See the <a href="#customizing-message">Customizing Message</a> section for details.</li>
         </ul>
       </td>
     </tr>
@@ -1810,7 +1861,7 @@ For LoggingEvents, the available providers and their configuration properties (d
           <li><tt>classFieldName</tt> - Field name for class name (<tt>caller_class_name</tt>)</li>
           <li><tt>methodFieldName</tt> - Field name for method name (<tt>caller_method_name</tt>)</li>
           <li><tt>fileFieldName</tt> - Field name for file name (<tt>caller_file_name</tt>)</li>
-          <li><tt>lineFieldName</tt> - Field name for lin number (<tt>caller_line_number</tt>)</li>
+          <li><tt>lineFieldName</tt> - Field name for line number (<tt>caller_line_number</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1820,6 +1871,16 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
           <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>rootStackTraceElement</tt></td>
+      <td><p>(Only if a throwable was logged) Outputs a JSON Object containing the class and method name from which the outer-most exception was thrown.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>root_stack_trace_element</tt>)</li>
+          <li><tt>classFieldName</tt> - Field name containing the class name from which the outermost exception was thrown (<tt>class_name</tt>)</li>
+          <li><tt>methodFieldName</tt> - Field name containing the method name from which the outermost exception was thrown (<tt>method_name</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1880,7 +1941,9 @@ For LoggingEvents, the available providers and their configuration properties (d
         <ul>
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
           <li><tt>includeMdcKeyName</tt> - Name of keys to include (all)</li>
-          <li><tt>excludeMdcKeyName</tt> - Name of keys to include (none)</li>
+          <li><tt>excludeMdcKeyName</tt> - Name of keys to exclude (none)</li>
+          <li><tt>mdcKeyFieldName</tt> - Strings in the form <tt>mdcKeyName=fieldName</tt>
+              that specify an alternate field name to output for specific MDC key (none)</li>
         </ul>
       </td>
     </tr>

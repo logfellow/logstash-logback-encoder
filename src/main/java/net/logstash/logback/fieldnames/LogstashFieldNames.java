@@ -17,6 +17,7 @@ import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.RootStackTraceElementJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
@@ -37,6 +38,9 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String callerFile = CallerDataJsonProvider.FIELD_CALLER_FILE_NAME;
     private String callerLine = CallerDataJsonProvider.FIELD_CALLER_LINE_NUMBER;
     private String stackTrace = StackTraceJsonProvider.FIELD_STACK_TRACE;
+    private String rootStackTraceElement = RootStackTraceElementJsonProvider.FIELD_STACKTRACE_ELEMENT;
+    private String rootStackTraceElementClass = RootStackTraceElementJsonProvider.FIELD_CLASS_NAME;
+    private String rootStackTraceElementMethod = RootStackTraceElementJsonProvider.FIELD_METHOD_NAME;
     private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
     private String context;
@@ -194,5 +198,29 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public String getRootStackTraceElement() {
+        return rootStackTraceElement;
+    }
+
+    public void setRootStackTraceElement(String rootStackTraceElement) {
+        this.rootStackTraceElement = rootStackTraceElement;
+    }
+
+    public String getRootStackTraceElementMethod() {
+        return rootStackTraceElementMethod;
+    }
+
+    public void setRootStackTraceElementMethod(String rootStackTraceElementMethod) {
+        this.rootStackTraceElementMethod = rootStackTraceElementMethod;
+    }
+
+    public String getRootStackTraceElementClass() {
+        return rootStackTraceElementClass;
+    }
+
+    public void setRootStackTraceElementClass(String rootStackTraceElementClass) {
+        this.rootStackTraceElementClass = rootStackTraceElementClass;
     }
 }

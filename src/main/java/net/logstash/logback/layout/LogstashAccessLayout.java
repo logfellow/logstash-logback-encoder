@@ -23,25 +23,25 @@ import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 
 public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
-    
+
     @Override
     protected CompositeJsonFormatter<IAccessEvent> createFormatter() {
         return new LogstashAccessFormatter(this);
     }
-    
+
     @Override
     protected LogstashAccessFormatter getFormatter() {
         return (LogstashAccessFormatter) super.getFormatter();
     }
-    
+
     public void addProvider(JsonProvider<IAccessEvent> provider) {
         getFormatter().addProvider(provider);
     }
-    
+
     public LogstashAccessFieldNames getFieldNames() {
         return getFormatter().getFieldNames();
     }
-    
+
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
         getFormatter().setFieldNames(fieldNames);
     }
@@ -64,17 +64,17 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
     public void setCustomFields(String customFields) {
         getFormatter().setCustomFieldsFromString(customFields);
     }
-    
+
     public String getCustomFields() {
         return getFormatter().getCustomFieldsAsString();
     }
-    
+
     public boolean getLowerCaseHeaderNames() {
         return getFormatter().getLowerCaseHeaderNames();
     }
 
     /**
-     * When true, names of headers will be written to JSON output in lowercase. 
+     * When true, names of headers will be written to JSON output in lowercase.
      */
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         getFormatter().setLowerCaseHeaderNames(lowerCaseHeaderNames);
@@ -83,19 +83,27 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
     public HeaderFilter getRequestHeaderFilter() {
         return getFormatter().getRequestHeaderFilter();
     }
-    
+
     @DefaultClass(IncludeExcludeHeaderFilter.class)
     public void setRequestHeaderFilter(HeaderFilter filter) {
         getFormatter().setRequestHeaderFilter(filter);
     }
-    
+
     public HeaderFilter getResponseHeaderFilter() {
         return getFormatter().getResponseHeaderFilter();
     }
-    
+
     @DefaultClass(IncludeExcludeHeaderFilter.class)
     public void setResponseHeaderFilter(HeaderFilter filter) {
         getFormatter().setResponseHeaderFilter(filter);
+    }
+
+    public boolean isIncludeContext() {
+        return getFormatter().isIncludeContext();
+    }
+
+    public void setIncludeContext(boolean includeContext) {
+        getFormatter().setIncludeContext(includeContext);
     }
 
     public String getVersion() {
@@ -105,7 +113,7 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
         getFormatter().setVersion(version);
     }
 
-    
+
     /**
      * @deprecated Use {@link #isWriteVersionAsInteger()}
      */
@@ -120,12 +128,12 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         getFormatter().setWriteVersionAsString(writeVersionAsString);
     }
-    
+
     public boolean isWriteVersionAsInteger() {
         return getFormatter().isWriteVersionAsInteger();
     }
     public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
         getFormatter().setWriteVersionAsInteger(writeVersionAsInteger);
     }
-    
+
 }

@@ -39,7 +39,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -127,7 +127,7 @@ public class LogstashTcpSocketAppenderTest {
         when(context.getStatusManager()).thenReturn(statusManager);
         when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);
-        when(encoder.encode(event1)).thenReturn("event1".getBytes("UTF-8"));
+        when(encoder.encode(event1)).thenReturn("event1".getBytes(StandardCharsets.UTF_8));
         appender.addListener(listener);
         
     }
@@ -217,7 +217,7 @@ public class LogstashTcpSocketAppenderTest {
         
         verify(encoder).start();
         
-        doThrow(new RuntimeException()).doReturn("event1".getBytes("UTF-8")).when(encoder).encode(event1);
+        doThrow(new RuntimeException()).doReturn("event1".getBytes(StandardCharsets.UTF_8)).when(encoder).encode(event1);
         
         appender.append(event1);
         
@@ -368,7 +368,7 @@ public class LogstashTcpSocketAppenderTest {
         // attempts will succeed. This should force the appender to close the connection
         // and attempt to reconnect
         doThrow(new RuntimeException())
-            .doReturn("event1".getBytes("UTF-8"))
+            .doReturn("event1".getBytes(StandardCharsets.UTF_8))
             .when(encoder).encode(event1);
         
         
@@ -491,11 +491,11 @@ public class LogstashTcpSocketAppenderTest {
 
         // Schedule keepalive message every 100ms
         appender.setKeepAliveMessage("UNIX");
-        appender.setKeepAliveCharset(Charset.forName("UTF-8"));
+        appender.setKeepAliveCharset(StandardCharsets.UTF_8);
         appender.setKeepAliveDuration(Duration.buildByMilliseconds(100));
 
         String expectedKeepAlives = SeparatorParser.parseSeparator("UNIX") + SeparatorParser.parseSeparator("UNIX");
-        byte[] expectedKeepAlivesBytes = expectedKeepAlives.getBytes("UTF-8");
+        byte[] expectedKeepAlivesBytes = expectedKeepAlives.getBytes(StandardCharsets.UTF_8);
 
         // Use a ByteArrayOutputStream to capture the actual keep alive message bytes
         ByteArrayOutputStream bos = new ByteArrayOutputStream();

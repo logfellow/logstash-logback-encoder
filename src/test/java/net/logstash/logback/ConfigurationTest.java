@@ -15,6 +15,7 @@ package net.logstash.logback;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -169,6 +170,7 @@ public class ConfigurationTest {
         MdcJsonProvider mdcJsonProvider = getInstance(providers, MdcJsonProvider.class);
         Assert.assertNotNull(mdcJsonProvider);
         Assert.assertEquals("included", mdcJsonProvider.getIncludeMdcKeyNames().get(0));
+        Assert.assertEquals("renamedKey", mdcJsonProvider.getMdcKeyFieldNames().get("key"));
 
         Assert.assertNotNull(getInstance(providers, ContextMapJsonProvider.class));
 
@@ -227,7 +229,7 @@ public class ConfigurationTest {
         byte[] encoded = encoder.encode(listAppender.list.get(0));
         
 
-        Map<String, Object> output = parseJson(new String(encoded, "UTF-8"));
+        Map<String, Object> output = parseJson(new String(encoded, StandardCharsets.UTF_8));
         Assert.assertNotNull(output.get("@timestamp"));
         Assert.assertEquals("1", output.get("@version"));
         Assert.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));

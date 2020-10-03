@@ -48,7 +48,7 @@ public class LogstashVersionJsonProviderTest {
 
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField(LogstashVersionJsonProvider.FIELD_VERSION, Integer.parseInt(LogstashVersionJsonProvider.DEFAULT_VERSION));
+        verify(generator).writeNumberField(LogstashVersionJsonProvider.FIELD_VERSION, Long.parseLong(LogstashVersionJsonProvider.DEFAULT_VERSION));
     }
 
     @Test
@@ -65,7 +65,7 @@ public class LogstashVersionJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField(LogstashVersionJsonProvider.FIELD_VERSION, 800);
+        verify(generator).writeNumberField(LogstashVersionJsonProvider.FIELD_VERSION, 800L);
     }
 
     @Test

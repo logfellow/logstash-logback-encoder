@@ -41,6 +41,8 @@ public class ShortenedFieldNames extends LogstashFieldNames {
         setCallerFile(FIELD_FILE);
         setCallerLine(FIELD_LINE);
         setStackTrace(FIELD_STACKTRACE);
+        setRootStackTraceElementClass(FIELD_CLASS);
+        setRootStackTraceElementMethod(FIELD_METHOD);
     }
     
 }

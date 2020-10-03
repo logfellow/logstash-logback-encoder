@@ -25,7 +25,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.CompositeJsonFormatter;
@@ -146,7 +146,7 @@ public class CompositeJsonEncoderTest {
         verify(formatter).setContext(context);
         verify(formatter).start();
         
-        verify(prefix).setCharset(Charset.forName("UTF-8"));
+        verify(prefix).setCharset(StandardCharsets.UTF_8);
         verify(prefix).start();
         verify(suffix).start();
         
@@ -181,8 +181,8 @@ public class CompositeJsonEncoderTest {
         LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
         Encoder<ILoggingEvent> suffix = mock(Encoder.class);
         
-        when(prefix.encode(event)).thenReturn("prefix".getBytes("UTF-8"));
-        when(suffix.encode(event)).thenReturn("suffix".getBytes("UTF-8"));
+        when(prefix.encode(event)).thenReturn("prefix".getBytes(StandardCharsets.UTF_8));
+        when(suffix.encode(event)).thenReturn("suffix".getBytes(StandardCharsets.UTF_8));
         
         encoder.setPrefix(prefix);
         encoder.setSuffix(suffix);
@@ -194,7 +194,7 @@ public class CompositeJsonEncoderTest {
         verify(formatter).setContext(context);
         verify(formatter).start();
         
-        verify(prefix).setCharset(Charset.forName("UTF-8"));
+        verify(prefix).setCharset(StandardCharsets.UTF_8);
         verify(prefix).start();
         verify(suffix).start();
         
@@ -205,7 +205,7 @@ public class CompositeJsonEncoderTest {
         
         verify(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
         
-        assertThat(encoded).containsExactly(("prefixsuffix" + System.getProperty("line.separator")).getBytes("UTF-8"));
+        assertThat(encoded).containsExactly(("prefixsuffix" + System.getProperty("line.separator")).getBytes(StandardCharsets.UTF_8));
         
         encoder.stop();
         Assert.assertFalse(encoder.isStarted());
