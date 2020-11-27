@@ -32,7 +32,7 @@
 
         <!-- test dependencies -->
         <junit.version>4.13.1</junit.version>
-        <org.assertj.version>3.18.0</org.assertj.version>
+        <org.assertj.version>3.18.1</org.assertj.version>
         <org.mockito.version>3.6.28</org.mockito.version>
 
         <!-- maven plugins -->
