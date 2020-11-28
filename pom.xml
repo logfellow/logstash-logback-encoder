@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>6.5-SNAPSHOT</version>
+    <version>6.6-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
@@ -30,9 +30,9 @@
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
 
         <!-- test dependencies -->
-        <junit.version>4.13</junit.version>
-        <org.assertj.version>3.17.2</org.assertj.version>
-        <org.mockito.version>3.5.13</org.mockito.version>
+        <junit.version>4.13.1</junit.version>
+        <org.assertj.version>3.18.1</org.assertj.version>
+        <org.mockito.version>3.6.28</org.mockito.version>
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.19</animal-sniffer-maven-plugin.version>
@@ -399,6 +399,7 @@
                         <configuration>
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
                         </configuration>
                     </plugin>
                 </plugins>

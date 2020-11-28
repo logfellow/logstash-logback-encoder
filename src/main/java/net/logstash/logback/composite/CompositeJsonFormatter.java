@@ -166,8 +166,9 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     }
 
     public void writeEventToOutputStream(Event event, OutputStream outputStream) throws IOException {
-        JsonGenerator generator = createGenerator(outputStream);
-        writeEventToGenerator(generator, event);
+        try (JsonGenerator generator = createGenerator(outputStream)) {
+            writeEventToGenerator(generator, event);
+        }
         /*
          * Do not flush the outputStream.
          * 
@@ -179,10 +180,11 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     public String writeEventAsString(Event event) throws IOException {
         SegmentedStringWriter writer = new SegmentedStringWriter(getBufferRecycler());
 
-        JsonGenerator generator = createGenerator(writer);
-        writeEventToGenerator(generator, event);
-        writer.flush();
-        return writer.getAndClear();
+        try (JsonGenerator generator = createGenerator(writer)) {
+            writeEventToGenerator(generator, event);
+            writer.flush();
+            return writer.getAndClear();
+        }
     }
 
     protected void writeEventToGenerator(JsonGenerator generator, Event event) throws IOException {
