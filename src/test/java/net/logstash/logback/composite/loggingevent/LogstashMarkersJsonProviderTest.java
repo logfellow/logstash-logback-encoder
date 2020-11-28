@@ -19,23 +19,18 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.Collections;
 
-import net.logstash.logback.marker.LogstashMarker;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.slf4j.Marker;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import net.logstash.logback.marker.LogstashMarker;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Marker;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class LogstashMarkersJsonProviderTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
     
     private LogstashMarkersJsonProvider provider = new LogstashMarkersJsonProvider();
     

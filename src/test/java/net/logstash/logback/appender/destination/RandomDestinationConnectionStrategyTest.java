@@ -20,15 +20,15 @@ import static org.mockito.Mockito.when;
 
 import java.util.Random;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import ch.qos.logback.core.util.Duration;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RandomDestinationConnectionStrategyTest {
     
     private RandomDestinationConnectionStrategy strategy = spy(new RandomDestinationConnectionStrategy());
@@ -36,7 +36,7 @@ public class RandomDestinationConnectionStrategyTest {
     @Mock
     private Random random;
     
-    @Before
+    @BeforeEach
     public void setup() {
         doReturn(random).when(strategy).getRandom();
     }

@@ -14,10 +14,10 @@
 package net.logstash.logback.pattern;
 
 import ch.qos.logback.access.spi.IAccessEvent;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 
@@ -26,10 +26,10 @@ import static org.mockito.BDDMockito.given;
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserTest<IAccessEvent>{
 
-    @Mock
+    @Mock(lenient = true)
     private IAccessEvent event;
 
     @Override

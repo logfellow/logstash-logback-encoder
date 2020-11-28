@@ -13,8 +13,10 @@
  */
 package net.logstash.logback.composite.accessevent;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class IncludeExcludeHeaderFilterTest {
     
@@ -22,34 +24,36 @@ public class IncludeExcludeHeaderFilterTest {
     
     @Test
     public void testEmpty() {
-        Assert.assertTrue(filter.includeHeader("HeaderA", "1"));
-        Assert.assertTrue(filter.includeHeader("Headera", "2"));
-        Assert.assertTrue(filter.includeHeader("HeaderB", "3"));
-        Assert.assertTrue(filter.includeHeader("Headerb", "4"));
+        Assertions.assertTrue(filter.includeHeader("HeaderA", "1"));
+        Assertions.assertTrue(filter.includeHeader("Headera", "2"));
+        Assertions.assertTrue(filter.includeHeader("HeaderB", "3"));
+        Assertions.assertTrue(filter.includeHeader("Headerb", "4"));
     }
     @Test
     public void testIncludeOnly() {
         filter.addInclude("headera");
-        Assert.assertTrue(filter.includeHeader("HeaderA", "1"));
-        Assert.assertTrue(filter.includeHeader("Headera", "2"));
-        Assert.assertFalse(filter.includeHeader("HeaderB", "3"));
-        Assert.assertFalse(filter.includeHeader("Headerb", "3"));
+        Assertions.assertTrue(filter.includeHeader("HeaderA", "1"));
+        Assertions.assertTrue(filter.includeHeader("Headera", "2"));
+        Assertions.assertFalse(filter.includeHeader("HeaderB", "3"));
+        Assertions.assertFalse(filter.includeHeader("Headerb", "3"));
     }
 
     @Test
     public void testExcludeOnly() {
         filter.addExclude("headera");
-        Assert.assertFalse(filter.includeHeader("HeaderA", "1"));
-        Assert.assertFalse(filter.includeHeader("Headera", "2"));
-        Assert.assertTrue(filter.includeHeader("HeaderB", "3"));
-        Assert.assertTrue(filter.includeHeader("Headerb", "4"));
+        Assertions.assertFalse(filter.includeHeader("HeaderA", "1"));
+        Assertions.assertFalse(filter.includeHeader("Headera", "2"));
+        Assertions.assertTrue(filter.includeHeader("HeaderB", "3"));
+        Assertions.assertTrue(filter.includeHeader("Headerb", "4"));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testBoth() {
-        filter.addInclude("headera");
-        filter.addExclude("headerb");
-        filter.includeHeader("HeaderA", "1");
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> {
+            filter.addInclude("headera");
+            filter.addExclude("headerb");
+            filter.includeHeader("HeaderA", "1");
+        });
     }
 
 }

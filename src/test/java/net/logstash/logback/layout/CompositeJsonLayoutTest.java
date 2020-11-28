@@ -13,23 +13,22 @@
  */
 package net.logstash.logback.layout;
 
-import ch.qos.logback.core.Layout;
-import ch.qos.logback.core.spi.DeferredProcessingAware;
-import junit.framework.TestCase;
-import net.logstash.logback.composite.CompositeJsonFormatter;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import ch.qos.logback.core.Layout;
+import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.composite.CompositeJsonFormatter;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
-public class CompositeJsonLayoutTest extends TestCase {
+@ExtendWith(MockitoExtension.class)
+public class CompositeJsonLayoutTest {
 
     /**
      * create an implementation of the composite layout that format teh event using simply toString()
@@ -49,13 +48,13 @@ public class CompositeJsonLayoutTest extends TestCase {
     @Mock
     DeferredProcessingAware event;
 
-    @Mock
+    @Mock(lenient = true)
     Layout prefixLayout;
 
-    @Mock
+    @Mock(lenient = true)
     Layout suffixLayout;
 
-    @Before
+    @BeforeEach
     public void setup() {
         when(event.toString()).thenReturn("event");
         when(prefixLayout.doLayout(event)).thenReturn("prefix:");

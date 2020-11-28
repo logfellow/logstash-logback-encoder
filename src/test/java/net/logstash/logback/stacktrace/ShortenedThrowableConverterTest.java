@@ -13,7 +13,7 @@
  */
 package net.logstash.logback.stacktrace;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,8 +36,8 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
 import ch.qos.logback.core.boolex.EventEvaluator;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 public class ShortenedThrowableConverterTest {
@@ -105,7 +105,7 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             
@@ -125,8 +125,8 @@ public class ShortenedThrowableConverterTest {
 
             formatted = converter.convert(createEvent(e));
             
-            Assert.assertEquals(totalLines - 3, countLines(formatted));
-            Assert.assertTrue(formatted.contains("4 frames truncated"));
+            Assertions.assertEquals(totalLines - 3, countLines(formatted));
+            Assertions.assertTrue(formatted.contains("4 frames truncated"));
             
         }
     }
@@ -135,7 +135,7 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
 
@@ -154,8 +154,8 @@ public class ShortenedThrowableConverterTest {
             converter.start();
             formatted = converter.convert(createEvent(e));
             
-            Assert.assertEquals(totalLength - 10, formatted.length());
-            Assert.assertTrue(formatted.endsWith("..." + System.getProperty("line.separator")));
+            Assertions.assertEquals(totalLength - 10, formatted.length());
+            Assertions.assertTrue(formatted.endsWith("..." + System.getProperty("line.separator")));
             
         }
     }
@@ -164,7 +164,7 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.addExclude("one");
@@ -175,9 +175,9 @@ public class ShortenedThrowableConverterTest {
             converter.setMaxDepthPerThrowable(8);
             converter.start();
             String formatted = converter.convert(createEvent(e));
-            Assert.assertTrue(formatted.contains("2 frames excluded"));
-            Assert.assertTrue(formatted.contains("3 frames excluded"));
-            Assert.assertEquals(12, countLines(formatted));
+            Assertions.assertTrue(formatted.contains("2 frames excluded"));
+            Assertions.assertTrue(formatted.contains("3 frames excluded"));
+            Assertions.assertEquals(12, countLines(formatted));
         }
     }
     @Test
@@ -185,15 +185,15 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setExcludes(Collections.singletonList("one"));
             converter.setMaxDepthPerThrowable(8);
             converter.start();
             String formatted = converter.convert(createEvent(e));
-            Assert.assertFalse(formatted.contains("frames excluded"));
-            Assert.assertEquals(10, countLines(formatted));
+            Assertions.assertFalse(formatted.contains("frames excluded"));
+            Assertions.assertEquals(10, countLines(formatted));
         }
     }
 
@@ -202,7 +202,7 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             
@@ -227,8 +227,8 @@ public class ShortenedThrowableConverterTest {
             converter.start();
             formatted = converter.convert(createEvent(e));
             
-            Assert.assertEquals(lines.size() - 1, countLines(formatted));
-            Assert.assertTrue(formatted.contains("2 frames excluded"));
+            Assertions.assertEquals(lines.size() - 1, countLines(formatted));
+            Assertions.assertTrue(formatted.contains("2 frames excluded"));
             
         }
     }
@@ -238,15 +238,15 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateCausedBy();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setMaxDepthPerThrowable(8);
             converter.start();
             String formatted = converter.convert(createEvent(e));
-            Assert.assertTrue(formatted.contains("Caused by"));
-            Assert.assertTrue(formatted.contains("common frames omitted"));
-            Assert.assertTrue(formatted.indexOf("message") > formatted.indexOf("wrapper"));
+            Assertions.assertTrue(formatted.contains("Caused by"));
+            Assertions.assertTrue(formatted.contains("common frames omitted"));
+            Assertions.assertTrue(formatted.indexOf("message") > formatted.indexOf("wrapper"));
         }
     }
 
@@ -255,16 +255,16 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateCausedBy();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setRootCauseFirst(true);
             converter.setMaxDepthPerThrowable(8);
             converter.start();
             String formatted = converter.convert(createEvent(e));
-            Assert.assertTrue(formatted.contains("Wrapped by"));
-            Assert.assertTrue(formatted.contains("common frames omitted"));
-            Assert.assertTrue(formatted.indexOf("message") < formatted.indexOf("wrapper"));
+            Assertions.assertTrue(formatted.contains("Wrapped by"));
+            Assertions.assertTrue(formatted.contains("common frames omitted"));
+            Assertions.assertTrue(formatted.indexOf("message") < formatted.indexOf("wrapper"));
         }
     }
 
@@ -274,7 +274,7 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateCausedBy();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             
@@ -283,7 +283,7 @@ public class ShortenedThrowableConverterTest {
             converter.addEvaluator(evaluator);
             converter.start();
             String formatted = converter.convert(createEvent(e));
-            Assert.assertEquals("", formatted);
+            Assertions.assertEquals("", formatted);
         }
     }
 
@@ -305,27 +305,27 @@ public class ShortenedThrowableConverterTest {
         converter.setOptionList(Arrays.asList("full", "full", "full", "rootFirst", "inlineHash", "evaluator", "regex"));
         converter.start();
         
-        Assert.assertEquals(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE, converter.getMaxDepthPerThrowable());
-        Assert.assertEquals(ShortenedThrowableConverter.FULL_CLASS_NAME_LENGTH, converter.getShortenedClassNameLength());
-        Assert.assertEquals(ShortenedThrowableConverter.FULL_MAX_LENGTH, converter.getMaxLength());
-        Assert.assertEquals(true, converter.isRootCauseFirst());
-        Assert.assertEquals(evaluator, converter.getEvaluators().get(0));
-        Assert.assertEquals("regex", converter.getExcludes().get(0));
+        Assertions.assertEquals(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE, converter.getMaxDepthPerThrowable());
+        Assertions.assertEquals(ShortenedThrowableConverter.FULL_CLASS_NAME_LENGTH, converter.getShortenedClassNameLength());
+        Assertions.assertEquals(ShortenedThrowableConverter.FULL_MAX_LENGTH, converter.getMaxLength());
+        Assertions.assertEquals(true, converter.isRootCauseFirst());
+        Assertions.assertEquals(evaluator, converter.getEvaluators().get(0));
+        Assertions.assertEquals("regex", converter.getExcludes().get(0));
         
         // test short values
         converter.setOptionList(Arrays.asList("short", "short", "short", "rootFirst", "inlineHash", "evaluator", "regex"));
         converter.start();
         
-        Assert.assertEquals(ShortenedThrowableConverter.SHORT_MAX_DEPTH_PER_THROWABLE, converter.getMaxDepthPerThrowable());
-        Assert.assertEquals(ShortenedThrowableConverter.SHORT_CLASS_NAME_LENGTH, converter.getShortenedClassNameLength());
-        Assert.assertEquals(ShortenedThrowableConverter.SHORT_MAX_LENGTH, converter.getMaxLength());
+        Assertions.assertEquals(ShortenedThrowableConverter.SHORT_MAX_DEPTH_PER_THROWABLE, converter.getMaxDepthPerThrowable());
+        Assertions.assertEquals(ShortenedThrowableConverter.SHORT_CLASS_NAME_LENGTH, converter.getShortenedClassNameLength());
+        Assertions.assertEquals(ShortenedThrowableConverter.SHORT_MAX_LENGTH, converter.getMaxLength());
         
         // test numeric values
         converter.setOptionList(Arrays.asList("1", "2", "3"));
         converter.start();
-        Assert.assertEquals(1, converter.getMaxDepthPerThrowable());
-        Assert.assertEquals(2, converter.getShortenedClassNameLength());
-        Assert.assertEquals(3, converter.getMaxLength());
+        Assertions.assertEquals(1, converter.getMaxDepthPerThrowable());
+        Assertions.assertEquals(2, converter.getShortenedClassNameLength());
+        Assertions.assertEquals(3, converter.getMaxLength());
         
     }
 
@@ -334,14 +334,14 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateSuppressed();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setMaxDepthPerThrowable(8);
             converter.start();
             String formatted = converter.convert(createEvent(e));
-            Assert.assertTrue(formatted.contains("Suppressed"));
-            Assert.assertTrue(formatted.contains("common frames omitted"));
+            Assertions.assertTrue(formatted.contains("Suppressed"));
+            Assertions.assertTrue(formatted.contains("common frames omitted"));
         }
     }
 
@@ -350,15 +350,15 @@ public class ShortenedThrowableConverterTest {
         
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
             converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
             converter.setShortenedClassNameLength(10);
             converter.start();
             String formatted = converter.convert(createEvent(e));
-            Assert.assertFalse(formatted.contains(getClass().getPackage().getName()));
-            Assert.assertTrue(formatted.contains("n.l.l.s."));
+            Assertions.assertFalse(formatted.contains(getClass().getPackage().getName()));
+            Assertions.assertTrue(formatted.contains("n.l.l.s."));
         }
     }
 
@@ -366,7 +366,7 @@ public class ShortenedThrowableConverterTest {
     public void test_inline_hash() {
         try {
             StackTraceElementGenerator.generateCausedBy();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher mockedHasher = Mockito.mock(StackHasher.class);
@@ -383,7 +383,7 @@ public class ShortenedThrowableConverterTest {
             // THEN
             // verify we have expected stack hashes inlined
             List<String> actualHashes = extractStackHashes(formatted);
-            Assert.assertArrayEquals(expectedHashes.toArray(), actualHashes.toArray());
+            Assertions.assertArrayEquals(expectedHashes.toArray(), actualHashes.toArray());
         }
     }
     
@@ -391,7 +391,7 @@ public class ShortenedThrowableConverterTest {
     public void test_inline_hash_root_cause_first() {
         try {
             StackTraceElementGenerator.generateCausedBy();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher mockedHasher = Mockito.mock(StackHasher.class);
@@ -411,7 +411,7 @@ public class ShortenedThrowableConverterTest {
             List<String> actualHashes = extractStackHashes(formatted);
             List<String> expectedHashesInReverseOrder = new ArrayList<String>(expectedHashes);
             Collections.reverse(expectedHashesInReverseOrder);
-            Assert.assertArrayEquals(expectedHashesInReverseOrder.toArray(), actualHashes.toArray());
+            Assertions.assertArrayEquals(expectedHashesInReverseOrder.toArray(), actualHashes.toArray());
         }
     }
 
@@ -419,7 +419,7 @@ public class ShortenedThrowableConverterTest {
     public void test_inline_hash_with_suppressed() {
         try {
             StackTraceElementGenerator.generateSuppressed();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher mockedHasher = Mockito.mock(StackHasher.class);
@@ -436,7 +436,7 @@ public class ShortenedThrowableConverterTest {
             // THEN
             // verify we have expected stack hashes inlined
             List<String> actualHashes = extractStackHashes(formatted);
-            Assert.assertArrayEquals(expectedHashes.toArray(), actualHashes.toArray());
+            Assertions.assertArrayEquals(expectedHashes.toArray(), actualHashes.toArray());
         }
     }
 

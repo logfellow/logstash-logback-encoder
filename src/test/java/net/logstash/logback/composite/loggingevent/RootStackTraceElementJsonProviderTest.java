@@ -13,27 +13,25 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
-import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
-import net.logstash.logback.fieldnames.ShortenedFieldNames;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.InOrder;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
-import java.io.IOException;
-
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.when;
 
-public class RootStackTraceElementJsonProviderTest {
+import java.io.IOException;
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import net.logstash.logback.fieldnames.ShortenedFieldNames;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+
+@ExtendWith(MockitoExtension.class)
+public class RootStackTraceElementJsonProviderTest {
 
     private RootStackTraceElementJsonProvider provider = new RootStackTraceElementJsonProvider();
 

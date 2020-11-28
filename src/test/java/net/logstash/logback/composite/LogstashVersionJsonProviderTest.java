@@ -17,22 +17,17 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
-import net.logstash.logback.fieldnames.LogstashFieldNames;
-
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class LogstashVersionJsonProviderTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
     
     private LogstashVersionJsonProvider<ILoggingEvent> provider = new LogstashVersionJsonProvider<ILoggingEvent>();
     

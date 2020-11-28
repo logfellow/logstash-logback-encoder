@@ -23,10 +23,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.time.FastDateFormat;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -36,7 +36,7 @@ import ch.qos.logback.core.Context;
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class LogstashAccessEncoderTest {
     
     private static final ObjectMapper MAPPER = new ObjectMapper();

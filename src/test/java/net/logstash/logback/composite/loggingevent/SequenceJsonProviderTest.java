@@ -13,23 +13,20 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.ArgumentMatchers.eq;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+
+@ExtendWith(MockitoExtension.class)
 public class SequenceJsonProviderTest {
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
 
     private SequenceJsonProvider provider = new SequenceJsonProvider();
 

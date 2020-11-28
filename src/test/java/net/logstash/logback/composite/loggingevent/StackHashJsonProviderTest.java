@@ -13,7 +13,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,19 +21,17 @@ import java.util.regex.Pattern;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+
+@ExtendWith(MockitoExtension.class)
 public class StackHashJsonProviderTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
     
     private StackHashJsonProvider provider = new StackHashJsonProvider();
     
@@ -60,7 +57,7 @@ public class StackHashJsonProviderTest {
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
         verify(generator).writeFieldName(StackHashJsonProvider.FIELD_NAME);
         verify(generator).writeString(hashCaptor.capture());
-        Assert.assertTrue("Did not produce an hexadecimal integer: "+hashCaptor.getValue(), HEX_PATTERN.matcher(hashCaptor.getValue()).matches());
+        Assertions.assertTrue(HEX_PATTERN.matcher(hashCaptor.getValue()).matches(), "Did not produce an hexadecimal integer: "+hashCaptor.getValue());
     }
 
     @Test
@@ -75,6 +72,6 @@ public class StackHashJsonProviderTest {
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
         verify(generator).writeFieldName("newFieldName");
         verify(generator).writeString(hashCaptor.capture());
-        Assert.assertTrue("Did not produce an hexadecimal integer: "+hashCaptor.getValue(), HEX_PATTERN.matcher(hashCaptor.getValue()).matches());
+        Assertions.assertTrue(HEX_PATTERN.matcher(hashCaptor.getValue()).matches(), "Did not produce an hexadecimal integer: "+hashCaptor.getValue());
     }
 }

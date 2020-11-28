@@ -20,14 +20,14 @@ import java.io.IOException;
 import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class LoggingEventCompositeJsonFormatterTest {
     
     private LoggingEventCompositeJsonFormatter formatter = new LoggingEventCompositeJsonFormatter(new LoggingEventCompositeJsonEncoder());

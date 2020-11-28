@@ -23,24 +23,21 @@ import java.util.Map;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.argument.StructuredArguments;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
 
+@ExtendWith(MockitoExtension.class)
 public class ArgumentsJsonProviderTest {
 
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
-
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
 
     private ArgumentsJsonProvider provider = new ArgumentsJsonProvider();
 
@@ -61,7 +58,7 @@ public class ArgumentsJsonProviderTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         
         generator = MAPPER.createGenerator(writer);

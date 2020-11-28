@@ -56,18 +56,18 @@ import net.logstash.logback.appender.destination.RandomDestinationConnectionStra
 import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class LogstashTcpSocketAppenderTest {
     
     private static final int VERIFICATION_TIMEOUT = 1000 * 10;
@@ -87,16 +87,16 @@ public class LogstashTcpSocketAppenderTest {
     @Mock
     private ILoggingEvent event2;
     
-    @Mock
+    @Mock(lenient = true)
     private SocketFactory socketFactory;
-    
-    @Mock
+
+    @Mock(lenient = true)
     private Socket socket;
     
     @Mock
     private OutputStream outputStream;
     
-    @Mock
+    @Mock(lenient = true)
     private Encoder<ILoggingEvent> encoder;
 
     @Mock
@@ -122,7 +122,7 @@ public class LogstashTcpSocketAppenderTest {
         }
     }
     
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         when(context.getStatusManager()).thenReturn(statusManager);
         when(socketFactory.createSocket()).thenReturn(socket);
@@ -132,7 +132,7 @@ public class LogstashTcpSocketAppenderTest {
         
     }
     
-    @After
+    @AfterEach
     public void tearDown() {
         appender.stop();
     }
@@ -510,7 +510,7 @@ public class LogstashTcpSocketAppenderTest {
 
         // Wait for a bit more than 2 keep alive messages then make sure we got the expected content
         Thread.sleep(250);
-        Assert.assertArrayEquals(expectedKeepAlivesBytes, bos.toByteArray());
+        Assertions.assertArrayEquals(expectedKeepAlivesBytes, bos.toByteArray());
     }
 
     @Test
@@ -610,7 +610,7 @@ public class LogstashTcpSocketAppenderTest {
     @Test
     public void testDestination_None() throws Exception {
         appender.start();
-        Assert.assertFalse(appender.isStarted());
+        Assertions.assertFalse(appender.isStarted());
     }
     
     
@@ -626,7 +626,7 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10001");
         
         appender.start();
-        Assert.assertFalse(appender.isStarted());
+        Assertions.assertFalse(appender.isStarted());
     }
 
     @Test

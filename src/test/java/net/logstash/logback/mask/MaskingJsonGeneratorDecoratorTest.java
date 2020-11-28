@@ -30,7 +30,7 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.spi.LifeCycle;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;

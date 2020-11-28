@@ -13,23 +13,24 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import org.junit.*;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.ThrowableProxy;
-
+@ExtendWith(MockitoExtension.class)
 public class ThrowableRootCauseClassNameJsonProviderTest {
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
 
     private AbstractThrowableClassNameJsonProvider provider = new ThrowableRootCauseClassNameJsonProvider();
 

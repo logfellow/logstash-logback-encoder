@@ -19,21 +19,18 @@ import java.io.IOException;
 import java.io.StringWriter;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
+@ExtendWith(MockitoExtension.class)
 public class GlobalCustomFieldsJsonProviderTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
     
     private GlobalCustomFieldsJsonProvider<ILoggingEvent> provider = new GlobalCustomFieldsJsonProvider<ILoggingEvent>();
     
@@ -46,7 +43,7 @@ public class GlobalCustomFieldsJsonProviderTest {
     
     private JsonGenerator generator;
     
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         provider.setCustomFields("{\"name\":\"value\"}");
         provider.setObjectMapper(objectMapper);

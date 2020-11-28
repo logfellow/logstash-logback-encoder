@@ -14,13 +14,14 @@
 package net.logstash.logback.appender.destination;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.net.InetSocketAddress;
 import java.util.List;
 
 import net.logstash.logback.appender.destination.DestinationParser;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import ch.qos.logback.core.CoreConstants;
 
@@ -53,19 +54,25 @@ public class DestinationParserTest {
             );
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testParse_Single_AlphaPort() {
-        DestinationParser.parse("localhost:a", 1);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            DestinationParser.parse("localhost:a", 1);
+        });
     }
     
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testParse_Single_NegativePort() {
-        DestinationParser.parse("localhost:-1", 1);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            DestinationParser.parse("localhost:-1", 1);
+        });
     }
     
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testParse_Single_UndefinedProperty() {
-        DestinationParser.parse("propertyName" + CoreConstants.UNDEFINED_PROPERTY_SUFFIX, 1);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            DestinationParser.parse("propertyName" + CoreConstants.UNDEFINED_PROPERTY_SUFFIX, 1);
+        });
     }
 
     @Test
@@ -79,18 +86,24 @@ public class DestinationParserTest {
             );
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testParse_Multiple_AlphaPort() {
-        DestinationParser.parse("localhost:10000, localhost:a", 1);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            DestinationParser.parse("localhost:10000, localhost:a", 1);
+        });
     }
     
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testParse_Multiple_NegativePort() {
-        DestinationParser.parse("localhost:10000, localhost:-1", 1);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            DestinationParser.parse("localhost:10000, localhost:-1", 1);
+        });
     }
     
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testParse_Multiple_Empty() {
-        DestinationParser.parse("localhost:1000, , localhost:1001", 1);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            DestinationParser.parse("localhost:1000, , localhost:1001", 1);
+        });
     }
 }
