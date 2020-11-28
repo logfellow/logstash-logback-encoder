@@ -13,8 +13,8 @@
  */
 package net.logstash.logback.composite;
 
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -24,11 +24,11 @@ import java.io.IOException;
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.NodeWriter;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
@@ -42,7 +42,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractPatternJsonProviderTest<Event extends DeferredProcessingAware> {
 
     // What our TestNodeWriter generates when invoked
@@ -64,7 +64,7 @@ public abstract class AbstractPatternJsonProviderTest<Event extends DeferredProc
 
     private AbstractPatternJsonProvider<Event> provider;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
         provider = createProvider();
     }

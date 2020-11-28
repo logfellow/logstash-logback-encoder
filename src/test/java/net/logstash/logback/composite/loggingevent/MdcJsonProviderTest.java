@@ -23,24 +23,19 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class MdcJsonProviderTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
     
     private MdcJsonProvider provider = new MdcJsonProvider();
     
@@ -52,7 +47,7 @@ public class MdcJsonProviderTest {
 
     private Map<String, String> mdc;
     
-    @Before
+    @BeforeEach
     public void setup() {
         mdc = new LinkedHashMap<String, String>();
         mdc.put("name1", "value1");

@@ -21,28 +21,21 @@ import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import net.logstash.logback.argument.StructuredArguments;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import net.logstash.logback.argument.StructuredArguments;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 
+@ExtendWith(MockitoExtension.class)
 public class ArgumentsJsonProviderTest {
-
-
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
 
     private ArgumentsJsonProvider provider = new ArgumentsJsonProvider();
 
@@ -65,7 +58,7 @@ public class ArgumentsJsonProviderTest {
         }
     }
 
-    @Before
+    @BeforeEach
     public void setup() throws IOException {
         
         generator = factory.createGenerator(writer);

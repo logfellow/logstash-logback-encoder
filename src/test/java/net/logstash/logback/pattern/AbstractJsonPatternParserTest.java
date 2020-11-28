@@ -21,11 +21,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -37,10 +37,10 @@ import static org.mockito.BDDMockito.given;
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public abstract class AbstractJsonPatternParserTest<Event> {
 
-    @Mock
+    @Mock(lenient = true)
     protected ContextAware contextAware;
 
     protected JsonFactory jsonFactory;
@@ -56,7 +56,7 @@ public abstract class AbstractJsonPatternParserTest<Event> {
     @Mock
     private Context context;
 
-    @Before
+    @BeforeEach
     public void setUp() throws Exception {
 
         event = createEvent();

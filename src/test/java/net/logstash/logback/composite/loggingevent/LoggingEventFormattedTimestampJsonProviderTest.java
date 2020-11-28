@@ -13,6 +13,7 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,18 +25,16 @@ import java.util.TimeZone;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class LoggingEventFormattedTimestampJsonProviderTest {
 
-    @Rule
-    public final MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
     private JsonGenerator generator;
@@ -78,10 +77,12 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
         verify(generator).writeStringField(FormattedTimestampJsonProvider.FIELD_TIMESTAMP, expectedValue);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void unknownConstant() throws IOException {
-        LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
-        provider.setPattern("[foo]");
+    @Test
+    public void unknownConstant() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
+            provider.setPattern("[foo]");
+        });
     }
 
     @Test
