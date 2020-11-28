@@ -17,11 +17,11 @@ import static ch.qos.logback.core.CoreConstants.LINE_SEPARATOR;
 import static net.logstash.logback.marker.Markers.append;
 import static net.logstash.logback.marker.Markers.appendEntries;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -36,19 +36,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxyUtil;
+import ch.qos.logback.core.Context;
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
-
 import org.apache.commons.lang3.time.FastDateFormat;
 import org.assertj.core.util.Files;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -62,15 +68,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ch.qos.logback.classic.Level;
-import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxyUtil;
-import ch.qos.logback.core.Context;
-
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class LogstashEncoderTest {
     
     private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
@@ -323,8 +321,7 @@ public class LogstashEncoderTest {
         mdcMap.put("thing_two", "Three");
         
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getMDCPropertyMap()).thenReturn(mdcMap);
-        
+
         encoder.setIncludeMdc(false);
         encoder.start();
         byte[] encoded = encoder.encode(event);
@@ -412,8 +409,7 @@ public class LogstashEncoderTest {
         when(event.getLevel()).thenReturn(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(Collections.<String, String> emptyMap());
         final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
-        when(event.getCallerData()).thenReturn(stackTraceElements);
-        
+
         encoder.setIncludeCallerInfo(false);
         
         encoder.start();
@@ -454,8 +450,7 @@ public class LogstashEncoderTest {
         propertyMap.put("thing_two", "Three");
         
         final Context context = mock(Context.class);
-        when(context.getCopyOfPropertyMap()).thenReturn(propertyMap);
-        
+
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         encoder.setIncludeContext(false);
         encoder.setContext(context);

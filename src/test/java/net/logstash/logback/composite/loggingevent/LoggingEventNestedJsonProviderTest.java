@@ -17,23 +17,19 @@ import static org.mockito.Mockito.inOrder;
 
 import java.io.IOException;
 
-import org.junit.Rule;
-import org.junit.Test;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class LoggingEventNestedJsonProviderTest {
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
-    
     @InjectMocks
     private LoggingEventNestedJsonProvider provider;
     

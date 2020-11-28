@@ -15,10 +15,10 @@ package net.logstash.logback.pattern;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -29,10 +29,10 @@ import static org.mockito.BDDMockito.given;
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParserTest<ILoggingEvent>{
 
-    @Mock
+    @Mock(lenient = true)
     private ILoggingEvent event;
 
     private Map<String, String> mdc = new HashMap<String, String>();

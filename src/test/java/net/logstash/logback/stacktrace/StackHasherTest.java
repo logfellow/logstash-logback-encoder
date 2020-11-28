@@ -15,8 +15,8 @@ package net.logstash.logback.stacktrace;
 
 import java.util.Deque;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class StackHasherTest {
 
@@ -96,7 +96,7 @@ public class StackHasherTest {
     public void one_hash_should_be_generated() {
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher hasher = new StackHasher();
@@ -105,7 +105,7 @@ public class StackHasherTest {
             Deque<String> hashes = hasher.hexHashes(e);
 
             // THEN
-            Assert.assertEquals(1, hashes.size());
+            Assertions.assertEquals(1, hashes.size());
         }
     }
 
@@ -113,7 +113,7 @@ public class StackHasherTest {
     public void two_hashes_should_be_generated() {
         try {
             StackTraceElementGenerator.generateCausedBy();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher hasher = new StackHasher();
@@ -122,7 +122,7 @@ public class StackHasherTest {
             Deque<String> hashes = hasher.hexHashes(e);
 
             // THEN
-            Assert.assertEquals(2, hashes.size());
+            Assertions.assertEquals(2, hashes.size());
         }
     }
     private static class OnlyFromStackTraceElementGeneratorFilter extends StackElementFilter {
@@ -141,7 +141,7 @@ public class StackHasherTest {
     public void expected_hash_should_be_generated() {
         try {
             StackTraceElementGenerator.generateSingle();
-            Assert.fail();
+            Assertions.fail();
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher hasher = new StackHasher(new OnlyFromStackTraceElementGeneratorFilter());
@@ -150,8 +150,8 @@ public class StackHasherTest {
             Deque<String> hashes = hasher.hexHashes(e);
 
             // THEN
-            Assert.assertEquals(1, hashes.size());
-            Assert.assertEquals("e30d4cae", hashes.getFirst());
+            Assertions.assertEquals(1, hashes.size());
+            Assertions.assertEquals("e30d4cae", hashes.getFirst());
         }
     }
 }

@@ -14,16 +14,16 @@
 package net.logstash.logback.argument;
 
 
-import java.util.Arrays;
-import java.util.Collection;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.stream.Stream;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.helpers.MessageFormatter;
 
-@RunWith(Parameterized.class)
 public class StructuredArgumentsToStringTest {
 
     private static  class BuguyToString {
@@ -38,30 +38,21 @@ public class StructuredArgumentsToStringTest {
         }
     }
 
-    @Parameterized.Parameters(name = "{0}: {1}")
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {"null" , "null", null},
-                {"Array of primitive" , "[0, 1, 2, 3]", new int[]{0, 1, 2, 3}},
-                {"Array of object" , "[a, b, c, d]", new String[]{"a", "b", "c", "d"}},
-                {"Nested array" , "[[a, b, c, d], 1, 2, [0, 1, 2, 3]]", new Object[]{new String[]{"a", "b", "c", "d"}, "1", "2", new int[]{0, 1, 2, 3}}},
-                {"Exception" , "[FAILED toString()]" , new BuguyToString()},
-        });
+    private static Stream<Arguments> data() {
+        return Stream.of(
+                arguments("null", null),
+                arguments("[0, 1, 2, 3]", new int[]{0, 1, 2, 3}),
+                arguments("[a, b, c, d]", new String[]{"a", "b", "c", "d"}),
+                arguments("[[a, b, c, d], 1, 2, [0, 1, 2, 3]]", new Object[]{new String[]{"a", "b", "c", "d"}, "1", "2", new int[]{0, 1, 2, 3}}),
+                arguments("[FAILED toString()]" , new BuguyToString())
+        );
     }
 
-    @Parameterized.Parameter(0)
-    public String testName;
-
-    @Parameterized.Parameter(1)
-    public String expected;
-
-    @Parameterized.Parameter(2)
-    public Object arg;
-
-    @Test
-    public void testToString() throws Exception {
-        Assert.assertEquals(expected, StructuredArguments.toString(arg));
-        Assert.assertEquals(MessageFormatter.format("{}", arg).getMessage() , StructuredArguments.toString(arg));
+    @ParameterizedTest
+    @MethodSource("data")
+    public void testToString(String expected, Object arg) throws Exception {
+        Assertions.assertEquals(expected, StructuredArguments.toString(arg));
+        Assertions.assertEquals(MessageFormatter.format("{}", arg).getMessage() , StructuredArguments.toString(arg));
     }
 
 }

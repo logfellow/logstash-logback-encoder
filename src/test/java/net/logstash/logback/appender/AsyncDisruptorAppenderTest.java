@@ -31,16 +31,16 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 import net.logstash.logback.appender.listener.AppenderListener;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -50,7 +50,7 @@ import ch.qos.logback.core.status.StatusManager;
 
 import com.lmax.disruptor.EventHandler;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class AsyncDisruptorAppenderTest {
     
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
@@ -61,7 +61,7 @@ public class AsyncDisruptorAppenderTest {
     @Mock
     private EventHandler<LogEvent<ILoggingEvent>> eventHandler;
     
-    @Mock
+    @Mock(lenient = true)
     private Context context;
     
     @Mock
@@ -76,7 +76,7 @@ public class AsyncDisruptorAppenderTest {
     @Mock
     private AppenderListener<ILoggingEvent> listener;
     
-    @Before
+    @BeforeEach
     public void setup() {
         when(context.getStatusManager()).thenReturn(statusManager);
 
@@ -84,7 +84,7 @@ public class AsyncDisruptorAppenderTest {
         appender.addListener(listener);
     }
     
-    @After
+    @AfterEach
     public void tearDown() {
         appender.stop();
     }
@@ -117,9 +117,9 @@ public class AsyncDisruptorAppenderTest {
         verify(eventHandler, timeout(VERIFICATION_TIMEOUT)).onEvent(captor.capture(), anyLong(), eq(true));
 
         // When eventHandler is invoked, the event should be event1
-        Assert.assertEquals(event1, capturedEvent.get());
+        Assertions.assertEquals(event1, capturedEvent.get());
         // The event should be set back to null after invocation
-        Assert.assertNull(captor.getValue().event);
+        Assertions.assertNull(captor.getValue().event);
         
         verify(event1).prepareForDeferredProcessing();
         
@@ -194,8 +194,8 @@ public class AsyncDisruptorAppenderTest {
         ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
         verify(statusManager, timeout(VERIFICATION_TIMEOUT)).add(statusCaptor.capture());
         
-        Assert.assertEquals(Status.WARN, statusCaptor.getValue().getLevel());
-        Assert.assertTrue(statusCaptor.getValue().getMessage().startsWith("Dropped"));
+        Assertions.assertEquals(Status.WARN, statusCaptor.getValue().getLevel());
+        Assertions.assertTrue(statusCaptor.getValue().getMessage().startsWith("Dropped"));
         
         eventHandlerWaiter.countDown();
         
@@ -215,8 +215,8 @@ public class AsyncDisruptorAppenderTest {
         ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
         verify(statusManager, timeout(VERIFICATION_TIMEOUT)).add(statusCaptor.capture());
         
-        Assert.assertEquals(Status.ERROR, statusCaptor.getValue().getLevel());
-        Assert.assertTrue(statusCaptor.getValue().getMessage().startsWith("Unable to process event"));
+        Assertions.assertEquals(Status.ERROR, statusCaptor.getValue().getLevel());
+        Assertions.assertTrue(statusCaptor.getValue().getMessage().startsWith("Unable to process event"));
         
     }
 

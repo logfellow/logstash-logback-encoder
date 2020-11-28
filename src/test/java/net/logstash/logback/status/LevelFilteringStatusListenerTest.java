@@ -14,7 +14,7 @@
 package net.logstash.logback.status;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -25,20 +25,17 @@ import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusListener;
 import ch.qos.logback.core.status.WarnStatus;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 public class LevelFilteringStatusListenerTest {
 
     private static final InfoStatus INFO_STATUS = new InfoStatus("foo", null);
     private static final WarnStatus WARN_STATUS = new WarnStatus("foo", null);
     private static final ErrorStatus ERROR_STATUS = new ErrorStatus("foo", null);
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
     private StatusListener simpleStatusListener;
