@@ -18,18 +18,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonFactory;
 
+@ExtendWith(MockitoExtension.class)
 public class FeatureJsonFactoryDecoratorTest {
-
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
 
     @Mock
     private JsonFactory jsonFactory;

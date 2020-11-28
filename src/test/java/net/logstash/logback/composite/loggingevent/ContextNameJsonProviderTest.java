@@ -18,22 +18,17 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
-import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerContextVO;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class ContextNameJsonProviderTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
     
     private ContextNameJsonProvider provider = new ContextNameJsonProvider();
     

@@ -22,18 +22,15 @@ import java.net.Socket;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
+@ExtendWith(MockitoExtension.class)
 public class FailureSummaryLoggingAppenderListenerTest {
-
-    @Rule
-    public MockitoRule mockitoRule = MockitoJUnit.rule();
 
     @Mock
     private Appender appender;
@@ -47,7 +44,7 @@ public class FailureSummaryLoggingAppenderListenerTest {
     @Mock
     private ILoggingEvent event;
 
-    @Before
+    @BeforeEach
     public void setup() {
         Logger logger = (Logger) LoggerFactory.getLogger(FailureSummaryLoggingAppenderListener.class);
         logger.addAppender(appender);

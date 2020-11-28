@@ -13,28 +13,23 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import static org.mockito.Matchers.eq;
-import static org.mockito.Matchers.matches;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
-public class UuidProviderTest
-{
+@ExtendWith(MockitoExtension.class)
+public class UuidProviderTest {
     public static final String UUID = "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$";
-
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
 
     private UuidProvider provider = new UuidProvider();
 

@@ -21,26 +21,21 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
-
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class CallerDataJsonProviderTest {
     
     private static final StackTraceElement CALLER_DATA = new StackTraceElement("declaringClass", "methodName", "fileName", 100);
 
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
-    
     private CallerDataJsonProvider provider = new CallerDataJsonProvider();
     
     @Mock
@@ -105,8 +100,6 @@ public class CallerDataJsonProviderTest {
         provider.setMethodFieldName("method");
         provider.setFileFieldName("file");
         provider.setLineFieldName("line");
-        
-        when(event.getLoggerName()).thenReturn(getClass().getName());
         
         provider.writeTo(generator, event);
         

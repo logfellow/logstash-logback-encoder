@@ -19,26 +19,21 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.Collections;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
-
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Marker;
-
-import ch.qos.logback.classic.spi.ILoggingEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+@ExtendWith(MockitoExtension.class)
 public class TagsJsonProviderTest {
-    
-    @Rule
-    public MockitoRule rule = MockitoJUnit.rule();
     
     private TagsJsonProvider provider = new TagsJsonProvider();
     
@@ -60,7 +55,7 @@ public class TagsJsonProviderTest {
     @Mock
     private Marker marker4;
     
-    @Before
+    @BeforeEach
     public void setup() {
         when(marker1.hasReferences()).thenReturn(true);
         when(marker1.iterator()).thenReturn(Collections.<Marker>singleton(marker2).iterator());

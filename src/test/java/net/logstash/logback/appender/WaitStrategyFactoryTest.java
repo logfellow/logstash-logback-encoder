@@ -14,11 +14,12 @@
 package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.BusySpinWaitStrategy;
@@ -42,9 +43,10 @@ public class WaitStrategyFactoryTest {
         assertThat(WaitStrategyFactory.createWaitStrategyFromString(" ")).isNull();
     }
 
-    @Test(expected = IllegalArgumentException.class)
     public void testUnknown() {
-        WaitStrategyFactory.createWaitStrategyFromString("foo");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("foo");
+        });
     }
 
     @Test
@@ -92,19 +94,25 @@ public class WaitStrategyFactoryTest {
         assertThat((long) getFieldValue(waitStrategy, SleepingWaitStrategy.class, "sleepTimeNs")).isEqualTo(1000L);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateSleeping_notEnoughParams() {
-        WaitStrategyFactory.createWaitStrategyFromString("sleeping{500}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("sleeping{500}");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateSleeping_noEndParamDelimiter() {
-        WaitStrategyFactory.createWaitStrategyFromString("sleeping{500,1000");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("sleeping{500,1000");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateSleeping_unparsableParam() {
-        WaitStrategyFactory.createWaitStrategyFromString("sleeping{hello,1000}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("sleeping{hello,1000}");
+        });
     }
     @Test
     public void testCreateYielding() {
@@ -129,24 +137,32 @@ public class WaitStrategyFactoryTest {
         
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreatePhasedBackoff_noParams() {
-        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreatePhasedBackoff_notEnoughParams() {
-        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,1,SECONDS}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,1,SECONDS}");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreatePhasedBackoff_noEndParamDelimiter() {
-        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,1,SECONDS,blocking");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,1,SECONDS,blocking");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreatePhasedBackoff_unparsableParam() {
-        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{hello,1,SECONDS,blocking}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{hello,1,SECONDS,blocking}");
+        });
     }
     
     @Test
@@ -155,14 +171,18 @@ public class WaitStrategyFactoryTest {
         assertThat((WaitStrategy) getFieldValue(waitStrategy, PhasedBackoffWaitStrategy.class, "fallbackStrategy")).isInstanceOf(PhasedBackoffWaitStrategy.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreatePhasedBackoff_nested_invalidStart() {
-        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreatePhasedBackoff_nested_invalidEnd() {
-        WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}}}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("phasedBackoff{1,2,SECONDS,phasedBackoff{1,2,SECONDS,blocking}}}");
+        });
     }
 
     @Test
@@ -178,24 +198,32 @@ public class WaitStrategyFactoryTest {
         
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateTimeoutBlocking_noParams() {
-        WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateTimeoutBlocking_notEnoughParams() {
-        WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking{1}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking{1}");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateTimeoutBlocking_noEndParamDelimiter() {
-        WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking{1,SECONDS");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking{1,SECONDS");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateTimeoutBlocking_unparsableParam() {
-        WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking{hello,SECONDS}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("timeoutBlocking{hello,SECONDS}");
+        });
     }
     
     @Test
@@ -211,24 +239,32 @@ public class WaitStrategyFactoryTest {
         
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateLiteTimeoutBlocking_noParams() {
-        WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateLiteTimeoutBlocking_notEnoughParams() {
-        WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking{1}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking{1}");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateLiteTimeoutBlocking_noEndParamDelimiter() {
-        WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking{1,SECONDS");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking{1,SECONDS");
+        });
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testCreateLiteTimeoutBlocking_unparsableParam() {
-        WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking{hello,SECONDS}");
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            WaitStrategyFactory.createWaitStrategyFromString("liteTimeoutBlocking{hello,SECONDS}");
+        });
     }
     
     private <T> T getFieldValue(Object object, Class<?> clazz, String fieldName) {

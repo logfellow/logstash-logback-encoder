@@ -21,18 +21,18 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class ResponseHeadersJsonProviderTest {
     
     private ResponseHeadersJsonProvider provider = new ResponseHeadersJsonProvider();
@@ -45,7 +45,7 @@ public class ResponseHeadersJsonProviderTest {
     @Mock
     private IAccessEvent event;
     
-    @Before
+    @BeforeEach
     public void setup() {
         headers.put("headerA", "valueA");
         headers.put("headerB", "valueB");

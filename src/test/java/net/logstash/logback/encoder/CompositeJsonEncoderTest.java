@@ -14,8 +14,8 @@
 package net.logstash.logback.encoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -30,13 +30,13 @@ import java.nio.charset.StandardCharsets;
 import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
@@ -46,7 +46,7 @@ import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.WarnStatus;
 
 @SuppressWarnings("unchecked")
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class CompositeJsonEncoderTest {
     
     private CompositeJsonFormatter<ILoggingEvent> formatter = mock(CompositeJsonFormatter.class);
@@ -60,7 +60,7 @@ public class CompositeJsonEncoderTest {
         }
     };
     
-    @Mock
+    @Mock(lenient = true)
     private Context context;
     
     @Mock
@@ -75,7 +75,7 @@ public class CompositeJsonEncoderTest {
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     private BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
     
-    @Before
+    @BeforeEach
     public void setup() {
         when(formatter.getEncoding()).thenReturn("UTF-8");
         when(context.getStatusManager()).thenReturn(statusManager);
@@ -89,7 +89,7 @@ public class CompositeJsonEncoderTest {
 
         encoder.start();
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(formatter).setContext(context);
         verify(formatter).start();
@@ -100,10 +100,10 @@ public class CompositeJsonEncoderTest {
         
         verify(formatter).writeEventToOutputStream(event, outputStream);
         
-        Assert.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
+        Assertions.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
         
         encoder.stop();
-        Assert.assertFalse(encoder.isStarted());
+        Assertions.assertFalse(encoder.isStarted());
         verify(formatter).stop();
     }
     
@@ -112,7 +112,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.start();
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(formatter).setContext(context);
         verify(formatter).start();
@@ -124,7 +124,7 @@ public class CompositeJsonEncoderTest {
         assertThat(encoded).containsExactly(System.getProperty("line.separator").getBytes("UTF-8"));
         
         encoder.stop();
-        Assert.assertFalse(encoder.isStarted());
+        Assertions.assertFalse(encoder.isStarted());
         verify(formatter).stop();
     }
     
@@ -141,7 +141,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.start();
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(formatter).setContext(context);
         verify(formatter).start();
@@ -162,14 +162,14 @@ public class CompositeJsonEncoderTest {
         
         verify(formatter).writeEventToOutputStream(event, outputStream);
         
-        Assert.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
+        Assertions.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
         
         encoder.close();
         verify(logback11Support).close(prefix);
         verify(logback11Support).close(suffix);
         
         encoder.stop();
-        Assert.assertFalse(encoder.isStarted());
+        Assertions.assertFalse(encoder.isStarted());
         verify(formatter).stop();
         verify(prefix).stop();
         verify(suffix).stop();
@@ -189,7 +189,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.start();
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(formatter).setContext(context);
         verify(formatter).start();
@@ -208,7 +208,7 @@ public class CompositeJsonEncoderTest {
         assertThat(encoded).containsExactly(("prefixsuffix" + System.getProperty("line.separator")).getBytes(StandardCharsets.UTF_8));
         
         encoder.stop();
-        Assert.assertFalse(encoder.isStarted());
+        Assertions.assertFalse(encoder.isStarted());
         verify(formatter).stop();
         verify(prefix).stop();
         verify(suffix).stop();
@@ -224,7 +224,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.start();
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(formatter).setContext(context);
         verify(formatter).start();
@@ -235,39 +235,39 @@ public class CompositeJsonEncoderTest {
         
         verify(formatter).writeEventToOutputStream(event, bufferedOutputStream);
         
-        Assert.assertEquals("", outputStream.toString("UTF-8"));
+        Assertions.assertEquals("", outputStream.toString("UTF-8"));
         
         bufferedOutputStream.flush();
         
-        Assert.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
+        Assertions.assertEquals(System.getProperty("line.separator"), outputStream.toString("UTF-8"));
         
         encoder.stop();
-        Assert.assertFalse(encoder.isStarted());
+        Assertions.assertFalse(encoder.isStarted());
         verify(formatter).stop();
     }
     
     @Test
     public void testLineEndings() throws IOException {
         
-        Assert.assertEquals(System.getProperty("line.separator"), encoder.getLineSeparator());
+        Assertions.assertEquals(System.getProperty("line.separator"), encoder.getLineSeparator());
         
         encoder.setLineSeparator("UNIX");
-        Assert.assertEquals("\n", encoder.getLineSeparator());
+        Assertions.assertEquals("\n", encoder.getLineSeparator());
         
         encoder.setLineSeparator(null);
-        Assert.assertEquals(null, encoder.getLineSeparator());
+        Assertions.assertEquals(null, encoder.getLineSeparator());
         
         encoder.setLineSeparator("WINDOWS");
-        Assert.assertEquals("\r\n", encoder.getLineSeparator());
+        Assertions.assertEquals("\r\n", encoder.getLineSeparator());
         
         encoder.setLineSeparator("foo");
-        Assert.assertEquals("foo", encoder.getLineSeparator());
+        Assertions.assertEquals("foo", encoder.getLineSeparator());
         
         encoder.setLineSeparator("SYSTEM");
-        Assert.assertEquals(System.getProperty("line.separator"), encoder.getLineSeparator());
+        Assertions.assertEquals(System.getProperty("line.separator"), encoder.getLineSeparator());
         
         encoder.setLineSeparator("");
-        Assert.assertEquals(null, encoder.getLineSeparator());
+        Assertions.assertEquals(null, encoder.getLineSeparator());
     }
     
     @Test
@@ -278,7 +278,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.start();
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(formatter).setContext(context);
         verify(formatter).start();
@@ -290,7 +290,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.doEncode(event);
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
                 + "OutputStream is now in an unknown state, but will continue to be used for future log events."
@@ -302,7 +302,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.start();
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(formatter).setContext(context);
         verify(formatter).start();
@@ -312,7 +312,7 @@ public class CompositeJsonEncoderTest {
         
         encoder.encode(event);
         
-        Assert.assertTrue(encoder.isStarted());
+        Assertions.assertTrue(encoder.isStarted());
         
         verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
                 + "Event: " + event, context, exception));

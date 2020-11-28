@@ -19,6 +19,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.read.ListAppender;
 import net.logstash.logback.appender.AsyncDisruptorAppender;
 import net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender;
 import net.logstash.logback.appender.listener.AppenderListener;
@@ -50,22 +56,14 @@ import net.logstash.logback.composite.loggingevent.UuidProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
-
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.OutputStreamAppender;
-import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.read.ListAppender;
 
 public class ConfigurationTest {
 
@@ -75,7 +73,7 @@ public class ConfigurationTest {
 
     private final JsonFactory jsonFactory = new MappingJsonFactory();
 
-    @Before
+    @BeforeEach
     public void setup() {
         listAppender.list.clear();
     }
@@ -84,7 +82,7 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(21, providers.size());
+        Assertions.assertEquals(21, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -95,11 +93,11 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assert.assertEquals(25, providers.size());
+        Assertions.assertEquals(25, providers.size());
 
         verifyCommonProviders(providers);
 
-        Assert.assertNotNull(getInstance(providers, TestJsonProvider.class));
+        Assertions.assertNotNull(getInstance(providers, TestJsonProvider.class));
 
         verifyOutput(encoder);
     }
@@ -110,101 +108,101 @@ public class ConfigurationTest {
         Field listenersField = AsyncDisruptorAppender.class.getDeclaredField("listeners");
         listenersField.setAccessible(true);
         List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) listenersField.get(appender);
-        Assert.assertEquals(1, listeners.size());
+        Assertions.assertEquals(1, listeners.size());
     }
 
 
     private void verifyCommonProviders(List<JsonProvider<ILoggingEvent>> providers) {
         LoggingEventFormattedTimestampJsonProvider timestampJsonProvider = getInstance(providers, LoggingEventFormattedTimestampJsonProvider.class);
-        Assert.assertNotNull(timestampJsonProvider);
-        Assert.assertEquals("@timestamp", timestampJsonProvider.getFieldName());
+        Assertions.assertNotNull(timestampJsonProvider);
+        Assertions.assertEquals("@timestamp", timestampJsonProvider.getFieldName());
 
         LogstashVersionJsonProvider<ILoggingEvent> versionJsonProvider = getInstance(providers, LogstashVersionJsonProvider.class);
-        Assert.assertNotNull(versionJsonProvider);
-        Assert.assertEquals("@version", versionJsonProvider.getFieldName());
+        Assertions.assertNotNull(versionJsonProvider);
+        Assertions.assertEquals("@version", versionJsonProvider.getFieldName());
 
         MessageJsonProvider messageJsonProvider = getInstance(providers, MessageJsonProvider.class);
-        Assert.assertNotNull(messageJsonProvider);
-        Assert.assertEquals("customMessage", messageJsonProvider.getFieldName());
+        Assertions.assertNotNull(messageJsonProvider);
+        Assertions.assertEquals("customMessage", messageJsonProvider.getFieldName());
 
         LoggerNameJsonProvider loggerNameJsonProvider = getInstance(providers, LoggerNameJsonProvider.class);
-        Assert.assertNotNull(loggerNameJsonProvider);
-        Assert.assertEquals("logger_name", loggerNameJsonProvider.getFieldName());
+        Assertions.assertNotNull(loggerNameJsonProvider);
+        Assertions.assertEquals("logger_name", loggerNameJsonProvider.getFieldName());
 
         ThreadNameJsonProvider threadNameJsonProvider = getInstance(providers, ThreadNameJsonProvider.class);
-        Assert.assertNotNull(threadNameJsonProvider);
-        Assert.assertEquals("thread_name", threadNameJsonProvider.getFieldName());
+        Assertions.assertNotNull(threadNameJsonProvider);
+        Assertions.assertEquals("thread_name", threadNameJsonProvider.getFieldName());
 
         LogLevelJsonProvider logLevelJsonProvider = getInstance(providers, LogLevelJsonProvider.class);
-        Assert.assertNotNull(logLevelJsonProvider);
-        Assert.assertEquals("level", logLevelJsonProvider.getFieldName());
+        Assertions.assertNotNull(logLevelJsonProvider);
+        Assertions.assertEquals("level", logLevelJsonProvider.getFieldName());
 
         LogLevelValueJsonProvider levelValueJsonProvider = getInstance(providers, LogLevelValueJsonProvider.class);
-        Assert.assertNotNull(levelValueJsonProvider);
-        Assert.assertEquals("level_value", levelValueJsonProvider.getFieldName());
+        Assertions.assertNotNull(levelValueJsonProvider);
+        Assertions.assertEquals("level_value", levelValueJsonProvider.getFieldName());
 
         CallerDataJsonProvider callerDataJsonProvider = getInstance(providers, CallerDataJsonProvider.class);
-        Assert.assertNotNull(callerDataJsonProvider);
-        Assert.assertEquals("caller", callerDataJsonProvider.getFieldName());
-        Assert.assertEquals("class", callerDataJsonProvider.getClassFieldName());
-        Assert.assertEquals("method", callerDataJsonProvider.getMethodFieldName());
-        Assert.assertEquals("file", callerDataJsonProvider.getFileFieldName());
-        Assert.assertEquals("line", callerDataJsonProvider.getLineFieldName());
+        Assertions.assertNotNull(callerDataJsonProvider);
+        Assertions.assertEquals("caller", callerDataJsonProvider.getFieldName());
+        Assertions.assertEquals("class", callerDataJsonProvider.getClassFieldName());
+        Assertions.assertEquals("method", callerDataJsonProvider.getMethodFieldName());
+        Assertions.assertEquals("file", callerDataJsonProvider.getFileFieldName());
+        Assertions.assertEquals("line", callerDataJsonProvider.getLineFieldName());
 
         StackTraceJsonProvider stackTraceJsonProvider = getInstance(providers, StackTraceJsonProvider.class);
-        Assert.assertNotNull(stackTraceJsonProvider);
+        Assertions.assertNotNull(stackTraceJsonProvider);
         ShortenedThrowableConverter throwableConverter = (ShortenedThrowableConverter) stackTraceJsonProvider.getThrowableConverter();
-        Assert.assertEquals(20, throwableConverter.getMaxDepthPerThrowable());
-        Assert.assertEquals(1000, throwableConverter.getMaxLength());
-        Assert.assertEquals(30, throwableConverter.getShortenedClassNameLength());
-        Assert.assertTrue(throwableConverter.isRootCauseFirst());
-        Assert.assertEquals(2, throwableConverter.getExcludes().size());
-        Assert.assertEquals("excluded1", throwableConverter.getExcludes().get(0));
-        Assert.assertEquals("excluded2", throwableConverter.getExcludes().get(1));
-        Assert.assertEquals(true, throwableConverter.isInlineHash());
+        Assertions.assertEquals(20, throwableConverter.getMaxDepthPerThrowable());
+        Assertions.assertEquals(1000, throwableConverter.getMaxLength());
+        Assertions.assertEquals(30, throwableConverter.getShortenedClassNameLength());
+        Assertions.assertTrue(throwableConverter.isRootCauseFirst());
+        Assertions.assertEquals(2, throwableConverter.getExcludes().size());
+        Assertions.assertEquals("excluded1", throwableConverter.getExcludes().get(0));
+        Assertions.assertEquals("excluded2", throwableConverter.getExcludes().get(1));
+        Assertions.assertEquals(true, throwableConverter.isInlineHash());
 
-        Assert.assertNotNull(getInstance(providers, ContextJsonProvider.class));
-        Assert.assertNotNull(getInstance(providers, ContextNameJsonProvider.class));
-        Assert.assertNotNull(getInstance(providers, JsonMessageJsonProvider.class));
+        Assertions.assertNotNull(getInstance(providers, ContextJsonProvider.class));
+        Assertions.assertNotNull(getInstance(providers, ContextNameJsonProvider.class));
+        Assertions.assertNotNull(getInstance(providers, JsonMessageJsonProvider.class));
 
         MdcJsonProvider mdcJsonProvider = getInstance(providers, MdcJsonProvider.class);
-        Assert.assertNotNull(mdcJsonProvider);
-        Assert.assertEquals("included", mdcJsonProvider.getIncludeMdcKeyNames().get(0));
-        Assert.assertEquals("renamedKey", mdcJsonProvider.getMdcKeyFieldNames().get("key"));
+        Assertions.assertNotNull(mdcJsonProvider);
+        Assertions.assertEquals("included", mdcJsonProvider.getIncludeMdcKeyNames().get(0));
+        Assertions.assertEquals("renamedKey", mdcJsonProvider.getMdcKeyFieldNames().get("key"));
 
-        Assert.assertNotNull(getInstance(providers, ContextMapJsonProvider.class));
+        Assertions.assertNotNull(getInstance(providers, ContextMapJsonProvider.class));
 
         GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsJsonProvider = getInstance(providers, GlobalCustomFieldsJsonProvider.class);
-        Assert.assertNotNull(globalCustomFieldsJsonProvider);
-        Assert.assertEquals("{\"customName\":\"customValue\"}", globalCustomFieldsJsonProvider.getCustomFields());
+        Assertions.assertNotNull(globalCustomFieldsJsonProvider);
+        Assertions.assertEquals("{\"customName\":\"customValue\"}", globalCustomFieldsJsonProvider.getCustomFields());
 
-        Assert.assertNotNull(getInstance(providers, TagsJsonProvider.class));
-        Assert.assertNotNull(getInstance(providers, LogstashMarkersJsonProvider.class));
+        Assertions.assertNotNull(getInstance(providers, TagsJsonProvider.class));
+        Assertions.assertNotNull(getInstance(providers, LogstashMarkersJsonProvider.class));
 
         LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
-        Assert.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
-        Assert.assertNotNull(patternProvider);
+        Assertions.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
+        Assertions.assertNotNull(patternProvider);
         
         LoggingEventNestedJsonProvider nestedJsonProvider = getInstance(providers, LoggingEventNestedJsonProvider.class);
-        Assert.assertNotNull(nestedJsonProvider);
-        Assert.assertEquals("nested", nestedJsonProvider.getFieldName());
+        Assertions.assertNotNull(nestedJsonProvider);
+        Assertions.assertEquals("nested", nestedJsonProvider.getFieldName());
         
         RawMessageJsonProvider rawMessageJsonProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), RawMessageJsonProvider.class);
-        Assert.assertNotNull(rawMessageJsonProvider);
-        Assert.assertEquals("customRawMessage", rawMessageJsonProvider.getFieldName());
+        Assertions.assertNotNull(rawMessageJsonProvider);
+        Assertions.assertEquals("customRawMessage", rawMessageJsonProvider.getFieldName());
 
         ArgumentsJsonProvider argumentsJsonProvider = getInstance(providers, ArgumentsJsonProvider.class);
-        Assert.assertNotNull(argumentsJsonProvider);
+        Assertions.assertNotNull(argumentsJsonProvider);
 
         UuidProvider uuidProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), UuidProvider.class);
-        Assert.assertNotNull(uuidProvider);
-        Assert.assertEquals("id", uuidProvider.getFieldName());
-        Assert.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
-        Assert.assertEquals(UuidProvider.STRATEGY_TIME, uuidProvider.getStrategy());
+        Assertions.assertNotNull(uuidProvider);
+        Assertions.assertEquals("id", uuidProvider.getFieldName());
+        Assertions.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
+        Assertions.assertEquals(UuidProvider.STRATEGY_TIME, uuidProvider.getStrategy());
 
         SequenceJsonProvider sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
-        Assert.assertNotNull(sequenceJsonProvider);
-        Assert.assertEquals("sequenceNumberField", sequenceJsonProvider.getFieldName());
+        Assertions.assertNotNull(sequenceJsonProvider);
+        Assertions.assertEquals("sequenceNumberField", sequenceJsonProvider.getFieldName());
     }
 
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {
@@ -230,31 +228,31 @@ public class ConfigurationTest {
         
 
         Map<String, Object> output = parseJson(new String(encoded, StandardCharsets.UTF_8));
-        Assert.assertNotNull(output.get("@timestamp"));
-        Assert.assertEquals("1", output.get("@version"));
-        Assert.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));
+        Assertions.assertNotNull(output.get("@timestamp"));
+        Assertions.assertEquals("1", output.get("@version"));
+        Assertions.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));
         Map<String, Object> nested = (Map<String, Object>) output.get("nested");
-        Assert.assertEquals("message {} {} {} {}", nested.get("customRawMessage"));
-        Assert.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
-        Assert.assertEquals("testContext", output.get("context"));
-        Assert.assertNotNull(output.get("thread_name"));
-        Assert.assertEquals("INFO", output.get("level"));
-        Assert.assertEquals(20000, output.get("level_value"));
-        Assert.assertNotNull(output.get("caller"));
-        Assert.assertTrue(((String) output.get("stack_trace")).contains("n.l.logback.ConfigurationTest.verifyOutput"));
-        Assert.assertEquals("customValue", output.get("customName"));
-        Assert.assertEquals("patternValue", output.get("patternName"));
-        Assert.assertEquals("markerFieldValue", output.get("markerFieldName"));
-        Assert.assertTrue(output.get("relativeTime") instanceof Number);
-        Assert.assertEquals("arg", output.get("prefix0"));
-        Assert.assertEquals("v1", output.get("k1"));
-        Assert.assertEquals("v2", output.get("k2"));
-        Assert.assertEquals("v3", output.get("k3"));
+        Assertions.assertEquals("message {} {} {} {}", nested.get("customRawMessage"));
+        Assertions.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
+        Assertions.assertEquals("testContext", output.get("context"));
+        Assertions.assertNotNull(output.get("thread_name"));
+        Assertions.assertEquals("INFO", output.get("level"));
+        Assertions.assertEquals(20000, output.get("level_value"));
+        Assertions.assertNotNull(output.get("caller"));
+        Assertions.assertTrue(((String) output.get("stack_trace")).contains("n.l.logback.ConfigurationTest.verifyOutput"));
+        Assertions.assertEquals("customValue", output.get("customName"));
+        Assertions.assertEquals("patternValue", output.get("patternName"));
+        Assertions.assertEquals("markerFieldValue", output.get("markerFieldName"));
+        Assertions.assertTrue(output.get("relativeTime") instanceof Number);
+        Assertions.assertEquals("arg", output.get("prefix0"));
+        Assertions.assertEquals("v1", output.get("k1"));
+        Assertions.assertEquals("v2", output.get("k2"));
+        Assertions.assertEquals("v3", output.get("k3"));
 
         Number sequence = (Number)output.get("sequenceNumberField");
-        Assert.assertNotNull(sequence);
-        Assert.assertNotEquals("", sequence);
-        Assert.assertTrue(0L < sequence.longValue());
+        Assertions.assertNotNull(sequence);
+        Assertions.assertNotEquals("", sequence);
+        Assertions.assertTrue(0L < sequence.longValue());
     }
 
     @SuppressWarnings("unchecked")

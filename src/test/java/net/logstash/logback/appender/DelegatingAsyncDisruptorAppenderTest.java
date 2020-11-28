@@ -23,18 +23,18 @@ import java.io.OutputStream;
 import ch.qos.logback.core.OutputStreamAppender;
 import net.logstash.logback.appender.listener.AppenderListener;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DelegatingAsyncDisruptorAppenderTest {
     
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
@@ -54,12 +54,12 @@ public class DelegatingAsyncDisruptorAppenderTest {
     @Mock
     private OutputStream outputStream;
 
-    @Before
+    @BeforeEach
     public void setup() {
         appender.addAppender(delegate);
     }
     
-    @After
+    @AfterEach
     public void tearDown() {
         appender.stop();
     }
