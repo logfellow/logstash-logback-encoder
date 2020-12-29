@@ -22,7 +22,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Flushable;
@@ -34,7 +33,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -53,7 +51,6 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
 
-    @InjectMocks
     private DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() {};
 
     @Mock
@@ -210,11 +207,10 @@ public class DelegatingAsyncDisruptorAppenderTest {
      */
     @Test
     public void flushWithNullOutputStream() {
-        when(outputStreamDelegate.getOutputStream()).thenReturn(null);
-
         appender.addAppender(outputStreamDelegate);
         appender.start();
 
+        outputStreamDelegate.setOutputStream(null);
         appender.doAppend(event);
 
         assertThat(appender.getStatusManager().getCount()).isZero();
