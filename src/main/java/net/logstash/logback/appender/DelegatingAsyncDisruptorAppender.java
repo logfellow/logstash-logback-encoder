@@ -57,66 +57,66 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
         /**
          * Whether exceptions should be reported with a error status or not.
          */
-    	private boolean silentError;
+        private boolean silentError;
         
         @Override
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
             
             boolean exceptionThrown = false;
-			for(Iterator<Appender<Event>> it=appenders.iteratorForAppenders(); it.hasNext(); ) {
-				Appender<Event> appender = it.next();
-				
-				try {
-					appender.doAppend(logEvent.event);
-					
-		            /*
-		             * Optimization:
-		             *
-		             * If any of the delegate appenders are instances of OutputStreamAppender or Flushable,
-		             * then flush them at the end of the batch.
-		             */
-					if (endOfBatch) {
-						flushAppender(appender);
-					}
-				}
-				catch(Exception e) {
-					exceptionThrown = true;
-					if (!this.silentError) {
-						addError(String.format("Unable to forward event to appender [%s]: %s", appender.getName(), e.getMessage()), e);
-					}
-				}
-			}
-			
-			this.silentError = exceptionThrown;
+            for(Iterator<Appender<Event>> it=appenders.iteratorForAppenders(); it.hasNext(); ) {
+                Appender<Event> appender = it.next();
+                
+                try {
+                    appender.doAppend(logEvent.event);
+                    
+                    /*
+                     * Optimization:
+                     *
+                     * If any of the delegate appenders are instances of OutputStreamAppender or Flushable,
+                     * then flush them at the end of the batch.
+                     */
+                    if (endOfBatch) {
+                        flushAppender(appender);
+                    }
+                }
+                catch(Exception e) {
+                    exceptionThrown = true;
+                    if (!this.silentError) {
+                        addError(String.format("Unable to forward event to appender [%s]: %s", appender.getName(), e.getMessage()), e);
+                    }
+                }
+            }
+            
+            this.silentError = exceptionThrown;
         }
         
         
         private void flushAppender(Appender<Event> appender) throws IOException {
-        	// Similar to #doAppend() - don't flush if appender is stopped
-        	if (!appender.isStarted()) {
-        		return;
-        	}
-			if (appender instanceof Flushable) {
-				flushAppender((Flushable)appender);
-			}
-			else
-			if (appender instanceof OutputStreamAppender) {
-				flushAppender((OutputStreamAppender<Event>)appender);
-			}
+            // Similar to #doAppend() - don't flush if appender is stopped
+            if (!appender.isStarted()) {
+                return;
+            }
+            if (appender instanceof Flushable) {
+                flushAppender((Flushable)appender);
+            }
+            else
+            if (appender instanceof OutputStreamAppender) {
+                flushAppender((OutputStreamAppender<Event>)appender);
+            }
         }
-		
-		private void flushAppender(OutputStreamAppender<Event> appender) throws IOException {
-			if (!appender.isImmediateFlush()) {
-				OutputStream os = appender.getOutputStream();
-				if (os != null) {
-					os.flush();
-				}
-			}
-		}
-		
-		private void flushAppender(Flushable appender) throws IOException {
-			appender.flush();
-		}
+        
+        private void flushAppender(OutputStreamAppender<Event> appender) throws IOException {
+            if (!appender.isImmediateFlush()) {
+                OutputStream os = appender.getOutputStream();
+                if (os != null) {
+                    os.flush();
+                }
+            }
+        }
+        
+        private void flushAppender(Flushable appender) throws IOException {
+            appender.flush();
+        }
     }
     
     public DelegatingAsyncDisruptorAppender() {
