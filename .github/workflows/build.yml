@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     name: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         java: [ '8', '11', '15' ]
@@ -22,7 +22,7 @@ jobs:
   release:
     name: release
     if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/master' && startsWith(github.event.commits[0].message, '[release]')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [build]
     steps:
       - uses: actions/checkout@v1.1.0
