@@ -32,7 +32,7 @@ import org.slf4j.Marker;
  * import static net.logstash.logback.marker.Markers.*
  *     
  * logger.info(append("name1", "value1"), "log message");
- * logger.info(append("name1", "value1").with(append("name2", "value2")), "log message");
+ * logger.info(append("name1", "value1").and(append("name2", "value2")), "log message");
  * logger.info(appendEntries(myMap), "log message");
  * }
  * </pre>
