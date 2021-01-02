@@ -28,7 +28,6 @@
 
         <!-- shaded runtime dependencies -->
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
-        <commons-lang3.version>3.11</commons-lang3.version>
 
         <!-- test dependencies -->
         <junit.version>5.7.0</junit.version>
@@ -180,11 +179,6 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang3.version}</version>
-        </dependency>
-        <dependency>
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
             <version>${com.lmax.disruptor.version}</version>
@@ -333,10 +327,6 @@
                     </artifactSet>
                     <relocations>
                         <relocation>
-                            <pattern>org.apache.commons.lang3</pattern>
-                            <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang3</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>com.lmax.disruptor</pattern>
                             <shadedPattern>${project.groupId}.encoder.com.lmax.disruptor</shadedPattern>
                         </relocation>
@@ -364,7 +354,7 @@
                         <!-- attach to Logback bundle as fragment -->
                         <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
                         <!-- exclude following imports as required classes are relocated by shade plugin and ignore ch.qos.logback.[core,classic] because this is a fragment and gets them from parent. -->
-                        <Import-Package>!org.apache.commons.*,!com.lmax.disruptor.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
+                        <Import-Package>!com.lmax.disruptor.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
                     </instructions>
                 </configuration>
             </plugin>
