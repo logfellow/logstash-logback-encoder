@@ -86,16 +86,20 @@ Maven style:
 </dependency>
 ```
 
-If you get `ClassNotFoundException`/`NoClassDefFoundError`/`NoSuchMethodError` at runtime, then ensure the required dependencies (and appropriate versions) as specified in the pom file from the maven repository exist on the runtime classpath.  Specifically, the following need to be available on the runtime classpath:
+If you get `ClassNotFoundException`/`NoClassDefFoundError`/`NoSuchMethodError` at runtime,
+then ensure the required dependencies (and appropriate versions) as specified in the pom file
+from the maven repository exist on the runtime classpath.
+Specifically, the following need to be available on the runtime classpath:
 
 * jackson-databind / jackson-core / jackson-annotations
-* logback-core
-* logback-classic (required for logging _LoggingEvents_)
-* logback-access (required for logging _AccessEvents_)
+* logback-core >= 1.2.0
+* logback-classic >= 1.2.0 (required for logging _LoggingEvents_)
+* logback-access >= 1.2.0 (required for logging _AccessEvents_)
 * slf4j-api
 * java-uuid-generator (required if the `uuid` provider is used)
 
 Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
+Support for logback versions prior to 1.2.0 was removed in logstash-logback-encoder 7.0.
 
 If you are using logstash-logback-encoder in a project (such as spring-boot) that also declares dependencies on any of the above libraries, you might need to tell maven explicitly which versions to use to avoid conflicts.
 You can do so using maven's [dependencyManagement](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Management) feature.
