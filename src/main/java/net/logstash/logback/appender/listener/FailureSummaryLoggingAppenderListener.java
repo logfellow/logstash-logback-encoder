@@ -14,11 +14,13 @@
 package net.logstash.logback.appender.listener;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.argument.StructuredArguments;
-import org.apache.commons.lang3.time.DateFormatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +54,7 @@ public class FailureSummaryLoggingAppenderListener<Event extends DeferredProcess
             logger.warn("{} {} failures since {} for {}.",
                     StructuredArguments.value("failEventCount", failureSummary.getConsecutiveFailures()),
                     StructuredArguments.value("failType", callbackType.name().toLowerCase()),
-                    StructuredArguments.value("failStartTime", DateFormatUtils.ISO_8601_EXTENDED_DATETIME_FORMAT.format(failureSummary.getFirstFailureTime())),
+                    StructuredArguments.value("failStartTime", DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(failureSummary.getFirstFailureTime()))),
                     StructuredArguments.value("failDuration", Duration.ofMillis(System.currentTimeMillis() - failureSummary.getFirstFailureTime()).toString()),
                     failureSummary.getMostRecentFailure());
         }

@@ -1539,7 +1539,25 @@ The value can be written as a number (instead of a string) like this:
 
 ## Customizing Timestamp
 
-By default, timestamps are written as string values in the format `yyyy-MM-dd'T'HH:mm:ss.SSSZZ` (e.g. `2018-04-28T22:23:59.164-07:00`), in the default TimeZone of the host Java platform.
+By default, timestamps are written as string values in the format specified by
+[`DateTimeFormatter.ISO_OFFSET_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_OFFSET_DATE_TIME)
+(e.g. `2019-11-03T10:15:30.123+01:00`), in the default TimeZone of the host Java platform.
+
+You can change the pattern like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
+</encoder>
+```
+
+The value of the `timestampPattern` can be any of the following:
+
+* `[UNIX_TIMESTAMP_AS_NUMBER]` - timestamp written as a JSON number value of the milliseconds since unix epoch
+* `[UNIX_TIMESTAMP_AS_STRING]` - timestamp written as a JSON string value of the milliseconds since unix epoch
+* `[` _`constant`_ `]` - (e.g. `[ISO_OFFSET_DATE_TIME]`) timestamp written using the given `DateTimeFormatter` constant
+* any other value - (e.g. `yyyy-MM-dd'T'HH:mm:ss.SSS`) timestamp written using a `DateTimeFormatter` created from the given pattern
+
 
 You can change the timezone like this:
 
@@ -1550,27 +1568,6 @@ You can change the timezone like this:
 ```
 
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
-
-You can change the pattern used like this:
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
-</encoder>
-```
-
-Use these timestamp pattern values to output the timestamp as a unix timestamp (number of milliseconds since unix epoch).
-
-* `[UNIX_TIMESTAMP_AS_NUMBER]` - write the timestamp value as a numeric unix timestamp
-* `[UNIX_TIMESTAMP_AS_STRING]` - write the timestamp value as a string verion of the numeric unix timestamp
-
-For example:
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <timestampPattern>[UNIX_TIMESTAMP_AS_NUMBER]</timestampPattern>
-</encoder>
-```
 
 
 ## Customizing Message
@@ -1794,12 +1791,7 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
-          <ul>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
-          </ul>
-          </li>
+          <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>
@@ -2066,12 +2058,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
-          <ul>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
-          </ul>
-          </li>
+          <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>

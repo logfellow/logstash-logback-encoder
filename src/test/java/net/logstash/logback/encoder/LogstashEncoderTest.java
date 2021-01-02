@@ -29,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +49,7 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
-import org.apache.commons.lang3.time.FastDateFormat;
+
 import org.assertj.core.util.Files;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -87,7 +89,7 @@ public class LogstashEncoderTest {
     }
 
     protected void verifyBasics(final long timestamp, JsonNode node) {
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
@@ -108,9 +110,8 @@ public class LogstashEncoderTest {
         byte[] encoded = encoder.encode(event);
         
         JsonNode node = MAPPER.readTree(encoded);
-        
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                (timestamp));
+
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
@@ -150,7 +151,7 @@ public class LogstashEncoderTest {
         
         assertThat(output).isEqualTo(String.format(
                 "{%n"
-                + "  @timestamp : \"" + FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp) + "\",%n"
+                + "  @timestamp : \"" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)) + "\",%n"
                 + "  @version : \"1\",%n"
                 + "  message : \"My message\",%n"
                 + "  logger_name : \"LoggerName\",%n"
@@ -165,10 +166,10 @@ public class LogstashEncoderTest {
     public void loggerNameIsShortenedProperly() throws Exception {
         final long timestamp = System.currentTimeMillis();
         final int length = 36;
-        final String shortenedLoggerName = new TargetLengthBasedClassNameAbbreviator(length).abbreviate(FastDateFormat.class.getCanonicalName());
+        final String shortenedLoggerName = new TargetLengthBasedClassNameAbbreviator(length).abbreviate(DateTimeFormatter.class.getCanonicalName());
 
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getLoggerName()).thenReturn(FastDateFormat.class.getCanonicalName());
+        when(event.getLoggerName()).thenReturn(DateTimeFormatter.class.getCanonicalName());
 
         when(event.getTimeStamp()).thenReturn(timestamp);
         encoder.setFieldNames(new ShortenedFieldNames());
@@ -178,8 +179,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                (timestamp));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo(shortenedLoggerName);
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
@@ -554,9 +554,8 @@ public class LogstashEncoderTest {
         byte[] encoded = encoder.encode(event);
         
         JsonNode node = MAPPER.readTree(encoded);
-        
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", TimeZone.getTimeZone("UTC")).format
-                (timestamp));
+
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getTimeZone("UTC").toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");

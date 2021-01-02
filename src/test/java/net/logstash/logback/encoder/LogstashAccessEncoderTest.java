@@ -17,18 +17,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
-
-import org.apache.commons.lang3.time.FastDateFormat;
-import org.junit.jupiter.api.Test;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.TimeZone;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+import org.junit.jupiter.api.Test;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LogstashAccessEncoderTest {
     
@@ -54,12 +55,11 @@ public class LogstashAccessEncoderTest {
     }
     
     protected void verifyBasics(final long timestamp, IAccessEvent event, JsonNode node) {
-        assertThat(node.get("timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                (timestamp));
+        assertThat(node.get("timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("message").textValue()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
-                FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                        (event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId())
+                        .format(Instant.ofEpochMilli(event.getTimeStamp())), event.getRequestURL(), event.getStatusCode(),
                 event.getContentLength()));
         
         assertThat(node.get("method").textValue()).isEqualTo(event.getMethod());
