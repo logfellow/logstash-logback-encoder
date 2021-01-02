@@ -42,7 +42,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import net.logstash.logback.Logback11Support;
 import net.logstash.logback.appender.destination.DelegateDestinationConnectionStrategy;
 import net.logstash.logback.appender.destination.DestinationConnectionStrategy;
 import net.logstash.logback.appender.destination.DestinationParser;
@@ -595,11 +594,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                  * This is a standard (non-keepAlive) event.
                  * Therefore, we need to send the event.
                  */
-                if (getLogback11Support().isLogback11OrBefore()) {
-                    getLogback11Support().doEncode(encoder, logEvent.event);
-                } else {
-                    outputStream.write(encoder.encode(logEvent.event));
-                }
+                outputStream.write(encoder.encode(logEvent.event));
             } else if (hasKeepAliveDurationElapsed(lastSendEndNanoTime, startNanoTime)){
                 /*
                  * This is a keep alive event, and the keepAliveDuration has passed,
@@ -731,10 +726,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                             ? new BufferedOutputStream(tempSocket.getOutputStream(), writeBufferSize)
                             : tempSocket.getOutputStream();
                     
-                    if (getLogback11Support().isLogback11OrBefore()) {
-                        getLogback11Support().init(encoder, tempOutputStream);
-                    }
-                    
                     addInfo(peerId + "connection established.");
                     
                     this.socket = tempSocket;
@@ -798,14 +789,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
         
         private void closeEncoder() {
-            if (getLogback11Support().isLogback11OrBefore()) {
-                try {
-                    getLogback11Support().close(encoder);
-                } catch (IOException ioe) {
-                    addError("Failed to close encoder", ioe);
-                }
-            }
-            
             encoder.stop();
         }
         
@@ -1057,13 +1040,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
     
 
-    /*
-     * Visible for unit testing 
-     */
-    protected Logback11Support getLogback11Support() {
-        return Logback11Support.INSTANCE;
-    }
-    
     public Encoder<Event> getEncoder() {
         return encoder;
     }
