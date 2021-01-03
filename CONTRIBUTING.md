@@ -1,6 +1,17 @@
 Contributing to logstash-logback-encoder
 ========================================
 
+* [Code of Conduct](#code-of-conduct)
+* [How to Contribute](#how-to-contribute)
+  * [Discuss](#discuss)
+  * [Create an Issue](#create-an-issue)
+  * [Submit a Pull Request](#submit-a-pull-request)
+  * [Participate in Reviews](#participate-in-reviews)
+  * [Become a Maintainer](#become-a-maintainer)
+* [Build from Source](#build-from-source)
+* [Source Code Style](#source-code-style)
+* [License](#license)
+
 Code of Conduct
 ---------------
 
@@ -66,12 +77,11 @@ can help to shape the implementation of new features. When reviewing pull reques
 however, please refrain from approving or rejecting a PR unless you are a core
 committer for logstash-logback-encoder.
 
-### Becoming a Maintainer
+### Become a Maintainer
 
 If you are interested in becoming a maintainer, show your support by making contributions
 using any of the above means.  After you have been involved in the project for a while,
 you may request to become a maintainer by filing an issue.
-
 
 Build from Source
 -----------------
