@@ -17,4 +17,4 @@ Do not create a question issue.  Instead:
    OR
    
 2. Create a new Discussion in the Q&A category
-   https://github.com/logstash/logstash-logback-encoder/discussions/categories/q-a).
+   https://github.com/logstash/logstash-logback-encoder/discussions/categories/q-a.
