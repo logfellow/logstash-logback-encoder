@@ -44,5 +44,9 @@ performs the release, and bumps the version to the next `-SNAPSHOT` version.
 
 During the release process, the `nexus-staging-maven-plugin` deploys the artifact to
 a staging repository hosted at https://oss.sonatype.org/,
-and automatically releases the staging repository if no errors occur.
+and automatically [releases](https://central.sonatype.org/pages/releasing-the-deployment.html)
+the staging repository if no errors occur.
 After the staging repository is released, the new artifacts will eventually propagate to maven central.
+
+After releasing, create a [release](https://github.com/logstash/logstash-logback-encoder/releases) for the tag
+that includes release notes of all the changes in the new version.
