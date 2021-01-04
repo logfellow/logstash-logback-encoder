@@ -38,7 +38,7 @@ to the `master` branch that:
 2. Contains a commit message that starts with `[release]`
     
 The [build workflow](.github/workflows/build.yml) sees `[release]` in the commit message
-and use the `maven-release-plugin` to perform the release.
+and uses the `maven-release-plugin` to perform the release.
 The `maven-release-plugin` strips the `-SNAPSHOT` from the pom version,
 performs the release, and bumps the version to the next `-SNAPSHOT` version.
 
