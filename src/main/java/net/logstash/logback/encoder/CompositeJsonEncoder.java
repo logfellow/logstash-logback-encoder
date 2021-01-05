@@ -13,7 +13,6 @@
  */
 package net.logstash.logback.encoder;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
@@ -22,6 +21,9 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.util.ThreadLocalBuffers;
+
+import com.fasterxml.jackson.core.util.ByteArrayBuilder;
 
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -43,6 +45,11 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      */
     private int minBufferSize = 1024;
     
+    /**
+     * Provides thread local buffers 
+     */
+    private final ThreadLocalBuffers buffers = new ThreadLocalBuffers();
+
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
     
@@ -53,6 +60,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private byte[] lineSeparatorBytes;
     
     private Charset charset;
+    
     
     public CompositeJsonEncoder() {
         super();
@@ -79,14 +87,21 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     @Override
     public byte[] encode(Event event) {
-        try(ByteArrayOutputStream outputStream = new ByteArrayOutputStream(getMinBufferSize())) {
-            encode(event, outputStream);
-            return outputStream.toByteArray();
+        ByteArrayBuilder buffer = null;
+        try {
+            buffer = this.buffers.getByteBuffer(getMinBufferSize());
+            encode(event, buffer);
+            return buffer.toByteArray();
         }
         catch (IOException e) {
             addWarn("Error encountered while encoding log event. Event: " + event, e);
             return EMPTY_BYTES;
-        } 
+        }
+        finally {
+            if (buffer!=null) {
+                buffer.release();
+            }
+        }
     }
     
     private void encode(Encoder<Event> encoder, Event event, OutputStream outputStream) throws IOException {
