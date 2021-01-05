@@ -48,6 +48,11 @@ import net.logstash.logback.appender.destination.DestinationParser;
 import net.logstash.logback.appender.destination.PreferPrimaryDestinationConnectionStrategy;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
+import net.logstash.logback.encoder.StreamingEncoder;
+
+import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.LifecycleAware;
+import com.lmax.disruptor.RingBuffer;
 
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.joran.spi.DefaultClass;
@@ -58,10 +63,6 @@ import ch.qos.logback.core.net.ssl.SSLParametersConfiguration;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.util.CloseUtil;
 import ch.qos.logback.core.util.Duration;
-
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.LifecycleAware;
-import com.lmax.disruptor.RingBuffer;
 
 /**
  * An {@link AsyncDisruptorAppender} appender that writes
@@ -594,8 +595,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                  * This is a standard (non-keepAlive) event.
                  * Therefore, we need to send the event.
                  */
-                outputStream.write(encoder.encode(logEvent.event));
-            } else if (hasKeepAliveDurationElapsed(lastSendEndNanoTime, startNanoTime)){
+                encode(logEvent.event, outputStream);
+            } 
+            else if (hasKeepAliveDurationElapsed(lastSendEndNanoTime, startNanoTime)){
                 /*
                  * This is a keep alive event, and the keepAliveDuration has passed,
                  * Therefore, we need to send the keepAliveMessage.
@@ -622,6 +624,21 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
 
+        
+        @SuppressWarnings("unchecked")
+        private void encode(Event event, OutputStream outputStream) throws IOException {
+            if (encoder instanceof StreamingEncoder) {
+                ((StreamingEncoder<Event>)encoder).encode(event, outputStream);
+            }
+            else {
+                byte[] data = encoder.encode(event);
+                if (data!=null) {
+                    outputStream.write(data);
+                }
+            }
+        }
+        
+        
         private boolean hasKeepAliveDurationElapsed(long lastSentNanoTime, long currentNanoTime) {
             return isKeepAliveEnabled()
                     && lastSentNanoTime + TimeUnit.MILLISECONDS.toNanos(keepAliveDuration.getMilliseconds()) < currentNanoTime;

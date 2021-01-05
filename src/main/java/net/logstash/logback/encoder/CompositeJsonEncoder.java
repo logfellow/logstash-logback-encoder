@@ -15,12 +15,14 @@ package net.logstash.logback.encoder;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
@@ -28,7 +30,7 @@ import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
-        extends EncoderBase<Event> {
+        extends EncoderBase<Event> implements StreamingEncoder<Event> {
     
     private static final byte[] EMPTY_BYTES = new byte[0];
     
@@ -60,54 +62,48 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     protected abstract CompositeJsonFormatter<Event> createFormatter();
     
     @Override
-    public byte[] encode(Event event) {
+    public void encode(Event event, OutputStream outputStream) throws IOException {
         if (!isStarted()) {
             throw new IllegalStateException("Encoder is not started");
         }
-        byte[] prefixBytes = doEncodeWrappedToBytes(prefix, event);
-        byte[] suffixBytes = doEncodeWrappedToBytes(suffix, event);
-        
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(
-                minBufferSize
-                + (prefixBytes == null ? 0 : prefixBytes.length)
-                + (suffixBytes == null ? 0 : suffixBytes.length)
-                + lineSeparatorBytes.length);
-        try {
-            if (prefixBytes != null) {
-                outputStream.write(prefixBytes);
-            }   
-            
-            formatter.writeEventToOutputStream(event, outputStream);
-            
-            if (suffixBytes != null) {
-                outputStream.write(suffixBytes);
-            }
-            
-            outputStream.write(lineSeparatorBytes);
-            
-            return outputStream.toByteArray();
-        } catch (IOException e) {
-            addWarn("Error encountered while encoding log event. "
-                    + "Event: " + event, e);
-            return EMPTY_BYTES;
-        } finally {
-            try {
-                outputStream.close();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        if (!isStarted()) {
+            throw new IllegalStateException("Encoder is not started.");
         }
+        
+        encode(prefix, event, outputStream);
+        formatter.writeEventToOutputStream(event, outputStream);
+        encode(suffix, event, outputStream);
+        
+        outputStream.write(lineSeparatorBytes);
     }
     
-    private byte[] doEncodeWrappedToBytes(Encoder<Event> wrapped, Event event) {
-        if (wrapped != null) {
-            return wrapped.encode(event);
+    @Override
+    public byte[] encode(Event event) {
+        try(ByteArrayOutputStream outputStream = new ByteArrayOutputStream(getMinBufferSize())) {
+            encode(event, outputStream);
+            return outputStream.toByteArray();
         }
-        return EMPTY_BYTES;
+        catch (IOException e) {
+            addWarn("Error encountered while encoding log event. Event: " + event, e);
+            return EMPTY_BYTES;
+        } 
+    }
+    
+    private void encode(Encoder<Event> encoder, Event event, OutputStream outputStream) throws IOException {
+        if (encoder!=null) {
+            byte[] data = encoder.encode(event);
+            if (data!=null) {
+                outputStream.write(data);
+            }
+        }
     }
     
     @Override
     public void start() {
+        if (isStarted()) {
+            return;
+        }
+        
         super.start();
         formatter.setContext(getContext());
         formatter.start();
@@ -154,14 +150,16 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     @Override
     public void stop() {
-        super.stop();
-        formatter.stop();
-        stopWrapped(prefix);
-        stopWrapped(suffix);
+        if (isStarted()) {
+            super.stop();
+            formatter.stop();
+            stopWrapped(prefix);
+            stopWrapped(suffix);
+        }
     }
     
     private void stopWrapped(Encoder<Event> wrapped) {
-        if (wrapped != null && !wrapped.isStarted()) {
+        if (wrapped != null && wrapped.isStarted()) {
             wrapped.stop();
         }
     }
