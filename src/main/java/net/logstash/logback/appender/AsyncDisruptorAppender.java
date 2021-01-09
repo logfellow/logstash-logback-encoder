@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.AsyncAppender;
@@ -249,6 +250,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     protected final List<Listener> listeners = new ArrayList<>();
 
     /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
+    /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
      */
     protected static class LogEvent<Event> {
@@ -369,7 +375,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             statusListener.setLevelValue(Status.WARN);
             statusListener.setDelegate(new OnConsoleStatusListener());
             statusListener.setContext(getContext());
-            statusListener.start();
+            lifecycleManager.start(statusListener);
             getStatusManager().add(statusListener);
         }
 
@@ -439,6 +445,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         } catch (InterruptedException e) {
             addWarn("Some queued events have not been logged due to requested shutdown", e);
         }
+
+        lifecycleManager.stopAll();
         fireAppenderStopped();
     }
 

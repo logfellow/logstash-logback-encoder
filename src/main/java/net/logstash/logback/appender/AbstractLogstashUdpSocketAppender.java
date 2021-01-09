@@ -24,6 +24,7 @@ import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
 import ch.qos.logback.core.net.SyslogOutputStream;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.appender.listener.AppenderListener;
 
 /**
@@ -40,6 +41,11 @@ public class AbstractLogstashUdpSocketAppender<Event extends DeferredProcessingA
 
     private SyslogOutputStream syslogOutputStream;
 
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
     public AbstractLogstashUdpSocketAppender() {
         setFacility("NEWS"); // NOTE: this value is never used
     }
@@ -53,7 +59,7 @@ public class AbstractLogstashUdpSocketAppender<Event extends DeferredProcessingA
 
         super.start();
         if (isStarted()) {
-            getLayout().start();
+            lifecycleManager.start(getLayout());
             fireAppenderStarted();
         }
     }
@@ -61,7 +67,7 @@ public class AbstractLogstashUdpSocketAppender<Event extends DeferredProcessingA
     @Override
     public void stop() {
         super.stop();
-        getLayout().stop();
+        lifecycleManager.stop(getLayout());
         fireAppenderStopped();
     }
 

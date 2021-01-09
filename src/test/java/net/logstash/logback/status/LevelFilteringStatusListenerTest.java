@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.status.ErrorStatus;
@@ -92,6 +93,8 @@ public class LevelFilteringStatusListenerTest {
 
         statusListener.addStatusEvent(ERROR_STATUS);
         verify(onConsoleStatusListener).addStatusEvent(ERROR_STATUS);
+
+        when(onConsoleStatusListener.isStarted()).thenReturn(true);
 
         statusListener.stop();
         verify(onConsoleStatusListener).stop();

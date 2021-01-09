@@ -19,6 +19,7 @@ import java.io.Writer;
 import java.lang.ref.SoftReference;
 import java.util.ServiceConfigurationError;
 
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.NullJsonFactoryDecorator;
@@ -86,6 +87,11 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
      */
     private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
 
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
     private JsonEncoding encoding = JsonEncoding.UTF8;
 
     private boolean findAndRegisterJacksonModules = true;
@@ -104,13 +110,13 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         jsonFactory = createJsonFactory();
         jsonProviders.setContext(context);
         jsonProviders.setJsonFactory(jsonFactory);
-        jsonProviders.start();
+        lifecycleManager.start(jsonProviders);
         started = true;
     }
 
     @Override
     public void stop() {
-        jsonProviders.stop();
+        lifecycleManager.stop(jsonProviders);
         started = false;
     }
 

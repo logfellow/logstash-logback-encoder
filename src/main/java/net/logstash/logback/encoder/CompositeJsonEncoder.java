@@ -17,6 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
@@ -51,6 +52,11 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private byte[] lineSeparatorBytes;
 
     private Charset charset;
+
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
 
     public CompositeJsonEncoder() {
         super();
@@ -110,7 +116,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     public void start() {
         super.start();
         formatter.setContext(getContext());
-        formatter.start();
+        lifecycleManager.start(formatter);
         charset = Charset.forName(formatter.getEncoding());
         lineSeparatorBytes = this.lineSeparator == null
                 ? EMPTY_BYTES
@@ -121,6 +127,9 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void startWrapped(Encoder<Event> wrapped) {
+        if (wrapped == null) {
+            return;
+        }
         if (wrapped instanceof LayoutWrappingEncoder) {
             /*
              * Convenience hack to ensure the same charset is used in most cases.
@@ -146,24 +155,29 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
                 layout.start();
             }
         }
-
-        if (wrapped != null && !wrapped.isStarted()) {
-            wrapped.start();
-        }
+        lifecycleManager.start(wrapped);
     }
 
     @Override
     public void stop() {
         super.stop();
-        formatter.stop();
+        lifecycleManager.stop(formatter);
         stopWrapped(prefix);
         stopWrapped(suffix);
     }
 
     private void stopWrapped(Encoder<Event> wrapped) {
-        if (wrapped != null && !wrapped.isStarted()) {
-            wrapped.stop();
+        if (wrapped == null) {
+            return;
         }
+        if (wrapped instanceof LayoutWrappingEncoder) {
+            LayoutWrappingEncoder<Event> layoutWrappedEncoder = (LayoutWrappingEncoder<Event>) wrapped;
+            if (layoutWrappedEncoder.getLayout() instanceof PatternLayoutBase) {
+                PatternLayoutBase layout = (PatternLayoutBase) layoutWrappedEncoder.getLayout();
+                lifecycleManager.stop(layout);
+            }
+        }
+        lifecycleManager.stop(wrapped);
     }
 
     @Override

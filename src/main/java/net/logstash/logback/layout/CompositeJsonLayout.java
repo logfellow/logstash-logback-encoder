@@ -15,6 +15,7 @@ package net.logstash.logback.layout;
 
 import java.io.IOException;
 
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
@@ -44,6 +45,11 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     private String lineSeparator;
 
     private final CompositeJsonFormatter<Event> formatter;
+
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
 
     public CompositeJsonLayout() {
         super();
@@ -98,12 +104,15 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     public void start() {
         super.start();
         formatter.setContext(getContext());
-        formatter.start();
+        lifecycleManager.start(formatter);
         startWrapped(prefix);
         startWrapped(suffix);
     }
 
     private void startWrapped(Layout<Event> wrapped) {
+        if (wrapped == null) {
+            return;
+        }
         if (wrapped instanceof PatternLayoutBase) {
             /*
              * Don't ensure exception output (for ILoggingEvents)
@@ -118,23 +127,26 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
              */
             layout.start();
         }
-        if (wrapped != null && !wrapped.isStarted()) {
-            wrapped.start();
-        }
+        lifecycleManager.start(wrapped);
     }
 
     @Override
     public void stop() {
         super.stop();
-        formatter.stop();
+        lifecycleManager.stop(formatter);
         stopWrapped(prefix);
         stopWrapped(suffix);
     }
 
     private void stopWrapped(Layout<Event> wrapped) {
-        if (wrapped != null && !wrapped.isStarted()) {
-            wrapped.stop();
+        if (wrapped == null) {
+            return;
         }
+        if (wrapped instanceof PatternLayoutBase) {
+            PatternLayoutBase<Event> layout = (PatternLayoutBase<Event>) wrapped;
+            layout.stop();
+        }
+        lifecycleManager.stop(wrapped);
     }
 
     public JsonProviders<Event> getProviders() {

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.LifeCycleManager;
 
 /**
  * A {@link JsonProvider} that nests other providers within a subobject.
@@ -35,7 +36,12 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
      * The providers that are used to populate the output nested JSON object.
      */
     private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
-    
+
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
     public AbstractNestedJsonProvider() {
         setFieldName(FIELD_NESTED);
     }
@@ -43,13 +49,13 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     @Override
     public void start() {
         super.start();
-        getProviders().start();
+        lifecycleManager.start(getProviders());
     }
     
     @Override
     public void stop() {
         super.stop();
-        getProviders().stop();
+        lifecycleManager.stop(getProviders());
     }
     
     @Override

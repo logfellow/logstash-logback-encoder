@@ -19,6 +19,7 @@ import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.LifeCycle;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusListener;
+import net.logstash.logback.LifeCycleManager;
 
 /**
  * A {@link StatusListener} that delegates to another {@link StatusListener}
@@ -28,6 +29,11 @@ public class DelegatingStatusListener extends ContextAwareBase implements Status
     private StatusListener delegate;
 
     private volatile boolean started;
+
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
 
     @Override
     public void start() {
@@ -39,7 +45,7 @@ public class DelegatingStatusListener extends ContextAwareBase implements Status
             ((ContextAware) delegate).setContext(context);
         }
         if (delegate instanceof LifeCycle) {
-            ((LifeCycle) delegate).start();
+            lifecycleManager.start((LifeCycle) delegate);
         }
         started = true;
     }
@@ -47,7 +53,7 @@ public class DelegatingStatusListener extends ContextAwareBase implements Status
     @Override
     public void stop() {
         if (delegate instanceof LifeCycle) {
-            ((LifeCycle) delegate).stop();
+            lifecycleManager.stop((LifeCycle) delegate);
         }
         started = false;
     }
