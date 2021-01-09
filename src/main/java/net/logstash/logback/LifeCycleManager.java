@@ -15,6 +15,7 @@ package net.logstash.logback;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -76,14 +77,14 @@ public class LifeCycleManager {
     public Set<LifeCycle> stopAll() {
         Set<LifeCycle> stopped = new HashSet<>();
 
-        for (LifeCycle lifeCycle : started) {
+        for (Iterator<LifeCycle> iterator = started.iterator(); iterator.hasNext();) {
+            LifeCycle lifeCycle = iterator.next();
             if (lifeCycle.isStarted()) {
                 lifeCycle.stop();
                 stopped.add(lifeCycle);
             }
+            iterator.remove();
         }
-
-        started.clear();
         return Collections.unmodifiableSet(stopped);
     }
 
