@@ -102,8 +102,8 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
             addError("No providers configured");
         }
         jsonFactory = createJsonFactory();
-        jsonProviders.setJsonFactory(jsonFactory);
         jsonProviders.setContext(context);
+        jsonProviders.setJsonFactory(jsonFactory);
         jsonProviders.start();
         started = true;
     }
