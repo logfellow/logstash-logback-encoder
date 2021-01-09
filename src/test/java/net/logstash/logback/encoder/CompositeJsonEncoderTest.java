@@ -14,6 +14,7 @@
 package net.logstash.logback.encoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -175,6 +176,12 @@ public class CompositeJsonEncoderTest {
         
         verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
                 + "Event: " + event, context, exception));
+    }
+
+    @Test
+    public void notStarted() {
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> encoder.encode(event))
+                .withMessage("Encoder is not started");
     }
 
 }

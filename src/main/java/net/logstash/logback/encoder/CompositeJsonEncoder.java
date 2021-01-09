@@ -61,6 +61,9 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     @Override
     public byte[] encode(Event event) {
+        if (!isStarted()) {
+            throw new IllegalStateException("Encoder is not started");
+        }
         byte[] prefixBytes = doEncodeWrappedToBytes(prefix, event);
         byte[] suffixBytes = doEncodeWrappedToBytes(suffix, event);
         

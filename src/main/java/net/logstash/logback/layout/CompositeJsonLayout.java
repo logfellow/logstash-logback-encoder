@@ -53,6 +53,9 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     protected abstract CompositeJsonFormatter<Event> createFormatter();
 
     public String doLayout(Event event) {
+        if (!isStarted()) {
+            throw new IllegalStateException("Layout is not started");
+        }
         final String result;
         try {
             result = formatter.writeEventAsString(event);

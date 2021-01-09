@@ -14,6 +14,7 @@
 package net.logstash.logback.layout;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -45,7 +46,7 @@ public class CompositeJsonLayoutTest {
         }
     }
 
-    @Mock
+    @Mock(lenient = true)
     DeferredProcessingAware event;
 
     @Mock(lenient = true)
@@ -65,6 +66,7 @@ public class CompositeJsonLayoutTest {
     public void testDoLayoutWithoutPrefixSuffix()  {
 
         CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        layout.start();
 
         String layoutResult = layout.doLayout(event);
 
@@ -76,6 +78,7 @@ public class CompositeJsonLayoutTest {
     public void testDoLayoutWithPrefixWithoutSuffix() {
         CompositeJsonLayout layout = new TesterCompositeJsonLayout();
         layout.setPrefix(prefixLayout);
+        layout.start();
 
         String layoutResult = layout.doLayout(event);
 
@@ -88,6 +91,7 @@ public class CompositeJsonLayoutTest {
     public void testDoLayoutWithoutPrefixWithSuffix() {
         CompositeJsonLayout layout = new TesterCompositeJsonLayout();
         layout.setSuffix(suffixLayout);
+        layout.start();
 
         String layoutResult = layout.doLayout(event);
 
@@ -101,6 +105,7 @@ public class CompositeJsonLayoutTest {
         CompositeJsonLayout layout = new TesterCompositeJsonLayout();
         layout.setPrefix(prefixLayout);
         layout.setSuffix(suffixLayout);
+        layout.start();
 
         String layoutResult = layout.doLayout(event);
 
@@ -112,9 +117,18 @@ public class CompositeJsonLayoutTest {
     public void testDoLayoutWithPrefixWithLineSeparator() {
         CompositeJsonLayout layout = new TesterCompositeJsonLayout();
         layout.setLineSeparator("SYSTEM");
+        layout.start();
 
         String layoutResult = layout.doLayout(event);
 
         assertThat(layoutResult).isEqualTo("event" + System.lineSeparator());
     }
+
+    @Test
+    public void notStarted() {
+        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> layout.doLayout(event))
+                .withMessage("Layout is not started");
+    }
+
 }
