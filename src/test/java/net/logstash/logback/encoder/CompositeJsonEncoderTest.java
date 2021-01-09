@@ -15,6 +15,8 @@ package net.logstash.logback.encoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -112,6 +114,13 @@ public class CompositeJsonEncoderTest {
         verify(prefix, times(1)).stop();
     }
 
+    
+    @Test
+    public void notStarted() {
+        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> encoder.encode(event))
+                .withMessage("Encoder is not started");
+    }
+    
     
     @Test
     public void encode_noPrefixSuffix() {
@@ -260,20 +269,22 @@ public class CompositeJsonEncoderTest {
     private static class TestEncoder extends EncoderBase<ILoggingEvent> {
         private final String name;
         
+        public TestEncoder(String name) {
             this.name = name;
         }
         
         public byte[] encode(ILoggingEvent event) {
             return getBytes(name+"/event");
         }
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> encoder.encode(event))
+
         public byte[] footerBytes()  {
            return getBytes(name+"/footer");
         }
-                .withMessage("Encoder is not started");
+
         public byte[] headerBytes()  {
             return getBytes(name+"/header");
-    }
+        }
+        
         private byte[] getBytes(String s) {
             return s.getBytes();
         }
