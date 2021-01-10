@@ -13,6 +13,9 @@
  */
 package net.logstash.logback;
 
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
+import ch.qos.logback.core.spi.ContextAware;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -37,9 +40,6 @@ import net.logstash.logback.composite.accessevent.RequestedUrlJsonProvider;
 import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
 import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
-import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.joran.spi.DefaultClass;
-import ch.qos.logback.core.spi.ContextAware;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -159,7 +159,8 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
             globalCustomFieldsProvider = null;
         } else {
             if (globalCustomFieldsProvider == null) {
-                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<IAccessEvent>());
+                globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<>();
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider);
             }
             globalCustomFieldsProvider.setCustomFields(customFields);
         }
@@ -171,7 +172,8 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
             globalCustomFieldsProvider = null;
         } else {
             if (globalCustomFieldsProvider == null) {
-                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<IAccessEvent>());
+                globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<>();
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider);
             }
             globalCustomFieldsProvider.setCustomFieldsNode(customFields);
         }

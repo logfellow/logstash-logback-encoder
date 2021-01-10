@@ -26,26 +26,26 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 @SuppressWarnings("serial")
 public abstract class LogstashMarker extends LogstashBasicMarker implements Iterable<Marker> {
-    
+
     public static final String MARKER_NAME_PREFIX = "LS_";
-    
+
     public LogstashMarker(String name) {
         super(name);
     }
-    
+
     /**
      * Adds the given marker as a reference, and returns this marker.
      * <p>
      * This can be used to chain markers together fluently on a log line. For example:
-     * 
+     *
      * <pre>
      * {@code
      * import static net.logstash.logback.marker.Markers.*
-     *     
+     *
      * logger.info(append("name1", "value1).and(append("name2", "value2")), "log message");
      * }
      * </pre>
-     * 
+     *
      * @param <T> subtype of LogstashMarker
      * @param reference The marker to add
      * @return A marker with this marker and the given marker
@@ -55,7 +55,7 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
         add(reference);
         return (T) this;
     }
-    
+
     /**
      * @param <T> subtype of LogstashMarker
      * @param reference The marker to add
@@ -70,7 +70,7 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
 
     /**
      * Writes the data associated with this marker to the given {@link JsonGenerator}.
-     * 
+     *
      * @param generator the generator to which to write the output of this marker.
      * @throws IOException if there was an error writing to the generator
      */

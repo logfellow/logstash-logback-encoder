@@ -34,7 +34,7 @@ public class CborFeatureJsonGeneratorDecorator extends FeatureDecorator<CBORGene
     @Override
     public JsonGenerator decorate(JsonGenerator generator) {
         if (!(generator instanceof CBORGenerator)) {
-            throw new ClassCastException("Expected generator to be of type " + CBORGenerator.class.getName() +".  See " + CborJsonFactoryDecorator.class.getName());
+            throw new ClassCastException("Expected generator to be of type " + CBORGenerator.class.getName() + ".  See " + CborJsonFactoryDecorator.class.getName());
         }
         return super.decorate((CBORGenerator) generator);
     }

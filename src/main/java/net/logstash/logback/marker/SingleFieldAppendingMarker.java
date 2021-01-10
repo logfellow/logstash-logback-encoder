@@ -29,7 +29,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * A {@link Marker} OR {@link StructuredArgument} that appends
  * a single field into the JSON event.
  * <p>
- * 
+ *
  * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}):
  * <ul>
  * <li>Field names are written via {@link #writeFieldName(JsonGenerator)},
@@ -38,21 +38,21 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *     which subclasses must override</li>
  * </ul>
  * <p>
- * 
+ *
  * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
  * the {@link #messageFormatPattern} is used to construct the string output.
- * {@link #getFieldName()} will be substituted in {0} in the {@link #messageFormatPattern}. 
+ * {@link #getFieldName()} will be substituted in {0} in the {@link #messageFormatPattern}.
  * {@link #getFieldValue()} will be substituted in {1} in the {@link #messageFormatPattern}.
- * Subclasses must override {@link #getFieldValue()} to provide the field value to include.  
+ * Subclasses must override {@link #getFieldValue()} to provide the field value to include.
  */
 @SuppressWarnings("serial")
-public abstract class SingleFieldAppendingMarker extends LogstashMarker implements StructuredArgument{
-    
+public abstract class SingleFieldAppendingMarker extends LogstashMarker implements StructuredArgument {
+
     public static final String MARKER_NAME_PREFIX = LogstashMarker.MARKER_NAME_PREFIX + "APPEND_";
-    
+
     /**
      * Name of the field to append.
-     * 
+     *
      * Note that the value of the field is provided by subclasses via {@link #writeFieldValue(JsonGenerator)}.
      */
     private final String fieldName;
@@ -60,42 +60,42 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
     /**
      * Pattern to use when appending the field/value in {@link #toString()}.
      * <p>
-     * {@link #getFieldName()} will be substituted in {0}. 
-     * {@link #getFieldValue()} will be substituted in {1}. 
+     * {@link #getFieldName()} will be substituted in {0}.
+     * {@link #getFieldValue()} will be substituted in {1}.
      */
     private final String messageFormatPattern;
-    
+
     public SingleFieldAppendingMarker(String markerName, String fieldName) {
         this(markerName, fieldName, StructuredArguments.DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN);
     }
-    
+
     public SingleFieldAppendingMarker(String markerName, String fieldName, String messageFormatPattern) {
         super(markerName);
         this.fieldName = Objects.requireNonNull(fieldName, "fieldName must not be null");
         this.messageFormatPattern = Objects.requireNonNull(messageFormatPattern, "messageFormatPattern must not be null");
     }
-    
+
     public String getFieldName() {
         return fieldName;
     }
-    
+
     public void writeTo(JsonGenerator generator) throws IOException {
         writeFieldName(generator);
         writeFieldValue(generator);
     }
-    
+
     /**
      * Writes the field name to the generator.
      */
     protected void writeFieldName(JsonGenerator generator) throws IOException {
         generator.writeFieldName(getFieldName());
     }
-    
+
     /**
      * Writes the field value to the generator.
      */
     protected abstract void writeFieldValue(JsonGenerator generator) throws IOException;
-    
+
     @Override
     public String toStringSelf() {
         final String fieldValueString = StructuredArguments.toString(getFieldValue());
@@ -118,7 +118,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
     }
 
     /**
-     * Return the value that should be included in the output of {@link #toString()}. 
+     * Return the value that should be included in the output of {@link #toString()}.
      */
     public abstract Object getFieldValue();
 
@@ -130,11 +130,11 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
         if (!(obj instanceof SingleFieldAppendingMarker)) {
             return false;
         }
-        
+
         SingleFieldAppendingMarker other = (SingleFieldAppendingMarker) obj;
         return this.fieldName.equals(other.fieldName);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

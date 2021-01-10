@@ -99,7 +99,8 @@ Source Code Style
 
 Please follow the style used by the existing code in the repository.
 
-4-space indents (no tabs)
+Rules are enforced by [checkstyle](src/checkstyle/checkstyle.xml).
+
 
 License
 -------

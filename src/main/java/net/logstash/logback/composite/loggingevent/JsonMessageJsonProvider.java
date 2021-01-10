@@ -24,8 +24,8 @@ import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.marker.Markers;
 
 /**
- * Provides logic for deprecated functionality. 
- * 
+ * Provides logic for deprecated functionality.
+ *
  * @deprecated Use the {@link LogstashMarkersJsonProvider}, and log events with {@link Markers} instead.
  */
 @Deprecated
@@ -34,13 +34,13 @@ public class JsonMessageJsonProvider extends AbstractFieldJsonProvider<ILoggingE
     /**
      * Name of the {@link Marker} that indicates that the log event arguments should be appended to the
      * logstash json as an array with field value "json_message".
-     * 
+     *
      * @deprecated When logging, prefer using a {@link Markers#appendArray(String, Object...)} marker
      *             with fieldName = "json_message" and objects = an array of arguments instead.
      */
     @Deprecated
     public static final String JSON_MARKER_NAME = "JSON";
-    
+
     public JsonMessageJsonProvider() {
         super();
         setFieldName("json_message");

@@ -34,7 +34,7 @@ public class SmileFeatureJsonGeneratorDecorator extends FeatureDecorator<SmileGe
     @Override
     public JsonGenerator decorate(JsonGenerator generator) {
         if (!(generator instanceof SmileGenerator)) {
-            throw new ClassCastException("Expected generator to be of type " + SmileGenerator.class.getName() +".  See " + SmileJsonFactoryDecorator.class.getName());
+            throw new ClassCastException("Expected generator to be of type " + SmileGenerator.class.getName() + ".  See " + SmileJsonFactoryDecorator.class.getName());
         }
         return super.decorate((SmileGenerator) generator);
     }

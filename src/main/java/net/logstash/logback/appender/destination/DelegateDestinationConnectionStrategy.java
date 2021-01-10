@@ -19,7 +19,7 @@ import ch.qos.logback.core.spi.LifeCycle;
 /**
  * A convenience class to make setting a {@link DestinationConnectionStrategy} cleaner in logback's xml configuration
  * when using the strategies provided by logstash-logback-encoder.
- * 
+ *
  * <p>
  * For example, instead of:
  * {@code
@@ -37,13 +37,13 @@ import ch.qos.logback.core.spi.LifeCycle;
  *             </roundRobin>
  *         </connectionStrategy>
  * }
- * 
- * 
+ *
+ *
  */
 public class DelegateDestinationConnectionStrategy extends ContextAwareBase implements DestinationConnectionStrategy, LifeCycle {
-    
+
     private DestinationConnectionStrategy delegate;
-    
+
     private volatile boolean started;
 
     @Override
@@ -65,7 +65,7 @@ public class DelegateDestinationConnectionStrategy extends ContextAwareBase impl
     public boolean shouldReconnect(long currentTimeInMillis, int currentDestinationIndex, int numDestinations) {
         return delegate.shouldReconnect(currentTimeInMillis, currentDestinationIndex, numDestinations);
     }
-    
+
     @Override
     public void start() {
         this.started = true;
@@ -82,24 +82,24 @@ public class DelegateDestinationConnectionStrategy extends ContextAwareBase impl
     @Override
     public boolean isStarted() {
         return started;
-    } 
+    }
 
     public void setPreferPrimary(PreferPrimaryDestinationConnectionStrategy strategy) {
         setDelegate(strategy);
     }
-    
+
     public void setRandom(RandomDestinationConnectionStrategy strategy) {
         setDelegate(strategy);
     }
-    
+
     public void setRoundRobin(RoundRobinDestinationConnectionStrategy strategy) {
         setDelegate(strategy);
     }
-    
+
     private void setDelegate(DestinationConnectionStrategy delegate) {
         if (this.delegate != null) {
-            throw new IllegalStateException(String.format("Attempted to set two destination connection strategies: %s %s", this.delegate, delegate)); 
-        } 
+            throw new IllegalStateException(String.format("Attempted to set two destination connection strategies: %s %s", this.delegate, delegate));
+        }
         this.delegate = delegate;
     }
 

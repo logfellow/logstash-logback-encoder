@@ -53,24 +53,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 /**
  * A {@link LoggingEventCompositeJsonFormatter} that contains a common
  * pre-defined set of {@link JsonProvider}s.
- * 
+ *
  * The included providers are configured via properties on this
  * formatter, rather than configuring the providers directly.
- * This leads to a somewhat simpler configuration definitions. 
- * 
+ * This leads to a somewhat simpler configuration definitions.
+ *
  * You cannot remove any of the pre-defined providers, but
  * you can add additional providers via {@link #addProvider(JsonProvider)}.
- * 
+ *
  * If you would like full control over the providers, you
  * should instead use {@link LoggingEventCompositeJsonFormatter} directly.
  */
 public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
-    
+
     /**
      * The field names to use when writing the standard event fields
      */
     protected LogstashFieldNames fieldNames;
-    
+
     private final LoggingEventFormattedTimestampJsonProvider timestampProvider = new LoggingEventFormattedTimestampJsonProvider();
     private final LogstashVersionJsonProvider<ILoggingEvent> versionProvider = new LogstashVersionJsonProvider<ILoggingEvent>();
     private final MessageJsonProvider messageProvider = new MessageJsonProvider();
@@ -78,7 +78,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     private final ThreadNameJsonProvider threadNameProvider = new ThreadNameJsonProvider();
     private final LogLevelJsonProvider logLevelProvider = new LogLevelJsonProvider();
     private final LogLevelValueJsonProvider logLevelValueProvider = new LogLevelValueJsonProvider();
-    
+
     /**
      * When not null, the caller information is included in the logged data.
      * Note: calculating the caller data is an expensive operation.
@@ -99,7 +99,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     private MdcJsonProvider mdcProvider = new MdcJsonProvider();
     /**
      * When not null, if the last argument to the log line is a map, then it will be embedded in the logstash json.
-     * 
+     *
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      */
     @Deprecated
@@ -112,23 +112,23 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     private TagsJsonProvider tagsProvider = new TagsJsonProvider();
     private final LogstashMarkersJsonProvider logstashMarkersProvider = new LogstashMarkersJsonProvider();
     private ArgumentsJsonProvider argumentsProvider = new ArgumentsJsonProvider();
-    
+
     public LogstashFormatter(ContextAware declaredOrigin) {
         this(declaredOrigin, false);
     }
-    
-    public LogstashFormatter(ContextAware declaredOrigin,boolean includeCallerInfo) {
+
+    public LogstashFormatter(ContextAware declaredOrigin, boolean includeCallerInfo) {
         this(declaredOrigin, includeCallerInfo, null);
     }
-    
-    public LogstashFormatter(ContextAware declaredOrigin,boolean includeCallerInfo, JsonNode customFields) {
+
+    public LogstashFormatter(ContextAware declaredOrigin, boolean includeCallerInfo, JsonNode customFields) {
         super(declaredOrigin);
-        
+
         this.fieldNames = new LogstashFieldNames();
 
         setIncludeCallerInfo(includeCallerInfo);
         setCustomFields(customFields);
-        
+
         getProviders().addTimestamp(this.timestampProvider);
         getProviders().addVersion(this.versionProvider);
         getProviders().addMessage(this.messageProvider);
@@ -147,13 +147,13 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         getProviders().addLogstashMarkers(this.logstashMarkersProvider);
         getProviders().addArguments(this.argumentsProvider);
     }
-    
+
     @Override
     public void start() {
         configureProviderFieldNames();
         super.start();
     }
-    
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     protected void configureProviderFieldNames() {
         for (JsonProvider<ILoggingEvent> provider : getProviders().getProviders()) {
@@ -162,11 +162,11 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             }
         }
     }
-    
+
     public boolean isIncludeCallerData() {
         return callerDataProvider != null;
     }
-    
+
     public void setIncludeCallerData(boolean includeCallerData) {
         if (isIncludeCallerData() != includeCallerData) {
             getProviders().removeProvider(callerDataProvider);
@@ -187,7 +187,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public boolean isIncludeCallerInfo() {
         return isIncludeCallerData();
     }
-    
+
     /**
      * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
      * @param includeCallerInfo true if the caller info should be included
@@ -196,43 +196,45 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setIncludeCallerInfo(boolean includeCallerInfo) {
         setIncludeCallerData(includeCallerInfo);
     }
-    
+
     public String getCustomFieldsAsString() {
         return globalCustomFieldsProvider == null
                 ? null
                 : globalCustomFieldsProvider.getCustomFields();
     }
-    
+
     public void setCustomFieldsFromString(String customFields) {
         if (customFields == null || customFields.length() == 0) {
             getProviders().removeProvider(globalCustomFieldsProvider);
             globalCustomFieldsProvider = null;
         } else {
             if (globalCustomFieldsProvider == null) {
-                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<ILoggingEvent>());
+                globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<>();
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider);
             }
             globalCustomFieldsProvider.setCustomFields(customFields);
         }
     }
-    
+
     public void setCustomFields(JsonNode customFields) {
         if (customFields == null) {
             getProviders().removeProvider(globalCustomFieldsProvider);
             globalCustomFieldsProvider = null;
         } else {
             if (globalCustomFieldsProvider == null) {
-                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<ILoggingEvent>());
+                globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<>();
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider);
             }
             globalCustomFieldsProvider.setCustomFieldsNode(customFields);
         }
     }
-    
+
     public JsonNode getCustomFields() {
         return globalCustomFieldsProvider == null
                 ? null
                 : globalCustomFieldsProvider.getCustomFieldsNode();
     }
-    
+
     public int getShortenedLoggerNameLength() {
         return loggerNameProvider.getShortenedLoggerNameLength();
     }
@@ -240,11 +242,11 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setShortenedLoggerNameLength(int length) {
         loggerNameProvider.setShortenedLoggerNameLength(length);
     }
-    
+
     public boolean isIncludeMdc() {
         return this.mdcProvider != null;
     }
-    
+
     public void setIncludeMdc(boolean includeMdc) {
         if (isIncludeMdc() != includeMdc) {
             if (includeMdc) {
@@ -276,11 +278,11 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public boolean isIncludeStructuredArguments() {
         return this.argumentsProvider.isIncludeStructuredArguments();
     }
-    
+
     public void setIncludeStructuredArguments(boolean includeStructuredArguments) {
         this.argumentsProvider.setIncludeStructuredArguments(includeStructuredArguments);
     }
-    
+
     public boolean isIncludeNonStructuredArguments() {
         return this.argumentsProvider.isIncludeNonStructuredArguments();
     }
@@ -288,7 +290,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
         this.argumentsProvider.setIncludeNonStructuredArguments(includeNonStructuredArguments);
     }
-    
+
     public String getNonStructuredArgumentsFieldPrefix() {
         return this.argumentsProvider.getNonStructuredArgumentsFieldPrefix();
     }
@@ -296,7 +298,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setNonStructuredArgumentsFieldPrefix(String nonStructuredArgumentsFieldPrefix) {
         this.argumentsProvider.setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
     }
-    
+
     public List<String> getIncludeMdcKeyNames() {
         return isIncludeMdc()
                 ? mdcProvider.getIncludeMdcKeyNames()
@@ -312,7 +314,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             mdcProvider.setIncludeMdcKeyNames(includeMdcKeyNames);
         }
     }
-    
+
     public List<String> getExcludeMdcKeyNames() {
         return isIncludeMdc()
                 ? mdcProvider.getExcludeMdcKeyNames()
@@ -337,7 +339,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public boolean isIncludeContext() {
         return contextProvider != null;
     }
-    
+
     public void setIncludeContext(boolean includeContext) {
         if (isIncludeContext() != includeContext) {
             getProviders().removeProvider(contextProvider);
@@ -349,7 +351,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             }
         }
     }
-    
+
     public ThrowableHandlingConverter getThrowableConverter() {
         return this.stackTraceProvider.getThrowableConverter();
     }
@@ -357,7 +359,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
         this.stackTraceProvider.setThrowableConverter(throwableConverter);
     }
-    
+
     public String getVersion() {
         return this.versionProvider.getVersion();
     }
@@ -365,7 +367,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         this.versionProvider.setVersion(version);
     }
 
-    
+
     /**
      * @deprecated Use {@link #isWriteVersionAsInteger()}
      * @return true if the version should be written as a string
@@ -382,14 +384,14 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setWriteVersionAsString(boolean writeVersionAsString) {
         this.versionProvider.setWriteAsString(writeVersionAsString);
     }
-    
+
     public boolean isWriteVersionAsInteger() {
         return this.versionProvider.isWriteAsInteger();
     }
     public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
         this.versionProvider.setWriteAsInteger(writeVersionAsInteger);
     }
-    
+
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      * @return true if the last Map argument should be appended
@@ -398,7 +400,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public boolean isEnableContextMap() {
         return contextMapProvider != null;
     }
-    
+
     /**
      * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
      * @param enableContextMap true if the last Map argument should be appended
@@ -415,7 +417,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             }
         }
     }
-    
+
     /**
      * Write the message as a JSON array by splitting the message text using the specified regex.
      *
@@ -473,12 +475,12 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         }
         getProviders().addProvider(provider);
     }
-    
+
     @Override
     public LoggingEventJsonProviders getProviders() {
         return (LoggingEventJsonProviders) super.getProviders();
     }
-    
+
     public LogstashFieldNames getFieldNames() {
         return fieldNames;
     }
@@ -499,7 +501,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void setTimestampPattern(String pattern) {
         timestampProvider.setPattern(pattern);
     }
-    
+
     @Override
     public void setProviders(JsonProviders<ILoggingEvent> jsonProviders) {
         if (super.getProviders() != null && !super.getProviders().getProviders().isEmpty()) {

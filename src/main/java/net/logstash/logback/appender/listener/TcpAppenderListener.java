@@ -21,15 +21,15 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 /**
  * Listens to a TCP appender.
- * 
+ *
  * Methods will be invoked in the thread that is sending the events over the TCP connection.
- * Therefore, ensure that the methods complete quickly, so that future events are not delayed. 
+ * Therefore, ensure that the methods complete quickly, so that future events are not delayed.
  */
 public interface TcpAppenderListener<Event extends DeferredProcessingAware> extends AppenderListener<Event> {
-    
+
     /**
      * Called after given appender successfully sent the given event over the TCP connection.
-     * 
+     *
      * @param appender the appender that sent the event
      * @param socket the socket over which the appender sent the event
      * @param event the event that was sent
@@ -39,34 +39,34 @@ public interface TcpAppenderListener<Event extends DeferredProcessingAware> exte
 
     /**
      * Called when the given appender fails to send the given event over a TCP connection.
-     * 
+     *
      * @param appender the appender that attempted to send the event
      * @param event the event that failed to send
      * @param reason what caused the failure
      */
     void eventSendFailure(Appender<Event> appender, Event event, Throwable reason);
-    
+
     /**
      * Called after the given appender successfully opens the given socket
-     *  
+     *
      * @param appender the appender that opened the socket
      * @param socket the socket that was opened
      */
     void connectionOpened(Appender<Event> appender, Socket socket);
-    
+
     /**
      * Called after the given appender fails to open a socket
-     * 
+     *
      * @param appender the appender that attempted to open a socket
      * @param address the address to which the appender attempted to connect
      * @param reason what caused the failure
      */
     void connectionFailed(Appender<Event> appender, InetSocketAddress address, Throwable reason);
-    
+
     /**
      * Called after the given appender closes the given socket
      * (either due to a reconnect, or shutdown)
-     *  
+     *
      * @param appender the appender that closed the socket
      * @param socket the socket that was closed
      */

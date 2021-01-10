@@ -29,10 +29,10 @@ public class AccessMessageJsonProvider extends AccessEventFormattedTimestampJson
     public AccessMessageJsonProvider() {
         setFieldName(FIELD_MESSAGE);
     }
-    
+
     @Override
     public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
-        JsonWritingUtils.writeStringField(generator, 
+        JsonWritingUtils.writeStringField(generator,
                 getFieldName(),
                 String.format("%s - %s [%s] \"%s\" %s %s",
                         event.getRemoteHost(),
@@ -42,7 +42,7 @@ public class AccessMessageJsonProvider extends AccessEventFormattedTimestampJson
                         event.getStatusCode(),
                         event.getContentLength()));
     }
-    
+
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
         setFieldName(fieldNames.getMessage());

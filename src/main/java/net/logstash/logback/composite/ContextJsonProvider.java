@@ -26,10 +26,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * Writes properties from the {@link Context} into the JSON event.
- * 
- * If the fieldName is set, then the properties will be written 
+ *
+ * If the fieldName is set, then the properties will be written
  * to that field as a subobject.
- * Otherwise, the properties are written inline. 
+ * Otherwise, the properties are written inline.
  *
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
@@ -42,18 +42,18 @@ public class ContextJsonProvider<Event extends DeferredProcessingAware> extends 
                 generator.writeObjectFieldStart(getFieldName());
             }
             JsonWritingUtils.writeMapEntries(generator, context.getCopyOfPropertyMap());
-            
+
             if (getFieldName() != null) {
                 generator.writeEndObject();
             }
         }
     }
-    
+
     @Override
     public void setFieldNames(LogstashCommonFieldNames fieldNames) {
         if (fieldNames instanceof LogstashFieldNames) {
             setFieldName(((LogstashFieldNames) fieldNames).getContext());
         }
     }
-    
+
 }

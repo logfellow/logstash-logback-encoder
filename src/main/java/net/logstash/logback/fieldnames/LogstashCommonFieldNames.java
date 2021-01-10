@@ -19,23 +19,23 @@ import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 
 /**
  * Common field names between the regular {@link net.logstash.logback.LogstashFormatter}
- * and the {@link net.logstash.logback.LogstashAccessFormatter}. 
+ * and the {@link net.logstash.logback.LogstashAccessFormatter}.
  */
 public abstract class LogstashCommonFieldNames {
     /**
      * Field name to use in logback configuration files
      * if you want the field to be ignored (not output).
-     * 
+     *
      * Unfortunately, logback does not provide a way to set a
      * field value to null via xml config,
      * so we have to fall back to using this magic string.
-     * 
+     *
      * Note that if you're programmatically configuring the field names,
      * then you can just set the field name to null in the
-     * FieldNamesType.  
+     * FieldNamesType.
      */
     public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
-  
+
     private String timestamp = FormattedTimestampJsonProvider.FIELD_TIMESTAMP;
     private String version = LogstashVersionJsonProvider.FIELD_VERSION;
     private String message = MessageJsonProvider.FIELD_MESSAGE;

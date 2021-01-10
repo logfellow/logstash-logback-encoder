@@ -18,31 +18,31 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 /**
  * Listens to an appender.
- * 
- * For example, a listener implementation could be created for metrics or dynamic error handling. 
+ *
+ * For example, a listener implementation could be created for metrics or dynamic error handling.
  */
 public interface AppenderListener<Event extends DeferredProcessingAware> {
-    
+
     /**
      * Called when the given appender is started.
-     * 
+     *
      * @param appender the appender that was started
      */
     void appenderStarted(Appender<Event> appender);
-    
+
     /**
      * Called when the given appender is stopped.
-     * 
+     *
      * @param appender the appender that was stopped
      */
     void appenderStopped(Appender<Event> appender);
-    
+
     /**
      * Called when the given event was successfully appended by the given appender.
-     * 
+     *
      * Note that for Asynchronous appenders, this generally means that the event was
      * accepted for processing, but hasn't finished processing yet.
-     * 
+     *
      * @param appender the appender when successfully appended the event
      * @param event the event that was appended
      * @param durationInNanos the time (in nanoseconds) it took to append the event
@@ -51,7 +51,7 @@ public interface AppenderListener<Event extends DeferredProcessingAware> {
 
     /**
      * Called when the given event was failed to be appended by the given appender.
-     * 
+     *
      * @param appender the appender when successfully appended the event
      * @param event the event that was appended
      * @param reason what caused the failure

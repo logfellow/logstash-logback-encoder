@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN" "https://checkstyle.org/dtds/configuration_1_3.dtd">
+<module name="Checker">
+    <module name="FileTabCharacter">
+        <property name="eachLine" value="true"/>
+    </module>
+
+    <!-- Checks whether files end with a new line.                        -->
+    <!-- See https://checkstyle.org/config_misc.html#NewlineAtEndOfFile -->
+    <module name="NewlineAtEndOfFile"/>
+
+    <!-- Checks for white space at the end of the line -->
+    <!-- See http://checkstyle.sourceforge.net/config_regexp.html -->
+    <!-- Updated to ignore whitespace following '*' in javadoc comments -->
+    <!-- http://stackoverflow.com/questions/9100059/checkstyle-trailing-spaces-regexp-issue -->
+    <module name="RegexpSingleline">
+        <property name="format" value="(?&lt;!\A[ \t]*\*?)[ \t]$"/>
+        <property name="message" value="Line has trailing spaces."/>
+        <property name="fileExtensions" value="java"/>
+    </module>
+
+    <module name="TreeWalker">
+        <!--
+           Exceptions
+           See https://checkstyle.sourceforge.io/config_filters.html
+         -->
+        <module name="SuppressionCommentFilter" />
+        <module name="SuppressWithNearbyCommentFilter"/>
+
+        <!-- Checks for Javadoc comments.                   -->
+        <!-- See https://checkstyle.org/config_javadoc.html -->
+        <module name="InvalidJavadocPosition"/>
+
+        <!-- Checks for imports                             -->
+        <!-- See https://checkstyle.org/config_imports.html -->
+        <module name="AvoidStarImport"/>
+        <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
+        <module name="RedundantImport"/>
+
+        <!-- Checks for whitespace                             -->
+        <!-- See https://checkstyle.org/config_whitespace.html -->
+        <module name="EmptyForIteratorPad"/>
+        <module name="GenericWhitespace"/>
+        <module name="MethodParamPad"/>
+        <module name="NoWhitespaceAfter"/>
+        <module name="NoWhitespaceBefore"/>
+        <module name="OperatorWrap"/>
+        <module name="ParenPad"/>
+        <module name="TypecastParenPad"/>
+        <module name="WhitespaceAfter"/>
+        <module name="WhitespaceAround"/>
+
+        <!-- Modifier Checks                                  -->
+        <!-- See https://checkstyle.org/config_modifiers.html -->
+        <module name="ModifierOrder"/>
+        <module name="RedundantModifier"/>
+
+        <!-- Checks for blocks. You know, those {}'s       -->
+        <!-- See https://checkstyle.org/config_blocks.html -->
+        <module name="AvoidNestedBlocks"/>
+        <module name="EmptyBlock"/>
+        <module name="LeftCurly"/>
+        <module name="NeedBraces"/>
+        <module name="RightCurly"/>
+
+        <!-- Checks for common coding problems             -->
+        <!-- See https://checkstyle.org/config_coding.html -->
+        <module name="EmptyStatement"/>
+        <module name="EqualsHashCode"/>
+        <module name="IllegalInstantiation"/>
+        <module name="InnerAssignment"/>
+        <module name="MissingSwitchDefault"/>
+        <module name="MultipleVariableDeclarations"/>
+        <module name="SimplifyBooleanExpression"/>
+        <module name="SimplifyBooleanReturn"/>
+
+        <!-- Checks for class design                       -->
+        <!-- See https://checkstyle.org/config_design.html -->
+        <module name="InterfaceIsType"/>
+
+        <!-- Miscellaneous other checks.                 -->
+        <!-- See https://checkstyle.org/config_misc.html -->
+        <module name="ArrayTypeStyle"/>
+        <module name="TodoComment"/>
+        <module name="UpperEll"/>
+    </module>
+    <module name="RegexpHeader">
+        <property name="header" value="^/\*\*\n^ \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\);"/>
+    </module>
+</module>

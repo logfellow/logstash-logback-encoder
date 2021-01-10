@@ -88,7 +88,7 @@ public class StackHasher {
         }
 
         // push hexadecimal representation of hash
-        if(hexHashes != null) {
+        if (hexHashes != null) {
             hexHashes.push(toHex(hash));
         }
 
