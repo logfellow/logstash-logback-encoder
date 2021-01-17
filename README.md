@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-6.5).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-6.6).
 
 # Logstash Logback Encoder
 
@@ -76,7 +76,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>6.5</version>
+    <version>6.6</version>
 </dependency>
 <!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
 <dependency>
@@ -86,15 +86,20 @@ Maven style:
 </dependency>
 ```
 
-If you get `ClassNotFoundException`/`NoClassDefFoundError`/`NoSuchMethodError` at runtime, then ensure the required dependencies (and appropriate versions) as specified in the pom file from the maven repository exist on the runtime classpath.  Specifically, the following need to be available on the runtime classpath:
+If you get `ClassNotFoundException`/`NoClassDefFoundError`/`NoSuchMethodError` at runtime,
+then ensure the required dependencies (and appropriate versions) as specified in the pom file
+from the maven repository exist on the runtime classpath.
+Specifically, the following need to be available on the runtime classpath:
 
 * jackson-databind / jackson-core / jackson-annotations
-* logback-core
-* logback-classic (required for logging _LoggingEvents_)
-* logback-access (required for logging _AccessEvents_)
+* logback-core >= 1.2.0
+* logback-classic >= 1.2.0 (required for logging _LoggingEvents_)
+* logback-access >= 1.2.0 (required for logging _AccessEvents_)
 * slf4j-api
+* java-uuid-generator (required if the `uuid` provider is used)
 
 Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
+Support for logback versions prior to 1.2.0 was removed in logstash-logback-encoder 7.0.
 
 If you are using logstash-logback-encoder in a project (such as spring-boot) that also declares dependencies on any of the above libraries, you might need to tell maven explicitly which versions to use to avoid conflicts.
 You can do so using maven's [dependencyManagement](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Management) feature.
@@ -1555,7 +1560,25 @@ The value can be written as a number (instead of a string) like this:
 
 ## Customizing Timestamp
 
-By default, timestamps are written as string values in the format `yyyy-MM-dd'T'HH:mm:ss.SSSZZ` (e.g. `2018-04-28T22:23:59.164-07:00`), in the default TimeZone of the host Java platform.
+By default, timestamps are written as string values in the format specified by
+[`DateTimeFormatter.ISO_OFFSET_DATE_TIME`](https://docs.oracle.com/en/java/javase/11/docs/api/java.base/java/time/format/DateTimeFormatter.html#ISO_OFFSET_DATE_TIME)
+(e.g. `2019-11-03T10:15:30.123+01:00`), in the default TimeZone of the host Java platform.
+
+You can change the pattern like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
+</encoder>
+```
+
+The value of the `timestampPattern` can be any of the following:
+
+* `[UNIX_TIMESTAMP_AS_NUMBER]` - timestamp written as a JSON number value of the milliseconds since unix epoch
+* `[UNIX_TIMESTAMP_AS_STRING]` - timestamp written as a JSON string value of the milliseconds since unix epoch
+* `[` _`constant`_ `]` - (e.g. `[ISO_OFFSET_DATE_TIME]`) timestamp written using the given `DateTimeFormatter` constant
+* any other value - (e.g. `yyyy-MM-dd'T'HH:mm:ss.SSS`) timestamp written using a `DateTimeFormatter` created from the given pattern
+
 
 You can change the timezone like this:
 
@@ -1566,27 +1589,6 @@ You can change the timezone like this:
 ```
 
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
-
-You can change the pattern used like this:
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
-</encoder>
-```
-
-Use these timestamp pattern values to output the timestamp as a unix timestamp (number of milliseconds since unix epoch).
-
-* `[UNIX_TIMESTAMP_AS_NUMBER]` - write the timestamp value as a numeric unix timestamp
-* `[UNIX_TIMESTAMP_AS_STRING]` - write the timestamp value as a string verion of the numeric unix timestamp
-
-For example:
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <timestampPattern>[UNIX_TIMESTAMP_AS_NUMBER]</timestampPattern>
-</encoder>
-```
 
 
 ## Customizing Message
@@ -1810,12 +1812,7 @@ For LoggingEvents, the available providers and their configuration properties (d
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
-          <ul>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
-          </ul>
-          </li>
+          <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>
@@ -2046,6 +2043,7 @@ For LoggingEvents, the available providers and their configuration properties (d
           </ul></li>
           <li><tt>ethernet</tt> - Only for 'time' strategy. When defined - MAC address to use for location part of UUID. Set it to <tt>interface</tt> value to use real underlying network interface or to specific values like <tt>00:C0:F0:3D:5B:7C</tt></li>          
         </ul>
+	      <p>Note: The <a href="https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator/"><tt>com.fasterxml.uuid:java-uuid-generator</tt></a> optional dependency must be added to applications that use the `uuid` provider.</p>
       </td>
     </tr>
     <tr>
@@ -2081,12 +2079,7 @@ For AccessEvents, the available providers and their configuration properties (de
       <td><p>Event timestamp</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</tt>)
-          <ul>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_NUMBER]</tt>, then the timestamp will be written as a numeric unix timestamp value</li>
-            <li>If set to <tt>[UNIX_TIMESTAMP_AS_STRING]</tt>, then the timestamp will be written as a string unix timestamp value</li>
-          </ul>
-          </li>
+          <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
           <li><tt>timeZone</tt> - Timezone (local timezone)</li>
         </ul>
       </td>

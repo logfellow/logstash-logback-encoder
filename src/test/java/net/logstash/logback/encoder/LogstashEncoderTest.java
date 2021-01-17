@@ -13,7 +13,6 @@
  */
 package net.logstash.logback.encoder;
 
-import static ch.qos.logback.core.CoreConstants.LINE_SEPARATOR;
 import static net.logstash.logback.marker.Markers.append;
 import static net.logstash.logback.marker.Markers.appendEntries;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +29,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -43,18 +44,14 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
-import net.logstash.logback.Logback11Support;
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import net.logstash.logback.decorate.PrettyPrintingDecorator;
 import net.logstash.logback.decorate.TokenStreamFactoryBuilderDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
-import org.apache.commons.lang3.time.FastDateFormat;
+
 import org.assertj.core.util.Files;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -69,7 +66,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 
-@ExtendWith(MockitoExtension.class)
 public class LogstashEncoderTest {
     
     private static Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
@@ -77,37 +73,9 @@ public class LogstashEncoderTest {
     private static final ObjectMapper MAPPER = JsonMapper.builder().build();
     private LogstashEncoder encoder = new LogstashEncoder();
     private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    
-    @Mock
-    private Logback11Support logback11Support;
-
-    @Test
-    public void basicsAreIncluded_logback11() throws Exception {
-
-        encoder.setLogback11Support(logback11Support);
-
-        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
-        
-        encoder.init(outputStream);
-        final long timestamp = System.currentTimeMillis();
-        
-        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getTimeStamp()).thenReturn(timestamp);
-        
-        encoder.start();
-        encoder.doEncode(event);
-        outputStream.close();
-        
-        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-        
-        verifyBasics(timestamp, node);
-    }
 
     @Test
     public void basicsAreIncluded_logback12() throws Exception {
-        encoder.setLogback11Support(logback11Support);
-
-        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
         final long timestamp = System.currentTimeMillis();
         
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
@@ -122,7 +90,7 @@ public class LogstashEncoderTest {
     }
 
     protected void verifyBasics(final long timestamp, JsonNode node) {
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
@@ -143,9 +111,8 @@ public class LogstashEncoderTest {
         byte[] encoded = encoder.encode(event);
         
         JsonNode node = MAPPER.readTree(encoded);
-        
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                (timestamp));
+
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
@@ -155,7 +122,7 @@ public class LogstashEncoderTest {
     }
 
     @Test
-    public void customDecorators() throws Exception {
+    public void customDecorators() {
         encoder.stop();
 
         encoder.addDecorator((TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder>) builder ->
@@ -175,7 +142,7 @@ public class LogstashEncoderTest {
         
         assertThat(output).isEqualTo(String.format(
                 "{%n"
-                + "  @timestamp : \"" + FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format(timestamp) + "\",%n"
+                + "  @timestamp : \"" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)) + "\",%n"
                 + "  @version : \"1\",%n"
                 + "  message : \"My message\",%n"
                 + "  logger_name : \"LoggerName\",%n"
@@ -190,10 +157,10 @@ public class LogstashEncoderTest {
     public void loggerNameIsShortenedProperly() throws Exception {
         final long timestamp = System.currentTimeMillis();
         final int length = 36;
-        final String shortenedLoggerName = new TargetLengthBasedClassNameAbbreviator(length).abbreviate(FastDateFormat.class.getCanonicalName());
+        final String shortenedLoggerName = new TargetLengthBasedClassNameAbbreviator(length).abbreviate(DateTimeFormatter.class.getCanonicalName());
 
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getLoggerName()).thenReturn(FastDateFormat.class.getCanonicalName());
+        when(event.getLoggerName()).thenReturn(DateTimeFormatter.class.getCanonicalName());
 
         when(event.getTimeStamp()).thenReturn(timestamp);
         encoder.setFieldNames(new ShortenedFieldNames());
@@ -203,32 +170,13 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                (timestamp));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo(shortenedLoggerName);
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
         assertThat(node.get("message").textValue()).isEqualTo("My message");
         assertThat(node.get("level").textValue()).isEqualTo("ERROR");
         assertThat(node.get("levelVal").intValue()).isEqualTo(40000);
-    }
-    
-    @Test
-    public void closePutsSeparatorAtTheEnd_logback11() throws Exception {
-        encoder.setLogback11Support(logback11Support);
-
-        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
-        
-        encoder.init(outputStream);
-
-        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        
-        encoder.start();
-        encoder.doEncode(event);
-        encoder.close();
-        outputStream.close();
-        
-        assertThat(outputStream.toString()).endsWith(LINE_SEPARATOR);
     }
     
     @Test
@@ -248,7 +196,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void mdcAllIncluded() throws Exception {
-        Map<String, String> mdcMap = new HashMap<String, String>();
+        Map<String, String> mdcMap = new HashMap<>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
         
@@ -266,7 +214,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void mdcSomeIncluded() throws Exception {
-        Map<String, String> mdcMap = new HashMap<String, String>();
+        Map<String, String> mdcMap = new HashMap<>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
         
@@ -286,7 +234,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void mdcSomeExcluded() throws Exception {
-        Map<String, String> mdcMap = new HashMap<String, String>();
+        Map<String, String> mdcMap = new HashMap<>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
         
@@ -306,7 +254,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void mdcNoneIncluded() throws Exception {
-        Map<String, String> mdcMap = new HashMap<String, String>();
+        Map<String, String> mdcMap = new HashMap<>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
         
@@ -324,7 +272,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void propertiesInMDCAreIncludedInSubObject() throws Exception {
-        Map<String, String> mdcMap = new HashMap<String, String>();
+        Map<String, String> mdcMap = new HashMap<>();
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
         
@@ -342,7 +290,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void nullMDCDoesNotCauseEverythingToBlowUp() throws Exception {
+    public void nullMDCDoesNotCauseEverythingToBlowUp() {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(null);
         
@@ -353,7 +301,7 @@ public class LogstashEncoderTest {
     @Test
     public void callerDataIsIncluded() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getMDCPropertyMap()).thenReturn(Collections.<String, String> emptyMap());
+        when(event.getMDCPropertyMap()).thenReturn(Collections.emptyMap());
         final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         when(event.getCallerData()).thenReturn(stackTraceElements);
         
@@ -373,7 +321,7 @@ public class LogstashEncoderTest {
     @Test
     public void callerDataIsIncludedInSubObject() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getMDCPropertyMap()).thenReturn(Collections.<String, String> emptyMap());
+        when(event.getMDCPropertyMap()).thenReturn(Collections.emptyMap());
         final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         when(event.getCallerData()).thenReturn(stackTraceElements);
         
@@ -397,9 +345,7 @@ public class LogstashEncoderTest {
         when(event.getThreadName()).thenReturn("ThreadName");
         when(event.getFormattedMessage()).thenReturn("My message");
         when(event.getLevel()).thenReturn(Level.ERROR);
-        when(event.getMDCPropertyMap()).thenReturn(Collections.<String, String> emptyMap());
-        final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
-
+        when(event.getMDCPropertyMap()).thenReturn(Collections.emptyMap());
         encoder.setIncludeCallerInfo(false);
         
         encoder.start();
@@ -414,7 +360,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void propertiesInContextAreIncluded() throws Exception {
-        Map<String, String> propertyMap = new HashMap<String, String>();
+        Map<String, String> propertyMap = new HashMap<>();
         propertyMap.put("thing_one", "One");
         propertyMap.put("thing_two", "Three");
         
@@ -435,7 +381,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void propertiesInContextAreNotIncludedIfSwitchedOff() throws Exception {
-        Map<String, String> propertyMap = new HashMap<String, String>();
+        Map<String, String> propertyMap = new HashMap<>();
         propertyMap.put("thing_one", "One");
         propertyMap.put("thing_two", "Three");
         
@@ -455,7 +401,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void propertiesInContextAreIncludedInSubObject() throws Exception {
-        Map<String, String> propertyMap = new HashMap<String, String>();
+        Map<String, String> propertyMap = new HashMap<>();
         propertyMap.put("thing_one", "One");
         propertyMap.put("thing_two", "Three");
         
@@ -572,15 +518,6 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void immediateFlushIsSane() {
-        encoder.setImmediateFlush(true);
-        assertThat(encoder.isImmediateFlush()).isEqualTo(true);
-        
-        encoder.setImmediateFlush(false);
-        assertThat(encoder.isImmediateFlush()).isEqualTo(false);
-    }
-    
-    @Test
     public void includeJsonChunk() throws Exception {
         String customFields = "{\"appname\":\"damnGodWebservice\",\"roles\":[\"customerorder\", \"auth\"], \"buildinfo\": { \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"} }";
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
@@ -608,9 +545,8 @@ public class LogstashEncoderTest {
         byte[] encoded = encoder.encode(event);
         
         JsonNode node = MAPPER.readTree(encoded);
-        
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ", TimeZone.getTimeZone("UTC")).format
-                (timestamp));
+
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getTimeZone("UTC").toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
@@ -647,7 +583,7 @@ public class LogstashEncoderTest {
     public void testContextMap() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         
-        Map<String, Object> contextMap = new HashMap<String, Object>();
+        Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("duration", 1200);
         contextMap.put("remoteResponse", "OK");
         contextMap.put("extra", Collections.singletonMap("extraEntry", "extraValue"));
@@ -680,7 +616,7 @@ public class LogstashEncoderTest {
     public void testAppendEntries() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         
-        Map<String, Object> contextMap = new HashMap<String, Object>();
+        Map<String, Object> contextMap = new HashMap<>();
         contextMap.put("duration", 1200);
         contextMap.put("remoteResponse", "OK");
         contextMap.put("extra", Collections.singletonMap("extraEntry", "extraValue"));
@@ -740,7 +676,7 @@ public class LogstashEncoderTest {
     }
     
     @Test
-    public void testCustomFields() throws Exception {
+    public void testCustomFields() {
         String customFields = "{\"foo\":\"bar\"}";
         encoder.setCustomFields(customFields);
         assertThat(encoder.getCustomFields()).isEqualTo(customFields);

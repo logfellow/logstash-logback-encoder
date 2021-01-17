@@ -13,62 +13,28 @@
  */
 package net.logstash.logback.encoder;
 
-import static ch.qos.logback.core.CoreConstants.LINE_SEPARATOR;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayOutputStream;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 
-import org.apache.commons.lang3.time.FastDateFormat;
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.Context;
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.Context;
-import net.logstash.logback.Logback11Support;
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-
-@ExtendWith(MockitoExtension.class)
 public class LogstashAccessEncoderTest {
     
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private LogstashAccessEncoder encoder = new LogstashAccessEncoder();
-    private ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    
-    @Mock
-    private Logback11Support logback11Support;
-    
-    @Test
-    public void basicsAreIncluded_logback11() throws Exception {
-        encoder.setLogback11Support(logback11Support);
-        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
-        
-        encoder.init(outputStream);
-        
-        final long timestamp = System.currentTimeMillis();
-        
-        IAccessEvent event = mockBasicILoggingEvent();
-        when(event.getTimeStamp()).thenReturn(timestamp);
-        
-        encoder.getFieldNames().setTimestamp("timestamp");
-        
-        encoder.start();
-        encoder.doEncode(event);
-        outputStream.close();
-        
-        JsonNode node = MAPPER.readTree(outputStream.toByteArray());
-        
-        verifyBasics(timestamp, event, node);
-        
-    }
+    private final LogstashAccessEncoder encoder = new LogstashAccessEncoder();
 
     @Test
     public void basicsAreIncluded_logback12OrLater() throws Exception {
@@ -89,12 +55,11 @@ public class LogstashAccessEncoderTest {
     }
     
     protected void verifyBasics(final long timestamp, IAccessEvent event, JsonNode node) {
-        assertThat(node.get("timestamp").textValue()).isEqualTo(FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                (timestamp));
+        assertThat(node.get("timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("message").textValue()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
-                FastDateFormat.getInstance("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").format
-                        (event.getTimeStamp()), event.getRequestURL(), event.getStatusCode(),
+                DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId())
+                        .format(Instant.ofEpochMilli(event.getTimeStamp())), event.getRequestURL(), event.getStatusCode(),
                 event.getContentLength()));
         
         assertThat(node.get("method").textValue()).isEqualTo(event.getMethod());
@@ -111,25 +76,8 @@ public class LogstashAccessEncoderTest {
     }
     
     @Test
-    public void closePutsSeparatorAtTheEnd() throws Exception {
-        encoder.setLogback11Support(logback11Support);
-        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
-        
-        encoder.init(outputStream);
-
-        IAccessEvent event = mockBasicILoggingEvent();
-        
-        encoder.start();
-        encoder.doEncode(event);
-        encoder.close();
-        outputStream.close();
-        
-        assertThat(outputStream.toString()).endsWith(LINE_SEPARATOR);
-    }
-    
-    @Test
     public void propertiesInContextAreIncluded() throws Exception {
-        Map<String, String> propertyMap = new HashMap<String, String>();
+        Map<String, String> propertyMap = new HashMap<>();
         propertyMap.put("thing_one", "One");
         propertyMap.put("thing_two", "Three");
         
@@ -172,16 +120,7 @@ public class LogstashAccessEncoderTest {
     }
     
     @Test
-    public void immediateFlushIsSane() {
-        encoder.setImmediateFlush(true);
-        assertThat(encoder.isImmediateFlush()).isEqualTo(true);
-        
-        encoder.setImmediateFlush(false);
-        assertThat(encoder.isImmediateFlush()).isEqualTo(false);
-    }
-    
-    @Test
-    public void testCustomFields() throws Exception {
+    public void testCustomFields() {
         String customFields = "{\"foo\":\"bar\"}";
         encoder.setCustomFields(customFields);
         assertThat(encoder.getCustomFields()).isEqualTo(customFields);

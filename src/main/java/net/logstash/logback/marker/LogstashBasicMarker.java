@@ -184,12 +184,15 @@ public class LogstashBasicMarker implements Marker {
 
 
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (!(obj instanceof Marker))
+        }
+        if (!(obj instanceof Marker)) {
             return false;
+        }
 
         final Marker other = (Marker) obj;
         return name.equals(other.getName());

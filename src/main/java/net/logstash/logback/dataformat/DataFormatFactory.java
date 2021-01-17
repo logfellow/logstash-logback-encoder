@@ -29,7 +29,7 @@ public interface DataFormatFactory<
         F extends TokenStreamFactory,
         FB extends TokenStreamFactory.TSFBuilder<F, FB>,
         M extends ObjectMapper,
-        MB extends MapperBuilder<M,MB>> {
+        MB extends MapperBuilder<M, MB>> {
 
     String JSON = "json";
     String YAML = "yaml";

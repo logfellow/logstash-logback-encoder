@@ -54,61 +54,61 @@ import com.lmax.disruptor.dsl.ProducerType;
  * as the interthread data exchange mechanism (as opposed to a {@link BlockingQueue}
  * used by logback's {@link AsyncAppender}).
  * <p>
- * 
+ *
  * See the <a href="https://lmax-exchange.github.io/disruptor/">LMAX Disruptor documentation</a>
  * for more information about the advantages of using a {@link RingBuffer} over a {@link BlockingQueue}.
  * <p>
- * 
+ *
  * This appender will never block the logging thread, since it uses
  * {@link RingBuffer#tryPublishEvent(EventTranslatorOneArg, Object)}
  * to publish events (rather than {@link RingBuffer#publishEvent(EventTranslatorOneArg, Object)}).
  * <p>
- * 
- * If the RingBuffer is full, and the event cannot be published, 
- * the event will be dropped.  A warning message will be logged to 
+ *
+ * If the RingBuffer is full, and the event cannot be published,
+ * the event will be dropped.  A warning message will be logged to
  * logback's context every {@link #droppedWarnFrequency} consecutive dropped events.
  * <p>
- * 
+ *
  * A single handler thread will be used to handle the actual handling of the event.
  * <p>
- * 
+ *
  * Subclasses are required to set the {@link #eventHandler} to define
  * the logic that executes in the handler thread.
  * For example, {@link DelegatingAsyncDisruptorAppender} for will delegate
  * appending of the event to another appender in the handler thread.
  * <p>
- * 
+ *
  * By default, child threads created by this appender will be daemon threads,
  * and therefore allow the JVM to exit gracefully without
  * needing to explicitly shut down the appender.
  * Note that in this case, it is possible for appended log events to not
  * be handled (if the child thread has not had a chance to process them yet).
- * 
+ *
  * By setting {@link #setDaemon(boolean)} to false, you can change this behavior.
  * When false, child threads created by this appender will not be daemon threads,
  * and therefore will prevent the JVM from shutting down
  * until the appender is explicitly shut down.
  * Set this to false if you want to ensure that every log event
  * prior to shutdown is handled.
- * 
+ *
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
 public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware, Listener extends AppenderListener<Event>> extends UnsynchronizedAppenderBase<Event> {
-    
+
     protected static final String APPENDER_NAME_FORMAT = "%1$s";
     protected static final String THREAD_INDEX_FORMAT = "%2$d";
     public static final String DEFAULT_THREAD_NAME_FORMAT = "logback-appender-" + APPENDER_NAME_FORMAT + "-" + THREAD_INDEX_FORMAT;
-    
+
     public static final int DEFAULT_RING_BUFFER_SIZE = 8192;
     public static final ProducerType DEFAULT_PRODUCER_TYPE = ProducerType.MULTI;
     public static final WaitStrategy DEFAULT_WAIT_STRATEGY = new BlockingWaitStrategy();
     public static final int DEFAULT_DROPPED_WARN_FREQUENCY = 1000;
-    
+
     private static final RingBufferFullException RING_BUFFER_FULL_EXCEPTION = new RingBufferFullException();
     static {
-        RING_BUFFER_FULL_EXCEPTION.setStackTrace(new StackTraceElement[] { new StackTraceElement(AsyncDisruptorAppender.class.getName(), "append(..)", null, -1)});
+        RING_BUFFER_FULL_EXCEPTION.setStackTrace(new StackTraceElement[] {new StackTraceElement(AsyncDisruptorAppender.class.getName(), "append(..)", null, -1)});
     }
-    
+
     /**
      * The size of the {@link RingBuffer}.
      * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
@@ -119,7 +119,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Must be a positive power of 2.
      */
     private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
-    
+
     /**
      * The {@link ProducerType} to use to configure the disruptor.
      * By default this is {@link ProducerType#MULTI}.
@@ -127,7 +127,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * will ever be appending to this appender.
      */
     private ProducerType producerType = DEFAULT_PRODUCER_TYPE;
-    
+
     /**
      * The {@link WaitStrategy} to used by the RingBuffer
      * when pulling events to be processed by {@link #eventHandler}.
@@ -138,17 +138,17 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * consider using a {@link SleepingWaitStrategy} or a {@link PhasedBackoffWaitStrategy}.
      */
     private WaitStrategy waitStrategy = DEFAULT_WAIT_STRATEGY;
-    
+
     /**
      * Pattern used by the {@link WorkerThreadFactory} to set the
      * handler thread name.
      * Defaults to {@value #DEFAULT_THREAD_NAME_FORMAT}.
      * <p>
-     * 
+     *
      * If you change the {@link #threadFactory}, then this
      * value may not be honored.
      * <p>
-     * 
+     *
      * The string is a format pattern understood by {@link Formatter#format(String, Object...)}.
      * {@link Formatter#format(String, Object...)} is used to
      * construct the actual thread name prefix.
@@ -157,7 +157,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Other arguments can be made available by subclasses.
      */
     private String threadNameFormat = DEFAULT_THREAD_NAME_FORMAT;
-    
+
     /**
      * When true, child threads created by this appender will be daemon threads,
      * and therefore allow the JVM to exit gracefully without
@@ -165,14 +165,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Note that in this case, it is possible for log events to not
      * be handled.
      * <p>
-     * 
+     *
      * When false, child threads created by this appender will not be daemon threads,
      * and therefore will prevent the JVM from shutting down
      * until the appender is explicitly shut down.
      * Set this to false if you want to ensure that every log event
      * prior to shutdown is handled.
      * <p>
-     * 
+     *
      * If you change the {@link #threadFactory}, then this
      * value may not be honored.
      */
@@ -183,71 +183,71 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * will be registered, so that error messages are seen on the console.
      */
     private boolean addDefaultStatusListener = true;
-    
+
     /**
      * For every droppedWarnFrequency consecutive dropped events, log a warning.
-     * Defaults to {@value #DEFAULT_DROPPED_WARN_FREQUENCY}. 
+     * Defaults to {@value #DEFAULT_DROPPED_WARN_FREQUENCY}.
      */
     private int droppedWarnFrequency = DEFAULT_DROPPED_WARN_FREQUENCY;
-    
+
     /**
      * The {@link ThreadFactory} used to create the handler thread.
      */
     private ThreadFactory threadFactory = new WorkerThreadFactory();
-    
+
     /**
      * The {@link ScheduledExecutorService} used to execute the handler task.
      */
     private ScheduledThreadPoolExecutor executorService;
-    
+
     /**
      * Size of the thread pool to create.
      */
     private int threadPoolCoreSize = 1;
-    
+
     /**
      * The {@link Disruptor} containing the {@link RingBuffer} onto
      * which to publish events.
      */
     private Disruptor<LogEvent<Event>> disruptor;
-    
+
     /**
      * Sets the {@link LogEvent#event} to the logback Event.
-     * Used when publishing events to the {@link RingBuffer}. 
+     * Used when publishing events to the {@link RingBuffer}.
      */
     private EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<Event>();
-    
+
     /**
      * Used by the handler thread to process the event.
      */
     private EventHandler<LogEvent<Event>> eventHandler;
-    
+
     /**
      * Defines what happens when there is an exception during
      * {@link RingBuffer} processing.
      */
     private ExceptionHandler<LogEvent<Event>> exceptionHandler = new LogEventExceptionHandler();
-    
+
     /**
      * Consecutive number of dropped events.
      */
     private final AtomicLong consecutiveDroppedCount = new AtomicLong();
-    
+
     /**
      * The {@link EventFactory} used to create {@link LogEvent}s for the RingBuffer.
      */
     private LogEventFactory<Event> eventFactory = new LogEventFactory<Event>();
-    
+
     /**
      * Incrementor number used as part of thread names for uniqueness.
      */
     private final AtomicInteger threadNumber = new AtomicInteger(1);
-    
+
     /**
      * These listeners will be notified when certain events occur on this appender.
      */
     protected final List<Listener> listeners = new ArrayList<>();
-    
+
     /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
      */
@@ -257,7 +257,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          */
         public volatile Event event;
     }
-    
+
     /**
      * Factory for creating the initial {@link LogEvent}s to populate
      * the {@link RingBuffer}.
@@ -274,7 +274,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * The default {@link ThreadFactory} used to create the handler thread.
      */
     private class WorkerThreadFactory implements ThreadFactory {
-        
+
         @Override
         public Thread newThread(Runnable r) {
             Thread t = new Thread(r);
@@ -283,10 +283,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             return t;
         }
     }
-    
+
     /**
      * Sets the {@link LogEvent#event} to the logback Event.
-     * Used when publishing events to the {@link RingBuffer}. 
+     * Used when publishing events to the {@link RingBuffer}.
      */
     protected static class LogEventTranslator<Event> implements EventTranslatorOneArg<LogEvent<Event>, Event> {
 
@@ -295,12 +295,12 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             logEvent.event = event;
         }
     }
-    
+
     /**
      * Defines what happens when there is an exception during
      * {@link RingBuffer} processing.
-     * 
-     * Currently, just logs to the logback context. 
+     *
+     * Currently, just logs to the logback context.
      */
     private class LogEventExceptionHandler implements ExceptionHandler<LogEvent<Event>> {
 
@@ -325,10 +325,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * so that the event can be garbage collected.
      */
     private static class EventClearingEventHandler<Event> implements EventHandler<LogEvent<Event>>, LifecycleAware {
-        
+
         private final EventHandler<LogEvent<Event>> delegate;
-        
-        public EventClearingEventHandler(EventHandler<LogEvent<Event>> delegate) {
+
+        EventClearingEventHandler(EventHandler<LogEvent<Event>> delegate) {
             super();
             this.delegate = delegate;
         }
@@ -358,9 +358,9 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 ((LifecycleAware) delegate).onShutdown();
             }
         }
-        
+
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public void start() {
@@ -377,33 +377,33 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             addError("No eventHandler was configured for appender " + name + ".");
             return;
         }
-        
+
         this.executorService = new ScheduledThreadPoolExecutor(
                 getThreadPoolCoreSize(),
                 this.threadFactory);
-        
+
         /*
          * This ensures that cancelled tasks
          * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
          * do not hold up shutdown.
          */
         this.executorService.setRemoveOnCancelPolicy(true);
-        
+
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
                 this.ringBufferSize,
                 this.executorService,
                 this.producerType,
                 this.waitStrategy);
-        
+
         /*
          * Define the exceptionHandler first, so that it applies
          * to all future eventHandlers.
          */
         this.disruptor.setDefaultExceptionHandler(this.exceptionHandler);
-        
+
         this.disruptor.handleEventsWith(new EventClearingEventHandler<Event>(this.eventHandler));
-        
+
         this.disruptor.start();
         super.start();
         fireAppenderStarted();
@@ -429,9 +429,9 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         } catch (TimeoutException e) {
             addWarn("Some queued events have not been logged due to requested shutdown");
         }
-        
+
         this.executorService.shutdown();
-        
+
         try {
             if (!this.executorService.awaitTermination(1, TimeUnit.MINUTES)) {
                 addWarn("Some queued events have not been logged due to requested shutdown");
@@ -470,8 +470,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     protected void prepareForDeferredProcessing(Event event) {
         event.prepareForDeferredProcessing();
     }
-    
-    
+
+
     protected String calculateThreadName() {
         List<Object> threadNameFormatParams = getThreadNameFormatParams();
         return String.format(threadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));
@@ -482,7 +482,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             getName(),
             threadNumber.incrementAndGet());
     }
-    
+
     protected void fireAppenderStarted() {
         for (Listener listener : listeners) {
             listener.appenderStarted(this);
@@ -503,19 +503,19 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             listener.eventAppendFailed(this, event, reason);
         }
     }
-    
+
     protected void setEventFactory(LogEventFactory<Event> eventFactory) {
         this.eventFactory = eventFactory;
     }
-    
+
     protected EventTranslatorOneArg<LogEvent<Event>, Event> getEventTranslator() {
         return eventTranslator;
     }
-    
+
     protected void setEventTranslator(EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator) {
         this.eventTranslator = eventTranslator;
     }
-    
+
     protected ScheduledExecutorService getExecutorService() {
         return executorService;
     }
@@ -523,14 +523,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     protected Disruptor<LogEvent<Event>> getDisruptor() {
         return disruptor;
     }
-    
+
     protected int getThreadPoolCoreSize() {
         return threadPoolCoreSize;
     }
     protected void setThreadPoolCoreSize(int threadPoolCoreSize) {
         this.threadPoolCoreSize = threadPoolCoreSize;
     }
-    
+
     /**
      * @deprecated use {@link #getThreadNameFormat()}
      */
@@ -538,19 +538,19 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public String getThreadNamePrefix() {
         if (this.threadNameFormat != null && this.threadNameFormat.endsWith(THREAD_INDEX_FORMAT)) {
             /*
-             * Try to return the old-style threadNamePrefix   
+             * Try to return the old-style threadNamePrefix
              */
             return this.threadNameFormat.substring(0, this.threadNameFormat.length() - THREAD_INDEX_FORMAT.length());
         }
         /*
          * Otherwise, just default to return the regular format
          */
-        return threadNameFormat; 
+        return threadNameFormat;
     }
-    
+
     /**
      * This is the old way to customize thread names.
-     * 
+     *
      * @param threadNamePrefix
      * @deprecated use {@link #setThreadNameFormat(String)} instead.
      */
@@ -558,7 +558,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setThreadNamePrefix(String threadNamePrefix) {
         setThreadNameFormat(threadNamePrefix + THREAD_INDEX_FORMAT);
     }
-    
+
     public String getThreadNameFormat() {
         return threadNameFormat;
     }
@@ -566,11 +566,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Pattern used by the to set the handler thread names.
      * Defaults to {@value #DEFAULT_THREAD_NAME_FORMAT}.
      * <p>
-     * 
+     *
      * If you change the {@link #threadFactory}, then this
      * value may not be honored.
      * <p>
-     * 
+     *
      * The string is a format pattern understood by {@link Formatter#format(String, Object...)}.
      * {@link Formatter#format(String, Object...)} is used to
      * construct the actual thread name prefix.
@@ -581,7 +581,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setThreadNameFormat(String threadNameFormat) {
         this.threadNameFormat = threadNameFormat;
     }
-    
+
     public int getRingBufferSize() {
         return ringBufferSize;
     }
@@ -595,46 +595,46 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setProducerType(ProducerType producerType) {
         this.producerType = producerType;
     }
-    
+
     public WaitStrategy getWaitStrategy() {
         return waitStrategy;
     }
     public void setWaitStrategy(WaitStrategy waitStrategy) {
         this.waitStrategy = waitStrategy;
     }
-    
+
     public void setWaitStrategyType(String waitStrategyType) {
         setWaitStrategy(WaitStrategyFactory.createWaitStrategyFromString(waitStrategyType));
     }
-    
+
     public ThreadFactory getThreadFactory() {
         return threadFactory;
     }
     public void setThreadFactory(ThreadFactory threadFactory) {
         this.threadFactory = threadFactory;
     }
-    
+
     public int getDroppedWarnFrequency() {
         return droppedWarnFrequency;
     }
     public void setDroppedWarnFrequency(int droppedWarnFrequency) {
         this.droppedWarnFrequency = droppedWarnFrequency;
     }
-    
+
     protected EventHandler<LogEvent<Event>> getEventHandler() {
         return eventHandler;
     }
     protected void setEventHandler(EventHandler<LogEvent<Event>> eventHandler) {
         this.eventHandler = eventHandler;
     }
-    
+
     public boolean isDaemon() {
         return useDaemonThread;
     }
     public void setDaemon(boolean useDaemonThread) {
         this.useDaemonThread = useDaemonThread;
     }
-    
+
     public void addListener(Listener listener) {
         this.listeners.add(listener);
     }

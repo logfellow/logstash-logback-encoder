@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.cfg.MapperBuilder;
 /**
  * A {@link MapperBuilderDecorator} that allows enabling/disabling of {@link MapperFeature} features.
  */
-public class MapperFeatureDecorator<M extends ObjectMapper, B extends MapperBuilder<M,B>>
+public class MapperFeatureDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>>
         extends FeatureDecorator<B, MapperFeature>
         implements MapperBuilderDecorator<M, B> {
 

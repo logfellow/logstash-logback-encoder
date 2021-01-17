@@ -19,8 +19,8 @@ import ch.qos.logback.access.spi.AccessEvent;
 /**
  * These are the default JSON field names that were used to output {@link AccessEvent} details
  * in logstash-logback-encoder versions prior to 5.0.
- * This class exists mainly to provide an easy way to revert to the pre-5.0 defaults. 
- * 
+ * This class exists mainly to provide an easy way to revert to the pre-5.0 defaults.
+ *
  * After logstash-logback-encoder 5.0, the defaults are specified in {@link LogstashAccessFieldNames}.
  */
 public class Pre50LogstashAccessFieldNames extends LogstashAccessFieldNames {

@@ -16,13 +16,13 @@ package net.logstash.logback.appender.destination;
 import ch.qos.logback.core.util.Duration;
 
 /**
- * A {@link DestinationConnectionStrategy} that will force a connection to be reestablished after a length of time has elapsed. 
+ * A {@link DestinationConnectionStrategy} that will force a connection to be reestablished after a length of time has elapsed.
  */
 public abstract class DestinationConnectionStrategyWithTtl implements DestinationConnectionStrategy {
-    
+
     /**
      * The desired max length of time for a connection to remain connected.
-     * After this length of time, the connection will be reestablished. 
+     * After this length of time, the connection will be reestablished.
      */
     private Duration connectionTTL;
 
@@ -36,8 +36,7 @@ public abstract class DestinationConnectionStrategyWithTtl implements Destinatio
     public void connectSuccess(long connectionStartTimeInMillis, int connectedDestinationIndex, int numDestinations) {
         if (connectionTTL != null) {
             connectionExpirationTime = connectionStartTimeInMillis + connectionTTL.getMilliseconds();
-        }
-        else {
+        } else {
             connectionExpirationTime = Long.MAX_VALUE;
         }
     }
@@ -50,17 +49,17 @@ public abstract class DestinationConnectionStrategyWithTtl implements Destinatio
     public boolean shouldReconnect(long currentTimeInMillis, int currentDestinationIndex, int numDestinations) {
         return connectionExpirationTime <= currentTimeInMillis;
     }
-    
+
     public Duration getConnectionTTL() {
         return connectionTTL;
     }
-    
+
     public void setConnectionTTL(Duration connectionTTL) {
         if (connectionTTL != null && connectionTTL.getMilliseconds() <= 0) {
             throw new IllegalArgumentException("connectionTTL must be > 0");
         }
         this.connectionTTL = connectionTTL;
     }
-    
+
 
 }

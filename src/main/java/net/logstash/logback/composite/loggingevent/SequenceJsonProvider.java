@@ -31,7 +31,9 @@ public class SequenceJsonProvider extends AbstractFieldJsonProvider<ILoggingEven
 
     private final AtomicLong sequenceNumber = new AtomicLong(0L);
 
-    public SequenceJsonProvider() { setFieldName(FIELD_SEQUENCE);}
+    public SequenceJsonProvider() {
+        setFieldName(FIELD_SEQUENCE);
+    }
 
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent iLoggingEvent) throws IOException {

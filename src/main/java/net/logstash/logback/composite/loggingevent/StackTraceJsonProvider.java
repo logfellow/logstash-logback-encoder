@@ -32,31 +32,31 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
 
     /**
      * Used to format throwables as Strings.
-     * 
+     *
      * Uses an {@link ExtendedThrowableProxyConverter} from logstash by default.
-     * 
+     *
      * Consider using a
      * {@link net.logstash.logback.stacktrace.ShortenedThrowableConverter ShortenedThrowableConverter}
-     * for more customization options. 
+     * for more customization options.
      */
     private ThrowableHandlingConverter throwableConverter = new ExtendedThrowableProxyConverter();
-    
+
     public StackTraceJsonProvider() {
         setFieldName(FIELD_STACK_TRACE);
     }
-    
+
     @Override
     public void start() {
         this.throwableConverter.start();
         super.start();
     }
-    
+
     @Override
     public void stop() {
         this.throwableConverter.stop();
         super.stop();
     }
-    
+
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
@@ -64,12 +64,12 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
             JsonWritingUtils.writeStringField(generator, getFieldName(), throwableConverter.convert(event));
         }
     }
-    
+
     @Override
     public void setFieldNames(LogstashFieldNames fieldNames) {
         setFieldName(fieldNames.getStackTrace());
     }
-    
+
     public ThrowableHandlingConverter getThrowableConverter() {
         return throwableConverter;
     }

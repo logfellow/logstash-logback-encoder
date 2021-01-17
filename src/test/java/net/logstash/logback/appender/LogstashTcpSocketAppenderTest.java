@@ -51,7 +51,6 @@ import ch.qos.logback.core.Context;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
-import net.logstash.logback.Logback11Support;
 import net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy;
 import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
@@ -73,7 +72,7 @@ public class LogstashTcpSocketAppenderTest {
     private static final int VERIFICATION_TIMEOUT = 1000 * 10;
 
     @InjectMocks
-    private LogstashTcpSocketAppender appender = new TestableLogstashTcpSocketAppender();
+    private final LogstashTcpSocketAppender appender = new TestableLogstashTcpSocketAppender();
     
     @Mock
     private Context context;
@@ -83,9 +82,6 @@ public class LogstashTcpSocketAppenderTest {
     
     @Mock
     private ILoggingEvent event1;
-    
-    @Mock
-    private ILoggingEvent event2;
     
     @Mock(lenient = true)
     private SocketFactory socketFactory;
@@ -108,17 +104,10 @@ public class LogstashTcpSocketAppenderTest {
     @Mock
     private Random random;
     
-    @Mock
-    private Logback11Support logback11Support;
-    
     private class TestableLogstashTcpSocketAppender extends LogstashTcpSocketAppender {
         @Override
         protected Future<?> scheduleReaderCallable(Callable<Void> readerCallable) {
             return readableCallableFuture;
-        }
-        @Override
-        protected Logback11Support getLogback11Support() {
-            return logback11Support;
         }
     }
     
@@ -138,28 +127,7 @@ public class LogstashTcpSocketAppenderTest {
     }
     
     @Test
-    public void testEncoderCalled_logback11() throws Exception {
-        when(logback11Support.isLogback11OrBefore()).thenReturn(true);
-        
-        appender.addDestination("localhost:10000");
-        appender.setIncludeCallerData(true);
-        
-        appender.start();
-        
-        verify(encoder).start();
-        
-        appender.append(event1);
-        
-        verify(event1).getCallerData();
-        
-        verify(logback11Support, timeout(2000L)).init(eq(encoder), any(OutputStream.class));
-        
-        verify(logback11Support, timeout(2000L)).doEncode(encoder, event1);
-
-    }
-
-    @Test
-    public void testEncoderCalled_logback12OrLater() throws Exception {
+    public void testEncoderCalled_logback12OrLater() {
         appender.addDestination("localhost:10000");
         appender.setIncludeCallerData(true);
         
@@ -209,7 +177,7 @@ public class LogstashTcpSocketAppenderTest {
     }
 
     @Test
-    public void testReconnectOnWrite() throws Exception {
+    public void testReconnectOnWrite() {
         appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
         
@@ -225,7 +193,7 @@ public class LogstashTcpSocketAppenderTest {
     }
 
     @Test
-    public void testReconnectOnReadFailure() throws Exception {
+    public void testReconnectOnReadFailure() {
         
         appender.addDestination("localhost:10000");
         appender.setReconnectionDelay(new Duration(100));
@@ -255,8 +223,6 @@ public class LogstashTcpSocketAppenderTest {
      *   Two servers: localhost:10000 (primary), localhost:10001 (secondary)
      *   Primary is available at startup
      *   Appender should connect to PRIMARY and not any secondaries
-     *   
-     * @throws Exception
      */
     @Test
     public void testConnectOnPrimary() throws Exception {
@@ -282,8 +248,6 @@ public class LogstashTcpSocketAppenderTest {
      *   Two servers: localhost:10000 (primary), localhost:10001 (secondary)
      *   Primary is not available at startup
      *   Appender should first try primary then immediately connect to secondary
-     *   
-     * @throws Exception
      */
     @Test
     public void testReconnectToSecondaryOnOpen() throws Exception {
@@ -347,8 +311,6 @@ public class LogstashTcpSocketAppenderTest {
      *   Two servers: localhost:10000 (primary), localhost:10001 (secondary)
      *   Primary is available at startup then fails after the first event.
      *   Appender should then connect on secondary for the next event.
-     *   
-     * @throws Exception
      */
     @Test
     public void testReconnectToSecondaryOnWrite() throws Exception {
@@ -608,7 +570,7 @@ public class LogstashTcpSocketAppenderTest {
      * The appender refuses to start in case of error.
      */
     @Test
-    public void testDestination_None() throws Exception {
+    public void testDestination_None() {
         appender.start();
         Assertions.assertFalse(appender.isStarted());
     }
@@ -620,7 +582,7 @@ public class LogstashTcpSocketAppenderTest {
      */
     @Test
     @SuppressWarnings("deprecation")
-    public void testDestination_MixedType() throws Exception {
+    public void testDestination_MixedType() {
         appender.setRemoteHost("localhost");
         appender.setPort(10000);
         appender.addDestination("localhost:10001");

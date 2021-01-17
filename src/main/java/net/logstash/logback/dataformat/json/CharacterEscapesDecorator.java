@@ -29,7 +29,7 @@ import com.fasterxml.jackson.core.json.JsonFactoryBuilder;
 
 /**
  * A {@link TokenStreamFactoryBuilderDecorator} that can be used to customize the {@link JsonFactoryBuilder#characterEscapes(CharacterEscapes)}.
- * 
+ *
  * For example, you could change the escape sequence used for newline characters from '\n' to '\u2028'
  */
 public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecorator<JsonFactory, JsonFactoryBuilder> {
@@ -49,7 +49,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
          * Parallel with escapeSequences.
          */
         private final int[] targetCharacterCodes;
-        
+
         /**
          * The customized escape sequences for specific characters.
          * Parallel with targetCharacterCodes.
@@ -63,13 +63,13 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
                 escapeCodesForAscii = new int[128];
                 Arrays.fill(escapeCodesForAscii, ESCAPE_NONE);
             }
-            
+
             /*
-             * Sort the escapes, so that binarySearch can be used by getEscapeSequence 
+             * Sort the escapes, so that binarySearch can be used by getEscapeSequence
              */
             List<Escape> sortedEscapes = new ArrayList<>(escapes);
             Collections.sort(sortedEscapes);
-            
+
             targetCharacterCodes = new int[sortedEscapes.size()];
             escapeSequences = new SerializedString[sortedEscapes.size()];
 
@@ -80,7 +80,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
                 }
                 /*
                  * Keep parallel arrays of these, so that a binary search can be performed against targetCharacterCodes
-                 * in order to determine the escapeSequence to return from getEscapeSequence 
+                 * in order to determine the escapeSequence to return from getEscapeSequence
                  */
                 targetCharacterCodes[i] = escape.getTargetCharacterCode();
                 escapeSequences[i] = escape.getEscapeSequence();
@@ -89,7 +89,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
 
         @Override
         public SerializableString getEscapeSequence(int ch) {
-            
+
             int index = Arrays.binarySearch(targetCharacterCodes, ch);
             if (index >= 0) {
                 return escapeSequences[index];
@@ -111,7 +111,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
     public static class Escape implements Comparable<Escape> {
 
         private static final SerializedString EMPTY_ESCAPE_SEQUENCE = new SerializedString("");
-        
+
         /**
          * The character code of the character that will be replaced with the {@link #escapeSequence} when written.
          */
@@ -120,10 +120,10 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
          * The string with which the {@link #targetCharacterCode} will be replaced.
          */
         private SerializedString escapeSequence = EMPTY_ESCAPE_SEQUENCE;
-        
+
         public Escape() {
         }
-        
+
         public Escape(String target, String escapeSequence) {
             setTarget(target);
             setEscapeSequence(escapeSequence);
@@ -141,7 +141,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
 
         /**
          * Sets the target string that will be replaced with the {@link #escapeSequence}.  Must have length == 1
-         * 
+         *
          * @param target the target string that will be escaped
          * @throws IllegalArgumentException if target length is != 1
          */
@@ -151,14 +151,14 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
             }
             setTargetCharacterCode((int) target.charAt(0));
         }
-        
+
         /**
          * Sets the target character that will be replaced with the {@link #escapeSequence}.
          */
         public void setTargetCharacter(char targetCharacter) {
             setTargetCharacterCode((char) targetCharacter);
         }
-        
+
         public int getTargetCharacterCode() {
             return targetCharacterCode;
         }
@@ -168,7 +168,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
             }
             this.targetCharacterCode = targetCharacterCode;
         }
-        
+
         public SerializedString getEscapeSequence() {
             return escapeSequence;
         }
@@ -179,13 +179,13 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
                 this.escapeSequence = new SerializedString(escapeSequence);
             }
         }
-        
+
         private void assertValid() {
             if (targetCharacterCode < 0) {
                 throw new IllegalArgumentException("targetCharacterCode must be 0 or greater");
             }
         }
-        
+
         @Override
         public int compareTo(Escape that) {
             if (that == null) {
@@ -195,7 +195,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
             if (targetCharacterCodeComparison != 0) {
                 return targetCharacterCodeComparison;
             }
-            
+
             return this.escapeSequence.getValue().compareTo(that.escapeSequence.getValue());
         }
 
@@ -218,13 +218,13 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
         }
 
     }
-    
+
     /**
      * When true (the default), the standard ASCII escape codes for JSON will be included by default.
      * Any additional escapes configured for ASCII characters will override these.
-     * 
+     *
      * When false, no escaping for ASCII will be provided by default.
-     * Only the escapes configured for ASCII characters will be used. 
+     * Only the escapes configured for ASCII characters will be used.
      */
     private boolean includeStandardAsciiEscapesForJSON = true;
 
@@ -237,7 +237,7 @@ public class CharacterEscapesDecorator implements TokenStreamFactoryBuilderDecor
      * Indicates when the {@link CharacterEscapesDecorator#characterEscapes} field needs to be re-initialized.
      */
     private boolean needsInitialization = true;
-    
+
     /**
      * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesDecorator#escapes}
      */

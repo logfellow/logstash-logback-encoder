@@ -14,10 +14,10 @@
 package net.logstash.logback.composite.accessevent;
 
 /**
- * A filter used to determine if a request/response header should be included in the log event output. 
+ * A filter used to determine if a request/response header should be included in the log event output.
  */
 public interface HeaderFilter {
-    
+
     /**
      * Returns true if the given header should be included in the log event output
      * @return true if the given header should be included in the log event output

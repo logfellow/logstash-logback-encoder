@@ -26,50 +26,50 @@ import org.slf4j.Marker;
  * This creates a somewhat fluent interface that can be used to create markers.
  * <p>
  * For example:
- * 
+ *
  * <pre>
  * {@code
  * import static net.logstash.logback.marker.Markers.*
- *     
+ *
  * logger.info(append("name1", "value1"), "log message");
- * logger.info(append("name1", "value1").with(append("name2", "value2")), "log message");
+ * logger.info(append("name1", "value1").and(append("name2", "value2")), "log message");
  * logger.info(appendEntries(myMap), "log message");
  * }
  * </pre>
  */
 public class Markers {
-    
+
     private Markers() {
     }
-    
+
     /**
      * @see MapEntriesAppendingMarker
      */
     public static LogstashMarker appendEntries(Map<?, ?> map) {
         return new MapEntriesAppendingMarker(map);
     }
-    
+
     /**
      * @see ObjectFieldsAppendingMarker
      */
     public static LogstashMarker appendFields(Object object) {
         return new ObjectFieldsAppendingMarker(object);
     }
-    
+
     /**
      * @see ObjectAppendingMarker
      */
     public static LogstashMarker append(String fieldName, Object object) {
         return new ObjectAppendingMarker(fieldName, object);
     }
-    
+
     /**
      * @see ObjectAppendingMarker
      */
     public static LogstashMarker appendArray(String fieldName, Object... objects) {
         return new ObjectAppendingMarker(fieldName, objects);
     }
-    
+
     /**
      * @see RawJsonAppendingMarker
      */

@@ -16,13 +16,13 @@ package net.logstash.logback.appender;
 import ch.qos.logback.core.net.ssl.SSLConfiguration;
 
 /**
- * This class extends {@link net.logstash.logback.appender.LogstashTcpSocketAppender} 
+ * This class extends {@link net.logstash.logback.appender.LogstashTcpSocketAppender}
  * to enable ssl by default.
  * <p>
  * New users should just use {@link LogstashTcpSocketAppender} directly,
  * and configure ssl on it, rather than using this class.
  * <p>
- * This class remains available for backwards compatibility only. 
+ * This class remains available for backwards compatibility only.
  *
  * @author <a href="mailto:behar@veliqi.de">Behar Veliqi</a>
  * @since 23 Oct 2014 (creation date)
@@ -31,7 +31,7 @@ import ch.qos.logback.core.net.ssl.SSLConfiguration;
  */
 @Deprecated
 public class SSLLogstashTcpSocketAppender extends LogstashTcpSocketAppender {
-    
+
 
     public SSLLogstashTcpSocketAppender() {
         super();

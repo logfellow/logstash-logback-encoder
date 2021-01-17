@@ -31,7 +31,7 @@ import com.lmax.disruptor.YieldingWaitStrategy;
  * Creates {@link WaitStrategy} objects from strings.
  */
 public class WaitStrategyFactory {
-    
+
     private static final char PARAM_END_CHAR = '}';
     private static final char PARAM_START_CHAR = '{';
     private static final char PARAM_SEPARATOR_CHAR = ',';
@@ -64,7 +64,7 @@ public class WaitStrategyFactory {
      *           <tt>timeUnit</tt> is a string name of one of the {@link TimeUnit} values.
      * </li>
      * </ul>
-     * 
+     *
      * @throws IllegalArgumentException if an unknown wait strategy type is given, or the parameters are unable to be parsed.
      */
     public static WaitStrategy createWaitStrategyFromString(String waitStrategyType) {
@@ -127,22 +127,22 @@ public class WaitStrategyFactory {
                     (Long) params.get(0),
                     (TimeUnit) params.get(1));
         }
-        
+
         throw new IllegalArgumentException("Unknown wait strategy type: " + waitStrategyType);
-        
+
     }
 
     private static List<Object> parseParams(String waitStrategyType, Class<?>... paramTypes) {
         String paramsString = extractParamsString(waitStrategyType, paramTypes);
-        
+
         List<Object> params = new ArrayList<Object>(paramTypes.length);
-        
+
         int startIndex = 0;
         for (int i = 0; i < paramTypes.length && startIndex < paramsString.length(); i++) {
             int endIndex = findParamEndIndex(paramsString, startIndex);
             String paramString = paramsString.substring(startIndex, endIndex).trim();
             startIndex = endIndex + 1;
-            
+
             if (Integer.class.equals(paramTypes[i])) {
                 params.add(Integer.valueOf(paramString));
             } else if (Long.class.equals(paramTypes[i])) {
@@ -154,18 +154,18 @@ public class WaitStrategyFactory {
             } else {
                 throw new IllegalArgumentException("Unknown paramType " + paramTypes[i]);
             }
-            
+
         }
         if (params.size() != paramTypes.length) {
             throw new IllegalArgumentException(String.format("%d parameters must be provided for waitStrategyType %s. %d were provided.", paramTypes.length, waitStrategyType, params.size()));
         }
-        
+
         return params;
     }
 
     /**
      * Extracts the parameters string (i.e. the part between the curly braces) from the waitStrategyType string.
-     * 
+     *
      * @throws IllegalArgumentException if no param string was found, or it is invalid.
      */
     private static String extractParamsString(String waitStrategyType, Class<?>... paramTypes) {
@@ -182,19 +182,19 @@ public class WaitStrategyFactory {
         if (endIndex == -1) {
             throw new IllegalArgumentException(String.format("Parameters of %s must end with '}'", waitStrategyType));
         }
-        
+
         return waitStrategyType.substring(startIndex + 1, endIndex);
     }
 
     /**
      * Finds the end character index of the parameter within the paramsString that starts at startIndex.
-     * 
+     *
      * Takes into account nesting of parameters.
-     * 
+     *
      * @param paramsString
      * @param startIndex index within paramsString to start looking
      * @return index at which the parameter string ends (e.g. the next comma, or paramsString length if no comma found)
-     * 
+     *
      * @throws IllegalArgumentException if the parameter is not well formed
      */
     private static int findParamEndIndex(String paramsString, int startIndex) {
@@ -206,14 +206,14 @@ public class WaitStrategyFactory {
             } else if (character == PARAM_END_CHAR) {
                 nestLevel--;
                 if (nestLevel < 0) {
-                    throw new IllegalArgumentException(String.format("Unbalanced '}' at character position %d in %s", c, paramsString)); 
+                    throw new IllegalArgumentException(String.format("Unbalanced '}' at character position %d in %s", c, paramsString));
                 }
             } else if (character == PARAM_SEPARATOR_CHAR && nestLevel == 0) {
                 return c;
             }
         }
         if (nestLevel != 0) {
-            throw new IllegalArgumentException(String.format("Unbalanced '{' in %s", paramsString)); 
+            throw new IllegalArgumentException(String.format("Unbalanced '{' in %s", paramsString));
         }
         return paramsString.length();
     }

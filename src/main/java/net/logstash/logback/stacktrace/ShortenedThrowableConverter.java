@@ -13,7 +13,11 @@
  */
 package net.logstash.logback.stacktrace;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Deque;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 
@@ -37,7 +41,7 @@ import net.logstash.logback.NullAbbreviator;
 /**
  * A {@link ThrowableHandlingConverter} (similar to logback's {@link ThrowableProxyConverter})
  * that formats stacktraces by doing the following:
- * 
+ *
  * <ul>
  * <li>Limits the number of stackTraceElements per throwable
  *     (applies to each individual throwable.  e.g. caused-bys and suppressed).
@@ -53,7 +57,7 @@ import net.logstash.logback.NullAbbreviator;
  * <li>Outputs in either 'normal' order (root-cause-last), or root-cause-first.
  *     See {@link #rootCauseFirst}.</li>
  * </ul>
- * 
+ *
  * <p>
  * To use this with a {@link PatternLayout}, you must configure <tt>conversionRule</tt>
  * as described <a href="http://logback.qos.ch/manual/layouts.html#customConversionSpecifier">here</a>.
@@ -72,37 +76,37 @@ import net.logstash.logback.NullAbbreviator;
  * For example,
  * <pre>
  * {@code
- *     <conversionRule conversionWord="stack" 
+ *     <conversionRule conversionWord="stack"
  *                   converterClass="net.logstash.logback.stacktrace.ShortenedThrowableConverter" />
- *         
+ *
  *     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
  *         <encoder>
  *             <pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,regex1,regex2,evaluatorName}</pattern>
  *         </encoder>
  *     </appender>
  * }
- * </pre> 
- * 
- * 
- * 
+ * </pre>
+ *
+ *
+ *
  */
 public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
-    
+
     public static final int FULL_MAX_DEPTH_PER_THROWABLE = Integer.MAX_VALUE;
     public static final int SHORT_MAX_DEPTH_PER_THROWABLE = 3;
     public static final int DEFAULT_MAX_DEPTH_PER_THROWABLE = FULL_MAX_DEPTH_PER_THROWABLE;
-    
+
     public static final int FULL_MAX_LENGTH = Integer.MAX_VALUE;
     public static final int SHORT_MAX_LENGTH = 1024;
     public static final int DEFAULT_MAX_LENGTH = FULL_MAX_LENGTH;
-    
+
     public static final int FULL_CLASS_NAME_LENGTH = Integer.MAX_VALUE;
     public static final int SHORT_CLASS_NAME_LENGTH = 10;
     public static final int DEFAULT_CLASS_NAME_LENGTH = FULL_CLASS_NAME_LENGTH;
-    
+
     private static final String ELLIPSIS = "...";
     private static final int BUFFER_INITIAL_CAPACITY = 4096;
-    
+
     private static final String OPTION_VALUE_FULL = "full";
     private static final String OPTION_VALUE_SHORT = "short";
     private static final String OPTION_VALUE_ROOT_FIRST = "rootFirst";
@@ -118,12 +122,12 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Maximum number of stackTraceElements printed per throwable.
      */
     private int maxDepthPerThrowable = DEFAULT_MAX_DEPTH_PER_THROWABLE;
-    
+
     /**
      * Maximum number of characters in the entire stacktrace.
      */
     private int maxLength = DEFAULT_MAX_LENGTH;
-    
+
     /**
      * Will try to shorten class name lengths to less than this value
      */
@@ -134,18 +138,18 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * is set less than {@link #FULL_CLASS_NAME_LENGTH}
      */
     private Abbreviator abbreviator = NullAbbreviator.INSTANCE;
-    
+
     /**
      * Patterns used to determine which stacktrace elements to exclude.
-     * 
+     *
      * The strings being matched against are in the form "fullyQualifiedClassName.methodName"
      * (e.g. "java.lang.Object.toString").
-     * 
+     *
      * Note that these elements will only be excluded if and only if
-     * more than one consecutive line matches an exclusion pattern. 
+     * more than one consecutive line matches an exclusion pattern.
      */
     private List<Pattern> excludes = new ArrayList<Pattern>(5);
-    
+
     /**
      * True to print the root cause first.  False to print exceptions normally (root cause last).
      */
@@ -164,13 +168,13 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Evaluators that determine if the stacktrace should be logged.
      */
     private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(1);
-    
+
     @Override
     public void start() {
         parseOptions();
         // instantiate stack element filter
-        if(excludes == null || excludes.isEmpty()) {
-            if(inlineHash) {
+        if (excludes == null || excludes.isEmpty()) {
+            if (inlineHash) {
                 // filter out elements with no source info
                 addInfo("[inlineHash] is active with no exclusion pattern: use non null source info filter to exclude generated classnames (see doc)");
                 stackElementFilter = StackElementFilter.withSourceInfo();
@@ -183,7 +187,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             stackElementFilter = StackElementFilter.byPattern(excludes);
         }
         // instantiate stack hasher if "inline hash" is active
-        if(inlineHash) {
+        if (inlineHash) {
             stackHasher = new StackHasher(stackElementFilter);
         }
         super.start();
@@ -218,7 +222,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                      */
                     if (OPTION_VALUE_ROOT_FIRST.equals(option)) {
                         setRootCauseFirst(true);
-                    } else if(OPTION_VALUE_INLINE_HASH.equals(option)) {
+                    } else if (OPTION_VALUE_INLINE_HASH.equals(option)) {
                         setInlineHash(true);
                     } else {
                         @SuppressWarnings("rawtypes")
@@ -253,7 +257,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             }
         }
     }
-    
+
     @Override
     public String convert(ILoggingEvent event) {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
@@ -263,7 +267,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
         // compute stack trace hashes
         Deque<String> stackHashes = null;
-        if(inlineHash && (throwableProxy instanceof ThrowableProxy)) {
+        if (inlineHash && (throwableProxy instanceof ThrowableProxy)) {
             stackHashes = stackHasher.hexHashes(((ThrowableProxy) throwableProxy).getThrowable());
         }
 
@@ -323,7 +327,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             int indent,
             IThrowableProxy throwableProxy,
             Deque<String> stackHashes) {
-        
+
         if (throwableProxy == null || builder.length() > maxLength) {
             return;
         }
@@ -331,7 +335,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         String hash = stackHashes == null || stackHashes.isEmpty() ? null : stackHashes.removeFirst();
         appendFirstLine(builder, prefix, indent, throwableProxy, hash);
         appendStackTraceElements(builder, indent, throwableProxy);
-        
+
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
@@ -352,11 +356,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             int indent,
             IThrowableProxy throwableProxy,
             Deque<String> stackHashes) {
-        
+
         if (throwableProxy == null || builder.length() > maxLength) {
             return;
         }
-        
+
         if (throwableProxy.getCause() != null) {
             appendRootCauseFirst(builder, prefix, indent, throwableProxy.getCause(), stackHashes);
             prefix = CoreConstants.WRAPPED_BY;
@@ -365,7 +369,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         String hash = stackHashes == null || stackHashes.isEmpty() ? null : stackHashes.removeLast();
         appendFirstLine(builder, prefix, indent, throwableProxy, hash);
         appendStackTraceElements(builder, indent, throwableProxy);
-        
+
         IThrowableProxy[] suppressedThrowableProxies = throwableProxy.getSuppressed();
         if (suppressedThrowableProxies != null) {
             for (IThrowableProxy suppressedThrowableProxy : suppressedThrowableProxies) {
@@ -379,7 +383,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Appends the frames of the throwable.
      */
     private void appendStackTraceElements(StringBuilder builder, int indent, IThrowableProxy throwableProxy) {
-        
+
         if (builder.length() > maxLength) {
             return;
         }
@@ -402,12 +406,12 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             if (i <= 1 || isIncluded(stackTraceElement)) {
                 /*
                  * We should append this line.
-                 * 
+                 *
                  * consecutiveExcluded will be > 0 if we were previously skipping lines based on excludes
                  */
                 if (consecutiveExcluded >= 2) {
                     /*
-                     * Multiple consecutive lines were excluded, so append a placeholder 
+                     * Multiple consecutive lines were excluded, so append a placeholder
                      */
                     appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
                     consecutiveExcluded = 0;
@@ -436,14 +440,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                 consecutiveExcluded++;
             }
         }
-        
+
         if (consecutiveExcluded > 0) {
             /*
              * We were excluding stuff at the end, so append a placeholder
              */
             appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
         }
-        
+
         if (commonFrames > 0) {
             /*
              * Common frames found, append a placeholder
@@ -454,7 +458,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     /**
-     * Appends a placeholder indicating that some frames were not written. 
+     * Appends a placeholder indicating that some frames were not written.
      */
     private void appendPlaceHolder(StringBuilder builder, int indent, int consecutiveExcluded, String message) {
         indent(builder, indent);
@@ -465,14 +469,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             .append(message)
             .append(CoreConstants.LINE_SEPARATOR);
     }
-    
+
     /**
      * Return true if the stack trace element is included (i.e. doesn't match any exclude patterns).
      */
     private boolean isIncluded(StackTraceElementProxy step) {
         return stackElementFilter.accept(step.getStackTraceElement());
     }
-    
+
     /**
      * Appends a single stack trace element.
      */
@@ -481,9 +485,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             return;
         }
         indent(builder, indent);
-        
+
         StackTraceElement stackTraceElement = step.getStackTraceElement();
-        
+
         String fileName = stackTraceElement.getFileName();
         int lineNumber = stackTraceElement.getLineNumber();
         builder.append("at ")
@@ -492,13 +496,13 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             .append(stackTraceElement.getMethodName())
             .append("(")
             .append(fileName == null ? "Unknown Source" : fileName);
-        
+
         if (lineNumber >= 0) {
             builder.append(":")
                 .append(lineNumber);
         }
         builder.append(")");
-        
+
         if (shouldAppendPackagingData(step, previousStep)) {
             appendPackagingData(builder, step);
         }
@@ -507,7 +511,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     /**
      * Return true if packaging data should be appended for the current step.
-     * 
+     *
      * Packaging data for the current step is only appended if it differs
      * from the packaging data from the previous step.
      */
@@ -526,7 +530,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     /**
-     * Appends the first line containing the prefix and throwable message 
+     * Appends the first line containing the prefix and throwable message
      */
     private void appendFirstLine(StringBuilder builder, String prefix, int indent, IThrowableProxy throwableProxy, String hash) {
         if (builder.length() > maxLength) {
@@ -545,7 +549,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             .append(throwableProxy.getMessage())
             .append(CoreConstants.LINE_SEPARATOR);
     }
-    
+
     private void indent(StringBuilder builder, int indent) {
         ThrowableProxyUtil.indent(builder, indent);
     }
@@ -553,7 +557,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public int getShortenedClassNameLength() {
         return shortenedClassNameLength;
     }
-    
+
     public void setShortenedClassNameLength(int length) {
         if (length <= 0) {
             throw new IllegalArgumentException();
@@ -565,8 +569,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             abbreviator = NullAbbreviator.INSTANCE;
         }
     }
-    
-    
+
+
     public int getMaxDepthPerThrowable() {
         return maxDepthPerThrowable;
     }
@@ -576,7 +580,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         }
         this.maxDepthPerThrowable = maxDepthPerThrowable;
     }
-    
+
     public void setMaxLength(int maxLength) {
         if (maxLength <= 0) {
             throw new IllegalArgumentException();
@@ -586,7 +590,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public int getMaxLength() {
         return maxLength;
     }
-    
+
     public boolean isRootCauseFirst() {
         return rootCauseFirst;
     }
@@ -632,7 +636,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             }
         }
     }
-    
+
     public List<String> getExcludes() {
         List<String> exclusionPatterns = new ArrayList<String>(excludes.size());
         for (Pattern pattern : excludes) {
@@ -640,11 +644,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         }
         return exclusionPatterns;
     }
-    
+
     public void addEvaluator(EventEvaluator<ILoggingEvent> evaluator) {
         evaluators.add(evaluator);
     }
-    
+
     public void setEvaluators(List<EventEvaluator<ILoggingEvent>> evaluators) {
         if (evaluators == null || evaluators.isEmpty()) {
             this.evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(1);
@@ -652,9 +656,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             this.evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(evaluators);
         }
     }
-    
+
     public List<EventEvaluator<ILoggingEvent>> getEvaluators() {
         return new ArrayList<EventEvaluator<ILoggingEvent>>(evaluators);
     }
-    
+
 }

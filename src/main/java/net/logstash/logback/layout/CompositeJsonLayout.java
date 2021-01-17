@@ -31,9 +31,9 @@ import net.logstash.logback.encoder.SeparatorParser;
 
 
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
-    
+
     private boolean immediateFlush = true;
-    
+
     private Layout<Event> prefix;
     private Layout<Event> suffix;
 
@@ -47,15 +47,18 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     private String lineSeparator;
 
     private final CompositeJsonFormatter<Event> formatter;
-    
+
     public CompositeJsonLayout() {
         super();
         this.formatter = createFormatter();
     }
-    
+
     protected abstract CompositeJsonFormatter<Event> createFormatter();
 
     public String doLayout(Event event) {
+        if (!isStarted()) {
+            throw new IllegalStateException("Layout is not started");
+        }
         final String result;
         try {
             result = formatter.writeEventAsString(event);
@@ -63,19 +66,19 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             addWarn("Error formatting logging event", e);
             return null;
         }
-        
+
         if (prefix == null && suffix == null && lineSeparator == null) {
             return result;
         }
-        
+
         String prefixResult = doLayoutWrapped(prefix, event);
         String suffixResult = doLayoutWrapped(suffix, event);
-        
+
         int size = result.length()
                 + (prefixResult == null ? 0 : prefixResult.length())
                 + (suffixResult == null ? 0 : suffixResult.length())
                 + (lineSeparator == null ? 0 : lineSeparator.length());
-        
+
         StringBuilder stringBuilder = new StringBuilder(size);
         if (prefixResult != null) {
             stringBuilder.append(prefixResult);
@@ -93,7 +96,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     private String doLayoutWrapped(Layout<Event> wrapped, Event event) {
         return wrapped == null ? null : wrapped.doLayout(event);
     }
-    
+
     @Override
     public void start() {
         super.start();
@@ -107,7 +110,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         if (wrapped instanceof PatternLayoutBase) {
             /*
              * Don't ensure exception output (for ILoggingEvents)
-             * or line separation (for IAccessEvents) 
+             * or line separation (for IAccessEvents)
              */
             PatternLayoutBase<Event> layout = (PatternLayoutBase<Event>) wrapped;
             layout.setPostCompileProcessor(null);
@@ -122,7 +125,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             wrapped.start();
         }
     }
-    
+
     @Override
     public void stop() {
         super.stop();
@@ -130,13 +133,13 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         stopWrapped(prefix);
         stopWrapped(suffix);
     }
-    
+
     private void stopWrapped(Layout<Event> wrapped) {
         if (wrapped != null && !wrapped.isStarted()) {
             wrapped.stop();
         }
     }
-    
+
     public JsonProviders<Event> getProviders() {
         return formatter.getProviders();
     }
@@ -144,11 +147,11 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     public void setProviders(JsonProviders<Event> jsonProviders) {
         formatter.setProviders(jsonProviders);
     }
-    
+
     public boolean isImmediateFlush() {
         return immediateFlush;
     }
-    
+
     public void setImmediateFlush(boolean immediateFlush) {
         this.immediateFlush = immediateFlush;
     }
@@ -192,14 +195,14 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     protected CompositeJsonFormatter<Event> getFormatter() {
         return formatter;
     }
-    
+
     public Layout<Event> getPrefix() {
         return prefix;
     }
     public void setPrefix(Layout<Event> prefix) {
         this.prefix = prefix;
     }
-    
+
     public Layout<Event> getSuffix() {
         return suffix;
     }

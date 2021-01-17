@@ -31,18 +31,18 @@ import org.slf4j.LoggerFactory;
  * Factory for creating {@link StructuredArgument}s.
  */
 public class StructuredArguments {
-    
+
     /**
      * The default message format used when writing key value pairs to the log message.
      */
     public static final String DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN = "{0}={1}";
-    
+
     /**
      * A message format pattern that will only write
      * the argument value to a log message (i.e. it won't write the key).
      */
     public static final String VALUE_ONLY_MESSAGE_FORMAT_PATTERN = "{1}";
-    
+
     private StructuredArguments() {
     }
 
@@ -52,7 +52,7 @@ public class StructuredArguments {
      * <p>
      * Basically, adds "key":"value" to the JSON event AND
      * name=value to the formatted message.
-     *  
+     *
      * @see ObjectAppendingMarker
      * @see #DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN
      */
@@ -62,7 +62,7 @@ public class StructuredArguments {
 
     /**
      * Abbreviated convenience method for calling {@link #keyValue(String, Object)}.
-     * 
+     *
      * @see ObjectAppendingMarker
      */
     public static StructuredArgument kv(String key, Object value) {
@@ -72,7 +72,7 @@ public class StructuredArguments {
     /**
      * Adds "key":"value" to the JSON event AND
      * name/value to the formatted message using the given messageFormatPattern.
-     *  
+     *
      * @see ObjectAppendingMarker
      */
     public static StructuredArgument keyValue(String key, Object value, String messageFormatPattern) {
@@ -81,7 +81,7 @@ public class StructuredArguments {
 
     /**
      * Abbreviated convenience method for calling {@link #keyValue(String, Object, String)}.
-     * 
+     *
      * @see ObjectAppendingMarker
      */
     public static StructuredArgument kv(String key, Object value, String messageFormatPattern) {
@@ -90,8 +90,8 @@ public class StructuredArguments {
 
     /**
      * Adds "key":"value" to the JSON event AND
-     * value to the formatted message (without the key). 
-     * 
+     * value to the formatted message (without the key).
+     *
      * @see ObjectAppendingMarker
      * @see #VALUE_ONLY_MESSAGE_FORMAT_PATTERN
      */
@@ -101,7 +101,7 @@ public class StructuredArguments {
 
     /**
      * Abbreviated convenience method for calling {@link #value(String, Object)}.
-     * 
+     *
      * @see ObjectAppendingMarker
      */
     public static StructuredArgument v(String key, Object value) {
@@ -112,26 +112,26 @@ public class StructuredArguments {
     /**
      * Adds a "key":"value" entry for each Map entry to the JSON event AND
      * map.toString() to the formatted message.
-     * 
+     *
      * @see MapEntriesAppendingMarker
      */
     public static StructuredArgument entries(Map<?, ?> map) {
         return new MapEntriesAppendingMarker(map);
     }
-    
+
     /**
      * Abbreviated convenience method for calling {@link #entries(Map)}.
-     * 
+     *
      * @see MapEntriesAppendingMarker
      */
     public static StructuredArgument e(Map<?, ?> map) {
         return entries(map);
     }
-    
+
     /**
      * Adds a "key":"value" entry for each field in the given object to the JSON event AND
      * object.toString() to the formatted message.
-     * 
+     *
      * @see ObjectFieldsAppendingMarker
      */
     public static StructuredArgument fields(Object object) {
@@ -139,17 +139,17 @@ public class StructuredArguments {
     }
     /**
      * Abbreviated convenience method for calling {@link #fields(Object)}.
-     * 
+     *
      * @see ObjectFieldsAppendingMarker
      */
     public static StructuredArgument f(Object object) {
         return fields(object);
     }
-    
+
     /**
      * Adds a field to the JSON event whose key is fieldName and whose value is a JSON array of objects AND
      * a string version of the array to the formatted message.
-     * 
+     *
      * @see ObjectAppendingMarker
      */
     public static StructuredArgument array(String fieldName, Object... objects) {
@@ -157,17 +157,17 @@ public class StructuredArguments {
     }
     /**
      * Abbreviated convenience method for calling {@link #array(String, Object...)}.
-     * 
+     *
      * @see ObjectAppendingMarker
      */
     public static StructuredArgument a(String fieldName, Object... objects) {
         return array(fieldName, objects);
     }
-    
+
     /**
      * Adds the rawJsonValue to the JSON event AND
      * the rawJsonValue to the formatted message.
-     * 
+     *
      * @see RawJsonAppendingMarker
      */
     public static StructuredArgument raw(String fieldName, String rawJsonValue) {
@@ -175,7 +175,7 @@ public class StructuredArguments {
     }
     /**
      * Abbreviated convenience method for calling {@link #raw(String, String)}.
-     * 
+     *
      * @see RawJsonAppendingMarker
      */
     public static StructuredArgument r(String fieldName, String rawJsonValue) {

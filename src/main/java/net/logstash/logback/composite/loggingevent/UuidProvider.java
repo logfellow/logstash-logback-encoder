@@ -27,38 +27,38 @@ import com.fasterxml.uuid.impl.TimeBasedGenerator;
 
 /**
  * Outputs random UUID as field value.
- * Handy when you want to provide unique identifier for log lines. 
+ * Handy when you want to provide unique identifier for log lines.
  */
 public class UuidProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
-    
+
     public static final String FIELD_UUID = "uuid";
-    
+
     /**
      * Type 4 UUID.
      */
     public static final String STRATEGY_RANDOM = "random";
-    
+
     /**
      * Type 1 time based UUID.
-     * 
+     *
      * When the time strategy is used, then
      * {@link #ethernet} can be set to either 'interface' (to automatically pick a MAC address from a network interface)
      * or a MAC address string.
      */
     public static final String STRATEGY_TIME = "time";
-    
+
     private NoArgGenerator uuids = Generators.randomBasedGenerator();
 
     /**
      * One of {@value #STRATEGY_RANDOM} or {@value #STRATEGY_TIME}.
      */
     private String strategy = STRATEGY_RANDOM;
-    
+
     /**
      * For {@link UuidStrategy#time} strategy only,
      * 'interface' or ethernet MAC address.
      */
-    private String ethernet; 
+    private String ethernet;
 
     public UuidProvider() {
         setFieldName(FIELD_UUID);
@@ -90,7 +90,7 @@ public class UuidProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
     }
 
     private NoArgGenerator newUuidStrategy(String strategy, String ethernet) {
-        
+
         if (STRATEGY_TIME.equalsIgnoreCase(strategy)) {
             return newTimeBasedGenerator(ethernet);
         }

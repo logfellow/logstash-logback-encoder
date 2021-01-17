@@ -25,16 +25,16 @@ import org.slf4j.Marker;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
- * A {@link Marker} OR {@link StructuredArgument} that 
+ * A {@link Marker} OR {@link StructuredArgument} that
  * writes a raw json value to the logstash json event
  * under a given field name.
  * <p>
- * 
+ *
  * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}),
  * the raw string is written verbatim without any modifications,
  * but assuming it must constitute a single legal JSON value (number, string, boolean, null, Array or List)
  * <p>
- * 
+ *
  * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
  * the raw string is written as the field value.
  * Note that using {@link RawJsonAppendingMarker} as a {@link StructuredArgument} is not very common.
@@ -42,34 +42,34 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 @SuppressWarnings("serial")
 public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
-    
+
     public static final String MARKER_NAME = SingleFieldAppendingMarker.MARKER_NAME_PREFIX + "RAW";
-    
+
     /**
      * The raw json value to write as the field value.
      */
     private final String rawJson;
-    
+
     public RawJsonAppendingMarker(String fieldName, String rawJson) {
         super(MARKER_NAME, fieldName);
         this.rawJson = Objects.requireNonNull(rawJson, "rawJson must not be null");
     }
-    
+
     public RawJsonAppendingMarker(String fieldName, String rawJson, String messageFormatPattern) {
         super(MARKER_NAME, fieldName, messageFormatPattern);
         this.rawJson = Objects.requireNonNull(rawJson, "rawJson must not be null");
     }
-    
+
     @Override
     protected void writeFieldValue(JsonGenerator generator) throws IOException {
         generator.writeRawValue(rawJson);
     }
-    
+
     @Override
     public Object getFieldValue() {
         return rawJson;
     }
-    
+
     @Override
     public boolean equals(Object obj) {
         if (!super.equals(obj)) {
@@ -78,11 +78,11 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
         if (!(obj instanceof RawJsonAppendingMarker)) {
             return false;
         }
-        
+
         RawJsonAppendingMarker other = (RawJsonAppendingMarker) obj;
         return Objects.equals(this.rawJson, other.rawJson);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

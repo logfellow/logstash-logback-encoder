@@ -25,11 +25,11 @@ import net.logstash.logback.composite.LogstashVersionJsonProvider;
  * <p>
  * For example, instead of:
  * {@code
- *     <provider class="net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider"/> 
+ *     <provider class="net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider"/>
  * }
  * you can just use:
  * {@code
- *     <timestamp/> 
+ *     <timestamp/>
  * }
  */
 public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
@@ -112,6 +112,8 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addThrowableRootCauseClassName(ThrowableRootCauseClassNameJsonProvider provider) {
         addProvider(provider);
     }
-    public void addSequence(SequenceJsonProvider provider) { addProvider(provider); }
+    public void addSequence(SequenceJsonProvider provider) {
+        addProvider(provider);
+    }
 
 }

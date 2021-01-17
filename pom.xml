@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>6.6-SNAPSHOT</version>
+    <version>7.0-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Logback encoder which will output events as Logstash-compatible JSON</description>
@@ -24,20 +24,21 @@
         <!-- runtime dependencies -->
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
         <com.fasterxml.jackson.version>3.0.0-SNAPSHOT</com.fasterxml.jackson.version>
-        <com.fasterxml.uuid.version>3.2.0</com.fasterxml.uuid.version>
+        <com.fasterxml.uuid.version>4.0.1</com.fasterxml.uuid.version>
 
         <!-- shaded runtime dependencies -->
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
-        <commons-lang3.version>3.11</commons-lang3.version>
 
         <!-- test dependencies -->
         <junit.version>5.7.0</junit.version>
         <org.assertj.version>3.18.1</org.assertj.version>
-        <org.mockito.version>3.6.28</org.mockito.version>
+        <org.mockito.version>3.7.0</org.mockito.version>
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.19</animal-sniffer-maven-plugin.version>
+        <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
         <maven-bundle-plugin.version>5.1.1</maven-bundle-plugin.version>
+        <maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-enforcer-plugin.version>1.4.1</maven-enforcer-plugin.version>
         <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
@@ -178,11 +179,6 @@
                Only needed if the UuidProvider is used.
             -->
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>${commons-lang3.version}</version>
         </dependency>
         <dependency>
             <groupId>com.lmax</groupId>
@@ -333,10 +329,6 @@
                     </artifactSet>
                     <relocations>
                         <relocation>
-                            <pattern>org.apache.commons.lang3</pattern>
-                            <shadedPattern>${project.groupId}.encoder.org.apache.commons.lang3</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>com.lmax.disruptor</pattern>
                             <shadedPattern>${project.groupId}.encoder.com.lmax.disruptor</shadedPattern>
                         </relocation>
@@ -364,9 +356,26 @@
                         <!-- attach to Logback bundle as fragment -->
                         <Fragment-Host>ch.qos.logback.classic</Fragment-Host>
                         <!-- exclude following imports as required classes are relocated by shade plugin and ignore ch.qos.logback.[core,classic] because this is a fragment and gets them from parent. -->
-                        <Import-Package>!org.apache.commons.*,!com.lmax.disruptor.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
+                        <Import-Package>!com.lmax.disruptor.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
                     </instructions>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <configuration>
+                    <configLocation>src/checkstyle/checkstyle.xml</configLocation>
+                    <logViolationsToConsole>true</logViolationsToConsole>
+                    <failOnViolation>true</failOnViolation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <pluginManagement>
@@ -392,6 +401,34 @@
                             <link>https://fasterxml.github.io/jackson-core/javadoc/2.10</link>
                             <link>https://fasterxml.github.io/jackson-databind/javadoc/2.10</link>
                         </links>
+                    </configuration>
+                </plugin>
+                
+                <!-- This plugin's configuration is used to store Eclipse m2e settings only. 
+                     It has no influence on the Maven build itself.
+                -->
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>${lifecycle-mapping.version}</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>com.mycila.maven-license-plugin</groupId>
+                                        <artifactId>maven-license-plugin</artifactId>
+                                        <versionRange>[1.9.0,)</versionRange>
+                                        <goals>
+                                            <goal>format</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <ignore></ignore>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
                     </configuration>
                 </plugin>
             </plugins>

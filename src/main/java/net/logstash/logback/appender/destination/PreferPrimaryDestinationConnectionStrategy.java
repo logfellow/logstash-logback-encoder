@@ -96,8 +96,7 @@ public class PreferPrimaryDestinationConnectionStrategy implements DestinationCo
          */
         if (secondaryConnectionTTL != null && connectedDestinationIndex != PRIMARY_DESTINATION_INDEX) {
             secondaryConnectionExpirationTime = connectionStartTimeInMillis + secondaryConnectionTTL.getMilliseconds();
-        }
-        else {
+        } else {
             secondaryConnectionExpirationTime = Long.MAX_VALUE;
         }
 
