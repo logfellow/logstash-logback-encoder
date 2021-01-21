@@ -32,7 +32,7 @@
         <!-- test dependencies -->
         <junit.version>5.7.0</junit.version>
         <org.assertj.version>3.18.1</org.assertj.version>
-        <org.mockito.version>3.7.0</org.mockito.version>
+        <org.mockito.version>3.7.7</org.mockito.version>
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.19</animal-sniffer-maven-plugin.version>
