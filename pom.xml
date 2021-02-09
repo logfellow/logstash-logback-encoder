@@ -30,7 +30,7 @@
         <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
 
         <!-- test dependencies -->
-        <junit.version>5.7.0</junit.version>
+        <junit.version>5.7.1</junit.version>
         <org.assertj.version>3.19.0</org.assertj.version>
         <org.mockito.version>3.7.7</org.mockito.version>
 
