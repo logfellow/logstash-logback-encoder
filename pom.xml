@@ -35,7 +35,7 @@
         <org.mockito.version>3.7.7</org.mockito.version>
 
         <!-- maven plugins -->
-        <animal-sniffer-maven-plugin.version>1.19</animal-sniffer-maven-plugin.version>
+        <animal-sniffer-maven-plugin.version>1.20</animal-sniffer-maven-plugin.version>
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
         <maven-bundle-plugin.version>5.1.1</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.1.1</maven-checkstyle-plugin.version>
