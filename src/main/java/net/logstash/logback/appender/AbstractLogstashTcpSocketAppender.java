@@ -1106,7 +1106,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         List<InetSocketAddress> parsedDestinations = DestinationParser.parse(destination, DEFAULT_PORT);
 
-        addDestinations(parsedDestinations.toArray(new InetSocketAddress[parsedDestinations.size()]));
+        addDestinations(parsedDestinations.toArray(new InetSocketAddress[0]));
     }
 
     /**

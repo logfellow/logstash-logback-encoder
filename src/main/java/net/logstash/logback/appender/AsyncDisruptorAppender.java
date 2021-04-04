@@ -474,7 +474,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     protected String calculateThreadName() {
         List<Object> threadNameFormatParams = getThreadNameFormatParams();
-        return String.format(threadNameFormat, threadNameFormatParams.toArray(new Object[threadNameFormatParams.size()]));
+        return String.format(threadNameFormat, threadNameFormatParams.toArray(new Object[0]));
     }
 
     protected List<Object> getThreadNameFormatParams() {
