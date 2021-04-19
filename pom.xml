@@ -27,7 +27,7 @@
         <com.fasterxml.uuid.version>4.0.1</com.fasterxml.uuid.version>
 
         <!-- shaded runtime dependencies -->
-        <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
+        <com.lmax.disruptor.version>3.4.3</com.lmax.disruptor.version>
 
         <!-- test dependencies -->
         <junit.version>5.7.1</junit.version>
