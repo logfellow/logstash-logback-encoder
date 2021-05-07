@@ -2511,12 +2511,12 @@ To disable the automatic registering of the default status listener by an append
 
 ### Profiling
 
-<a href="http://www.yourkit.com/java/profiler/index.jsp"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
+<a href="https://www.yourkit.com/java/profiler/"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
 
 Memory usage and performance of logstash-logback-encoder have been improved
 by addressing issues discovered with the help of the
-[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp).
+[YourKit Java Profiler](https://www.yourkit.com/java/profiler/).
 
 YourKit, LLC has graciously donated a free license of the
-[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp)
+[YourKit Java Profiler](https://www.yourkit.com/java/profiler/)
 to this open source project.
