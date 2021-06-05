@@ -4,7 +4,7 @@
 
 # Logstash Logback Encoder
 
-[![Build](https://github.com/logstash/logstash-logback-encoder/workflows/build/badge.svg?branch=master)](https://github.com/logstash/logstash-logback-encoder/actions)
+[![Build](https://github.com/logstash/logstash-logback-encoder/workflows/build/badge.svg?branch=main)](https://github.com/logstash/logstash-logback-encoder/actions)
 [![Javadocs](http://www.javadoc.io/badge/net.logstash.logback/logstash-logback-encoder.svg)](http://www.javadoc.io/doc/net.logstash.logback/logstash-logback-encoder)
 [![Maven Central](https://img.shields.io/maven-central/v/net.logstash.logback/logstash-logback-encoder)](https://search.maven.org/artifact/net.logstash.logback/logstash-logback-encoder)
 [![Release Notes](https://img.shields.io/github/v/release/logstash/logstash-logback-encoder?label=release%20notes)](https://github.com/logstash/logstash-logback-encoder/releases/latest)

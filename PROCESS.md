@@ -10,12 +10,12 @@ This page covers the processes used by the maintainers of logstash-logback-encod
 Branching Strategy
 ------------------
 
-The `master` branch is the head for the next release.
+The `main` branch is the head for the next release.
 
-The project version referenced in the `pom.xml` file on the `master` branch is
+The project version referenced in the `pom.xml` file on the `main` branch is
 the next release version appended with `-SNAPSHOT`.
 
-PRs are submitted against `master`.
+PRs are submitted against `main`.
 
 
 Version Support
@@ -32,7 +32,7 @@ Releasing
 ---------
 
 To perform a release, push a commit ([like this one](https://github.com/logstash/logstash-logback-encoder/commit/aa942e9fe59320fa1b39f1b54f8a742dd8fd9930))
-to the `master` branch that:
+to the `main` branch that:
 
 1. Bumps the version references in the README.md
 2. Contains a commit message that starts with `[release]`

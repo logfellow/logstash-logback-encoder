@@ -106,4 +106,4 @@ License
 -------
 
 By contributing, you agree that the contributions will be licensed under the
-[Apache License 2.0](https://github.com/logstash/logstash-logback-encoder/blob/master/LICENSE).
+[Apache License 2.0](https://github.com/logstash/logstash-logback-encoder/blob/main/LICENSE).
