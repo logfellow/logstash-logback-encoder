@@ -21,13 +21,13 @@ jobs:
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml verify
   release:
     name: release
-    if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/master' && startsWith(github.event.commits[0].message, '[release]')
+    if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     runs-on: ubuntu-20.04
     needs: [build]
     steps:
       - uses: actions/checkout@v1.1.0
         with:
-          ref: master
+          ref: main
       - uses: actions/setup-java@v1
         with:
           java-version: 1.8
@@ -39,7 +39,7 @@ jobs:
       - name: setup-git
         run: |
           .github/workflows/steps/setup-git.sh
-          git switch master
+          git switch main
       - name: release
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml --activate-profiles ossrh release:prepare release:perform
         env:
