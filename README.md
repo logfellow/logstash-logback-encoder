@@ -1645,8 +1645,8 @@ is included in the logstash-logback-encoder library to format stacktraces by:
 * Abbreviating class names
 * Filtering out consecutive unwanted stackTraceElements based on regular expressions.
 * Using evaluators to determine if the stacktrace should be logged.
-* Outputing in either 'normal' order (root-cause-last), or root-cause-first.
-* Computing and inlining hexadecimal hashes for each exception stack ([more info](stack-hash.md)).
+* Outputting in either 'normal' order (root-cause-last), or root-cause-first.
+* Computing and inlining hexadecimal hashes for each exception stack using the `inlineHash` or `stackHash` provider ([more info](stack-hash.md)).
 
 For example:
 
@@ -1787,7 +1787,8 @@ Each provider has its own configuration options to further customize it.
 
 #### Providers for LoggingEvents
 
-For LoggingEvents, the available providers and their configuration properties (defaults in parenthesis) are as follows:
+The table below lists the available providers for LoggingEvents, and their configuration properties (defaults in parentheses).
+The provider name is the xml element name to use when configuring.
 
 <table>
   <tbody>
@@ -2052,9 +2053,8 @@ For LoggingEvents, the available providers and their configuration properties (d
 
 #### Providers for AccessEvents  
 
-For AccessEvents, the available providers and their configuration properties (defaults in parenthesis) are as follows:
-
-
+The table below lists the available providers for AccessEvents, and their configuration properties (defaults in parentheses).
+The provider name is the xml element name to use when configuring.
 
 <table>
   <tbody>
