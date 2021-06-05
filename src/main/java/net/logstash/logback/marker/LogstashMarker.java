@@ -14,6 +14,7 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.slf4j.Marker;
 
@@ -75,6 +76,42 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
      * @throws IOException if there was an error writing to the generator
      */
     public abstract void writeTo(JsonGenerator generator) throws IOException;
+
+    @Override
+    public synchronized void add(Marker reference) {
+        if (reference instanceof EmptyLogstashMarker) {
+            for (Marker m : (EmptyLogstashMarker) reference) {
+                add(m);
+            }
+        } else {
+            super.add(reference);
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + super.hashCode();
+        result = prime * result + this.getReferences().hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof LogstashMarker)) {
+            return false;
+        }
+
+        LogstashMarker other = (LogstashMarker) obj;
+        return Objects.equals(this.getReferences(), other.getReferences());
+    }
 
     /**
      * Returns a String in the form of
