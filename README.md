@@ -77,12 +77,21 @@ Maven style:
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
     <version>6.6</version>
+    <!-- Use runtime scope if the project does not have any compile-time usage of logstash-logback-encoder,
+         such as usage of StructuredArguments/Markers or implementations such as
+         JsonProvider, AppenderListener, JsonFactoryDecorator, JsonGeneratorDecorator, etc
+    <scope>runtime</scope>
+    -->
 </dependency>
 <!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
     <version>1.2.3</version>
+    <!-- Use runtime scope if the project does not have any compile-time usage of logback,
+         such as implementations of Appender, Encoder, Layout, TurboFilter, etc
+    <scope>runtime</scope>
+    -->
 </dependency>
 ```
 
