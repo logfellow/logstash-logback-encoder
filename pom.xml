@@ -31,7 +31,7 @@
 
         <!-- test dependencies -->
         <junit.version>5.7.2</junit.version>
-        <org.assertj.version>3.19.0</org.assertj.version>
+        <org.assertj.version>3.20.0</org.assertj.version>
         <org.mockito.version>3.11.0</org.mockito.version>
 
         <!-- maven plugins -->
