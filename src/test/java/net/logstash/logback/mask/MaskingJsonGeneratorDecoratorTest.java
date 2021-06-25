@@ -175,8 +175,8 @@ public class MaskingJsonGeneratorDecoratorTest {
                 "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"****\",\"fieldD\":\"****\",\"fieldE\":\"[masked]\",\"fieldF\":\"****\",\"testfield\":\"[maskedtestfield]\"}",
                 masks);
         test(
-                "{\"field0\":\"value0\",\"field1\":\"value1\",\"field2\":\"value2\",\"field3\":\"value3\",\"field-Z\":\"value-Z\",\"field4\":\"value4\",\"field5\":\"testvalue\",\"field6\":\"value6\"}",
-                "{\"field0\":\"****\",\"field1\":\"****\",\"field2\":\"****\",\"field3\":\"****\",\"field-Z\":\"value-masked\",\"field4\":\"value4\",\"field5\":\"[maskedtestvalue]\",\"field6\":\"****\"}",
+                "{\"field0\":\"value0\",\"field1\":\"value1\",\"field2\":\"value2\",\"field3\":\"value3\",\"field-Z\":\"value-Z\",\"field4\":\"value4\",\"field5\":\"testvalue\",\"field6\":\"value6\",\"field7\":\"nestedvalue1-nestedvalue1\"}",
+                "{\"field0\":\"****\",\"field1\":\"****\",\"field2\":\"****\",\"field3\":\"****\",\"field-Z\":\"value-masked\",\"field4\":\"value4\",\"field5\":\"[maskedtestvalue]\",\"field6\":\"****\",\"field7\":\"****-****\"}",
                 masks);
     }
 

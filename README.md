@@ -1452,6 +1452,9 @@ for the path string format and more examples.  But in general:
 
 Specific values to be masked can be specified in several ways, as seen in the following example:
 
+When using regexes to identify strings to mask, all matches within each string field value will be replaced.
+If you want to match the full string field value, then use the beginning of line (`^`) and end of line (`$`) markers.
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
@@ -1462,9 +1465,9 @@ Specific values to be masked can be specified in several ways, as seen in the fo
     -->
     <defaultMask>****</defaultMask>
 
-    <!-- Values to mask added via <value> will use the  default mask string -->
+    <!-- Values to mask added via <value> will use the default mask string -->
     <value>^foo$</value>
-    <value>^bar$</value>
+    <value>bar</value>
 
     <!-- Multiple values can be specified as a comma separated string in the <values> element. -->
     <values>^baz$,^blah$</values>
