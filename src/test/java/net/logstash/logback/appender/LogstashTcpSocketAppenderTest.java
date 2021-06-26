@@ -575,22 +575,6 @@ public class LogstashTcpSocketAppenderTest {
         Assertions.assertFalse(appender.isStarted());
     }
     
-    
-    /**
-     * Specify destinations using both <remoteHost>/<port> and <destination>.
-     * Only one scheme can be used - make sure the appender refuses to start.
-     */
-    @Test
-    @SuppressWarnings("deprecation")
-    public void testDestination_MixedType() {
-        appender.setRemoteHost("localhost");
-        appender.setPort(10000);
-        appender.addDestination("localhost:10001");
-        
-        appender.start();
-        Assertions.assertFalse(appender.isStarted());
-    }
-
     @Test
     public void testRoundRobin() throws Exception {
         appender.addDestination("localhost:10000");
