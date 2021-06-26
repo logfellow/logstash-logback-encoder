@@ -98,6 +98,14 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
         getFormatter().setResponseHeaderFilter(filter);
     }
 
+    public String getMessagePattern() {
+        return getFormatter().getMessagePattern();
+    }
+
+    public void setMessagePattern(String messagePattern) {
+        getFormatter().setMessagePattern(messagePattern);
+    }
+
     public boolean isIncludeContext() {
         return getFormatter().isIncludeContext();
     }

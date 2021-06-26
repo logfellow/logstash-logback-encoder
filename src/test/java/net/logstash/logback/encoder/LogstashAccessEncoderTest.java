@@ -158,6 +158,33 @@ public class LogstashAccessEncoderTest {
         assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
     }    
     
+    @Test
+    public void customMessagePattern() throws Exception {
+
+        IAccessEvent event = mockBasicILoggingEvent();
+
+        Context context = mock(Context.class);
+
+        encoder.setMessagePattern("%requestURL %statusCode %bytesSent");
+        encoder.getFieldNames().setMessage("msg");
+        encoder.setContext(context);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("msg").textValue()).isEqualTo("https://123.123.123.123/my/uri 200 123");
+
+        encoder.stop();
+
+        encoder.setMessagePattern(null);
+        encoder.start();
+
+        assertThat(MAPPER.readTree(encoder.encode(event)).get("msg").textValue())
+                .startsWith("123.123.123.123 - remote-user ")
+                .endsWith("\"https://123.123.123.123/my/uri\" 200 123");
+    }
+
     private IAccessEvent mockBasicILoggingEvent() {
         IAccessEvent event = mock(IAccessEvent.class);
         when(event.getContentLength()).thenReturn(123L);

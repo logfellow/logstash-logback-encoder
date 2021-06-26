@@ -52,7 +52,8 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
-* [Customizing Message](#customizing-message)
+* [Customizing LoggingEvent Message](#customizing-loggingevent-message)
+* [Customizing AccessEvent Message](#customizing-accessevent-message)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
@@ -1582,9 +1583,9 @@ You can change the timezone like this:
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
 
 
-## Customizing Message
+## Customizing LoggingEvent Message
 
-By default, messages are written as JSON strings. Any characters not allowed in a JSON string, such as newlines, are escaped.
+By default, LoggingEvent messages are written as JSON strings. Any characters not allowed in a JSON string, such as newlines, are escaped.
 See the [Customizing Character Escapes](#customizing-character-escapes) section for details.
 
 You can also write messages as JSON arrays instead of strings, by specifying a `messageSplitRegex` to split the message text.
@@ -1615,6 +1616,24 @@ For example:
   <messageSplitRegex>#+</messageSplitRegex>
 </encoder>
 ```
+
+## Customizing AccessEvent Message
+
+By default, AccessEvent messages are written in the following format:
+
+```
+%clientHost - %user [%date] "%requestURL" %statusCode %bytesSent
+```
+
+To customize the message pattern, specify the `messagePattern` like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <messagePattern>%clientHost [%date] "%requestURL" %statusCode %bytesSent</messagePattern>
+</encoder>
+```
+
+The pattern can contain any of the [AccessEvent conversion words](http://logback.qos.ch/manual/layouts.html#AccessPatternLayout).
 
 ## Customizing Logger Name Length
 
