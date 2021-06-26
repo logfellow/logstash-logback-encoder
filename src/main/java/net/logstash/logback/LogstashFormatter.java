@@ -330,24 +330,6 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         this.versionProvider.setVersion(version);
     }
 
-
-    /**
-     * @deprecated Use {@link #isWriteVersionAsInteger()}
-     * @return true if the version should be written as a string
-     */
-    @Deprecated
-    public boolean isWriteVersionAsString() {
-        return this.versionProvider.isWriteAsString();
-    }
-    /**
-     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
-     * @param writeVersionAsString true if the version should be written as a string
-     */
-    @Deprecated
-    public void setWriteVersionAsString(boolean writeVersionAsString) {
-        this.versionProvider.setWriteAsString(writeVersionAsString);
-    }
-
     public boolean isWriteVersionAsInteger() {
         return this.versionProvider.isWriteAsInteger();
     }

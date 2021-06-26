@@ -121,21 +121,6 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
         getFormatter().setVersion(version);
     }
 
-    /**
-     * @deprecated Use {@link #isWriteVersionAsInteger()}
-     */
-    @Deprecated
-    public boolean isWriteVersionAsString() {
-        return getFormatter().isWriteVersionAsString();
-    }
-    /**
-     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
-     */
-    @Deprecated
-    public void setWriteVersionAsString(boolean writeVersionAsString) {
-        getFormatter().setWriteVersionAsString(writeVersionAsString);
-    }
-
     public boolean isWriteVersionAsInteger() {
         return getFormatter().isWriteVersionAsInteger();
     }
