@@ -488,28 +488,6 @@ public class LogstashEncoderTest {
         assertThat(node.findValue("tags")).isNull();
     }
 
-    /**
-     * Tests the old way of appending a json_message to the event.
-     * 
-     * @deprecated See {@link #testAppendJsonMessage()} for the new way of doing this.
-     */
-    @Test
-    @Deprecated
-    public void markerIsJSON() throws Exception {
-        Object[] argArray = new Object[] { 1, Collections.singletonMap("hello", Collections.singletonMap("hello", "world")) };
-        Marker marker = MarkerFactory.getMarker("JSON");
-        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
-        when(event.getMarker()).thenReturn(marker);
-        when(event.getArgumentArray()).thenReturn(argArray);
-        
-        encoder.start();
-        byte[] encoded = encoder.encode(event);
-        
-        JsonNode node = MAPPER.readTree(encoded);
-        
-        assertThat(MAPPER.convertValue(argArray, JsonNode.class).equals(node.get("json_message"))).isEqualTo(true);
-    }
-    
     @Test
     public void testAppendJsonMessage() throws Exception {
         Object[] argArray = new Object[] { 1, Collections.singletonMap("hello", Collections.singletonMap("hello", "world")) };
@@ -566,59 +544,6 @@ public class LogstashEncoderTest {
     
     public JsonNode parse(String string) throws IOException {
         return FACTORY.createParser(string).readValueAsTree();
-    }
-    
-    @Test
-    @Deprecated
-    public void testContextMapWithNoArguments() throws Exception {
-        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
-        when(event.getArgumentArray()).thenReturn(null);
-        
-        encoder.setEnableContextMap(true);
-        encoder.start();
-        byte[] encoded = encoder.encode(event);
-        
-        JsonNode node = MAPPER.readTree(encoded);
-        assertThat(node.get("message").textValue()).isEqualTo("My message");
-    }
-    
-    /**
-     * Tests the old way of embedding a map in the json event.
-     * 
-     * @deprecated See {@link #testAppendEntries()} for the new way of doing this.
-     */
-    @Test
-    @Deprecated
-    public void testContextMap() throws Exception {
-        ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
-        
-        Map<String, Object> contextMap = new HashMap<>();
-        contextMap.put("duration", 1200);
-        contextMap.put("remoteResponse", "OK");
-        contextMap.put("extra", Collections.singletonMap("extraEntry", "extraValue"));
-        
-        Object[] argList = new Object[] {
-                "firstParamThatShouldBeIgnored",
-                Collections.singletonMap("ignoredMapEntry", "whatever"),
-                contextMap
-        };
-        
-        when(event.getArgumentArray()).thenReturn(argList);
-        
-        encoder.setEnableContextMap(true);
-        encoder.start();
-        byte[] encoded = encoder.encode(event);
-        
-        JsonNode node = MAPPER.readTree(encoded);
-        assertThat(node.get("duration")).isNotNull();
-        assertThat(node.get("duration").intValue()).isEqualTo(1200);
-        assertThat(node.get("remoteResponse")).isNotNull();
-        assertThat(node.get("remoteResponse").textValue()).isEqualTo("OK");
-        assertThat(node.get("extra")).isNotNull();
-        assertThat(node.get("extra").get("extraEntry")).isNotNull();
-        assertThat(node.get("extra").get("extraEntry").textValue()).isEqualTo("extraValue");
-        
-        assertThat(node.get("ignoredMapEntry")).as("The second map from the end should be ignored").isNull();
     }
     
     @Test

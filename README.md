@@ -1154,11 +1154,6 @@ logger.info(appendFields(myobject), "log message");
 ```
 
 
-See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.
-
-
-
-
 ## AccessEvent Fields
 
 The following sections describe the fields included in the JSON output by default for AccessEvents written by the

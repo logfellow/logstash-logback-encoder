@@ -15,7 +15,6 @@ package net.logstash.logback;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
@@ -25,8 +24,6 @@ import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
-import net.logstash.logback.composite.loggingevent.ContextMapJsonProvider;
-import net.logstash.logback.composite.loggingevent.JsonMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
@@ -40,7 +37,6 @@ import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
-import net.logstash.logback.marker.Markers;
 
 import org.slf4j.MDC;
 
@@ -72,7 +68,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     protected LogstashFieldNames fieldNames;
 
     private final LoggingEventFormattedTimestampJsonProvider timestampProvider = new LoggingEventFormattedTimestampJsonProvider();
-    private final LogstashVersionJsonProvider<ILoggingEvent> versionProvider = new LogstashVersionJsonProvider<ILoggingEvent>();
+    private final LogstashVersionJsonProvider<ILoggingEvent> versionProvider = new LogstashVersionJsonProvider<>();
     private final MessageJsonProvider messageProvider = new MessageJsonProvider();
     private final LoggerNameJsonProvider loggerNameProvider = new LoggerNameJsonProvider();
     private final ThreadNameJsonProvider threadNameProvider = new ThreadNameJsonProvider();
@@ -85,25 +81,12 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
      */
     private CallerDataJsonProvider callerDataProvider;
     private final StackTraceJsonProvider stackTraceProvider = new StackTraceJsonProvider();
-    private ContextJsonProvider<ILoggingEvent> contextProvider = new ContextJsonProvider<ILoggingEvent>();
-    /**
-     * @deprecated When logging, prefer using a {@link Markers#appendArray(String, Object...)} marker
-     *             with fieldName = "json_message" and objects = an array of arguments instead.
-     */
-    @Deprecated
-    private final JsonMessageJsonProvider jsonMessageProvider = new JsonMessageJsonProvider();
+    private ContextJsonProvider<ILoggingEvent> contextProvider = new ContextJsonProvider<>();
     /**
      * When not null, {@link MDC} properties will be included according
      * to the logic in {@link MdcJsonProvider}.
      */
     private MdcJsonProvider mdcProvider = new MdcJsonProvider();
-    /**
-     * When not null, if the last argument to the log line is a map, then it will be embedded in the logstash json.
-     *
-     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
-     */
-    @Deprecated
-    private ContextMapJsonProvider contextMapProvider;
     private GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsProvider;
     /**
      * When not null, markers will be included according
@@ -139,9 +122,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         getProviders().addCallerData(this.callerDataProvider);
         getProviders().addStackTrace(this.stackTraceProvider);
         getProviders().addContext(this.contextProvider);
-        getProviders().addJsonMessage(this.jsonMessageProvider);
         getProviders().addMdc(this.mdcProvider);
-        getProviders().addContextMap(this.contextMapProvider);
         getProviders().addGlobalCustomFields(this.globalCustomFieldsProvider);
         getProviders().addTags(this.tagsProvider);
         getProviders().addLogstashMarkers(this.logstashMarkersProvider);
@@ -302,7 +283,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public List<String> getIncludeMdcKeyNames() {
         return isIncludeMdc()
                 ? mdcProvider.getIncludeMdcKeyNames()
-                : Collections.<String>emptyList();
+                : Collections.emptyList();
     }
     public void addIncludeMdcKeyName(String includedMdcKeyName) {
         if (isIncludeMdc()) {
@@ -318,7 +299,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public List<String> getExcludeMdcKeyNames() {
         return isIncludeMdc()
                 ? mdcProvider.getExcludeMdcKeyNames()
-                : Collections.<String>emptyList();
+                : Collections.emptyList();
     }
     public void addExcludeMdcKeyName(String excludedMdcKeyName) {
         if (isIncludeMdc()) {
@@ -344,7 +325,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         if (isIncludeContext() != includeContext) {
             getProviders().removeProvider(contextProvider);
             if (includeContext) {
-                contextProvider = new ContextJsonProvider<ILoggingEvent>();
+                contextProvider = new ContextJsonProvider<>();
                 getProviders().addContext(contextProvider);
             } else {
                 contextProvider = null;
@@ -390,32 +371,6 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     }
     public void setWriteVersionAsInteger(boolean writeVersionAsInteger) {
         this.versionProvider.setWriteAsInteger(writeVersionAsInteger);
-    }
-
-    /**
-     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
-     * @return true if the last Map argument should be appended
-     */
-    @Deprecated
-    public boolean isEnableContextMap() {
-        return contextMapProvider != null;
-    }
-
-    /**
-     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
-     * @param enableContextMap true if the last Map argument should be appended
-     */
-    @Deprecated
-    public void setEnableContextMap(boolean enableContextMap) {
-        if (isEnableContextMap() != enableContextMap) {
-            getProviders().removeProvider(contextMapProvider);
-            if (enableContextMap) {
-                contextMapProvider = new ContextMapJsonProvider();
-                getProviders().addContextMap(contextMapProvider);
-            } else {
-                contextMapProvider = null;
-            }
-        }
     }
 
     /**
