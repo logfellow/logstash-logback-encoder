@@ -161,11 +161,6 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().setShortenedLoggerNameLength(length);
     }
     
-    @Deprecated
-    public void setEnableContextMap(boolean enableContextMap) {
-        getFormatter().setEnableContextMap(enableContextMap);
-    }
-
     public String getTimeZone() {
         return getFormatter().getTimeZone();
     }

@@ -52,9 +52,6 @@ public class TagsJsonProviderTest {
     @Mock
     private Marker marker3;
     
-    @Mock
-    private Marker marker4;
-    
     @BeforeEach
     public void setup() {
         when(marker1.hasReferences()).thenReturn(true);
@@ -62,15 +59,9 @@ public class TagsJsonProviderTest {
         
         when(marker2.hasReferences()).thenReturn(true);
         when(marker2.iterator()).thenReturn(Collections.singleton(marker3).iterator());
-        
-        when(marker3.hasReferences()).thenReturn(true);
-        when(marker3.iterator()).thenReturn(Collections.singleton(marker4).iterator());
-        
-        
+
         when(marker1.getName()).thenReturn("marker1");
-        when(marker2.getName()).thenReturn("marker2");
-        when(marker3.getName()).thenReturn(JsonMessageJsonProvider.JSON_MARKER_NAME);
-        when(marker4.getName()).thenReturn("marker4");
+        when(marker3.getName()).thenReturn("marker3");
         
         when(event.getMarker()).thenReturn(marker1);
         
@@ -85,7 +76,7 @@ public class TagsJsonProviderTest {
         
         inOrder.verify(generator).writeArrayFieldStart(TagsJsonProvider.FIELD_TAGS);
         inOrder.verify(generator).writeString("marker1");
-        inOrder.verify(generator).writeString("marker4");
+        inOrder.verify(generator).writeString("marker3");
         inOrder.verify(generator).writeEndArray();
     }
 
@@ -99,7 +90,7 @@ public class TagsJsonProviderTest {
         
         inOrder.verify(generator).writeArrayFieldStart("newFieldName");
         inOrder.verify(generator).writeString("marker1");
-        inOrder.verify(generator).writeString("marker4");
+        inOrder.verify(generator).writeString("marker3");
         inOrder.verify(generator).writeEndArray();
     }
 
@@ -115,7 +106,7 @@ public class TagsJsonProviderTest {
         
         inOrder.verify(generator).writeArrayFieldStart("newFieldName");
         inOrder.verify(generator).writeString("marker1");
-        inOrder.verify(generator).writeString("marker4");
+        inOrder.verify(generator).writeString("marker3");
         inOrder.verify(generator).writeEndArray();
     }
 
