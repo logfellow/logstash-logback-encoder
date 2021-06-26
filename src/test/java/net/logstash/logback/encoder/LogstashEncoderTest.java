@@ -314,7 +314,7 @@ public class LogstashEncoderTest {
         final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         when(event.getCallerData()).thenReturn(stackTraceElements);
         
-        encoder.setIncludeCallerInfo(true);
+        encoder.setIncludeCallerData(true);
         
         encoder.start();
         byte[] encoded = encoder.encode(event);
@@ -334,7 +334,7 @@ public class LogstashEncoderTest {
         final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         when(event.getCallerData()).thenReturn(stackTraceElements);
         
-        encoder.setIncludeCallerInfo(true);
+        encoder.setIncludeCallerData(true);
         encoder.getFieldNames().setCaller("caller");
         encoder.start();
         byte[] encoded = encoder.encode(event);
@@ -355,7 +355,7 @@ public class LogstashEncoderTest {
         when(event.getFormattedMessage()).thenReturn("My message");
         when(event.getLevel()).thenReturn(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(Collections.emptyMap());
-        encoder.setIncludeCallerInfo(false);
+        encoder.setIncludeCallerData(false);
         
         encoder.start();
         byte[] encoded = encoder.encode(event);

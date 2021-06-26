@@ -100,16 +100,16 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         this(declaredOrigin, false);
     }
 
-    public LogstashFormatter(ContextAware declaredOrigin, boolean includeCallerInfo) {
-        this(declaredOrigin, includeCallerInfo, null);
+    public LogstashFormatter(ContextAware declaredOrigin, boolean includeCallerData) {
+        this(declaredOrigin, includeCallerData, null);
     }
 
-    public LogstashFormatter(ContextAware declaredOrigin, boolean includeCallerInfo, JsonNode customFields) {
+    public LogstashFormatter(ContextAware declaredOrigin, boolean includeCallerData, JsonNode customFields) {
         super(declaredOrigin);
 
         this.fieldNames = new LogstashFieldNames();
 
-        setIncludeCallerInfo(includeCallerInfo);
+        setIncludeCallerData(includeCallerData);
         setCustomFields(customFields);
 
         getProviders().addTimestamp(this.timestampProvider);
@@ -158,24 +158,6 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
                 callerDataProvider = null;
             }
         }
-    }
-
-    /**
-     * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses)
-     * @return true if the caller info should be included
-     */
-    @Deprecated
-    public boolean isIncludeCallerInfo() {
-        return isIncludeCallerData();
-    }
-
-    /**
-     * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
-     * @param includeCallerInfo true if the caller info should be included
-     */
-    @Deprecated
-    public void setIncludeCallerInfo(boolean includeCallerInfo) {
-        setIncludeCallerData(includeCallerInfo);
     }
 
     public String getCustomFieldsAsString() {

@@ -54,22 +54,6 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().setIncludeCallerData(includeCallerData);
     }
     
-    /**
-     * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses)
-     */
-    @Deprecated
-    public boolean isIncludeCallerInfo() {
-        return getFormatter().isIncludeCallerInfo();
-    }
-    
-    /**
-     * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
-     */
-    @Deprecated
-    public void setIncludeCallerInfo(boolean includeCallerInfo) {
-        getFormatter().setIncludeCallerInfo(includeCallerInfo);
-    }
-    
     public LogstashFieldNames getFieldNames() {
         return getFormatter().getFieldNames();
     }
