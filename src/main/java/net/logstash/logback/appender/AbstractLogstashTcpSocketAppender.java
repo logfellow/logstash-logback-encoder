@@ -128,16 +128,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     /**
-     * The host to which to connect and send events
-     */
-    private String remoteHost;
-
-    /**
-     * The TCP port on the host to which to connect and send events
-     */
-    private int port = DEFAULT_PORT;
-
-    /**
      * Destinations to which to attempt to send logs, in order of preference.
      * <p>
      *
@@ -909,27 +899,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
 
         /*
-         * Destinations can be configured via <remoteHost>/<port> OR <destination> but not both!
-         */
-        if (!destinations.isEmpty() && remoteHost != null) {
-            errorCount++;
-            addError("Use '<remoteHost>/<port>' or '<destination>' but not both");
-        }
-
-        /*
-         * Handle destination specified using <remoteHost>/<port>
-         */
-        if (remoteHost != null) {
-            addWarn("<remoteHost>/<port> are DEPRECATED, use <destination> instead");
-            try {
-                addDestinations(InetSocketAddress.createUnresolved(remoteHost, port));
-            } catch (IllegalArgumentException e) {
-                errorCount++;
-                addError(e.getMessage());
-            }
-        }
-
-        /*
          * Make sure at least one destination has been specified
          */
         if (destinations.isEmpty()) {
@@ -1060,44 +1029,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     /**
-     * The host to which to connect and send events
-     *
-     * @deprecated use {@link #addDestination(String)} instead
-     */
-    @Deprecated
-    public void setRemoteHost(String host) {
-        remoteHost = host;
-    }
-
-    @Deprecated
-    public String getRemoteHost() {
-        return remoteHost;
-    }
-
-    /**
-     * The TCP port on the host to which to connect and send events
-     *
-     * @deprecated use {@link #addDestination(String)} instead
-     */
-    @Deprecated
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    @Deprecated
-    public int getPort() {
-        return port;
-    }
-
-    /**
      * Adds the given destination (or destinations) to the list of potential destinations
      * to which to send logs.
      * <p>
      *
      * The string is a comma separated list of destinations in the form of hostName[:portNumber].
      * <p>
-     * If portNumber is not provided, then the configured {@link #port} will be used,
-     * which defaults to {@value #DEFAULT_PORT}
+     * If portNumber is not provided, then the default ({@value #DEFAULT_PORT}) will be used
      * <p>
      *
      * For example, "host1.domain.com,host2.domain.com:5560"
