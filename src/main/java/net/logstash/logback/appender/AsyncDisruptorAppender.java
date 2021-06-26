@@ -531,34 +531,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.threadPoolCoreSize = threadPoolCoreSize;
     }
 
-    /**
-     * @deprecated use {@link #getThreadNameFormat()}
-     */
-    @Deprecated
-    public String getThreadNamePrefix() {
-        if (this.threadNameFormat != null && this.threadNameFormat.endsWith(THREAD_INDEX_FORMAT)) {
-            /*
-             * Try to return the old-style threadNamePrefix
-             */
-            return this.threadNameFormat.substring(0, this.threadNameFormat.length() - THREAD_INDEX_FORMAT.length());
-        }
-        /*
-         * Otherwise, just default to return the regular format
-         */
-        return threadNameFormat;
-    }
-
-    /**
-     * This is the old way to customize thread names.
-     *
-     * @param threadNamePrefix
-     * @deprecated use {@link #setThreadNameFormat(String)} instead.
-     */
-    @Deprecated
-    public void setThreadNamePrefix(String threadNamePrefix) {
-        setThreadNameFormat(threadNamePrefix + THREAD_INDEX_FORMAT);
-    }
-
     public String getThreadNameFormat() {
         return threadNameFormat;
     }
