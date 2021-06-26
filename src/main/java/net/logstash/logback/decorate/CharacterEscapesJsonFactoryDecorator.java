@@ -23,7 +23,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.SerializableString;
 import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.SerializedString;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
  * A {@link JsonFactoryDecorator} that can be used to customize the {@link JsonFactory#setCharacterEscapes(CharacterEscapes)}.
@@ -240,12 +239,6 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
      * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryDecorator#escapes}
      */
     private CustomizedCharacterEscapes characterEscapes;
-
-    @Override
-    @Deprecated
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        return (MappingJsonFactory) decorate((JsonFactory) factory);
-    }
 
     @Override
     public JsonFactory decorate(JsonFactory factory) {
