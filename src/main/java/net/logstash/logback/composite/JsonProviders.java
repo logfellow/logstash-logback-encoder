@@ -22,6 +22,8 @@ import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import ch.qos.logback.core.spi.LifeCycle;
+import net.logstash.logback.LifeCycleManager;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -38,20 +40,36 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
-public class JsonProviders<Event extends DeferredProcessingAware> implements JsonFactoryAware {
+public class JsonProviders<Event extends DeferredProcessingAware> implements JsonFactoryAware, LifeCycle {
     
     private final List<JsonProvider<Event>> jsonProviders = new ArrayList<JsonProvider<Event>>();
 
+    private boolean started;
+
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
     public void start() {
-        for (JsonProvider<Event> jsonProvider : jsonProviders) {
-            jsonProvider.start();
+        if (isStarted()) {
+            return;
         }
+        jsonProviders.forEach(lifecycleManager::start);
+        started = true;
     }
 
     public void stop() {
-        for (JsonProvider<Event> jsonProvider : jsonProviders) {
-            jsonProvider.stop();
+        if (!isStarted()) {
+            return;
         }
+        jsonProviders.forEach(lifecycleManager::stop);
+        started = false;
+    }
+
+    @Override
+    public boolean isStarted() {
+        return started;
     }
 
     public void setContext(Context context) {

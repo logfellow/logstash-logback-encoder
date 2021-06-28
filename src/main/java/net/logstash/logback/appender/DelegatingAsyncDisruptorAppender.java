@@ -30,6 +30,7 @@ import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.spi.AppenderAttachable;
 import ch.qos.logback.core.spi.AppenderAttachableImpl;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.appender.listener.AppenderListener;
 
 /**
@@ -52,7 +53,12 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
      * The delegate appenders.
      */
     private final AppenderAttachableImpl<Event> appenders = new AppenderAttachableImpl<Event>();
-    
+
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
     private class DelegatingEventHandler implements EventHandler<LogEvent<Event>> {
         /**
          * Whether exceptions should be reported with a error status or not.
@@ -142,18 +148,14 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
             if (appender.getContext() == null) {
                 appender.setContext(getContext());
             }
-            if (!appender.isStarted()) {
-                appender.start();
-            }
+            lifecycleManager.start(appender);
         }
     }
 
     private void stopDelegateAppenders() {
         for (Iterator<Appender<Event>> appenderIter = appenders.iteratorForAppenders(); appenderIter.hasNext();) {
             Appender<Event> appender = appenderIter.next();
-            if (appender.isStarted()) {
-                appender.stop();
-            }
+            lifecycleManager.stop(appender);
         }
     }
 

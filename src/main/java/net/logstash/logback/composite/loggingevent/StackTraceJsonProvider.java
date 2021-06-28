@@ -21,6 +21,7 @@ import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
@@ -41,19 +42,30 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
      */
     private ThrowableHandlingConverter throwableConverter = new ExtendedThrowableProxyConverter();
 
+    /**
+     * Manages the lifecycle of subcomponents
+     */
+    private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
     public StackTraceJsonProvider() {
         setFieldName(FIELD_STACK_TRACE);
     }
 
     @Override
     public void start() {
-        this.throwableConverter.start();
+        if (isStarted()) {
+            return;
+        }
+        lifecycleManager.start(this.throwableConverter);
         super.start();
     }
 
     @Override
     public void stop() {
-        this.throwableConverter.stop();
+        if (!isStarted()) {
+            return;
+        }
+        lifecycleManager.stop(this.throwableConverter);
         super.stop();
     }
 

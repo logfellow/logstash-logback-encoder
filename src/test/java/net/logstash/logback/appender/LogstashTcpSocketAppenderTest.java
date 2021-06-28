@@ -133,7 +133,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.start();
         
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
         
         appender.append(event1);
         
@@ -155,7 +155,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.start();
         
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
         
         appender.append(event1);
         
@@ -182,8 +182,8 @@ public class LogstashTcpSocketAppenderTest {
         appender.setReconnectionDelay(new Duration(100));
         
         appender.start();
-        
-        verify(encoder).start();
+
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();
         
         doThrow(new RuntimeException()).doReturn("event1".getBytes(StandardCharsets.UTF_8)).when(encoder).encode(event1);
         
@@ -210,7 +210,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.start();
         
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
         
         appender.append(event1);
         
@@ -230,7 +230,7 @@ public class LogstashTcpSocketAppenderTest {
         appender.addDestination("localhost:10001");
 
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
 
         // Only one socket should have been created
         verify(socket, timeout(VERIFICATION_TIMEOUT).times(1)).connect(any(SocketAddress.class), anyInt());
@@ -261,7 +261,7 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started.
         // It should try to connect to primary, fail then retry on secondary.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
 
         // TWO connection attempts must have been made (without delay)
         verify(socket, timeout(VERIFICATION_TIMEOUT).times(2)).connect(any(SocketAddress.class), anyInt());
@@ -292,7 +292,7 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started.
         // It should try to connect to second destination by random destination, fail then retry on first destination.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();
 
         // TWO connection attempts must have been made (without delay)
         verify(socket, timeout(VERIFICATION_TIMEOUT).times(2)).connect(any(SocketAddress.class), anyInt());
@@ -337,7 +337,7 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started
         // At this point, it should be connected to primary.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
 
         appender.append(event1);
 
@@ -373,7 +373,7 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started
         // At this point, it should be connected to primary.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
 
         
         // The appender is supposed to be on the secondary.
@@ -424,7 +424,7 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started
         // At this point, it should be connected to primary.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
         
         
         // THREE connection attempts must have been made in total
@@ -468,7 +468,7 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started
         // At this point, it should be connected to primary.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
 
         // Wait for a bit more than 2 keep alive messages then make sure we got the expected content
         Thread.sleep(250);
@@ -510,12 +510,12 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started
         // At this point, it should be connected to primary.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();
 
         appender.append(event1);
 
-        verify(goodOutputStream, timeout(1000)).write(any());
-        verify(goodOutputStream, timeout(1000)).flush();
+        verify(goodOutputStream, timeout(VERIFICATION_TIMEOUT)).write(any());
+        verify(goodOutputStream, timeout(VERIFICATION_TIMEOUT)).flush();
     }
 
     /**
@@ -550,7 +550,7 @@ public class LogstashTcpSocketAppenderTest {
         // Start the appender and verify it is actually started
         // At this point, it should be connected to primary.
         appender.start();
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
 
         // Wait for a bit more than a single keep alive message.
         // TWO connection attempts must have been made in total:
@@ -585,7 +585,7 @@ public class LogstashTcpSocketAppenderTest {
 
         appender.start();
 
-        verify(encoder).start();
+        verify(encoder, timeout(VERIFICATION_TIMEOUT)).start();;
 
         appender.append(event1);
 

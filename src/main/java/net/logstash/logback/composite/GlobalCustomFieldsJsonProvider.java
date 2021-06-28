@@ -98,5 +98,8 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     @Override
     public void setJsonFactory(JsonFactory jsonFactory) {
         this.jsonFactory = jsonFactory;
+        if (isStarted()) {
+            initializeCustomFields();
+        }
     }
 }

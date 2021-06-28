@@ -74,7 +74,7 @@ public class CompositeJsonEncoderTest {
     }
     
     @Test
-    public void testNoPrefixNoSuffix_logback12OrLater() throws IOException {
+    public void testNoPrefixNoSuffix() throws IOException {
         
         encoder.start();
         
@@ -88,14 +88,16 @@ public class CompositeJsonEncoderTest {
         verify(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
         
         assertThat(encoded).containsExactly(System.getProperty("line.separator").getBytes(StandardCharsets.UTF_8));
-        
+
+        when(formatter.isStarted()).thenReturn(true);
+
         encoder.stop();
         Assertions.assertFalse(encoder.isStarted());
         verify(formatter).stop();
     }
     
     @Test
-    public void testPrefixAndSuffix_logback12OrLater() throws IOException {
+    public void testPrefixAndSuffix() throws IOException {
         
         LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
         Encoder<ILoggingEvent> suffix = mock(Encoder.class);
@@ -125,7 +127,15 @@ public class CompositeJsonEncoderTest {
         verify(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
         
         assertThat(encoded).containsExactly(("prefixsuffix" + System.getProperty("line.separator")).getBytes(StandardCharsets.UTF_8));
-        
+
+        when(formatter.isStarted()).thenReturn(true);
+        when(prefix.isStarted()).thenReturn(true);
+        when(suffix.isStarted()).thenReturn(true);
+
+        when(formatter.isStarted()).thenReturn(true);
+        when(prefix.isStarted()).thenReturn(true);
+        when(suffix.isStarted()).thenReturn(true);
+
         encoder.stop();
         Assertions.assertFalse(encoder.isStarted());
         verify(formatter).stop();

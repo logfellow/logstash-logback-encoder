@@ -42,6 +42,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import net.logstash.logback.LifeCycleManager;
 import net.logstash.logback.appender.destination.DelegateDestinationConnectionStrategy;
 import net.logstash.logback.appender.destination.DestinationConnectionStrategy;
 import net.logstash.logback.appender.destination.DestinationParser;
@@ -350,6 +351,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         private Future<?> readerFuture;
 
         /**
+         * Manages the lifecycle of subcomponents
+         */
+        private final LifeCycleManager lifecycleManager = new LifeCycleManager();
+
+        /**
          * When run, if the {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
          * has elapsed since the last event was sent,
          * then this runnable will publish a keepAlive event to the ringBuffer.
@@ -621,6 +627,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         public void onStart() {
             this.destinationAttemptStartTimes = new long[destinations.size()];
             openSocket();
+            lifecycleManager.start(encoder);
             scheduleKeepAlive(System.nanoTime());
             scheduleWriteTimeout();
         }
@@ -629,7 +636,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         public void onShutdown() {
             unscheduleWriteTimeout();
             unscheduleKeepAlive();
-            closeEncoder();
+            lifecycleManager.stop(encoder);
             closeSocket();
         }
 
@@ -776,10 +783,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                  */
                 this.readerFuture.cancel(true);
             }
-        }
-
-        private void closeEncoder() {
-            encoder.stop();
         }
 
         private synchronized void scheduleKeepAlive(long basedOnNanoTime) {
@@ -936,10 +939,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         if (errorCount == 0) {
 
             encoder.setContext(getContext());
-            if (!encoder.isStarted()) {
-                encoder.start();
-            }
-
             /*
              * Increase the core size to handle the reader thread
              */
