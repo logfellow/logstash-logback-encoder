@@ -22,7 +22,7 @@ import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.util.ReusableByteBuffer;
-import net.logstash.logback.util.ReusableByteBuffers;
+import net.logstash.logback.util.ReusableByteBufferPool;
 
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -48,7 +48,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     /**
      * Provides reusable byte buffers (initialized when the encoder is started).
      */
-    private ReusableByteBuffers bufferPool;
+    private ReusableByteBufferPool bufferPool;
 
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
@@ -115,7 +115,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         }
         
         super.start();
-        this.bufferPool = new ReusableByteBuffers(this.minBufferSize);
+        this.bufferPool = new ReusableByteBufferPool(this.minBufferSize);
         formatter.setContext(getContext());
         formatter.start();
         charset = Charset.forName(formatter.getEncoding());

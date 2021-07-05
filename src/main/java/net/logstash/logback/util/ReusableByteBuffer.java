@@ -34,6 +34,8 @@ import java.util.Objects;
  * <p>The {@link #reset()} method clears the content and resets the buffer to its initial state.
  * Buffers are disposed except the initial buffer which is reused by subsequent usage.
  *
+ * <p>This class is *not* thread-safe!
+ * 
  * @author brenuart
  *
  */
@@ -62,7 +64,7 @@ public class ReusableByteBuffer extends OutputStream {
     /**
      * The write index in the tail buffer
      */
-    private int index = 0;
+    private int tailWriteIndex = 0;
 
     /**
      * Is the stream closed?
@@ -97,7 +99,7 @@ public class ReusableByteBuffer extends OutputStream {
         }
 
         growIfNeeded();
-        getTailBuffer()[this.index++] = (byte) datum;
+        getTailBuffer()[this.tailWriteIndex++] = (byte) datum;
     }
 
 
@@ -114,13 +116,13 @@ public class ReusableByteBuffer extends OutputStream {
 
         while (length > 0) {
             byte[] buffer = getTailBuffer();
-            int freeSpace = buffer.length - this.index;
+            int freeSpace = buffer.length - this.tailWriteIndex;
 
             if (freeSpace > 0) {
                 int toCopy = Math.min(freeSpace, length);
-                System.arraycopy(data, offset, buffer, this.index, toCopy);
+                System.arraycopy(data, offset, buffer, this.tailWriteIndex, toCopy);
                 offset += toCopy;
-                this.index += toCopy;
+                this.tailWriteIndex += toCopy;
                 length -= toCopy;
             }
 
@@ -143,7 +145,7 @@ public class ReusableByteBuffer extends OutputStream {
      * @return the current size of the buffer.
      */
     public int size() {
-        return this.alreadyBufferedSize + this.index;
+        return this.alreadyBufferedSize + this.tailWriteIndex;
     }
 
 
@@ -158,9 +160,8 @@ public class ReusableByteBuffer extends OutputStream {
         this.buffers.clear();
         this.buffers.add(initialBuffer);
 
-        //this.nextBlockSize = this.initialBlockSize;
         this.closed = false;
-        this.index = 0;
+        this.tailWriteIndex = 0;
         this.alreadyBufferedSize = 0;
     }
 
@@ -177,7 +178,7 @@ public class ReusableByteBuffer extends OutputStream {
             if (it.hasNext()) {
                 out.write(buffer, 0, buffer.length);
             } else {
-                out.write(buffer, 0, this.index);
+                out.write(buffer, 0, this.tailWriteIndex);
             }
         }
     }
@@ -209,7 +210,7 @@ public class ReusableByteBuffer extends OutputStream {
                 System.arraycopy(buffer, 0, result, offset, buffer.length);
                 offset += buffer.length;
             } else {
-                System.arraycopy(buffer, 0, result, offset, this.index);
+                System.arraycopy(buffer, 0, result, offset, this.tailWriteIndex);
             }
         }
 
@@ -221,10 +222,10 @@ public class ReusableByteBuffer extends OutputStream {
      * Allocate a new chunk if needed
      */
     private void growIfNeeded() {
-        if (getTailBuffer().length == this.index) {
-            this.alreadyBufferedSize += this.index;
-            this.buffers.add(new byte[this.index * 2]); // block size doubles each time
-            this.index = 0;
+        if (getTailBuffer().length == this.tailWriteIndex) {
+            this.alreadyBufferedSize += this.tailWriteIndex;
+            this.buffers.add(new byte[this.tailWriteIndex * 2]); // block size doubles each time
+            this.tailWriteIndex = 0;
         }
     }
 

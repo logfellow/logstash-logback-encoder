@@ -24,7 +24,7 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.util.ReusableByteBuffer;
-import net.logstash.logback.util.ReusableByteBuffers;
+import net.logstash.logback.util.ReusableByteBufferPool;
 
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
@@ -62,7 +62,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     /**
      * Provides reusable byte buffers (initialized when layout is started)
      */
-    private ReusableByteBuffers bufferPool;
+    private ReusableByteBufferPool bufferPool;
     
     
     private final CompositeJsonFormatter<Event> formatter;
@@ -120,7 +120,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     @Override
     public void start() {
         super.start();
-        this.bufferPool = new ReusableByteBuffers(this.minBufferSize);
+        this.bufferPool = new ReusableByteBufferPool(this.minBufferSize);
         formatter.setContext(getContext());
         formatter.start();
         startWrapped(prefix);

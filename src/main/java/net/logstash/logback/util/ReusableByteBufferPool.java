@@ -22,12 +22,12 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * A pool of {@link ReusableByteBuffer}.
  * 
  * <p>The pool is technically unbounded but will never hold more buffers than the number of concurrent
- * threads accessing it. Buffers are kept in the pool using weak references so they can be garbage
+ * threads accessing it. Buffers are kept in the pool using soft references so they can be garbage
  * collected by the JVM when running low in memory.
  * 
  * @author brenuart
  */
-public class ReusableByteBuffers {
+public class ReusableByteBufferPool {
 
     /**
      * Pool of reusable buffers.
@@ -44,7 +44,7 @@ public class ReusableByteBuffers {
      *
      * @param intialCapacity the initial capacity of buffers created by this pool.
      */
-    public ReusableByteBuffers(int intialCapacity) {
+    public ReusableByteBufferPool(int intialCapacity) {
         if (intialCapacity <= 0) {
             throw new IllegalArgumentException("initialCapacity must be greater than 0");
         }
@@ -54,7 +54,7 @@ public class ReusableByteBuffers {
     /**
      * Create a new buffer pool holding buffers with a default initial capacity.
      */
-    public ReusableByteBuffers() {
+    public ReusableByteBufferPool() {
         this(ReusableByteBuffer.DEFAULT_INITIAL_CAPACITY);
     }
 
@@ -69,7 +69,7 @@ public class ReusableByteBuffers {
     
     /**
      * Get a buffer from the pool or create a new one if none is available.
-     * The buffer is automatically returned to the pooled when closed.
+     * The buffer must be returned to the pool after usage by a call to {@link #release(ReusableByteBuffer)}.
      * 
      * @return a reusable byte buffer
      */
