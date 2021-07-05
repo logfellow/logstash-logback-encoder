@@ -403,24 +403,24 @@
                 <!-- Configure checkstyle with sensible defaults for this project so it can be
                      executed standalone from the CLI as follows:
                      
-                         mvn checkstyle:check 
+                         mvn checkstyle:check
                  -->
-	            <plugin>
-	                <groupId>org.apache.maven.plugins</groupId>
-	                <artifactId>maven-checkstyle-plugin</artifactId>
-	                <version>${maven-checkstyle-plugin.version}</version>
-	                <configuration>
-	                    <configLocation>src/checkstyle/checkstyle.xml</configLocation>
-	                </configuration>
-	                <dependencies>
-						<dependency>
-							<groupId>com.puppycrawl.tools</groupId>
-	              			<artifactId>checkstyle</artifactId>
-	              			<version>${checkstyle.version}</version>
-	            		</dependency>
-	                </dependencies>
-	            </plugin>
-	            
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-checkstyle-plugin</artifactId>
+                    <version>${maven-checkstyle-plugin.version}</version>
+                    <configuration>
+                        <configLocation>src/checkstyle/checkstyle.xml</configLocation>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.puppycrawl.tools</groupId>
+                              <artifactId>checkstyle</artifactId>
+                              <version>${checkstyle.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+                
                 <!-- This plugin's configuration is used to store Eclipse m2e settings only. 
                      It has no influence on the Maven build itself.
                 -->
