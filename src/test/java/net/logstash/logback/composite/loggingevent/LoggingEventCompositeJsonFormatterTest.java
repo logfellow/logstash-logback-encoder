@@ -13,8 +13,10 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import net.logstash.logback.argument.StructuredArguments;
@@ -48,7 +50,9 @@ public class LoggingEventCompositeJsonFormatterTest {
         /*
          * This should not throw an exception, since SerializationFeature.FAIL_ON_EMPTY_BEANS is disabled
          */
-        formatter.writeEventAsString(event);
+        try(ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            assertThatCode(() -> formatter.writeEventToOutputStream(event, bos)).doesNotThrowAnyException();
+        }
     }
 
 }

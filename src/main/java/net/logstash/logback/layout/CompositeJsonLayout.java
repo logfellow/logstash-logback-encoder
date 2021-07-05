@@ -14,17 +14,22 @@
 package net.logstash.logback.layout;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.encoder.CompositeJsonEncoder;
+import net.logstash.logback.encoder.SeparatorParser;
+import net.logstash.logback.util.ReusableByteBuffer;
+import net.logstash.logback.util.ReusableByteBuffers;
+
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import net.logstash.logback.encoder.CompositeJsonEncoder;
-import net.logstash.logback.encoder.SeparatorParser;
 
 
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
@@ -43,6 +48,25 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
      */
     private String lineSeparator;
 
+    /**
+     * The minimum size of the byte buffer used when encoding events in logback versions 
+     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
+     * the encoder. 
+     * 
+     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to 
+     * accommodate with larger events. However, only the first {@code minBufferSize} bytes 
+     * will be reused by subsequent invocations. It is therefore strongly advised to set
+     * the minimum size at least equal to the average size of the encoded events to reduce
+     * unnecessary memory allocations and reduce pressure on the garbage collector.
+     */
+    private int minBufferSize = 1024;
+    
+    /**
+     * Provides reusable byte buffers (initialized when layout is started)
+     */
+    private ReusableByteBuffers bufferPool;
+    
+    
     private final CompositeJsonFormatter<Event> formatter;
     
     public CompositeJsonLayout() {
@@ -52,51 +76,55 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     
     protected abstract CompositeJsonFormatter<Event> createFormatter();
 
+    @Override
     public String doLayout(Event event) {
         if (!isStarted()) {
             throw new IllegalStateException("Layout is not started");
         }
-        final String result;
-        try {
-            result = formatter.writeEventAsString(event);
-        } catch (IOException e) {
+        
+        ReusableByteBuffer buffer = this.bufferPool.getBuffer();
+        try(OutputStreamWriter writer = new OutputStreamWriter(buffer)) {
+            writeLayout(   prefix, writer, event);
+            writeFormatter(        writer, event);
+            writeLayout(   suffix, writer, event);
+            
+            if (lineSeparator!=null) {
+                writer.write(lineSeparator);
+            }
+            writer.flush();
+
+            return new String(buffer.toByteArray());
+        }
+        catch (IOException e) {
             addWarn("Error formatting logging event", e);
             return null;
         }
-        
-        if (prefix == null && suffix == null && lineSeparator == null) {
-            return result;
+        finally {
+            bufferPool.releaseBuffer(buffer);
         }
-        
-        String prefixResult = doLayoutWrapped(prefix, event);
-        String suffixResult = doLayoutWrapped(suffix, event);
-        
-        int size = result.length()
-                + (prefixResult == null ? 0 : prefixResult.length())
-                + (suffixResult == null ? 0 : suffixResult.length())
-                + (lineSeparator == null ? 0 : lineSeparator.length());
-        
-        StringBuilder stringBuilder = new StringBuilder(size);
-        if (prefixResult != null) {
-            stringBuilder.append(prefixResult);
-        }
-        stringBuilder.append(result);
-        if (suffixResult != null) {
-            stringBuilder.append(suffixResult);
-        }
-        if (lineSeparator != null) {
-            stringBuilder.append(lineSeparator);
-        }
-        return stringBuilder.toString();
     }
 
-    private String doLayoutWrapped(Layout<Event> wrapped, Event event) {
-        return wrapped == null ? null : wrapped.doLayout(event);
+    
+    private void writeLayout(Layout<Event> wrapped, Writer writer, Event event) throws IOException {
+        if (wrapped==null) {
+            return;
+        }
+        
+        String str = wrapped.doLayout(event);
+        if (str!=null) {
+            writer.write(str);
+        }
     }
+    
+    private void writeFormatter(Writer writer, Event event) throws IOException {
+        this.formatter.writeEventToWriter(event, writer);
+    }
+
     
     @Override
     public void start() {
         super.start();
+        this.bufferPool = new ReusableByteBuffers(this.minBufferSize);
         formatter.setContext(getContext());
         formatter.start();
         startWrapped(prefix);
@@ -212,4 +240,25 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
     }
 
+    public int getMinBufferSize() {
+        return minBufferSize;
+    }
+    
+    /**
+     * The minimum size of the byte buffer used when encoding events in logback versions 
+     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
+     * the encoder. 
+     * 
+     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to 
+     * accommodate with larger events. However, only the first {@code minBufferSize} bytes 
+     * will be reused by subsequent invocations. It is therefore strongly advised to set
+     * the minimum size at least equal to the average size of the encoded events to reduce
+     * unnecessary memory allocations and reduce pressure on the garbage collector.
+     * 
+     * <p>Note: changes to the buffer size will not be taken into account after the encoder
+     *          is started.
+     */
+    public void setMinBufferSize(int minBufferSize) {
+        this.minBufferSize = minBufferSize;
+    }
 }

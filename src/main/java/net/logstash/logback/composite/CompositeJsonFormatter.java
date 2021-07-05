@@ -22,12 +22,10 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.NullJsonFactoryDecorator;
 import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
-import net.logstash.logback.util.ThreadLocalBuffers;
 
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.io.SegmentedStringWriter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -50,12 +48,6 @@ import ch.qos.logback.core.spi.LifeCycle;
  */
 public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAware>
         extends ContextAwareBase implements LifeCycle {
-
-    /**
-     * Provides thread local buffers
-     */
-    private final ThreadLocalBuffers buffers = new ThreadLocalBuffers();
-    
     
     /**
      * Used to create the necessary {@link JsonGenerator}s for generating JSON.
@@ -141,8 +133,16 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
                  * when the appender performs the flushes at appropriate times
                  * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
                  */
-                .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+                .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
 
+                /*
+                 * Don't let the json generator close the underlying outputStream and let the
+                 * encoder managed it.
+                 */
+                .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+                
+                //FIXME these settings are mandatory - should we instead apply them *after* jsonGeneratorDecorator is applied (ie. in createGenerator()) ?
+        
         return this.jsonFactoryDecorator.decorate(jsonFactory);
     }
 
@@ -158,16 +158,9 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
          */
     }
 
-    public String writeEventAsString(Event event) throws IOException {
-        SegmentedStringWriter writer = this.buffers.getStringWriter();
-
+    public void writeEventToWriter(Event event, Writer writer) throws IOException {
         try (JsonGenerator generator = createGenerator(writer)) {
             writeEventToGenerator(generator, event);
-            return writer.getAndClear();
-        }
-        finally {
-            // make sure the buffer is released!
-            writer.getAndClear();
         }
     }
 
@@ -189,7 +182,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     private JsonGenerator createGenerator(OutputStream outputStream) throws IOException {
         return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(outputStream, encoding));
     }
-
+    
     private JsonGenerator createGenerator(Writer writer) throws IOException {
         return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(writer));
     }

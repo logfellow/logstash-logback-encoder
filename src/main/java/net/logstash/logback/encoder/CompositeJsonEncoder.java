@@ -21,9 +21,8 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
-import net.logstash.logback.util.ThreadLocalBuffers;
-
-import com.fasterxml.jackson.core.util.ByteArrayBuilder;
+import net.logstash.logback.util.ReusableByteBuffer;
+import net.logstash.logback.util.ReusableByteBuffers;
 
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -37,19 +36,23 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private static final byte[] EMPTY_BYTES = new byte[0];
     
     /**
-     * The minimum size of the byte array buffer used when 
-     * encoding events in logback versions greater than or equal to 1.2.0.
+     * The minimum size of the byte buffer used when encoding events in logback versions 
+     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
+     * the encoder. 
      * 
-     * The actual buffer size will be the {@link #minBufferSize}
-     * plus the prefix, suffix, and line separators sizes.
+     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to 
+     * accommodate with larger events. However, only the first {@code minBufferSize} bytes 
+     * will be reused by subsequent invocations. It is therefore strongly advised to set
+     * the minimum size at least equal to the average size of the encoded events to reduce
+     * unnecessary memory allocations and reduce pressure on the garbage collector.
      */
     private int minBufferSize = 1024;
     
     /**
-     * Provides thread local buffers 
+     * Provides reusable byte buffers (initialized when the encoder is started).
      */
-    private final ThreadLocalBuffers buffers = new ThreadLocalBuffers();
-
+    private ReusableByteBuffers bufferPool;
+    
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
     
@@ -74,10 +77,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         if (!isStarted()) {
             throw new IllegalStateException("Encoder is not started");
         }
-        if (!isStarted()) {
-            throw new IllegalStateException("Encoder is not started.");
-        }
-        
+
         encode(prefix, event, outputStream);
         formatter.writeEventToOutputStream(event, outputStream);
         encode(suffix, event, outputStream);
@@ -87,20 +87,21 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     
     @Override
     public byte[] encode(Event event) {
-        ByteArrayBuilder buffer = null;
+        if (!isStarted()) {
+            throw new IllegalStateException("Encoder is not started");
+        }
+        
+        ReusableByteBuffer buffer = bufferPool.getBuffer();
         try {
-            buffer = this.buffers.getByteBuffer(getMinBufferSize());
             encode(event, buffer);
             return buffer.toByteArray();
         }
-        catch (IOException e) {
+        catch(IOException e) {
             addWarn("Error encountered while encoding log event. Event: " + event, e);
             return EMPTY_BYTES;
         }
         finally {
-            if (buffer!=null) {
-                buffer.release();
-            }
+            bufferPool.releaseBuffer(buffer);
         }
     }
     
@@ -120,6 +121,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         }
         
         super.start();
+        this.bufferPool = new ReusableByteBuffers(this.minBufferSize);
         formatter.setContext(getContext());
         formatter.start();
         charset = Charset.forName(formatter.getEncoding());
@@ -254,12 +256,20 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     public int getMinBufferSize() {
         return minBufferSize;
     }
+    
     /**
-     * Sets the minimum size of the byte array buffer used when 
-     * encoding events in logback versions greater than or equal to 1.2.0.
+     * The minimum size of the byte buffer used when encoding events in logback versions 
+     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
+     * the encoder. 
      * 
-     * The actual buffer size will be the {@link #minBufferSize}
-     * plus the prefix, suffix, and line separators sizes.
+     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to 
+     * accommodate with larger events. However, only the first {@code minBufferSize} bytes 
+     * will be reused by subsequent invocations. It is therefore strongly advised to set
+     * the minimum size at least equal to the average size of the encoded events to reduce
+     * unnecessary memory allocations and reduce pressure on the garbage collector.
+     * 
+     * <p>Note: changes to the buffer size will not be taken into account after the encoder
+     *          is started.
      */
     public void setMinBufferSize(int minBufferSize) {
         this.minBufferSize = minBufferSize;
