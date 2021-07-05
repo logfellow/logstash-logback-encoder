@@ -1801,6 +1801,10 @@ The logstash-logback-encoder library contains many providers out-of-the-box,
 and you can even plug-in your own by extending `JsonProvider`.
 Each provider has its own configuration options to further customize it.
 
+These encoders/layouts make use of an internal buffer to hold the JSON output during the rendering process. 
+The size of this buffer is set to `1024` bytes by default. A different size can be configured by setting the `minBufferSize` property to the desired value.
+The buffer automatically grows above the `minBufferSize` when needed to accommodate with larger events. However, only the first `minBufferSize` bytes will be reused by subsequent invocations. It is therefore strongly advised to set the minimum size at least equal to the average size of the encoded events to reduce unnecessary memory allocations and reduce pressure on the garbage collector.
+
 
 #### Providers for LoggingEvents
 

@@ -16,28 +16,25 @@ package net.logstash.logback.composite;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
-import java.lang.ref.SoftReference;
 import java.util.ServiceConfigurationError;
 
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.NullJsonFactoryDecorator;
 import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
+
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
-
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.io.SegmentedStringWriter;
-import com.fasterxml.jackson.core.util.BufferRecycler;
-import com.fasterxml.jackson.core.util.ByteArrayBuilder;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Formats logstash Events as JSON using {@link JsonProvider}s.
@@ -51,18 +48,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  */
 public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAware>
         extends ContextAwareBase implements LifeCycle {
-
-    /**
-     * This <code>ThreadLocal</code> contains a {@link java.lang.ref.SoftReference}
-     * to a {@link BufferRecycler} used to provide a low-cost
-     * buffer recycling between writer instances.
-     */
-    private final ThreadLocal<SoftReference<BufferRecycler>> recycler = new ThreadLocal<SoftReference<BufferRecycler>>() {
-        protected SoftReference<BufferRecycler> initialValue() {
-            final BufferRecycler bufferRecycler = new BufferRecycler();
-            return new SoftReference<BufferRecycler>(bufferRecycler);
-        }
-    };
 
     /**
      * Used to create the necessary {@link JsonGenerator}s for generating JSON.
@@ -134,35 +119,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
             }
         }
 
-        JsonFactory jsonFactory = objectMapper
-                .getFactory()
-                /*
-                 * When generators are flushed, don't flush the underlying outputStream.
-                 *
-                 * This allows some streaming optimizations when using an encoder.
-                 *
-                 * The encoder generally determines when the stream should be flushed
-                 * by an 'immediateFlush' property.
-                 *
-                 * The 'immediateFlush' property of the encoder can be set to false
-                 * when the appender performs the flushes at appropriate times
-                 * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
-                 */
-                .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
-
-        return this.jsonFactoryDecorator.decorate(jsonFactory);
-    }
-
-    public byte[] writeEventAsBytes(Event event) throws IOException {
-        ByteArrayBuilder outputStream = new ByteArrayBuilder(getBufferRecycler());
-
-        try {
-            writeEventToOutputStream(event, outputStream);
-            outputStream.flush();
-            return outputStream.toByteArray();
-        } finally {
-            outputStream.release();
-        }
+        return this.jsonFactoryDecorator.decorate(objectMapper.getFactory());
     }
 
     public void writeEventToOutputStream(Event event, OutputStream outputStream) throws IOException {
@@ -177,13 +134,9 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
          */
     }
 
-    public String writeEventAsString(Event event) throws IOException {
-        SegmentedStringWriter writer = new SegmentedStringWriter(getBufferRecycler());
-
+    public void writeEventToWriter(Event event, Writer writer) throws IOException {
         try (JsonGenerator generator = createGenerator(writer)) {
             writeEventToGenerator(generator, event);
-            writer.flush();
-            return writer.getAndClear();
         }
     }
 
@@ -203,23 +156,36 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     }
 
     private JsonGenerator createGenerator(OutputStream outputStream) throws IOException {
-        return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(outputStream, encoding));
+        return decorateGenerator(jsonFactory.createGenerator(outputStream, encoding));
     }
-
+    
     private JsonGenerator createGenerator(Writer writer) throws IOException {
-        return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(writer));
+        return decorateGenerator(jsonFactory.createGenerator(writer));
     }
 
-    private BufferRecycler getBufferRecycler() {
-        SoftReference<BufferRecycler> bufferRecyclerReference = recycler.get();
-        BufferRecycler bufferRecycler = bufferRecyclerReference.get();
-        if (bufferRecycler == null) {
-            recycler.remove();
-            return getBufferRecycler();
-        }
-        return bufferRecycler;
-    }
+    private JsonGenerator decorateGenerator(JsonGenerator generator) {
+        return this.jsonGeneratorDecorator.decorate(generator)
+               /*
+                * When generators are flushed, don't flush the underlying outputStream.
+                *
+                * This allows some streaming optimizations when using an encoder.
+                *
+                * The encoder generally determines when the stream should be flushed
+                * by an 'immediateFlush' property.
+                *
+                * The 'immediateFlush' property of the encoder can be set to false
+                * when the appender performs the flushes at appropriate times
+                * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
+                */
+               .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
 
+               /*
+                * Don't let the json generator close the underlying outputStream and let the
+                * encoder managed it.
+                */
+               .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+    }
+    
     public JsonFactory getJsonFactory() {
         return jsonFactory;
     }
