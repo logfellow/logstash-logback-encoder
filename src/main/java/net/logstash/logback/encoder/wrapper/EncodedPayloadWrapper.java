@@ -11,18 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder;
+package net.logstash.logback.encoder.wrapper;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import java.io.IOException;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-public class LogstashBeatsEncoder extends LogstashEncoder {
-
-    private final AtomicInteger sequenceNumber = new AtomicInteger();
-
-    @Override
-    public byte[] encode(ILoggingEvent iLoggingEvent) {
-        return BeatsPayloadWrapper.wrapAsBeatsOrReturnEmpty(super.encode(iLoggingEvent), sequenceNumber, this::addError);
-    }
+/**
+ * Wraps encoded payload (with prefix and suffix).
+ * Can be used to convert plain bytes to a given format.
+ */
+public interface EncodedPayloadWrapper {
+    byte[] wrap(byte[] encoded) throws IOException;
 }

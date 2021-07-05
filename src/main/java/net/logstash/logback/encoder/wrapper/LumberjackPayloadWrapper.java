@@ -11,44 +11,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder;
+package net.logstash.logback.encoder.wrapper;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiConsumer;
 
 /**
- * Util to wrap encoder output that should be compatible with a Beats input.
+ * Wraps payload so it should be compatible with a Beats input (Lumberjack protocol).
  * Can be used with Logstash input or Graylog's Beats input.
  *
  * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash's documentation</a>
  * to read more about this protocol.
  */
-public class BeatsPayloadWrapper {
+public class LumberjackPayloadWrapper implements EncodedPayloadWrapper {
 
     private static final int INT_SIZE_IN_BYTES = 4;
 
     private static final byte PROTOCOL_VERSION = '2';
     private static final byte PAYLOAD_JSON_TYPE = 'J';
 
-    private BeatsPayloadWrapper() {
-        // util
+    private int counter;
+
+    public LumberjackPayloadWrapper() {
+        this.counter = 0;
     }
 
-    public static byte[] wrapAsBeatsOrReturnEmpty(byte[] encoded, AtomicInteger counter, BiConsumer<String, IOException> exceptionConsumer) {
-        try {
-            return wrapAsBeats(encoded, counter);
-        } catch (IOException e) {
-            exceptionConsumer.accept("Cannot wrap encoded event as Beats", e);
-        }
-        return new byte[0];
-    }
-
-    public static byte[] wrapAsBeats(byte[] encoded, AtomicInteger counter) throws IOException {
+    @Override
+    public byte[] wrap(byte[] encoded) throws IOException {
         byte[] payloadLength = intToBytes(encoded.length);
-        byte[] sequenceNumber = intToBytes(counter.getAndIncrement());
+        byte[] sequenceNumber = intToBytes(counter++);
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(
                 2 + encoded.length + payloadLength.length + sequenceNumber.length
@@ -66,7 +58,7 @@ public class BeatsPayloadWrapper {
     private static byte[] intToBytes(int value) {
         byte[] result = new byte[INT_SIZE_IN_BYTES];
         byte[] unpadded = BigInteger.valueOf(value).toByteArray();
-        for (int i = unpadded.length - 1, j = result.length - 1; i >= 0 && j >= 0; i++, j++) {
+        for (int i = unpadded.length - 1, j = result.length - 1; i >= 0 && j >= 0; i--, j--) {
             result[j] = unpadded[i];
         }
         return result;

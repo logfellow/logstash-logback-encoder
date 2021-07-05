@@ -26,6 +26,8 @@ import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.encoder.wrapper.EncodedPayloadWrapper;
+import net.logstash.logback.encoder.wrapper.LumberjackPayloadWrapper;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
         extends EncoderBase<Event> {
@@ -43,6 +45,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
+    private EncodedPayloadWrapper payloadWrapper;
 
     private final CompositeJsonFormatter<Event> formatter;
 
@@ -85,7 +88,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
             outputStream.write(lineSeparatorBytes);
 
-            return outputStream.toByteArray();
+            return wrapEncoded(outputStream.toByteArray());
         } catch (IOException e) {
             addWarn("Error encountered while encoding log event. "
                     + "Event: " + event, e);
@@ -104,6 +107,13 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             return wrapped.encode(event);
         }
         return EMPTY_BYTES;
+    }
+
+    private byte[] wrapEncoded(byte[] encoded) throws IOException {
+        if (payloadWrapper != null) {
+            return payloadWrapper.wrap(encoded);
+        }
+        return encoded;
     }
 
     @Override
@@ -270,4 +280,10 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         this.suffix = suffix;
     }
 
+    public EncodedPayloadWrapper getPayloadWrapper() {
+        return payloadWrapper;
+    }
+    public void setPayloadWrapper(EncodedPayloadWrapper wrapper) {
+        this.payloadWrapper = wrapper;
+    }
 }
