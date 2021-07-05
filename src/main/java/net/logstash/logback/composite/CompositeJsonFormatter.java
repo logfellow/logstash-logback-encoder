@@ -119,31 +119,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
             }
         }
 
-        JsonFactory jsonFactory = objectMapper
-                .getFactory()
-                /*
-                 * When generators are flushed, don't flush the underlying outputStream.
-                 *
-                 * This allows some streaming optimizations when using an encoder.
-                 *
-                 * The encoder generally determines when the stream should be flushed
-                 * by an 'immediateFlush' property.
-                 *
-                 * The 'immediateFlush' property of the encoder can be set to false
-                 * when the appender performs the flushes at appropriate times
-                 * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
-                 */
-                .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
-
-                /*
-                 * Don't let the json generator close the underlying outputStream and let the
-                 * encoder managed it.
-                 */
-                .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
-                
-                //FIXME these settings are mandatory - should we instead apply them *after* jsonGeneratorDecorator is applied (ie. in createGenerator()) ?
-        
-        return this.jsonFactoryDecorator.decorate(jsonFactory);
+        return this.jsonFactoryDecorator.decorate(objectMapper.getFactory());
     }
 
     public void writeEventToOutputStream(Event event, OutputStream outputStream) throws IOException {
@@ -180,13 +156,36 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     }
 
     private JsonGenerator createGenerator(OutputStream outputStream) throws IOException {
-        return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(outputStream, encoding));
+        return decorateGenerator(jsonFactory.createGenerator(outputStream, encoding));
     }
     
     private JsonGenerator createGenerator(Writer writer) throws IOException {
-        return this.jsonGeneratorDecorator.decorate(jsonFactory.createGenerator(writer));
+        return decorateGenerator(jsonFactory.createGenerator(writer));
     }
 
+    private JsonGenerator decorateGenerator(JsonGenerator generator) {
+        return this.jsonGeneratorDecorator.decorate(generator)
+               /*
+                * When generators are flushed, don't flush the underlying outputStream.
+                *
+                * This allows some streaming optimizations when using an encoder.
+                *
+                * The encoder generally determines when the stream should be flushed
+                * by an 'immediateFlush' property.
+                *
+                * The 'immediateFlush' property of the encoder can be set to false
+                * when the appender performs the flushes at appropriate times
+                * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
+                */
+               .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
+
+               /*
+                * Don't let the json generator close the underlying outputStream and let the
+                * encoder managed it.
+                */
+               .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+    }
+    
     public JsonFactory getJsonFactory() {
         return jsonFactory;
     }

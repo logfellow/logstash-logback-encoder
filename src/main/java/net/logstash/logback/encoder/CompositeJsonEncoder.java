@@ -35,9 +35,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private static final byte[] EMPTY_BYTES = new byte[0];
 
     /**
-     * The minimum size of the byte buffer used when encoding events in logback versions
-     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
-     * the encoder.
+     * The minimum size of the byte buffer used when encoding events.
      *
      * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to
      * accommodate with larger events. However, only the first {@code minBufferSize} bytes
@@ -89,7 +87,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             throw new IllegalStateException("Encoder is not started");
         }
         
-        ReusableByteBuffer buffer = bufferPool.getBuffer();
+        ReusableByteBuffer buffer = bufferPool.acquire();
         try {
             encode(event, buffer);
             return buffer.toByteArray();
@@ -97,7 +95,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             addWarn("Error encountered while encoding log event. Event: " + event, e);
             return EMPTY_BYTES;
         } finally {
-            bufferPool.releaseBuffer(buffer);
+            bufferPool.release(buffer);
         }
     }
     
@@ -254,9 +252,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     }
     
     /**
-     * The minimum size of the byte buffer used when encoding events in logback versions
-     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
-     * the encoder.
+     * The minimum size of the byte buffer used when encoding events.
      *
      * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to
      * accommodate with larger events. However, only the first {@code minBufferSize} bytes

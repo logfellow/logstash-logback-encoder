@@ -21,8 +21,9 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 /**
  * A pool of {@link ReusableByteBuffer}.
  * 
- * <p>The pool is unbounded and can hold as many buffers as needed. Buffers are kept in the pool
- * using weak references so they can be garbage collected by the JVM when running low in memory.
+ * <p>The pool is technically unbounded but will never hold more buffers than the number of concurrent
+ * threads accessing it. Buffers are kept in the pool using weak references so they can be garbage
+ * collected by the JVM when running low in memory.
  * 
  * @author brenuart
  */
@@ -34,42 +35,45 @@ public class ReusableByteBuffers {
     private final Deque<Reference<ReusableByteBuffer>> buffers = new ConcurrentLinkedDeque<>();
     
     /**
-     * The size (in bytes) of the initial buffer that is reused across consecutive usages.
+     * The capacity (in bytes) of the initial buffer that is reused across consecutive usages.
      */
-    private final int initialSize;
+    private final int initialCapacity;
     
     /**
      * Create a new buffer pool holding buffers with an initial capacity of {@code initialSize} bytes.
      *
-     * @param initialSize the initial capacity of buffers created by this pool.
+     * @param intialCapacity the initial capacity of buffers created by this pool.
      */
-    public ReusableByteBuffers(int initialSize) {
-        this.initialSize = initialSize;
+    public ReusableByteBuffers(int intialCapacity) {
+        if (intialCapacity <= 0) {
+            throw new IllegalArgumentException("initialCapacity must be greater than 0");
+        }
+        this.initialCapacity = intialCapacity;
     }
     
     /**
      * Create a new buffer pool holding buffers with a default initial capacity.
      */
     public ReusableByteBuffers() {
-        this(ReusableByteBuffer.INITIAL_SIZE);
+        this(ReusableByteBuffer.DEFAULT_INITIAL_CAPACITY);
     }
 
     /**
-     * Create a new buffer with an initial size of {@link #initialSize} bytes.
+     * Create a new buffer with an initial size of {@link #initialCapacity} bytes.
      * 
      * @return a new buffer instance
      */
     private ReusableByteBuffer createBuffer() {
-        return new ReusableByteBuffer(initialSize);
+        return new ReusableByteBuffer(initialCapacity);
     }
     
     /**
      * Get a buffer from the pool or create a new one if none is available.
-     * The buffer must be returned to the pool after usage by a call to {@link #releaseBuffer(ReusableByteBuffer)}.
+     * The buffer is automatically returned to the pooled when closed.
      * 
      * @return a reusable byte buffer
      */
-    public ReusableByteBuffer getBuffer() {
+    public ReusableByteBuffer acquire() {
         ReusableByteBuffer buffer = null;
         
         while (buffer == null) {
@@ -92,7 +96,7 @@ public class ReusableByteBuffers {
      * 
      * @param buffer the buffer to return to the pool.
      */
-    public void releaseBuffer(ReusableByteBuffer buffer) {
+    public void release(ReusableByteBuffer buffer) {
         buffer.reset();
         this.buffers.add(new SoftReference<>(buffer));
     }

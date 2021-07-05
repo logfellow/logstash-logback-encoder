@@ -49,9 +49,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     private String lineSeparator;
 
     /**
-     * The minimum size of the byte buffer used when encoding events in logback versions
-     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
-     * the encoder.
+     * The minimum size of the byte buffer used when encoding events.
      *
      * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to
      * accommodate with larger events. However, only the first {@code minBufferSize} bytes
@@ -82,7 +80,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             throw new IllegalStateException("Layout is not started");
         }
         
-        ReusableByteBuffer buffer = this.bufferPool.getBuffer();
+        ReusableByteBuffer buffer = this.bufferPool.acquire();
         try (OutputStreamWriter writer = new OutputStreamWriter(buffer)) {
             writeLayout(prefix, writer, event);
             writeFormatter(writer, event);
@@ -98,7 +96,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             addWarn("Error formatting logging event", e);
             return null;
         } finally {
-            bufferPool.releaseBuffer(buffer);
+            bufferPool.release(buffer);
         }
     }
 
@@ -243,9 +241,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     }
    
     /**
-     * The minimum size of the byte buffer used when encoding events in logback versions
-     * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
-     * the encoder.
+     * The minimum size of the byte buffer used when encoding events.
      *
      * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to
      * accommodate with larger events. However, only the first {@code minBufferSize} bytes

@@ -18,6 +18,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * A speedy alternative to {@link java.io.ByteArrayOutputStream}.
@@ -41,7 +42,7 @@ public class ReusableByteBuffer extends OutputStream {
     /**
      * The default size of the initial buffer
      */
-    public static final int INITIAL_SIZE = 1024;
+    static final int DEFAULT_INITIAL_CAPACITY = 1024;
 
     /**
      * Constant with an empty byte array
@@ -70,24 +71,22 @@ public class ReusableByteBuffer extends OutputStream {
 
 
     /**
-     * Create a new {@link ReusableByteBuffer}
-     * with the default initial capacity of 1024 bytes.
+     * Create a new {@link ReusableByteBuffer} with the default initial capacity of 1024 bytes.
      */
     public ReusableByteBuffer() {
-        this(INITIAL_SIZE);
+        this(DEFAULT_INITIAL_CAPACITY);
     }
 
     /**
-     * Create a new {@link ReusableByteBuffer}
-     * with the specified initial capacity.
+     * Create a new {@link ReusableByteBuffer} with the specified initial capacity.
      *
-     * @param initialBlockSize the initial buffer size in bytes
+     * @param initialCapacity the initial buffer size in bytes
      */
-    public ReusableByteBuffer(int initialBlockSize) {
-        if (initialBlockSize <= 0) {
-            throw new IllegalArgumentException("Initial block size must be greater than 0");
+    public ReusableByteBuffer(int initialCapacity) {
+        if (initialCapacity <= 0) {
+            throw new IllegalArgumentException("initialCapacity must be greater than 0");
         }
-        this.buffers.add(new byte[initialBlockSize]);
+        this.buffers.add(new byte[initialCapacity]);
     }
 
 
@@ -104,9 +103,7 @@ public class ReusableByteBuffer extends OutputStream {
 
     @Override
     public void write(byte[] data, int offset, int length) throws IOException {
-        if (data == null) {
-            throw new NullPointerException();
-        }
+        Objects.requireNonNull(data, "data must not be null");
         if (offset < 0 || offset + length > data.length || length < 0) {
             throw new IndexOutOfBoundsException();
         }
@@ -141,10 +138,12 @@ public class ReusableByteBuffer extends OutputStream {
 
 
     /**
-     * Return the number of bytes stored in this {@link ReusableByteBuffer}.
+     * Return the current size of the buffer.
+     * 
+     * @return the current size of the buffer.
      */
     public int size() {
-        return (this.alreadyBufferedSize + this.index);
+        return this.alreadyBufferedSize + this.index;
     }
 
 
