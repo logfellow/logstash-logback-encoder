@@ -1801,6 +1801,24 @@ The logstash-logback-encoder library contains many providers out-of-the-box,
 and you can even plug-in your own by extending `JsonProvider`.
 Each provider has its own configuration options to further customize it.
 
+Apart from providers, if you need to further customize the output format of encoded JSON, 
+you can specify the _payloadWrapper_. 
+A _payloadWrapper_ can wrap or convert the encoded JSON (with a prefix, suffix and other providers) to another byte format.
+For example, it can be used to convert plain JSON to Lumberjack protocol, 
+which is used by Beats input.
+
+```xml
+<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+    <payloadWrapper class="net.logstash.logback.encoder.wrapper.LumberjackPayloadWrapper" />
+</encoder>
+```
+
+The encoder will prepare the output JSON and pass it to given _payloadWrapper_, 
+which will then convert it to a proper format.
+
+The logstash-logback-encoder library contains `LumberjackPayloadWrapper`.
+It can be used in situation when it is needed to reuse Beats input (in Logstash or Graylog for example)
+that is also used by Filebeat (or other tools).
 
 #### Providers for LoggingEvents
 
