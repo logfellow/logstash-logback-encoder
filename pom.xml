@@ -50,6 +50,8 @@
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
+        
+        <checkstyle.version>8.44</checkstyle.version>
     </properties>
 
     <licenses>
@@ -363,12 +365,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>${maven-checkstyle-plugin.version}</version>
-                <configuration>
-                    <configLocation>src/checkstyle/checkstyle.xml</configLocation>
-                    <logViolationsToConsole>true</logViolationsToConsole>
-                    <failOnViolation>true</failOnViolation>
-                </configuration>
                 <executions>
                     <execution>
                         <goals>
@@ -404,6 +400,27 @@
                     </configuration>
                 </plugin>
                 
+                <!-- Configure checkstyle with sensible defaults for this project so it can be
+                     executed standalone from the CLI as follows:
+                     
+                         mvn checkstyle:check 
+                 -->
+	            <plugin>
+	                <groupId>org.apache.maven.plugins</groupId>
+	                <artifactId>maven-checkstyle-plugin</artifactId>
+	                <version>${maven-checkstyle-plugin.version}</version>
+	                <configuration>
+	                    <configLocation>src/checkstyle/checkstyle.xml</configLocation>
+	                </configuration>
+	                <dependencies>
+						<dependency>
+							<groupId>com.puppycrawl.tools</groupId>
+	              			<artifactId>checkstyle</artifactId>
+	              			<version>${checkstyle.version}</version>
+	            		</dependency>
+	                </dependencies>
+	            </plugin>
+	            
                 <!-- This plugin's configuration is used to store Eclipse m2e settings only. 
                      It has no influence on the Maven build itself.
                 -->
