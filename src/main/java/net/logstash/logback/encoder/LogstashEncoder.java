@@ -48,22 +48,6 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setIncludeCallerData(includeCallerData);
     }
     
-    /**
-     * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses)
-     */
-    @Deprecated
-    public boolean isIncludeCallerInfo() {
-        return getFormatter().isIncludeCallerInfo();
-    }
-    
-    /**
-     * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
-     */
-    @Deprecated
-    public void setIncludeCallerInfo(boolean includeCallerInfo) {
-        getFormatter().setIncludeCallerInfo(includeCallerInfo);
-    }
-    
     public void setCustomFields(String customFields) {
         getFormatter().setCustomFieldsFromString(customFields);
     }
@@ -164,44 +148,6 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setNonStructuredArgumentsFieldPrefix(nonStructuredArgumentsFieldPrefix);
     }
     
-    
-    /**
-     * <p>
-     * If set to true the encoder will search logging event array and if the last item is a Map, entries will be included in the message.
-     * </p>
-     * <p>Example:</p>
-     * 
-     * <pre>
-     * log.info(&quot;Service started in {} seconds&quot;, duration / 1000, Collections.singletonMap(&quot;duration&quot;, duration))
-     * </pre>
-     * 
-     * Will produce:
-     * 
-     * <pre>
-     * {
-     *     "@timestamp": "2014-06-04T15:26:14.464+02:00",
-     *     "message": "Service started in 8 seconds",
-     *     "level": "INFO",
-     *     "duration": 8496
-     *     ...
-     * </pre>
-     * 
-     * @param enableContextMap <code>true</code> to enable context map
-     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
-     */
-    @Deprecated
-    public void setEnableContextMap(boolean enableContextMap) {
-        getFormatter().setEnableContextMap(enableContextMap);
-    }
-    
-    /**
-     * @deprecated When logging, prefer using a {@link Markers#appendEntries(Map)} marker instead.
-     */
-    @Deprecated
-    public boolean isEnableContextMap() {
-        return getFormatter().isEnableContextMap();
-    }
-    
     public ThrowableHandlingConverter getThrowableConverter() {
         return getFormatter().getThrowableConverter();
     }
@@ -232,22 +178,6 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setVersion(version);
     }
 
-    
-    /**
-     * @deprecated Use {@link #isWriteVersionAsInteger()}
-     */
-    @Deprecated
-    public boolean isWriteVersionAsString() {
-        return getFormatter().isWriteVersionAsString();
-    }
-    /**
-     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
-     */
-    @Deprecated
-    public void setWriteVersionAsString(boolean writeVersionAsString) {
-        getFormatter().setWriteVersionAsString(writeVersionAsString);
-    }
-    
     public boolean isWriteVersionAsInteger() {
         return getFormatter().isWriteVersionAsInteger();
     }

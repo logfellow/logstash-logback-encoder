@@ -17,9 +17,9 @@ package net.logstash.logback.appender.destination;
 /**
  * This strategy attempts connections to the destination in round robin order.
  * If a connection fails, the next destination is attempted.
- * 
+ *
  * The connectionTTL can be set to gracefully close connections after a specific duration.
- * This will force the the appender to reattempt to connect to the next destination.  
+ * This will force the the appender to reattempt to connect to the next destination.
  */
 public class RoundRobinDestinationConnectionStrategy extends DestinationConnectionStrategyWithTtl {
 

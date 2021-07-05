@@ -76,21 +76,6 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
         }
     }
     
-    /**
-     * @deprecated Use {@link #isWriteAsInteger()}
-     */
-    @Deprecated
-    public boolean isWriteAsString() {
-        return !isWriteAsInteger();
-    }
-    /**
-     * @deprecated Use {@link #setWriteAsInteger(boolean)}
-     */
-    @Deprecated
-    public void setWriteAsString(boolean writeAsString) {
-        setWriteAsInteger(!writeAsString);
-    }
-    
     public boolean isWriteAsInteger() {
         return writeAsInteger;
     }

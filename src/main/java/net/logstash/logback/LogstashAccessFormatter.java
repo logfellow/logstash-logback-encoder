@@ -13,6 +13,11 @@
  */
 package net.logstash.logback;
 
+import java.util.Collections;
+
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
+import ch.qos.logback.core.spi.ContextAware;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -22,6 +27,7 @@ import net.logstash.logback.composite.LogstashVersionJsonProvider;
 import net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter;
 import net.logstash.logback.composite.accessevent.AccessEventFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
+import net.logstash.logback.composite.accessevent.AccessEventPatternJsonProvider;
 import net.logstash.logback.composite.accessevent.AccessMessageJsonProvider;
 import net.logstash.logback.composite.accessevent.ContentLengthJsonProvider;
 import net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider;
@@ -37,11 +43,10 @@ import net.logstash.logback.composite.accessevent.RequestedUrlJsonProvider;
 import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
 import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
-import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.joran.spi.DefaultClass;
-import ch.qos.logback.core.spi.ContextAware;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A {@link AccessEventCompositeJsonFormatter} that contains a common
@@ -65,8 +70,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     protected LogstashAccessFieldNames fieldNames = new LogstashAccessFieldNames();
 
     private final AccessEventFormattedTimestampJsonProvider timestampProvider = new AccessEventFormattedTimestampJsonProvider();
-    private final LogstashVersionJsonProvider<IAccessEvent> versionProvider = new LogstashVersionJsonProvider<IAccessEvent>();
-    private final AccessMessageJsonProvider messageProvider = new AccessMessageJsonProvider();
+    private final LogstashVersionJsonProvider<IAccessEvent> versionProvider = new LogstashVersionJsonProvider<>();
     private final MethodJsonProvider methodProvider = new MethodJsonProvider();
     private final ProtocolJsonProvider protocolProvider = new ProtocolJsonProvider();
     private final StatusCodeJsonProvider statusCodeProvider = new StatusCodeJsonProvider();
@@ -78,15 +82,17 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     private final ElapsedTimeJsonProvider elapsedTimeProvider = new ElapsedTimeJsonProvider();
     private final RequestHeadersJsonProvider requestHeadersProvider = new RequestHeadersJsonProvider();
     private final ResponseHeadersJsonProvider responseHeadersProvider = new ResponseHeadersJsonProvider();
+    private JsonProvider<IAccessEvent> messageProvider;
     private ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
     private GlobalCustomFieldsJsonProvider<IAccessEvent> globalCustomFieldsProvider;
+
+    private String messagePattern;
 
     public LogstashAccessFormatter(ContextAware declaredOrigin) {
         super(declaredOrigin);
 
         getProviders().addTimestamp(this.timestampProvider);
         getProviders().addVersion(this.versionProvider);
-        getProviders().addAccessMessage(this.messageProvider);
         getProviders().addMethod(this.methodProvider);
         getProviders().addProtocol(this.protocolProvider);
         getProviders().addStatusCode(this.statusCodeProvider);
@@ -103,8 +109,28 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
 
     @Override
     public void start() {
+        updateMessageProvider();
         configureProviderFieldNames();
         super.start();
+    }
+
+    private void updateMessageProvider() {
+        getProviders().removeProvider(this.messageProvider);
+        if (messagePattern != null) {
+            try {
+                AccessEventPatternJsonProvider messagePatternProvider = new AccessEventPatternJsonProvider();
+                messagePatternProvider.setPattern(new ObjectMapper()
+                        .writeValueAsString(Collections.singletonMap(this.fieldNames.getMessage(), messagePattern)));
+                this.messageProvider = messagePatternProvider;
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Unable to configure messagePattern: " + messagePattern, e);
+            }
+        } else {
+            AccessMessageJsonProvider accessMessageJsonProvider = new AccessMessageJsonProvider();
+            accessMessageJsonProvider.setTimeZone(this.timestampProvider.getTimeZone());
+            this.messageProvider = accessMessageJsonProvider;
+        }
+        getProviders().addProvider(this.messageProvider);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -138,7 +164,6 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     }
     public void setTimeZone(String timeZoneId) {
         this.timestampProvider.setTimeZone(timeZoneId);
-        this.messageProvider.setTimeZone(timeZoneId);
     }
     public String getTimestampPattern() {
         return timestampProvider.getPattern();
@@ -159,7 +184,8 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
             globalCustomFieldsProvider = null;
         } else {
             if (globalCustomFieldsProvider == null) {
-                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<IAccessEvent>());
+                globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<>();
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider);
             }
             globalCustomFieldsProvider.setCustomFields(customFields);
         }
@@ -171,7 +197,8 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
             globalCustomFieldsProvider = null;
         } else {
             if (globalCustomFieldsProvider == null) {
-                getProviders().addGlobalCustomFields(globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<IAccessEvent>());
+                globalCustomFieldsProvider = new GlobalCustomFieldsJsonProvider<>();
+                getProviders().addGlobalCustomFields(globalCustomFieldsProvider);
             }
             globalCustomFieldsProvider.setCustomFieldsNode(customFields);
         }
@@ -222,7 +249,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         if (isIncludeContext() != includeContext) {
             getProviders().removeProvider(contextProvider);
             if (includeContext) {
-                contextProvider = new ContextJsonProvider<IAccessEvent>();
+                contextProvider = new ContextJsonProvider<>();
                 getProviders().addContext(contextProvider);
             } else {
                 contextProvider = null;
@@ -230,29 +257,19 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         }
     }
 
+    public String getMessagePattern() {
+        return messagePattern;
+    }
+
+    public void setMessagePattern(String messagePattern) {
+        this.messagePattern = messagePattern;
+    }
+
     public String getVersion() {
         return this.versionProvider.getVersion();
     }
     public void setVersion(String version) {
         this.versionProvider.setVersion(version);
-    }
-
-
-    /**
-     * @deprecated Use {@link #isWriteVersionAsInteger()}
-     * @return true if the version should be written as a string
-     */
-    @Deprecated
-    public boolean isWriteVersionAsString() {
-        return this.versionProvider.isWriteAsString();
-    }
-    /**
-     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
-     * @param writeVersionAsString true if the version should be written as a string
-     */
-    @Deprecated
-    public void setWriteVersionAsString(boolean writeVersionAsString) {
-        this.versionProvider.setWriteAsString(writeVersionAsString);
     }
 
     public boolean isWriteVersionAsInteger() {

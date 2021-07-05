@@ -14,6 +14,7 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.slf4j.Marker;
 
@@ -26,26 +27,26 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 @SuppressWarnings("serial")
 public abstract class LogstashMarker extends LogstashBasicMarker implements Iterable<Marker> {
-    
+
     public static final String MARKER_NAME_PREFIX = "LS_";
-    
+
     public LogstashMarker(String name) {
         super(name);
     }
-    
+
     /**
      * Adds the given marker as a reference, and returns this marker.
      * <p>
      * This can be used to chain markers together fluently on a log line. For example:
-     * 
+     *
      * <pre>
      * {@code
      * import static net.logstash.logback.marker.Markers.*
-     *     
+     *
      * logger.info(append("name1", "value1).and(append("name2", "value2")), "log message");
      * }
      * </pre>
-     * 
+     *
      * @param <T> subtype of LogstashMarker
      * @param reference The marker to add
      * @return A marker with this marker and the given marker
@@ -55,7 +56,7 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
         add(reference);
         return (T) this;
     }
-    
+
     /**
      * @param <T> subtype of LogstashMarker
      * @param reference The marker to add
@@ -70,11 +71,47 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
 
     /**
      * Writes the data associated with this marker to the given {@link JsonGenerator}.
-     * 
+     *
      * @param generator the generator to which to write the output of this marker.
      * @throws IOException if there was an error writing to the generator
      */
     public abstract void writeTo(JsonGenerator generator) throws IOException;
+
+    @Override
+    public synchronized void add(Marker reference) {
+        if (reference instanceof EmptyLogstashMarker) {
+            for (Marker m : (EmptyLogstashMarker) reference) {
+                add(m);
+            }
+        } else {
+            super.add(reference);
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + super.hashCode();
+        result = prime * result + this.getReferences().hashCode();
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof LogstashMarker)) {
+            return false;
+        }
+
+        LogstashMarker other = (LogstashMarker) obj;
+        return Objects.equals(this.getReferences(), other.getReferences());
+    }
 
     /**
      * Returns a String in the form of

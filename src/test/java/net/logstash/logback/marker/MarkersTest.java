@@ -35,6 +35,21 @@ public class MarkersTest {
     }
 
     @Test
+    public void aggregate_multi() {
+        LogstashMarker marker1 = Markers.append("fieldName1", "fieldValue1");
+        LogstashMarker marker2 = Markers.append("fieldName2", "fieldValue2");
+        LogstashMarker aggregate = Markers.aggregate(marker1, marker2);
+
+        LogstashMarker marker3 = Markers.append("fieldName3", "fieldValue3");
+        aggregate = Markers.aggregate(aggregate, marker3);
+
+        assertThat(aggregate).isInstanceOf(EmptyLogstashMarker.class);
+        assertThat(aggregate.contains(marker1)).isTrue();
+        assertThat(aggregate.contains(marker2)).isTrue();
+        assertThat(aggregate.contains(marker3)).isTrue();
+    }
+
+    @Test
     public void testToString() {
 
         assertThat(Markers.empty().toString())

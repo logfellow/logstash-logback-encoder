@@ -35,21 +35,21 @@ import com.fasterxml.jackson.databind.ser.ResolvableSerializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
 
 /**
- * A {@link Marker} OR {@link StructuredArgument} that 
+ * A {@link Marker} OR {@link StructuredArgument} that
  * that "unwraps" the given object into the logstash event.
  * <p>
- * 
+ *
  * When writing to the JSON data (via {@link ArgumentsJsonProvider} or {@link LogstashMarkersJsonProvider}),
  * the fields of the object are written inline into the JSON event
  * similar to how the {@link com.fasterxml.jackson.annotation.JsonUnwrapped} annotation works.
  * <p>
- * 
+ *
  * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
  * {@link StructuredArguments#toString(Object)} is used to convert the object to a string.
  * <p>
- * 
+ *
  * For example, if the message is "mymessage {}", and the object argument is:
- * 
+ *
  * <pre>
  * {
  *     name1 : "value1",
@@ -64,7 +64,7 @@ import com.fasterxml.jackson.databind.util.NameTransformer;
  * Then the message, name1, name2, name3, name4 fields will be added to the json for the logstash event.
  * <p>
  * For example:
- * 
+ *
  * <pre>
  * {
  *     "message" : "mymessage objectsToStringValue",
@@ -74,30 +74,30 @@ import com.fasterxml.jackson.databind.util.NameTransformer;
  *     "name4" : { "name5" : 6 }
  * }
  * </pre>
- * 
+ *
  * Note that if the object cannot be unwrapped, then nothing will be written.
  */
 @SuppressWarnings("serial")
 public class ObjectFieldsAppendingMarker extends LogstashMarker implements StructuredArgument {
-    
+
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "OBJECT_FIELDS";
-    
+
     private final Object object;
-    
+
     /*
      * Would really like to use Guava's Cache for these two, with expiring entries, soft reference, etc.
      * But didn't want to introduce a dependency on Guava.
-     * 
+     *
      * Since apps will typically serialize the same types of objects repeatedly, they shouldn't grow too much.
      */
     private static final ConcurrentHashMap<Class<?>, JsonSerializer<Object>> beanSerializers = new ConcurrentHashMap<Class<?>, JsonSerializer<Object>>();
     private static final ConcurrentHashMap<ObjectMapper, SerializerProvider> serializerProviders = new ConcurrentHashMap<ObjectMapper, SerializerProvider>();
-    
+
     public ObjectFieldsAppendingMarker(Object object) {
         super(MARKER_NAME);
         this.object = object;
     }
-    
+
     @Override
     public void writeTo(JsonGenerator generator) throws IOException {
         if (object != null) {
@@ -108,38 +108,38 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
             }
         }
     }
-    
+
     @Override
     public String toStringSelf() {
         return StructuredArguments.toString(object);
     }
-    
+
     /**
-     * Gets a serializer that will write the {@link #object} unwrapped. 
+     * Gets a serializer that will write the {@link #object} unwrapped.
      */
     private JsonSerializer<Object> getBeanSerializer(ObjectMapper mapper) throws JsonMappingException {
-        
+
         JsonSerializer<Object> jsonSerializer = beanSerializers.get(object.getClass());
-        
+
         if (jsonSerializer == null) {
             SerializerProvider serializerProvider = getSerializerProvider(mapper);
             JsonSerializer<Object> newSerializer = mapper.getSerializerFactory().createSerializer(
                     serializerProvider,
                     mapper.getSerializationConfig().constructType(object.getClass()))
                 .unwrappingSerializer(NameTransformer.NOP);
-            
+
             if (newSerializer instanceof ResolvableSerializer) {
                 ((ResolvableSerializer) newSerializer).resolve(serializerProvider);
             }
-            
+
             JsonSerializer<Object> existingSerializer = beanSerializers.putIfAbsent(
                     object.getClass(),
                     newSerializer);
-            
+
             jsonSerializer = (existingSerializer == null) ? newSerializer : existingSerializer;
         }
         return jsonSerializer;
-        
+
     }
 
     /**
@@ -151,15 +151,15 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
      * which causes NullPointerExceptions when it is used.
      */
     private SerializerProvider getSerializerProvider(ObjectMapper mapper) {
-        
+
         SerializerProvider provider = serializerProviders.get(mapper);
         if (provider == null) {
-            
+
             SerializerProvider newProvider = ((DefaultSerializerProvider) mapper.getSerializerProvider())
                     .createInstance(mapper.getSerializationConfig(), mapper.getSerializerFactory());
-            
+
             SerializerProvider existingProvider = serializerProviders.putIfAbsent(mapper, newProvider);
-            
+
             provider = (existingProvider == null) ? newProvider : existingProvider;
         }
         return provider;
@@ -167,17 +167,20 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
 
     @Override
     public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
         if (!super.equals(obj)) {
             return false;
         }
         if (!(obj instanceof ObjectFieldsAppendingMarker)) {
             return false;
         }
-        
+
         ObjectFieldsAppendingMarker other = (ObjectFieldsAppendingMarker) obj;
         return Objects.equals(this.object, other.object);
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;

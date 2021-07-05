@@ -37,7 +37,7 @@
                 <callerFile>file</callerFile>
                 <callerLine>line</callerLine>
             </fieldNames>
-            <includeCallerInfo>true</includeCallerInfo>
+            <includeCallerData>true</includeCallerData>
             <enableContextMap>true</enableContextMap>
             <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
             <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
@@ -136,12 +136,10 @@
                 </stackHash>
                 <context/>
                 <contextName/>
-                <jsonMessage/>
                 <mdc>
                     <includeMdcKeyName>included</includeMdcKeyName>
                     <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
                 </mdc>
-                <contextMap/>
                 <globalCustomFields>
                     <customFields>{"customName":"customValue"}</customFields>
                 </globalCustomFields>

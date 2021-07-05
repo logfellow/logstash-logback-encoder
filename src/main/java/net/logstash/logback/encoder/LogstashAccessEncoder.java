@@ -98,6 +98,14 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
         getFormatter().setResponseHeaderFilter(filter);
     }
 
+    public String getMessagePattern() {
+        return getFormatter().getMessagePattern();
+    }
+
+    public void setMessagePattern(String messagePattern) {
+        getFormatter().setMessagePattern(messagePattern);
+    }
+
     public boolean isIncludeContext() {
         return getFormatter().isIncludeContext();
     }
@@ -111,21 +119,6 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     }
     public void setVersion(String version) {
         getFormatter().setVersion(version);
-    }
-
-    /**
-     * @deprecated Use {@link #isWriteVersionAsInteger()}
-     */
-    @Deprecated
-    public boolean isWriteVersionAsString() {
-        return getFormatter().isWriteVersionAsString();
-    }
-    /**
-     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
-     */
-    @Deprecated
-    public void setWriteVersionAsString(boolean writeVersionAsString) {
-        getFormatter().setWriteVersionAsString(writeVersionAsString);
     }
 
     public boolean isWriteVersionAsInteger() {

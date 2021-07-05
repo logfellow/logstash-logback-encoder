@@ -45,10 +45,10 @@ import com.fasterxml.jackson.databind.node.JsonNodeType;
 public abstract class AbstractJsonPatternParser<Event> {
 
     public static final Pattern OPERATION_PATTERN = Pattern.compile("\\# (\\w+) (?: \\{ (.*) \\} )?", Pattern.COMMENTS);
-    
+
     private final ContextAware contextAware;
     private final JsonFactory jsonFactory;
-    
+
     private final Map<String, Operation> operations = new HashMap<>();
 
     /**
@@ -65,7 +65,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         addOperation(new AsJsonOperation());
         addOperation(new TryJsonOperation());
     }
-    
+
     protected void addOperation(Operation operation) {
         this.operations.put(operation.getName(), operation);
     }
@@ -78,25 +78,25 @@ public abstract class AbstractJsonPatternParser<Event> {
             this.name = name;
             this.requiresData = requiresData;
         }
-        
+
         public String getName() {
             return name;
         }
-        
+
         public boolean requiresData() {
             return requiresData;
         }
-        
+
         public abstract ValueGetter<?, Event> createValueGetter(String data);
-        
+
     }
-    
+
     protected class AsLongOperation extends Operation {
 
         public AsLongOperation() {
             super("asLong", true);
         }
-        
+
         @Override
         public ValueGetter<?, Event> createValueGetter(String data) {
             return new AsLongValueTransformer<>(makeLayoutValueGetter(data));
@@ -108,7 +108,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         public AsDoubleOperation() {
             super("asDouble", true);
         }
-        
+
         @Override
         public ValueGetter<?, Event> createValueGetter(String data) {
             return new AsDoubleValueTransformer<>(makeLayoutValueGetter(data));
@@ -126,7 +126,7 @@ public abstract class AbstractJsonPatternParser<Event> {
             return new AsJsonValueTransformer(makeLayoutValueGetter(data));
         }
     }
-    
+
     protected class TryJsonOperation extends Operation {
 
         public TryJsonOperation() {
@@ -153,7 +153,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
     }
 
-    protected static abstract class AbstractAsObjectTransformer<T, Event> implements ValueGetter<T, Event> {
+    protected abstract static class AbstractAsObjectTransformer<T, Event> implements ValueGetter<T, Event> {
 
         private final ValueGetter<String, Event> generator;
 
@@ -174,10 +174,10 @@ public abstract class AbstractJsonPatternParser<Event> {
             }
         }
 
-        abstract protected T transform(final String value) throws NumberFormatException, IOException;
+        protected abstract T transform(String value) throws NumberFormatException, IOException;
     }
 
-    protected static abstract class AbstractAsNumberTransformer<T extends Number, Event> implements ValueGetter<T, Event> {
+    protected abstract static class AbstractAsNumberTransformer<T extends Number, Event> implements ValueGetter<T, Event> {
 
         private final ValueGetter<String, Event> generator;
 
@@ -198,7 +198,7 @@ public abstract class AbstractJsonPatternParser<Event> {
             }
         }
 
-        abstract protected T transform(final String value) throws NumberFormatException;
+        protected abstract T transform(String value) throws NumberFormatException;
     }
 
     protected static class AsLongValueTransformer<Event> extends AbstractAsNumberTransformer<Long, Event> {
@@ -231,7 +231,7 @@ public abstract class AbstractJsonPatternParser<Event> {
             return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
         }
     }
-    
+
     protected class TryJsonValueTransformer extends AbstractAsObjectTransformer<Object, Event> {
 
         public TryJsonValueTransformer(final ValueGetter<String, Event> generator) {
@@ -382,7 +382,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     protected class ObjectWriter<Event> implements NodeWriter<Event> {
 
         private final ChildrenWriter<Event> childrenWriter;
-        
+
         public ObjectWriter(ChildrenWriter<Event> childrenWriter) {
             this.childrenWriter = childrenWriter;
         }
@@ -453,7 +453,7 @@ public abstract class AbstractJsonPatternParser<Event> {
             String operationData = matcher.groupCount() > 1
                     ? matcher.group(2)
                     : null;
-                    
+
             Operation operation = this.operations.get(operationName);
             if (operation != null) {
                 if (operation.requiresData() && operationData == null) {
@@ -462,7 +462,7 @@ public abstract class AbstractJsonPatternParser<Event> {
                     return operation.createValueGetter(operationData);
                 }
             }
-        } 
+        }
         return makeLayoutValueGetter(pattern);
     }
 
@@ -501,7 +501,7 @@ public abstract class AbstractJsonPatternParser<Event> {
 
     private ChildrenWriter<Event> parseChildren(JsonNode node) {
         List<FieldWriter<Event>> children = new ArrayList<>();
-        for (Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields(); nodeFields.hasNext(); ) {
+        for (Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields(); nodeFields.hasNext();) {
             Map.Entry<String, JsonNode> field = nodeFields.next();
 
             String key = field.getKey();

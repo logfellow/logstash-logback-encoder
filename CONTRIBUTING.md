@@ -50,7 +50,7 @@ Once you're ready, create an [issue](https://github.com/logstash/logstash-logbac
    created, we will close the issue as superseded by the pull request, and the discussion
    about the issue will continue under the pull request.
 
-2. Always check out the `master` branch and submit pull requests against it.
+2. Always check out the `main` branch and submit pull requests against it.
 
 3. Choose the granularity of your commits consciously and squash commits that represent
    multiple edits or corrections of the same logical change. See
@@ -99,10 +99,11 @@ Source Code Style
 
 Please follow the style used by the existing code in the repository.
 
-4-space indents (no tabs)
+Rules are enforced by [checkstyle](src/checkstyle/checkstyle.xml).
+
 
 License
 -------
 
 By contributing, you agree that the contributions will be licensed under the
-[Apache License 2.0](https://github.com/logstash/logstash-logback-encoder/blob/master/LICENSE).
+[Apache License 2.0](https://github.com/logstash/logstash-logback-encoder/blob/main/LICENSE).

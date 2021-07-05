@@ -23,11 +23,10 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.SerializableString;
 import com.fasterxml.jackson.core.io.CharacterEscapes;
 import com.fasterxml.jackson.core.io.SerializedString;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
  * A {@link JsonFactoryDecorator} that can be used to customize the {@link JsonFactory#setCharacterEscapes(CharacterEscapes)}.
- * 
+ *
  * For example, you could change the escape sequence used for newline characters from '\n' to '\u2028'
  */
 public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorator {
@@ -47,7 +46,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
          * Parallel with escapeSequences.
          */
         private final int[] targetCharacterCodes;
-        
+
         /**
          * The customized escape sequences for specific characters.
          * Parallel with targetCharacterCodes.
@@ -61,13 +60,13 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
                 escapeCodesForAscii = new int[128];
                 Arrays.fill(escapeCodesForAscii, ESCAPE_NONE);
             }
-            
+
             /*
-             * Sort the escapes, so that binarySearch can be used by getEscapeSequence 
+             * Sort the escapes, so that binarySearch can be used by getEscapeSequence
              */
             List<Escape> sortedEscapes = new ArrayList<>(escapes);
             Collections.sort(sortedEscapes);
-            
+
             targetCharacterCodes = new int[sortedEscapes.size()];
             escapeSequences = new SerializedString[sortedEscapes.size()];
 
@@ -78,7 +77,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
                 }
                 /*
                  * Keep parallel arrays of these, so that a binary search can be performed against targetCharacterCodes
-                 * in order to determine the escapeSequence to return from getEscapeSequence 
+                 * in order to determine the escapeSequence to return from getEscapeSequence
                  */
                 targetCharacterCodes[i] = escape.getTargetCharacterCode();
                 escapeSequences[i] = escape.getEscapeSequence();
@@ -87,7 +86,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
 
         @Override
         public SerializableString getEscapeSequence(int ch) {
-            
+
             int index = Arrays.binarySearch(targetCharacterCodes, ch);
             if (index >= 0) {
                 return escapeSequences[index];
@@ -109,7 +108,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
     public static class Escape implements Comparable<Escape> {
 
         private static final SerializedString EMPTY_ESCAPE_SEQUENCE = new SerializedString("");
-        
+
         /**
          * The character code of the character that will be replaced with the {@link #escapeSequence} when written.
          */
@@ -118,10 +117,10 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
          * The string with which the {@link #targetCharacterCode} will be replaced.
          */
         private SerializedString escapeSequence = EMPTY_ESCAPE_SEQUENCE;
-        
+
         public Escape() {
         }
-        
+
         public Escape(String target, String escapeSequence) {
             setTarget(target);
             setEscapeSequence(escapeSequence);
@@ -139,7 +138,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
 
         /**
          * Sets the target string that will be replaced with the {@link #escapeSequence}.  Must have length == 1
-         * 
+         *
          * @param target the target string that will be escaped
          * @throws IllegalArgumentException if target length is != 1
          */
@@ -149,14 +148,14 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
             }
             setTargetCharacterCode((int) target.charAt(0));
         }
-        
+
         /**
          * Sets the target character that will be replaced with the {@link #escapeSequence}.
          */
         public void setTargetCharacter(char targetCharacter) {
             setTargetCharacterCode((char) targetCharacter);
         }
-        
+
         public int getTargetCharacterCode() {
             return targetCharacterCode;
         }
@@ -166,7 +165,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
             }
             this.targetCharacterCode = targetCharacterCode;
         }
-        
+
         public SerializedString getEscapeSequence() {
             return escapeSequence;
         }
@@ -177,13 +176,13 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
                 this.escapeSequence = new SerializedString(escapeSequence);
             }
         }
-        
+
         private void assertValid() {
             if (targetCharacterCode < 0) {
                 throw new IllegalArgumentException("targetCharacterCode must be 0 or greater");
             }
         }
-        
+
         @Override
         public int compareTo(Escape that) {
             if (that == null) {
@@ -193,7 +192,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
             if (targetCharacterCodeComparison != 0) {
                 return targetCharacterCodeComparison;
             }
-            
+
             return this.escapeSequence.getValue().compareTo(that.escapeSequence.getValue());
         }
 
@@ -216,13 +215,13 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
         }
 
     }
-    
+
     /**
      * When true (the default), the standard ASCII escape codes for JSON will be included by default.
      * Any additional escapes configured for ASCII characters will override these.
-     * 
+     *
      * When false, no escaping for ASCII will be provided by default.
-     * Only the escapes configured for ASCII characters will be used. 
+     * Only the escapes configured for ASCII characters will be used.
      */
     private boolean includeStandardAsciiEscapesForJSON = true;
 
@@ -235,17 +234,11 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
      * Indicates when the {@link CharacterEscapesJsonFactoryDecorator#characterEscapes} field needs to be re-initialized.
      */
     private boolean needsInitialization = true;
-    
+
     /**
      * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryDecorator#escapes}
      */
     private CustomizedCharacterEscapes characterEscapes;
-
-    @Override
-    @Deprecated
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        return (MappingJsonFactory) decorate((JsonFactory) factory);
-    }
 
     @Override
     public JsonFactory decorate(JsonFactory factory) {
@@ -255,7 +248,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
         }
         return factory.setCharacterEscapes(characterEscapes);
     }
-    
+
     public boolean isIncludeStandardAsciiEscapesForJSON() {
         return includeStandardAsciiEscapesForJSON;
     }

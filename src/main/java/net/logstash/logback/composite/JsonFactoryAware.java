@@ -16,7 +16,7 @@ package net.logstash.logback.composite;
 import com.fasterxml.jackson.core.JsonFactory;
 
 /**
- * Can be implemented by {@link JsonProvider}s to indicate that 
+ * Can be implemented by {@link JsonProvider}s to indicate that
  * the provider needs to be injected with the {@link JsonFactory}.
  */
 public interface JsonFactoryAware {

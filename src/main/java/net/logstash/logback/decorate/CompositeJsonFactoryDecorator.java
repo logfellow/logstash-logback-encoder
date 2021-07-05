@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 /**
  * Combines a list of decorators into a single decorator, so multiple decorators can be used together.
@@ -25,12 +24,6 @@ import com.fasterxml.jackson.databind.MappingJsonFactory;
 public class CompositeJsonFactoryDecorator implements JsonFactoryDecorator {
     
     private final List<JsonFactoryDecorator> decorators = new ArrayList<JsonFactoryDecorator>();
-
-    @Override
-    @Deprecated
-    public MappingJsonFactory decorate(MappingJsonFactory factory) {
-        return (MappingJsonFactory) decorate((JsonFactory) factory);
-    }
 
     @Override
     public JsonFactory decorate(JsonFactory factory) {

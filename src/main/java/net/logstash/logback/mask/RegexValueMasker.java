@@ -41,17 +41,20 @@ public class RegexValueMasker implements ValueMasker {
      */
     public RegexValueMasker(Pattern pattern, Object mask) {
         this.pattern = Objects.requireNonNull(pattern, "pattern must not be null");
-        this.mask = Objects.requireNonNull(mask, "rmask must not be null");
+        this.mask = Objects.requireNonNull(mask, "mask must not be null");
     }
 
     @Override
     public Object mask(JsonStreamContext context, Object o) {
         if (o instanceof CharSequence) {
             Matcher matcher = pattern.matcher((CharSequence) o);
-            if (matcher.matches()) {
-                return mask instanceof String
-                        ? matcher.replaceAll((String) mask)
-                        : mask;
+            if (mask instanceof String) {
+                String replaced = matcher.replaceAll((String) mask);
+                if (replaced != o) {
+                    return replaced;
+                }
+            } else if (matcher.matches()) {
+                return mask;
             }
         }
         return null;

@@ -121,7 +121,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
         }
         _verifyOffsets(array.length, offset, length);
         writeStartArray(array, length);
-        for (int i = offset, end = offset+length; i < end; ++i) {
+        for (int i = offset, end = offset + length; i < end; ++i) {
             writeNumber(array[i]);
         }
         writeEndArray();
@@ -139,7 +139,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
         }
         _verifyOffsets(array.length, offset, length);
         writeStartArray(array, length);
-        for (int i = offset, end = offset+length; i < end; ++i) {
+        for (int i = offset, end = offset + length; i < end; ++i) {
             writeNumber(array[i]);
         }
         writeEndArray();
@@ -157,7 +157,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
         }
         _verifyOffsets(array.length, offset, length);
         writeStartArray(array, length);
-        for (int i = offset, end = offset+length; i < end; ++i) {
+        for (int i = offset, end = offset + length; i < end; ++i) {
             writeNumber(array[i]);
         }
         writeEndArray();
@@ -178,7 +178,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
         writeFieldName(() -> super.writeFieldId(id));
     }
 
-    private void writeFieldName(ThrowingRunnable<IOException> doWriteFieldName) throws IOException{
+    private void writeFieldName(ThrowingRunnable<IOException> doWriteFieldName) throws IOException {
 
         if (maskingInProgress()) {
             /*

@@ -27,12 +27,12 @@ import ch.qos.logback.core.joran.spi.DefaultClass;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 public class RequestHeadersJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
-    
+
     /**
-     * When true, names of headers will be written to JSON output in lowercase. 
+     * When true, names of headers will be written to JSON output in lowercase.
      */
     private boolean lowerCaseHeaderNames = true;
-    
+
     private HeaderFilter filter;
 
     @Override
@@ -50,12 +50,12 @@ public class RequestHeadersJsonProvider extends AbstractFieldJsonProvider<IAcces
         }
         JsonWritingUtils.writeMapStringFields(generator, getFieldName(), headers, lowerCaseHeaderNames);
     }
-    
+
     @Override
     public void setFieldNames(LogstashAccessFieldNames fieldNames) {
         setFieldName(fieldNames.getRequestHeaders());
     }
-    
+
     public boolean getLowerCaseHeaderNames() {
         return lowerCaseHeaderNames;
     }
@@ -67,7 +67,7 @@ public class RequestHeadersJsonProvider extends AbstractFieldJsonProvider<IAcces
     public HeaderFilter getFilter() {
         return filter;
     }
-    
+
     @DefaultClass(IncludeExcludeHeaderFilter.class)
     public void setFilter(HeaderFilter filter) {
         this.filter = filter;

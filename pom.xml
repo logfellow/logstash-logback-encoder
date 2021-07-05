@@ -7,7 +7,7 @@
     <version>7.0-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
-    <description>Logback encoder which will output events as Logstash-compatible JSON</description>
+    <description>Provides logback encoders, layouts, and appenders to log in JSON and other formats supported by Jackson</description>
     <url>https://github.com/logstash/logstash-logback-encoder</url>
 
     <scm>
@@ -23,26 +23,27 @@
 
         <!-- runtime dependencies -->
         <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
-        <com.fasterxml.jackson.version>2.12.0</com.fasterxml.jackson.version>
+        <com.fasterxml.jackson.version>2.12.3</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>4.0.1</com.fasterxml.uuid.version>
 
         <!-- shaded runtime dependencies -->
-        <com.lmax.disruptor.version>3.4.2</com.lmax.disruptor.version>
+        <com.lmax.disruptor.version>3.4.4</com.lmax.disruptor.version>
 
         <!-- test dependencies -->
-        <junit.version>5.7.0</junit.version>
-        <org.assertj.version>3.18.1</org.assertj.version>
-        <org.mockito.version>3.7.0</org.mockito.version>
+        <junit.version>5.7.2</junit.version>
+        <org.assertj.version>3.20.2</org.assertj.version>
+        <org.mockito.version>3.11.2</org.mockito.version>
 
         <!-- maven plugins -->
-        <animal-sniffer-maven-plugin.version>1.19</animal-sniffer-maven-plugin.version>
+        <animal-sniffer-maven-plugin.version>1.20</animal-sniffer-maven-plugin.version>
         <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
-        <maven-bundle-plugin.version>5.1.1</maven-bundle-plugin.version>
+        <maven-bundle-plugin.version>5.1.2</maven-bundle-plugin.version>
+        <maven-checkstyle-plugin.version>3.1.2</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-enforcer-plugin.version>1.4.1</maven-enforcer-plugin.version>
-        <maven-gpg-plugin.version>1.6</maven-gpg-plugin.version>
+        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
-        <maven-javadoc-plugin.version>3.2.0</maven-javadoc-plugin.version>
+        <maven-javadoc-plugin.version>3.3.0</maven-javadoc-plugin.version>
         <maven-license-plugin.version>1.9.0</maven-license-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
@@ -358,6 +359,23 @@
                         <Import-Package>!com.lmax.disruptor.*,!ch.qos.logback.classic.*,!ch.qos.logback.core.*,!org.slf4j.*,*</Import-Package>
                     </instructions>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>${maven-checkstyle-plugin.version}</version>
+                <configuration>
+                    <configLocation>src/checkstyle/checkstyle.xml</configLocation>
+                    <logViolationsToConsole>true</logViolationsToConsole>
+                    <failOnViolation>true</failOnViolation>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <pluginManagement>

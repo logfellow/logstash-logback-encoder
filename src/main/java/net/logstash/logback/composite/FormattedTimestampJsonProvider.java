@@ -34,24 +34,24 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * </ul>
  */
 public abstract class FormattedTimestampJsonProvider<Event extends DeferredProcessingAware, FieldNames extends LogstashCommonFieldNames> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<FieldNames> {
-    
+
     public static final String FIELD_TIMESTAMP = "@timestamp";
-    
+
     /**
      * Setting the {@link #pattern} as this value will make it so that the timestamp
      * is written as a number value of the milliseconds since unix epoch.
      */
     public static final String UNIX_TIMESTAMP_AS_NUMBER = "[UNIX_TIMESTAMP_AS_NUMBER]";
-    
+
     /**
      * Setting the {@link #pattern} as this value will make it so that the timestamp
      * is written as a string value representing the number of milliseconds since unix epoch
      */
     public static final String UNIX_TIMESTAMP_AS_STRING = "[UNIX_TIMESTAMP_AS_STRING]";
-    
+
     private static final String DEFAULT_PATTERN = "[ISO_OFFSET_DATE_TIME]";
     private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
-    
+
     /**
      * The pattern in which to format the timestamp.
      *
@@ -65,27 +65,27 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
      * </ul>
      */
     private String pattern = DEFAULT_PATTERN;
-    
+
     /**
      * The timezone for which to write the timestamp.
-     * Only applicable if the pattern is not {@value #UNIX_TIMESTAMP_AS_NUMBER} or {@value #UNIX_TIMESTAMP_AS_STRING} 
+     * Only applicable if the pattern is not {@value #UNIX_TIMESTAMP_AS_NUMBER} or {@value #UNIX_TIMESTAMP_AS_STRING}
      */
     private TimeZone timeZone = DEFAULT_TIMEZONE;
-    
+
     /**
      * Writes the timestamp to the JsonGenerator.
      */
     private TimestampWriter timestampWriter;
-    
+
     /**
      * Writes the timestamp to the JsonGenerator
      */
     private interface TimestampWriter {
         void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException;
-        
+
         String getTimestampAsString(long timestampInMillis);
     }
-    
+
     /**
      * Writes the timestamp to the JsonGenerator as a string formatted by the pattern.
      */
@@ -93,11 +93,11 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
 
         private final DateTimeFormatter formatter;
 
-        public PatternTimestampWriter(DateTimeFormatter formatter) {
+        PatternTimestampWriter(DateTimeFormatter formatter) {
             this.formatter = formatter;
         }
 
-        
+
         @Override
         public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
             JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestampInMillis));
@@ -108,7 +108,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
             return formatter.format(Instant.ofEpochMilli(timestampInMillis));
         }
     }
-    
+
     /**
      * Writes the timestamp to the JsonGenerator as a number of milliseconds since unix epoch.
      */
@@ -118,13 +118,13 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
         public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
             JsonWritingUtils.writeNumberField(generator, fieldName, timestampInMillis);
         }
-        
+
         @Override
         public String getTimestampAsString(long timestampInMillis) {
             return Long.toString(timestampInMillis);
         }
     }
-    
+
     /**
      * Writes the timestamp to the JsonGenerator as a string representation of the of milliseconds since unix epoch.
      */
@@ -134,24 +134,24 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
         public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
             JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestampInMillis));
         }
-        
+
         @Override
         public String getTimestampAsString(long timestampInMillis) {
             return Long.toString(timestampInMillis);
         }
-        
+
     }
-    
+
     public FormattedTimestampJsonProvider() {
         setFieldName(FIELD_TIMESTAMP);
         updateTimestampWriter();
     }
-    
+
     @Override
     public void setFieldNames(FieldNames fieldNames) {
         setFieldName(fieldNames.getTimestamp());
     }
-    
+
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
         timestampWriter.writeTo(generator, getFieldName(), getTimestampAsMillis(event));
@@ -162,7 +162,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
     }
 
     protected abstract long getTimestampAsMillis(Event event);
-    
+
     /**
      * Updates the {@link #timestampWriter} value based on the current pattern and timeZone.
      */
@@ -194,7 +194,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
             timestampWriter = new PatternTimestampWriter(DateTimeFormatter.ofPattern(pattern).withZone(timeZone.toZoneId()));
         }
     }
-    
+
     public String getPattern() {
         return pattern;
     }

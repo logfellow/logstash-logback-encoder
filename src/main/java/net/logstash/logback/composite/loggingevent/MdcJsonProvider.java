@@ -35,18 +35,18 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *
  * <p>There are three valid combinations of {@link #includeMdcKeyNames}
  * and {@link #excludeMdcKeyNames}:</p>
- * 
+ *
  * <ol>
  * <li>When {@link #includeMdcKeyNames} and {@link #excludeMdcKeyNames}
  *     are both empty, then all entries will be included.</li>
  * <li>When {@link #includeMdcKeyNames} is not empty and
  *     {@link #excludeMdcKeyNames} is empty, then only those entries
- *     with key names in {@link #includeMdcKeyNames} will be included.</li> 
+ *     with key names in {@link #includeMdcKeyNames} will be included.</li>
  * <li>When {@link #includeMdcKeyNames} is empty and
  *     {@link #excludeMdcKeyNames} is not empty, then all entries except those
  *     with key names in {@link #excludeMdcKeyNames} will be included.</li>
  * </ol>
- * 
+ *
  * <p>It is a configuration error for both {@link #includeMdcKeyNames}
  * and {@link #excludeMdcKeyNames} to be not empty.</p>
  *
@@ -64,14 +64,14 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
      * See {@link MdcJsonProvider}.
      */
     private List<String> includeMdcKeyNames = new ArrayList<>();
-    
+
     /**
      * See {@link MdcJsonProvider}.
      */
     private List<String> excludeMdcKeyNames = new ArrayList<>();
 
     private final Map<String, String> mdcKeyFieldNames = new HashMap<>();
-    
+
     @Override
     public void start() {
         if (!this.includeMdcKeyNames.isEmpty() && !this.excludeMdcKeyNames.isEmpty()) {
@@ -79,7 +79,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
         }
         super.start();
     }
-    
+
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         Map<String, String> mdcProperties = event.getMDCPropertyMap();
@@ -109,7 +109,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
             }
         }
     }
-    
+
     @Override
     public void setFieldNames(LogstashFieldNames fieldNames) {
         setFieldName(fieldNames.getMdc());
@@ -124,7 +124,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
         this.includeMdcKeyNames = new ArrayList<String>(includeMdcKeyNames);
     }
-    
+
     public List<String> getExcludeMdcKeyNames() {
         return Collections.unmodifiableList(excludeMdcKeyNames);
     }
@@ -152,5 +152,5 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
         }
         mdcKeyFieldNames.put(split[0], split[1]);
     }
-    
+
 }

@@ -33,9 +33,9 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 
 public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware> extends LayoutBase<Event> {
-    
+
     private boolean immediateFlush = true;
-    
+
     private Layout<Event> prefix;
     private Layout<Event> suffix;
 
@@ -49,12 +49,12 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     private String lineSeparator;
 
     /**
-     * The minimum size of the byte buffer used when encoding events in logback versions 
+     * The minimum size of the byte buffer used when encoding events in logback versions
      * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
-     * the encoder. 
-     * 
-     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to 
-     * accommodate with larger events. However, only the first {@code minBufferSize} bytes 
+     * the encoder.
+     *
+     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to
+     * accommodate with larger events. However, only the first {@code minBufferSize} bytes
      * will be reused by subsequent invocations. It is therefore strongly advised to set
      * the minimum size at least equal to the average size of the encoded events to reduce
      * unnecessary memory allocations and reduce pressure on the garbage collector.
@@ -68,12 +68,12 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     
     
     private final CompositeJsonFormatter<Event> formatter;
-    
+
     public CompositeJsonLayout() {
         super();
         this.formatter = createFormatter();
     }
-    
+
     protected abstract CompositeJsonFormatter<Event> createFormatter();
 
     @Override
@@ -83,35 +83,33 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         }
         
         ReusableByteBuffer buffer = this.bufferPool.getBuffer();
-        try(OutputStreamWriter writer = new OutputStreamWriter(buffer)) {
-            writeLayout(   prefix, writer, event);
-            writeFormatter(        writer, event);
-            writeLayout(   suffix, writer, event);
-            
-            if (lineSeparator!=null) {
+        try (OutputStreamWriter writer = new OutputStreamWriter(buffer)) {
+            writeLayout(prefix, writer, event);
+            writeFormatter(writer, event);
+            writeLayout(suffix, writer, event);
+           
+            if (lineSeparator != null) {
                 writer.write(lineSeparator);
             }
             writer.flush();
 
             return new String(buffer.toByteArray());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             addWarn("Error formatting logging event", e);
             return null;
-        }
-        finally {
+        } finally {
             bufferPool.releaseBuffer(buffer);
         }
     }
 
     
     private void writeLayout(Layout<Event> wrapped, Writer writer, Event event) throws IOException {
-        if (wrapped==null) {
+        if (wrapped == null) {
             return;
         }
         
         String str = wrapped.doLayout(event);
-        if (str!=null) {
+        if (str != null) {
             writer.write(str);
         }
     }
@@ -120,7 +118,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         this.formatter.writeEventToWriter(event, writer);
     }
 
-    
+
     @Override
     public void start() {
         super.start();
@@ -135,7 +133,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         if (wrapped instanceof PatternLayoutBase) {
             /*
              * Don't ensure exception output (for ILoggingEvents)
-             * or line separation (for IAccessEvents) 
+             * or line separation (for IAccessEvents)
              */
             PatternLayoutBase<Event> layout = (PatternLayoutBase<Event>) wrapped;
             layout.setPostCompileProcessor(null);
@@ -150,7 +148,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             wrapped.start();
         }
     }
-    
+
     @Override
     public void stop() {
         super.stop();
@@ -158,13 +156,13 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         stopWrapped(prefix);
         stopWrapped(suffix);
     }
-    
+
     private void stopWrapped(Layout<Event> wrapped) {
         if (wrapped != null && !wrapped.isStarted()) {
             wrapped.stop();
         }
     }
-    
+
     public JsonProviders<Event> getProviders() {
         return formatter.getProviders();
     }
@@ -172,15 +170,15 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     public void setProviders(JsonProviders<Event> jsonProviders) {
         formatter.setProviders(jsonProviders);
     }
-    
+
     public boolean isImmediateFlush() {
         return immediateFlush;
     }
-    
+
     public void setImmediateFlush(boolean immediateFlush) {
         this.immediateFlush = immediateFlush;
     }
-    
+
     public JsonFactoryDecorator getJsonFactoryDecorator() {
         return formatter.getJsonFactoryDecorator();
     }
@@ -204,14 +202,14 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     protected CompositeJsonFormatter<Event> getFormatter() {
         return formatter;
     }
-    
+
     public Layout<Event> getPrefix() {
         return prefix;
     }
     public void setPrefix(Layout<Event> prefix) {
         this.prefix = prefix;
     }
-    
+
     public Layout<Event> getSuffix() {
         return suffix;
     }
@@ -243,18 +241,18 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     public int getMinBufferSize() {
         return minBufferSize;
     }
-    
+   
     /**
-     * The minimum size of the byte buffer used when encoding events in logback versions 
+     * The minimum size of the byte buffer used when encoding events in logback versions
      * greater than or equal to 1.2.0. The buffer is reused by subsequent invocations of
-     * the encoder. 
-     * 
-     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to 
-     * accommodate with larger events. However, only the first {@code minBufferSize} bytes 
+     * the encoder.
+     *
+     * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to
+     * accommodate with larger events. However, only the first {@code minBufferSize} bytes
      * will be reused by subsequent invocations. It is therefore strongly advised to set
      * the minimum size at least equal to the average size of the encoded events to reduce
      * unnecessary memory allocations and reduce pressure on the garbage collector.
-     * 
+     *
      * <p>Note: changes to the buffer size will not be taken into account after the encoder
      *          is started.
      */

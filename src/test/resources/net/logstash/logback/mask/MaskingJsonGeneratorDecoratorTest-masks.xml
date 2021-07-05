@@ -19,6 +19,7 @@
                 <value>^value0$</value>
                 <value>^value1$</value>
                 <values>^value2$,^value3$</values>
+                <value>nestedvalue1</value>
                 <valueMask>
                     <value>^(value-).*$</value>
                     <mask>$1masked</mask>

@@ -54,22 +54,6 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().setIncludeCallerData(includeCallerData);
     }
     
-    /**
-     * @deprecated use {@link #isIncludeCallerData()} (to use the same name that logback uses)
-     */
-    @Deprecated
-    public boolean isIncludeCallerInfo() {
-        return getFormatter().isIncludeCallerInfo();
-    }
-    
-    /**
-     * @deprecated use {@link #setIncludeCallerData(boolean)} (to use the same name that logback uses)
-     */
-    @Deprecated
-    public void setIncludeCallerInfo(boolean includeCallerInfo) {
-        getFormatter().setIncludeCallerInfo(includeCallerInfo);
-    }
-    
     public LogstashFieldNames getFieldNames() {
         return getFormatter().getFieldNames();
     }
@@ -161,11 +145,6 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().setShortenedLoggerNameLength(length);
     }
     
-    @Deprecated
-    public void setEnableContextMap(boolean enableContextMap) {
-        getFormatter().setEnableContextMap(enableContextMap);
-    }
-
     public String getTimeZone() {
         return getFormatter().getTimeZone();
     }
@@ -196,22 +175,6 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().setVersion(version);
     }
 
-    
-    /**
-     * @deprecated Use {@link #isWriteVersionAsInteger()}
-     */
-    @Deprecated
-    public boolean isWriteVersionAsString() {
-        return getFormatter().isWriteVersionAsString();
-    }
-    /**
-     * @deprecated Use {@link #setWriteVersionAsInteger(boolean)}
-     */
-    @Deprecated
-    public void setWriteVersionAsString(boolean writeVersionAsString) {
-        getFormatter().setWriteVersionAsString(writeVersionAsString);
-    }
-    
     public boolean isWriteVersionAsInteger() {
         return getFormatter().isWriteVersionAsInteger();
     }

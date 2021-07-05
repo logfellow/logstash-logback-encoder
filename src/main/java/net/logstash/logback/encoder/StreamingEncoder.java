@@ -17,11 +17,11 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * Interface implemented by {@link Encoder} that supports writing directly into a {@link OutputStream} 
+ * Interface implemented by {@link Encoder} that supports writing directly into a {@link OutputStream}
  * instead of returning a byte array.
  */
 public interface StreamingEncoder<Event> {
 
-    public void encode(Event event, OutputStream outputStream) throws IOException;
+    void encode(Event event, OutputStream outputStream) throws IOException;
 
 }

@@ -35,9 +35,7 @@ import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
-import net.logstash.logback.composite.loggingevent.ContextMapJsonProvider;
 import net.logstash.logback.composite.loggingevent.ContextNameJsonProvider;
-import net.logstash.logback.composite.loggingevent.JsonMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
@@ -82,7 +80,7 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assertions.assertEquals(21, providers.size());
+        Assertions.assertEquals(19, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -93,7 +91,7 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assertions.assertEquals(25, providers.size());
+        Assertions.assertEquals(23, providers.size());
 
         verifyCommonProviders(providers);
 
@@ -163,14 +161,11 @@ public class ConfigurationTest {
 
         Assertions.assertNotNull(getInstance(providers, ContextJsonProvider.class));
         Assertions.assertNotNull(getInstance(providers, ContextNameJsonProvider.class));
-        Assertions.assertNotNull(getInstance(providers, JsonMessageJsonProvider.class));
 
         MdcJsonProvider mdcJsonProvider = getInstance(providers, MdcJsonProvider.class);
         Assertions.assertNotNull(mdcJsonProvider);
         Assertions.assertEquals("included", mdcJsonProvider.getIncludeMdcKeyNames().get(0));
         Assertions.assertEquals("renamedKey", mdcJsonProvider.getMdcKeyFieldNames().get("key"));
-
-        Assertions.assertNotNull(getInstance(providers, ContextMapJsonProvider.class));
 
         GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsJsonProvider = getInstance(providers, GlobalCustomFieldsJsonProvider.class);
         Assertions.assertNotNull(globalCustomFieldsJsonProvider);

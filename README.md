@@ -4,7 +4,7 @@
 
 # Logstash Logback Encoder
 
-[![Build](https://github.com/logstash/logstash-logback-encoder/workflows/build/badge.svg?branch=master)](https://github.com/logstash/logstash-logback-encoder/actions)
+[![Build](https://github.com/logstash/logstash-logback-encoder/workflows/build/badge.svg?branch=main)](https://github.com/logstash/logstash-logback-encoder/actions)
 [![Javadocs](http://www.javadoc.io/badge/net.logstash.logback/logstash-logback-encoder.svg)](http://www.javadoc.io/doc/net.logstash.logback/logstash-logback-encoder)
 [![Maven Central](https://img.shields.io/maven-central/v/net.logstash.logback/logstash-logback-encoder)](https://search.maven.org/artifact/net.logstash.logback/logstash-logback-encoder)
 [![Release Notes](https://img.shields.io/github/v/release/logstash/logstash-logback-encoder?label=release%20notes)](https://github.com/logstash/logstash-logback-encoder/releases/latest)
@@ -52,7 +52,8 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
 * [Customizing Timestamp](#customizing-timestamp)
-* [Customizing Message](#customizing-message)
+* [Customizing LoggingEvent Message](#customizing-loggingevent-message)
+* [Customizing AccessEvent Message](#customizing-accessevent-message)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
@@ -77,12 +78,21 @@ Maven style:
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
     <version>6.6</version>
+    <!-- Use runtime scope if the project does not have any compile-time usage of logstash-logback-encoder,
+         such as usage of StructuredArguments/Markers or implementations such as
+         JsonProvider, AppenderListener, JsonFactoryDecorator, JsonGeneratorDecorator, etc
+    <scope>runtime</scope>
+    -->
 </dependency>
 <!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
     <version>1.2.3</version>
+    <!-- Use runtime scope if the project does not have any compile-time usage of logback,
+         such as implementations of Appender, Encoder, Layout, TurboFilter, etc
+    <scope>runtime</scope>
+    -->
 </dependency>
 ```
 
@@ -1144,11 +1154,6 @@ logger.info(appendFields(myobject), "log message");
 ```
 
 
-See [DEPRECATED.md](DEPRECATED.md) for other deprecated ways of adding json to the output.
-
-
-
-
 ## AccessEvent Fields
 
 The following sections describe the fields included in the JSON output by default for AccessEvents written by the
@@ -1443,6 +1448,9 @@ for the path string format and more examples.  But in general:
 
 Specific values to be masked can be specified in several ways, as seen in the following example:
 
+When using regexes to identify strings to mask, all matches within each string field value will be replaced.
+If you want to match the full string field value, then use the beginning of line (`^`) and end of line (`$`) markers.
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
@@ -1453,9 +1461,9 @@ Specific values to be masked can be specified in several ways, as seen in the fo
     -->
     <defaultMask>****</defaultMask>
 
-    <!-- Values to mask added via <value> will use the  default mask string -->
+    <!-- Values to mask added via <value> will use the default mask string -->
     <value>^foo$</value>
-    <value>^bar$</value>
+    <value>bar</value>
 
     <!-- Multiple values can be specified as a comma separated string in the <values> element. -->
     <values>^baz$,^blah$</values>
@@ -1570,9 +1578,9 @@ You can change the timezone like this:
 The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
 
 
-## Customizing Message
+## Customizing LoggingEvent Message
 
-By default, messages are written as JSON strings. Any characters not allowed in a JSON string, such as newlines, are escaped.
+By default, LoggingEvent messages are written as JSON strings. Any characters not allowed in a JSON string, such as newlines, are escaped.
 See the [Customizing Character Escapes](#customizing-character-escapes) section for details.
 
 You can also write messages as JSON arrays instead of strings, by specifying a `messageSplitRegex` to split the message text.
@@ -1603,6 +1611,24 @@ For example:
   <messageSplitRegex>#+</messageSplitRegex>
 </encoder>
 ```
+
+## Customizing AccessEvent Message
+
+By default, AccessEvent messages are written in the following format:
+
+```
+%clientHost - %user [%date] "%requestURL" %statusCode %bytesSent
+```
+
+To customize the message pattern, specify the `messagePattern` like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
+  <messagePattern>%clientHost [%date] "%requestURL" %statusCode %bytesSent</messagePattern>
+</encoder>
+```
+
+The pattern can contain any of the [AccessEvent conversion words](http://logback.qos.ch/manual/layouts.html#AccessPatternLayout).
 
 ## Customizing Logger Name Length
 
@@ -1636,8 +1662,8 @@ is included in the logstash-logback-encoder library to format stacktraces by:
 * Abbreviating class names
 * Filtering out consecutive unwanted stackTraceElements based on regular expressions.
 * Using evaluators to determine if the stacktrace should be logged.
-* Outputing in either 'normal' order (root-cause-last), or root-cause-first.
-* Computing and inlining hexadecimal hashes for each exception stack ([more info](stack-hash.md)).
+* Outputting in either 'normal' order (root-cause-last), or root-cause-first.
+* Computing and inlining hexadecimal hashes for each exception stack using the `inlineHash` or `stackHash` provider ([more info](stack-hash.md)).
 
 For example:
 
@@ -1778,7 +1804,8 @@ Each provider has its own configuration options to further customize it.
 
 #### Providers for LoggingEvents
 
-For LoggingEvents, the available providers and their configuration properties (defaults in parenthesis) are as follows:
+The table below lists the available providers for LoggingEvents, and their configuration properties (defaults in parentheses).
+The provider name is the xml element name to use when configuring.
 
 <table>
   <tbody>
@@ -2043,9 +2070,8 @@ For LoggingEvents, the available providers and their configuration properties (d
 
 #### Providers for AccessEvents  
 
-For AccessEvents, the available providers and their configuration properties (defaults in parenthesis) are as follows:
-
-
+The table below lists the available providers for AccessEvents, and their configuration properties (defaults in parentheses).
+The provider name is the xml element name to use when configuring.
 
 <table>
   <tbody>
@@ -2511,12 +2537,12 @@ To disable the automatic registering of the default status listener by an append
 
 ### Profiling
 
-<a href="http://www.yourkit.com/java/profiler/index.jsp"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
+<a href="https://www.yourkit.com/java/profiler/"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
 
 Memory usage and performance of logstash-logback-encoder have been improved
 by addressing issues discovered with the help of the
-[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp).
+[YourKit Java Profiler](https://www.yourkit.com/java/profiler/).
 
 YourKit, LLC has graciously donated a free license of the
-[YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp)
+[YourKit Java Profiler](https://www.yourkit.com/java/profiler/)
 to this open source project.

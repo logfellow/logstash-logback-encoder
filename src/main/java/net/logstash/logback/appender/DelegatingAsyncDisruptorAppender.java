@@ -63,7 +63,7 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
             
             boolean exceptionThrown = false;
-            for(Iterator<Appender<Event>> it=appenders.iteratorForAppenders(); it.hasNext(); ) {
+            for (Iterator<Appender<Event>> it = appenders.iteratorForAppenders(); it.hasNext();) {
                 Appender<Event> appender = it.next();
                 
                 try {
@@ -78,8 +78,7 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
                     if (endOfBatch) {
                         flushAppender(appender);
                     }
-                }
-                catch(Exception e) {
+                } catch (Exception e) {
                     exceptionThrown = true;
                     if (!this.silentError) {
                         addError(String.format("Unable to forward event to appender [%s]: %s", appender.getName(), e.getMessage()), e);
@@ -97,11 +96,9 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
                 return;
             }
             if (appender instanceof Flushable) {
-                flushAppender((Flushable)appender);
-            }
-            else
-            if (appender instanceof OutputStreamAppender) {
-                flushAppender((OutputStreamAppender<Event>)appender);
+                flushAppender((Flushable) appender);
+            } else if (appender instanceof OutputStreamAppender) {
+                flushAppender((OutputStreamAppender<Event>) appender);
             }
         }
         

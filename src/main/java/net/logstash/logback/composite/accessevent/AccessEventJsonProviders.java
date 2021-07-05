@@ -25,11 +25,11 @@ import ch.qos.logback.access.spi.IAccessEvent;
  * <p>
  * For example, instead of:
  * {@code
- *     <provider class="net.logstash.logback.composite.accessevent.AccessEventFormattedTimestampJsonProvider"/> 
+ *     <provider class="net.logstash.logback.composite.accessevent.AccessEventFormattedTimestampJsonProvider"/>
  * }
  * you can just use:
  * {@code
- *     <timestamp/> 
+ *     <timestamp/>
  * }
  */
 public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {

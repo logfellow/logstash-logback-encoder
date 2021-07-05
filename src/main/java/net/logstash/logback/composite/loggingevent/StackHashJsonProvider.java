@@ -55,7 +55,7 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
 
     @Override
     public void start() {
-        if(!excludes.isEmpty()) {
+        if (!excludes.isEmpty()) {
             hasher = new StackHasher(StackElementFilter.byPattern(excludes));
         }
         super.start();
@@ -100,7 +100,7 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null && throwableProxy instanceof  ThrowableProxy) {
-            String hash = hasher.hexHash(((ThrowableProxy)event.getThrowableProxy()).getThrowable());
+            String hash = hasher.hexHash(((ThrowableProxy) event.getThrowableProxy()).getThrowable());
             JsonWritingUtils.writeStringField(generator, getFieldName(), hash);
         }
     }

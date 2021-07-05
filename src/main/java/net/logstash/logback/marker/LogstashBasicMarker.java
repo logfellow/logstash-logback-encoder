@@ -20,10 +20,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-/* Copy of {@link org.slf4j.helpers.BasicMarker} from slf4j-api v1.7.12,
- * with a minor change to make the constructor public,
- * so that it can be extended in other packages.
- * <p>
+/* Copy of {@link org.slf4j.helpers.BasicMarker} from slf4j-api v1.7.12, with minor changes:
+ * 1. make the constructor public so that it can be extended in other packages
+ * 2. add getReferences() method
+
  * slf4j-api, {@link org.slf4j.helpers.BasicMarker}, and the portions
  * of this class that have been copied from BasicMarker are provided under
  * the MIT License copied here:
@@ -119,6 +119,18 @@ public class LogstashBasicMarker implements Marker {
         }
     }
 
+    /*
+     * BEGIN Modification in logstash-logback-encoder to add this method
+     */
+    protected List<Marker> getReferences() {
+        return refereceList == null
+                ? Collections.emptyList()
+                : Collections.unmodifiableList(refereceList);
+    }
+    /*
+     * END Modification in logstash-logback-encoder to add this method
+     */
+
     public synchronized boolean remove(Marker referenceToRemove) {
         if (refereceList == null) {
             return false;
@@ -184,12 +196,15 @@ public class LogstashBasicMarker implements Marker {
 
 
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (!(obj instanceof Marker))
+        }
+        if (!(obj instanceof Marker)) {
             return false;
+        }
 
         final Marker other = (Marker) obj;
         return name.equals(other.getName());

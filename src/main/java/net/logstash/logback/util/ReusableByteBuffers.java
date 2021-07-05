@@ -22,7 +22,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * A pool of {@link ReusableByteBuffer}.
  * 
  * <p>The pool is unbounded and can hold as many buffers as needed. Buffers are kept in the pool
- * using weak references so they can be garbage collected by the JVM when running low in memory. 
+ * using weak references so they can be garbage collected by the JVM when running low in memory.
  * 
  * @author brenuart
  */
@@ -34,13 +34,13 @@ public class ReusableByteBuffers {
     private final Deque<Reference<ReusableByteBuffer>> buffers = new ConcurrentLinkedDeque<>();
     
     /**
-     * The size (in bytes) of the initial buffer that is reused across consecutive usages.  
+     * The size (in bytes) of the initial buffer that is reused across consecutive usages.
      */
     private final int initialSize;
     
     /**
      * Create a new buffer pool holding buffers with an initial capacity of {@code initialSize} bytes.
-     *  
+     *
      * @param initialSize the initial capacity of buffers created by this pool.
      */
     public ReusableByteBuffers(int initialSize) {
@@ -70,17 +70,17 @@ public class ReusableByteBuffers {
      * @return a reusable byte buffer
      */
     public ReusableByteBuffer getBuffer() {
-        ReusableByteBuffer buffer=null;
+        ReusableByteBuffer buffer = null;
         
-        while(buffer==null) {
+        while (buffer == null) {
             Reference<ReusableByteBuffer> ref = buffers.poll();
-            if (ref==null) {
+            if (ref == null) {
                 break;
             }
             buffer = ref.get();
         }
         
-        if (buffer==null) {
+        if (buffer == null) {
             buffer = createBuffer();
         }
         
@@ -88,7 +88,7 @@ public class ReusableByteBuffers {
     }
     
     /**
-     * Return a buffer to the pool after usage. 
+     * Return a buffer to the pool after usage.
      * 
      * @param buffer the buffer to return to the pool.
      */

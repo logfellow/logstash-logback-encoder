@@ -34,7 +34,7 @@ public class YamlFeatureJsonGeneratorDecorator extends FeatureDecorator<YAMLGene
     @Override
     public JsonGenerator decorate(JsonGenerator generator) {
         if (!(generator instanceof YAMLGenerator)) {
-            throw new ClassCastException("Expected generator to be of type " + YAMLGenerator.class.getName() +".  See " + YamlJsonFactoryDecorator.class.getName());
+            throw new ClassCastException("Expected generator to be of type " + YAMLGenerator.class.getName() + ".  See " + YamlJsonFactoryDecorator.class.getName());
         }
         return super.decorate((YAMLGenerator) generator);
     }
