@@ -103,7 +103,9 @@ Rules are enforced by [checkstyle](src/checkstyle/checkstyle.xml).
 Java source files must include the following header at the top of the file, before the _package_ declaration:
 
 ```
-/**
+/*
+ * Copyright 2013-${year} the original author or authors.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at

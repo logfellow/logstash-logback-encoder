@@ -9,6 +9,7 @@
     <name>Logstash Logback Encoder</name>
     <description>Provides logback encoders, layouts, and appenders to log in JSON and other formats supported by Jackson</description>
     <url>https://github.com/logstash/logstash-logback-encoder</url>
+    <inceptionYear>2013</inceptionYear>
 
     <scm>
         <url>https://github.com/logstash/logstash-logback-encoder</url>
@@ -407,21 +408,24 @@
                     </dependencies>
                 </plugin>
                 
-	            <plugin>
-	                <groupId>com.mycila</groupId>
-	                <artifactId>license-maven-plugin</artifactId>
-	                <version>${license-maven-plugin.version}</version>
-	                <configuration>
-	                    <header>license-header.txt</header>
-						<mapping>
-							<java>JAVADOC_STYLE</java>
-						</mapping>
-	                    <includes>
-	                        <include>src/main/java/**</include>
-	                        <include>src/test/java/**</include>
-	                    </includes>
-	                </configuration>
-	            </plugin>
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <version>${license-maven-plugin.version}</version>
+                    <configuration>
+                        <header>license-header.txt</header>
+                        <mapping>
+                            <java>SLASHSTAR_STYLE</java>
+                        </mapping>
+                        <includes>
+                            <include>src/main/java/**</include>
+                            <include>src/test/java/**</include>
+                        </includes>
+                        <defaultProperties>
+                            <year>2021</year>
+                        </defaultProperties>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
