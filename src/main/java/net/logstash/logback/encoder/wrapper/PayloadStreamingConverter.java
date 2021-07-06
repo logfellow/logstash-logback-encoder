@@ -13,12 +13,10 @@
  */
 package net.logstash.logback.encoder.wrapper;
 
-import java.io.IOException;
+import java.io.OutputStream;
 
-/**
- * Wraps encoded payload (with prefix and suffix).
- * Can be used to convert plain bytes to a given format.
- */
-public interface EncodedPayloadWrapper {
-    byte[] wrap(byte[] encoded) throws IOException;
+public abstract class PayloadStreamingConverter extends OutputStream
+        implements PayloadConverter {
+
+    public abstract PayloadStreamingConverter streamTo(OutputStream outputStream);
 }

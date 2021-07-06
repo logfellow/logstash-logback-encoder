@@ -21,15 +21,15 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class LumberjackPayloadWrapperTest {
-    private final LumberjackPayloadWrapper payloadWrapper = new LumberjackPayloadWrapper();
+class LumberjackPayloadConverterTest {
+    private final LumberjackPayloadConverter payloadWrapper = new LumberjackPayloadConverter();
 
     @Test
     void testPayloadProperlyWrapped() {
         String payload = "{\"message\":\"Log message\"}";
         byte[] encoded = payload.getBytes(StandardCharsets.UTF_8);
 
-        byte[] wrapped = assertDoesNotThrow(() -> payloadWrapper.wrap(encoded));
+        byte[] wrapped = assertDoesNotThrow(() -> payloadWrapper.convert(encoded));
 
         ByteBuffer buffer = ByteBuffer.wrap(wrapped);
 
@@ -58,7 +58,7 @@ class LumberjackPayloadWrapperTest {
         byte[] encoded = payload.getBytes(StandardCharsets.UTF_8);
 
         for (int i = 0; i < 5; i++) {
-            byte[] wrapped = assertDoesNotThrow(() -> payloadWrapper.wrap(encoded));
+            byte[] wrapped = assertDoesNotThrow(() -> payloadWrapper.convert(encoded));
             assertSequenceNumberIs(wrapped, i);
         }
     }

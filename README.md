@@ -1806,21 +1806,22 @@ The size of this buffer is set to `1024` bytes by default. A different size can 
 The buffer automatically grows above the `minBufferSize` when needed to accommodate with larger events. However, only the first `minBufferSize` bytes will be reused by subsequent invocations. It is therefore strongly advised to set the minimum size at least equal to the average size of the encoded events to reduce unnecessary memory allocations and reduce pressure on the garbage collector.
 
 Apart from providers, if you need to further customize the output format of encoded JSON, 
-you can specify the _payloadWrapper_. 
-A _payloadWrapper_ can wrap or convert the encoded JSON (with a prefix, suffix and other providers) to another byte format.
+you can specify the _payloadConverter_. 
+A _payloadConverter_ can wrap or convert the encoded JSON (with a prefix, suffix and other providers) to another byte format.
 For example, it can be used to convert plain JSON to Lumberjack protocol, 
 which is used by Beats input.
 
 ```xml
+
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-    <payloadWrapper class="net.logstash.logback.encoder.wrapper.LumberjackPayloadWrapper" />
+  <payloadConverter class="net.logstash.logback.encoder.wrapper.LumberjackPayloadConverter"/>
 </encoder>
 ```
 
-The encoder will prepare the output JSON and pass it to given _payloadWrapper_, 
+The encoder will prepare the output JSON and pass it to given _payloadConverter_, 
 which will then convert it to a proper format.
 
-The logstash-logback-encoder library contains `LumberjackPayloadWrapper`.
+The logstash-logback-encoder library contains `LumberjackPayloadConverter`.
 It can be used in situation when it is needed to reuse Beats input (in Logstash or Graylog for example)
 that is also used by Filebeat (or other tools).
 

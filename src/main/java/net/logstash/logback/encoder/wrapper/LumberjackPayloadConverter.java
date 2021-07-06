@@ -24,7 +24,7 @@ import java.math.BigInteger;
  * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash's documentation</a>
  * to read more about this protocol.
  */
-public class LumberjackPayloadWrapper implements EncodedPayloadWrapper {
+public class LumberjackPayloadConverter implements PayloadConverter {
 
     private static final int INT_SIZE_IN_BYTES = 4;
 
@@ -33,12 +33,12 @@ public class LumberjackPayloadWrapper implements EncodedPayloadWrapper {
 
     private int counter;
 
-    public LumberjackPayloadWrapper() {
+    public LumberjackPayloadConverter() {
         this.counter = 0;
     }
 
     @Override
-    public byte[] wrap(byte[] encoded) throws IOException {
+    public byte[] convert(byte[] encoded) throws IOException {
         byte[] payloadLength = intToBytes(encoded.length);
         byte[] sequenceNumber = intToBytes(counter++);
 

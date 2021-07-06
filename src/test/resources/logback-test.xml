@@ -29,7 +29,7 @@
     -->
     <appender name="logstashEncoderAppender" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <payloadWrapper class="net.logstash.logback.encoder.wrapper.LumberjackPayloadWrapper" />
+            <payloadConverter class="net.logstash.logback.encoder.wrapper.LumberjackPayloadConverter" />
             <fieldNames>
                 <message>customMessage</message>
                 <caller>caller</caller>

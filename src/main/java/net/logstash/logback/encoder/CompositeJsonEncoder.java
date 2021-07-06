@@ -21,6 +21,7 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.encoder.wrapper.PayloadStreamingConverter;
 import net.logstash.logback.util.ReusableByteBuffer;
 import net.logstash.logback.util.ReusableByteBufferPool;
 
@@ -29,8 +30,7 @@ import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import net.logstash.logback.encoder.wrapper.EncodedPayloadWrapper;
-import net.logstash.logback.encoder.wrapper.LumberjackPayloadWrapper;
+import net.logstash.logback.encoder.wrapper.PayloadConverter;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
         extends EncoderBase<Event> implements StreamingEncoder<Event> {
@@ -54,7 +54,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
-    private EncodedPayloadWrapper payloadWrapper;
+    private PayloadConverter payloadConverter;
 
     private final CompositeJsonFormatter<Event> formatter;
 
@@ -77,6 +77,8 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             throw new IllegalStateException("Encoder is not started");
         }
 
+        outputStream = wrappedStream(outputStream);
+
         encode(prefix, event, outputStream);
         formatter.writeEventToOutputStream(event, outputStream);
         encode(suffix, event, outputStream);
@@ -93,7 +95,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         ReusableByteBuffer buffer = bufferPool.acquire();
         try {
             encode(event, buffer);
-            return buffer.toByteArray();
+            return convertEncoded(buffer.toByteArray());
         } catch (IOException e) {
             addWarn("Error encountered while encoding log event. Event: " + event, e);
             return EMPTY_BYTES;
@@ -111,11 +113,22 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         }
     }
 
-    private byte[] wrapEncoded(byte[] encoded) throws IOException {
-        if (payloadWrapper != null) {
-            return payloadWrapper.wrap(encoded);
+    private OutputStream wrappedStream(OutputStream outputStream) {
+        if (payloadConverterReady() && payloadConverter instanceof PayloadStreamingConverter) {
+            return ((PayloadStreamingConverter) payloadConverter).streamTo(outputStream);
+        }
+        return outputStream;
+    }
+
+    private byte[] convertEncoded(byte[] encoded) throws IOException {
+        if (payloadConverterReady() && !(payloadConverter instanceof PayloadStreamingConverter)) {
+            return payloadConverter.convert(encoded);
         }
         return encoded;
+    }
+
+    private boolean payloadConverterReady() {
+        return payloadConverter != null && payloadConverter.isStarted();
     }
 
     @Override
@@ -134,6 +147,9 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
                 : this.lineSeparator.getBytes(charset);
         startWrapped(prefix);
         startWrapped(suffix);
+        if (payloadConverter != null) {
+            payloadConverter.start();
+        }
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -176,6 +192,9 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             formatter.stop();
             stopWrapped(prefix);
             stopWrapped(suffix);
+            if (payloadConverterReady()) {
+                payloadConverter.stop();
+            }
         }
     }
 
@@ -295,10 +314,10 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         this.suffix = suffix;
     }
 
-    public EncodedPayloadWrapper getPayloadWrapper() {
-        return payloadWrapper;
+    public PayloadConverter getPayloadConverter() {
+        return payloadConverter;
     }
-    public void setPayloadWrapper(EncodedPayloadWrapper wrapper) {
-        this.payloadWrapper = wrapper;
+    public void setPayloadConverter(PayloadConverter wrapper) {
+        this.payloadConverter = wrapper;
     }
 }
