@@ -15,18 +15,22 @@ package net.logstash.logback.layout;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import ch.qos.logback.core.Layout;
-import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.composite.AbstractJsonProvider;
 import net.logstash.logback.composite.CompositeJsonFormatter;
-import org.junit.jupiter.api.BeforeEach;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+
+import ch.qos.logback.core.Layout;
+import ch.qos.logback.core.LayoutBase;
+import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 @ExtendWith(MockitoExtension.class)
 public class CompositeJsonLayoutTest {
@@ -34,99 +38,105 @@ public class CompositeJsonLayoutTest {
     /**
      * create an implementation of the composite layout that format teh event using simply toString()
      */
-    static class TesterCompositeJsonLayout extends CompositeJsonLayout {
+    static class TesterCompositeJsonLayout extends CompositeJsonLayout<DeferredProcessingAware> {
         @Override
-        protected CompositeJsonFormatter createFormatter() {
-            return new CompositeJsonFormatter(this){
+        protected CompositeJsonFormatter<DeferredProcessingAware> createFormatter() {
+            CompositeJsonFormatter<DeferredProcessingAware> formatter = new CompositeJsonFormatter<DeferredProcessingAware>(this) {};
+            formatter.getProviders().addProvider(new AbstractJsonProvider<DeferredProcessingAware>() {
                 @Override
-                public String writeEventAsString(DeferredProcessingAware deferredProcessingAware) throws IOException {
-                    return deferredProcessingAware.toString();
+                public void writeTo(JsonGenerator generator, DeferredProcessingAware event) throws IOException {
+                    generator.writeRaw("event");
                 }
-            };
+                @Override
+                public void prepareForDeferredProcessing(DeferredProcessingAware event) {
+                    super.prepareForDeferredProcessing(event);
+                }
+            });
+            return formatter;
         }
     }
 
-    @Mock(lenient = true)
-    DeferredProcessingAware event;
+    private Layout<DeferredProcessingAware> prefixLayout = new LayoutBase<DeferredProcessingAware>() {
+        @Override
+        public String doLayout(DeferredProcessingAware event) {
+            return "prefix:";
+        }  
+    };
+
+    private Layout<DeferredProcessingAware> suffixLayout = new LayoutBase<DeferredProcessingAware>() {
+        public String doLayout(DeferredProcessingAware event) {
+            return ":suffix";
+        };
+    };
 
     @Mock(lenient = true)
-    Layout prefixLayout;
-
-    @Mock(lenient = true)
-    Layout suffixLayout;
-
-    @BeforeEach
-    public void setup() {
-        when(event.toString()).thenReturn("event");
-        when(prefixLayout.doLayout(event)).thenReturn("prefix:");
-        when(suffixLayout.doLayout(event)).thenReturn(":suffix");
-    }
+    private DeferredProcessingAware event;
+    
 
     @Test
     public void testDoLayoutWithoutPrefixSuffix()  {
-
-        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        CompositeJsonLayout<DeferredProcessingAware> layout = new TesterCompositeJsonLayout();
         layout.start();
 
         String layoutResult = layout.doLayout(event);
 
-        assertThat(layoutResult).isEqualTo("event");
+        assertThat(layoutResult).isEqualTo("{event}");
 
     }
 
     @Test
     public void testDoLayoutWithPrefixWithoutSuffix() {
-        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        CompositeJsonLayout<DeferredProcessingAware> layout = new TesterCompositeJsonLayout();
         layout.setPrefix(prefixLayout);
         layout.start();
 
         String layoutResult = layout.doLayout(event);
 
-        assertThat(layoutResult).isEqualTo("prefix:event");
+        assertThat(layoutResult).isEqualTo("prefix:{event}");
 
     }
 
 
     @Test
     public void testDoLayoutWithoutPrefixWithSuffix() {
-        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        CompositeJsonLayout<DeferredProcessingAware> layout = new TesterCompositeJsonLayout();
         layout.setSuffix(suffixLayout);
         layout.start();
 
         String layoutResult = layout.doLayout(event);
 
-        assertThat(layoutResult).isEqualTo("event:suffix");
+        assertThat(layoutResult).isEqualTo("{event}:suffix");
 
     }
 
 
     @Test
     public void testDoLayoutWithPrefixWithSuffix() {
-        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        CompositeJsonLayout<DeferredProcessingAware> layout = new TesterCompositeJsonLayout();
         layout.setPrefix(prefixLayout);
         layout.setSuffix(suffixLayout);
         layout.start();
 
         String layoutResult = layout.doLayout(event);
 
-        assertThat(layoutResult).isEqualTo("prefix:event:suffix");
+        assertThat(layoutResult).isEqualTo("prefix:{event}:suffix");
 
     }
 
     @Test
     public void testDoLayoutWithPrefixWithLineSeparator() {
-        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        CompositeJsonLayout<DeferredProcessingAware> layout = new TesterCompositeJsonLayout();
         layout.setLineSeparator("SYSTEM");
         layout.start();
 
         String layoutResult = layout.doLayout(event);
 
-        assertThat(layoutResult).isEqualTo("event" + System.lineSeparator());
+        assertThat(layoutResult).isEqualTo("{event}" + System.lineSeparator());
     }
 
     @Test
     public void notStarted() {
-        CompositeJsonLayout layout = new TesterCompositeJsonLayout();
+        CompositeJsonLayout<DeferredProcessingAware> layout = new TesterCompositeJsonLayout();
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> layout.doLayout(event))
                 .withMessage("Layout is not started");
     }

@@ -14,21 +14,27 @@
 package net.logstash.logback.encoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+import net.logstash.logback.TestJsonProvider;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,9 +42,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.fasterxml.jackson.core.JsonEncoding;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.WarnStatus;
@@ -47,16 +56,10 @@ import ch.qos.logback.core.status.WarnStatus;
 @ExtendWith(MockitoExtension.class)
 public class CompositeJsonEncoderTest {
     
-    private final CompositeJsonFormatter<ILoggingEvent> formatter = mock(CompositeJsonFormatter.class);
-    
     @InjectMocks
-    private final CompositeJsonEncoder<ILoggingEvent> encoder = new CompositeJsonEncoder<ILoggingEvent>() {
-
-        @Override
-        protected CompositeJsonFormatter<ILoggingEvent> createFormatter() {
-            return formatter;
-        }
-    };
+    private final CompositeJsonEncoder<ILoggingEvent> encoder = new TestCompositeJsonEncoder();
+    
+    private CompositeJsonFormatter<ILoggingEvent> formatter;
     
     @Mock(lenient = true)
     private Context context;
@@ -69,119 +72,221 @@ public class CompositeJsonEncoderTest {
     
     @BeforeEach
     public void setup() {
-        when(formatter.getEncoding()).thenReturn("UTF-8");
+        // suppress line separator to make test platform independent
+        this.encoder.setLineSeparator("");
+        this.formatter = encoder.getFormatter();
+        
         when(context.getStatusManager()).thenReturn(statusManager);
     }
     
-    @Test
-    public void testNoPrefixNoSuffix_logback12OrLater() throws IOException {
-        
-        encoder.start();
-        
-        Assertions.assertTrue(encoder.isStarted());
-        
-        verify(formatter).setContext(context);
-        verify(formatter).start();
-        
-        byte[] encoded = encoder.encode(event);
-        
-        verify(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
-        
-        assertThat(encoded).containsExactly(System.getProperty("line.separator").getBytes(StandardCharsets.UTF_8));
-        
-        encoder.stop();
-        Assertions.assertFalse(encoder.isStarted());
-        verify(formatter).stop();
-    }
     
     @Test
-    public void testPrefixAndSuffix_logback12OrLater() throws IOException {
-        
-        LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
-        Encoder<ILoggingEvent> suffix = mock(Encoder.class);
-        
-        when(prefix.encode(event)).thenReturn("prefix".getBytes(StandardCharsets.UTF_8));
-        when(suffix.encode(event)).thenReturn("suffix".getBytes(StandardCharsets.UTF_8));
-        
+    public void startStop() {
+        Encoder<ILoggingEvent> prefix = spy(new TestEncoder("prefix"));
         encoder.setPrefix(prefix);
-        encoder.setSuffix(suffix);
         
+        // stopped by default
+        assertThat(encoder.isStarted()).isFalse();
+        assertThat(formatter.isStarted()).isFalse();
+        assertThat(prefix.isStarted()).isFalse();
+        
+        // start encoder
         encoder.start();
-        
-        Assertions.assertTrue(encoder.isStarted());
-        
+        assertThat(encoder.isStarted()).isTrue();
+        assertThat(formatter.isStarted()).isTrue();
+        assertThat(prefix.isStarted()).isTrue();
         verify(formatter).setContext(context);
-        verify(formatter).start();
         
-        verify(prefix).setCharset(StandardCharsets.UTF_8);
-        verify(prefix).start();
-        verify(suffix).start();
+        // providers are not started a second time
+        encoder.start();
+        verify(formatter, times(1)).start();
+        verify(prefix, times(1)).start();
         
-        byte[] encoded = encoder.encode(event);
-        
-        verify(prefix).encode(event);
-        verify(suffix).encode(event);
-        
-        verify(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
-        
-        assertThat(encoded).containsExactly(("prefixsuffix" + System.getProperty("line.separator")).getBytes(StandardCharsets.UTF_8));
-        
+        // stop encoder
         encoder.stop();
-        Assertions.assertFalse(encoder.isStarted());
-        verify(formatter).stop();
-        verify(prefix).stop();
-        verify(suffix).stop();
-    }
-    
-    @Test
-    public void testLineEndings() {
+        assertThat(encoder.isStarted()).isFalse();
+        assertThat(formatter.isStarted()).isFalse();
+        assertThat(prefix.isStarted()).isFalse();
         
-        Assertions.assertEquals(System.getProperty("line.separator"), encoder.getLineSeparator());
-        
-        encoder.setLineSeparator("UNIX");
-        Assertions.assertEquals("\n", encoder.getLineSeparator());
-        
-        encoder.setLineSeparator(null);
-        Assertions.assertEquals(null, encoder.getLineSeparator());
-        
-        encoder.setLineSeparator("WINDOWS");
-        Assertions.assertEquals("\r\n", encoder.getLineSeparator());
-        
-        encoder.setLineSeparator("foo");
-        Assertions.assertEquals("foo", encoder.getLineSeparator());
-        
-        encoder.setLineSeparator("SYSTEM");
-        Assertions.assertEquals(System.getProperty("line.separator"), encoder.getLineSeparator());
-        
-        encoder.setLineSeparator("");
-        Assertions.assertEquals(null, encoder.getLineSeparator());
-    }
-    
-    @Test
-    public void testIOException_logback12OrLater() throws IOException {
-        
-        encoder.start();
-        
-        Assertions.assertTrue(encoder.isStarted());
-        
-        verify(formatter).setContext(context);
-        verify(formatter).start();
-        
-        IOException exception = new IOException();
-        doThrow(exception).when(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
-        
-        encoder.encode(event);
-        
-        Assertions.assertTrue(encoder.isStarted());
-        
-        verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
-                + "Event: " + event, context, exception));
+        // providers are not stopped a second time
+        encoder.stop();
+        verify(formatter, times(1)).stop();
+        verify(prefix, times(1)).stop();
     }
 
+    
     @Test
     public void notStarted() {
         assertThatExceptionOfType(IllegalStateException.class).isThrownBy(() -> encoder.encode(event))
                 .withMessage("Encoder is not started");
     }
+    
+    
+    @Test
+    public void encode_noPrefixSuffix() {
+        encoder.start();
+        assertThat(new String(encoder.encode(event))).isEqualTo("{}");
+    }
 
+    
+    /*
+     * Encode log event with prefix and suffix encoders.
+     * 
+     * NOTE: Encoder#headerBytes and Encoder#footerBytes are ignored
+     */
+    @Test
+    public void encode_withPrefixSuffix() {
+        encoder.setPrefix( new TestEncoder("prefix") );
+        encoder.setSuffix( new TestEncoder("suffix") );
+        encoder.start();
+        
+        assertThat(new String(encoder.encode(event))).isEqualTo("prefix/event{}suffix/event");
+    }
+    
+    
+    /*
+     * Use a custom line separator
+     */
+    @Test
+    public void encode_customLineSeparator() {
+        encoder.setLineSeparator("-");
+        encoder.start();
+        assertThat(new String(encoder.encode(event))).isEqualTo("{}-");
+    }
+    
+    
+    /*
+     * Prefix/Suffix of type LayoutWrappingEncoder have their charset set to the same value 
+     * as the Formatter used by the CompositeJsonEncoder
+     */
+    @Test
+    public void charsetOnLayoutWrappingEncoder() {
+        formatter.setEncoding(JsonEncoding.UTF16_BE.getJavaName()); // use an encoding that is not likely to be 
+                                                                    // the default to avoid false positives
+        
+        LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
+        encoder.setPrefix(prefix);
+        
+        encoder.start();
+        
+        verify(prefix).setCharset(StandardCharsets.UTF_16BE);
+    }
+    
+    
+    /*
+     * Encode using the StreamingEncoder API
+     */
+    @Test
+    public void streamingEncode() {
+        encoder.start();
+        
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        assertThatNoException().isThrownBy(() -> encoder.encode(event, bos));
+        
+        assertThat(new String(bos.toByteArray())).isEqualTo("{}");
+    }
+    
+    
+    /*
+     * Test decoding of special line separators
+     */
+    @Test
+    public void testLineEndings() {
+        // Use a brand new default instance to get rid of configuration done by the #setup() method
+        TestCompositeJsonEncoder encoder = new TestCompositeJsonEncoder();
+        
+        assertThat(encoder.getLineSeparator()).isEqualTo(System.getProperty("line.separator"));
+        
+        encoder.setLineSeparator("UNIX");
+        assertThat(encoder.getLineSeparator()).isEqualTo("\n");
+        
+        encoder.setLineSeparator(null);
+        assertThat(encoder.getLineSeparator()).isNull();
+        
+        encoder.setLineSeparator("WINDOWS");
+        assertThat(encoder.getLineSeparator()).isEqualTo("\r\n");
+        
+        encoder.setLineSeparator("foo");
+        assertThat(encoder.getLineSeparator()).isEqualTo("foo");
+        
+        encoder.setLineSeparator("SYSTEM");
+        assertThat(encoder.getLineSeparator()).isEqualTo(System.getProperty("line.separator"));
+        
+        encoder.setLineSeparator("");
+        assertThat(encoder.getLineSeparator()).isNull();
+    }
+
+    
+    /*
+     * Failure to encode log event should log an warning status
+     */
+    @Test
+    public void testIOException() throws IOException {
+        encoder.start();
+        
+        IOException exception = new IOException();
+        
+        doThrow(exception).when(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
+        
+        encoder.encode(event);
+        
+        verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
+                + "Event: " + event, context, exception));
+    }
+
+    
+    /*
+     * StreamingEncoder re-throws the IOException to the caller and does not log any warning
+     */
+    @Test
+    public void testIOException_streaming() throws IOException {
+        encoder.start();
+        
+        IOException exception = new IOException();
+        
+        OutputStream stream = mock(OutputStream.class);
+        doThrow(exception).when(stream).write(any(byte[].class), any(int.class), any(int.class));
+        
+        assertThatCode(() -> encoder.encode(event, stream)).isInstanceOf(IOException.class);
+        
+        verify(statusManager, never()).add(new WarnStatus("Error encountered while encoding log event. "
+                + "Event: " + event, context, exception));
+    }
+    
+    
+    // ----------------------------------------------------------------------------------------------------------------
+    
+    
+    private static class TestCompositeJsonEncoder extends CompositeJsonEncoder<ILoggingEvent> {
+        @Override
+        protected CompositeJsonFormatter<ILoggingEvent> createFormatter() {
+            CompositeJsonFormatter<ILoggingEvent> formatter = spy(new CompositeJsonFormatter<ILoggingEvent>(this) {});
+            formatter.getProviders().addProvider(new TestJsonProvider());
+            return formatter;
+        }
+    }
+    
+    private static class TestEncoder extends EncoderBase<ILoggingEvent> {
+        private final String name;
+        
+        public TestEncoder(String name) {
+            this.name = name;
+        }
+        
+        public byte[] encode(ILoggingEvent event) {
+            return getBytes(name+"/event");
+        }
+
+        public byte[] footerBytes()  {
+           return getBytes(name+"/footer");
+        }
+
+        public byte[] headerBytes()  {
+            return getBytes(name+"/header");
+        }
+        
+        private byte[] getBytes(String s) {
+            return s.getBytes();
+        }
+    }
 }
