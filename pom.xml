@@ -36,7 +36,6 @@
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.20</animal-sniffer-maven-plugin.version>
-        <lifecycle-mapping.version>1.0.0</lifecycle-mapping.version>
         <maven-bundle-plugin.version>5.1.2</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.1.2</maven-checkstyle-plugin.version>
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -44,7 +43,7 @@
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
         <maven-jar-plugin.version>3.2.0</maven-jar-plugin.version>
         <maven-javadoc-plugin.version>3.3.0</maven-javadoc-plugin.version>
-        <maven-license-plugin.version>1.9.0</maven-license-plugin.version>
+        <license-maven-plugin.version>4.1</license-maven-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <maven-shade-plugin.version>3.2.4</maven-shade-plugin.version>
         <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
@@ -268,26 +267,13 @@
                 <version>${maven-release-plugin.version}</version>
             </plugin>
             <plugin>
-                <groupId>com.mycila.maven-license-plugin</groupId>
-                <artifactId>maven-license-plugin</artifactId>
-                <version>${maven-license-plugin.version}</version>
-                <configuration>
-                    <header>license-header.txt</header>
-                    <strictCheck>true</strictCheck>
-                    <aggregate>true</aggregate>
-                    <encoding>UTF-8</encoding>
-                    <failIfMissing>true</failIfMissing>
-                    <skipExistingHeaders>true</skipExistingHeaders>
-                    <includes>
-                        <include>**/src/main/java/**</include>
-                        <include>**/src/test/java/**</include>
-                    </includes>
-                </configuration>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
                 <executions>
                     <execution>
                         <phase>process-sources</phase>
                         <goals>
-                            <goal>format</goal>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -421,33 +407,21 @@
                     </dependencies>
                 </plugin>
                 
-                <!-- This plugin's configuration is used to store Eclipse m2e settings only. 
-                     It has no influence on the Maven build itself.
-                -->
-                <plugin>
-                    <groupId>org.eclipse.m2e</groupId>
-                    <artifactId>lifecycle-mapping</artifactId>
-                    <version>${lifecycle-mapping.version}</version>
-                    <configuration>
-                        <lifecycleMappingMetadata>
-                            <pluginExecutions>
-                                <pluginExecution>
-                                    <pluginExecutionFilter>
-                                        <groupId>com.mycila.maven-license-plugin</groupId>
-                                        <artifactId>maven-license-plugin</artifactId>
-                                        <versionRange>[1.9.0,)</versionRange>
-                                        <goals>
-                                            <goal>format</goal>
-                                        </goals>
-                                    </pluginExecutionFilter>
-                                    <action>
-                                        <ignore></ignore>
-                                    </action>
-                                </pluginExecution>
-                            </pluginExecutions>
-                        </lifecycleMappingMetadata>
-                    </configuration>
-                </plugin>
+	            <plugin>
+	                <groupId>com.mycila</groupId>
+	                <artifactId>license-maven-plugin</artifactId>
+	                <version>${license-maven-plugin.version}</version>
+	                <configuration>
+	                    <header>license-header.txt</header>
+						<mapping>
+							<java>JAVADOC_STYLE</java>
+						</mapping>
+	                    <includes>
+	                        <include>src/main/java/**</include>
+	                        <include>src/test/java/**</include>
+	                    </includes>
+	                </configuration>
+	            </plugin>
             </plugins>
         </pluginManagement>
     </build>

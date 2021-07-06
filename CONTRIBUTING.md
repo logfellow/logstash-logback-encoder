@@ -98,8 +98,39 @@ Source Code Style
 -----------------
 
 Please follow the style used by the existing code in the repository.
-
 Rules are enforced by [checkstyle](src/checkstyle/checkstyle.xml).
+
+Java source files must include the following header at the top of the file, before the _package_ declaration:
+
+```
+/**
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+```
+
+The project makes use of the great https://github.com/mathieucarbou/license-maven-plugin[Mycila Maven License Plugin] to check for the presence of a valid header in source files during the build process.
+
+You can manually check your source files by invoking the plugin manually on the command line as follows:
+
+```
+mvn license:check
+```
+
+You can also ask the plugin to automatically update the header for you like this:
+
+```
+mvn license:format
+```
 
 
 License
@@ -107,3 +138,4 @@ License
 
 By contributing, you agree that the contributions will be licensed under the
 [Apache License 2.0](https://github.com/logstash/logstash-logback-encoder/blob/main/LICENSE).
+
