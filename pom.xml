@@ -318,17 +318,22 @@
                 <configuration>
                     <shadedArtifactAttached>false</shadedArtifactAttached>
                     <createDependencyReducedPom>true</createDependencyReducedPom>
+                    <createSourcesJar>true</createSourcesJar>
+                    <shadeSourcesContent>true</shadeSourcesContent>
                     <minimizeJar>true</minimizeJar>
                     <artifactSet>
-                        <excludes>
-                            <exclude>ch.qos.logback:*</exclude>
-                            <exclude>org.slf4j:*</exclude>
-                            <exclude>org.yaml:*</exclude>
-                            <exclude>com.fasterxml.jackson.core:*</exclude>
-                            <exclude>com.fasterxml.jackson.dataformat:*</exclude>
-                            <exclude>com.fasterxml.uuid:*</exclude>
-                        </excludes>
+                        <includes>
+                            <include>com.lmax:disruptor</include>
+                        </includes>
                     </artifactSet>
+                    <filters>
+                        <filter>
+                            <artifact>com.lmax:disruptor</artifact>
+                            <excludes>
+                                <exclude>META-INF/MANIFEST.MF</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
                     <relocations>
                         <relocation>
                             <pattern>com.lmax.disruptor</pattern>
