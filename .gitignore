@@ -3,8 +3,6 @@
 .settings/
 .*.md.html
 
-dependency-reduced-pom.xml
-
 META-INF/
 target/
 
