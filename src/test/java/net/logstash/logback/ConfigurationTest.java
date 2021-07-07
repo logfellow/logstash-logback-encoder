@@ -246,7 +246,7 @@ public class ConfigurationTest {
         Assertions.assertEquals("v2", output.get("k2"));
         Assertions.assertEquals("v3", output.get("k3"));
 
-        Number sequence = (Number)output.get("sequenceNumberField");
+        Number sequence = (Number) output.get("sequenceNumberField");
         Assertions.assertNotNull(sequence);
         Assertions.assertNotEquals("", sequence);
         Assertions.assertTrue(0L < sequence.longValue());

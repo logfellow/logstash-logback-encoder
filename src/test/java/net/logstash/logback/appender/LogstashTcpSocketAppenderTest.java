@@ -204,7 +204,7 @@ public class LogstashTcpSocketAppenderTest {
         
         when(readableCallableFuture.isDone())
             /*
-             * First return true, so that the reconnect logic is executed 
+             * First return true, so that the reconnect logic is executed
              */
             .thenReturn(true)
             /*
@@ -406,7 +406,7 @@ public class LogstashTcpSocketAppenderTest {
     
     
     /**
-     * When a connection failure occurs, the appender retries immediately with the next 
+     * When a connection failure occurs, the appender retries immediately with the next
      * available host. When all hosts are exhausted, the appender should wait {reconnectionDelay}
      * before retrying with the first server.
      */
@@ -432,7 +432,7 @@ public class LogstashTcpSocketAppenderTest {
         
         
         // THREE connection attempts must have been made in total
-        verify(socket, timeout(appender.getReconnectionDelay().getMilliseconds()+50).times(3)).connect(any(SocketAddress.class), anyInt());
+        verify(socket, timeout(appender.getReconnectionDelay().getMilliseconds() + 50).times(3)).connect(any(SocketAddress.class), anyInt());
         InOrder inOrder = inOrder(socket, encoder);
 
         // 1) fail to connect on primary at startup
@@ -570,7 +570,7 @@ public class LogstashTcpSocketAppenderTest {
     
     
     /**
-     * At least one valid destination must be configured. 
+     * At least one valid destination must be configured.
      * The appender refuses to start in case of error.
      */
     @Test

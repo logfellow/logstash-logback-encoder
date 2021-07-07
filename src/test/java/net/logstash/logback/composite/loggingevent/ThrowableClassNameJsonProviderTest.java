@@ -81,5 +81,4 @@ public class ThrowableClassNameJsonProviderTest {
 
         verify(generator).writeStringField(ThrowableClassNameJsonProvider.FIELD_NAME, throwable.getClass().getName());
     }
-
 }

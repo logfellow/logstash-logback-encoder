@@ -37,7 +37,7 @@ public class ResponseHeadersJsonProviderTest {
     
     private ResponseHeadersJsonProvider provider = new ResponseHeadersJsonProvider();
     
-    private Map<String, String> headers = new LinkedHashMap<String, String>(); 
+    private Map<String, String> headers = new LinkedHashMap<String, String>();
 
     @Mock
     private JsonGenerator generator;

@@ -215,7 +215,4 @@ public class FailureSummaryLoggingAppenderListenerTest {
                     && loggingEvent.getThrowableProxy().getSuppressed()[0].getMessage().contains("firstA");
         }));
     }
-
-
-
 }

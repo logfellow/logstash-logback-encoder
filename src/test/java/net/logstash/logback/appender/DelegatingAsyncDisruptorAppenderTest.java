@@ -53,7 +53,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
 
-    private DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() {};
+    private DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() { };
 
     @Mock
     private ILoggingEvent event;
@@ -205,7 +205,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
 
     /*
-     * OutputStreamAppender may return a null OutputStream 
+     * OutputStreamAppender may return a null OutputStream
      */
     @Test
     public void flushWithNullOutputStream() {
@@ -220,7 +220,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
 
     /*
-     * Don't flush OutputStreamAppender at end of batch when they are configured 
+     * Don't flush OutputStreamAppender at end of batch when they are configured
      * to "immediate flush"
      */
     @Test
@@ -297,7 +297,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
 
     private static class TestAppender<E> extends AppenderBase<E> {
-        public TestAppender() {
+        private TestAppender() {
             super();
         }
         protected void append(E eventObject) {
