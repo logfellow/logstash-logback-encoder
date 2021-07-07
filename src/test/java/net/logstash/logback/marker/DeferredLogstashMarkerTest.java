@@ -103,6 +103,4 @@ public class DeferredLogstashMarkerTest {
 
         assertThat(Markers.defer(() -> Markers.append("myObject", myObject)).hashCode()).isNotEqualTo(Markers.defer(() -> Markers.append("myObject", myObject)).hashCode());
     }
-
-
 }

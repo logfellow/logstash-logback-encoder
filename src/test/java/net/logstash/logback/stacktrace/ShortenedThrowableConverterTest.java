@@ -476,7 +476,7 @@ public class ShortenedThrowableConverterTest {
         Pattern hashPattern = Pattern.compile("<#([0-9abcdef]{8})>");
         Matcher matcher = hashPattern.matcher(formattedStackTrace);
         List<String> hashes = new ArrayList<String>();
-        while(matcher.find()) {
+        while (matcher.find()) {
             hashes.add(matcher.group(1));
         }
         return hashes;

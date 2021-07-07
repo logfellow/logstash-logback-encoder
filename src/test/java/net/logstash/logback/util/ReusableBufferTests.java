@@ -56,7 +56,7 @@ public class ReusableBufferTests {
     public void autoGrow() throws IOException {
         ReusableByteBuffer buffer = new ReusableByteBuffer(1);
         
-        for (int i=0; i<10; i++) {
+        for (int i = 0; i < 10; i++) {
             buffer.write(1);
         }
         

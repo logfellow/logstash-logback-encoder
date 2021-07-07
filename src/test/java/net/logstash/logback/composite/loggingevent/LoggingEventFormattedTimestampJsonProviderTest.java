@@ -121,6 +121,4 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
 
         verify(generator).writeStringField(FormattedTimestampJsonProvider.FIELD_TIMESTAMP, "0");
     }
-
-
 }

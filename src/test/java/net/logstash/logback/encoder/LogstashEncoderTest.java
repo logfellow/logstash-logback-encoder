@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -72,7 +71,6 @@ public class LogstashEncoderTest {
     private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
     private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
     private final LogstashEncoder encoder = new LogstashEncoder();
-    private final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     
     @Test
     public void basicsAreIncluded_logback12() throws Exception {
@@ -312,7 +310,7 @@ public class LogstashEncoderTest {
     public void callerDataIsIncluded() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(Collections.emptyMap());
-        final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
+        final StackTraceElement[] stackTraceElements = {new StackTraceElement("caller_class", "method_name", "file_name", 12345)};
         when(event.getCallerData()).thenReturn(stackTraceElements);
         
         encoder.setIncludeCallerData(true);
@@ -332,7 +330,7 @@ public class LogstashEncoderTest {
     public void callerDataIsIncludedInSubObject() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(Collections.emptyMap());
-        final StackTraceElement[] stackTraceElements = { new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
+        final StackTraceElement[] stackTraceElements = {new StackTraceElement("caller_class", "method_name", "file_name", 12345)};
         when(event.getCallerData()).thenReturn(stackTraceElements);
         
         encoder.setIncludeCallerData(true);
@@ -491,7 +489,7 @@ public class LogstashEncoderTest {
 
     @Test
     public void testAppendJsonMessage() throws Exception {
-        Object[] argArray = new Object[] { 1, Collections.singletonMap("hello", Collections.singletonMap("hello", "world")) };
+        Object[] argArray = new Object[] {1, Collections.singletonMap("hello", Collections.singletonMap("hello", "world"))};
         Marker marker = append("json_message", argArray);
         ILoggingEvent event = mockBasicILoggingEvent(Level.INFO);
         when(event.getMarker()).thenReturn(marker);
@@ -632,7 +630,7 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
         
         assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
-    }    
+    }
     
     @Test
     public void unixTimestampAsString() throws Exception {
@@ -648,7 +646,7 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
         
         assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
-    }    
+    }
     
     @Test
     public void testMessageSplitEnabled() throws Exception {

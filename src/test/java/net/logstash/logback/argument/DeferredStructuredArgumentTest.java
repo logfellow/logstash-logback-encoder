@@ -84,5 +84,4 @@ public class DeferredStructuredArgumentTest {
         assertThat(writer.toString()).isEqualTo("{\"myObject\":{\"myField\":\"value\"}} {\"myObject\":{\"myField\":\"value\"}}");
 
     }
-
 }

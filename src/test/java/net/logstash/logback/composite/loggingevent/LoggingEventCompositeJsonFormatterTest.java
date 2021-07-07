@@ -51,7 +51,7 @@ public class LoggingEventCompositeJsonFormatterTest {
         /*
          * This should not throw an exception, since SerializationFeature.FAIL_ON_EMPTY_BEANS is disabled
          */
-        try(ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
             assertThatCode(() -> formatter.writeEventToOutputStream(event, bos)).doesNotThrowAnyException();
         }
     }

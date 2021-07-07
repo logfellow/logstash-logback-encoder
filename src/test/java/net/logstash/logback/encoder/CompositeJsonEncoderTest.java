@@ -136,8 +136,8 @@ public class CompositeJsonEncoderTest {
      */
     @Test
     public void encode_withPrefixSuffix() {
-        encoder.setPrefix( new TestEncoder("prefix") );
-        encoder.setSuffix( new TestEncoder("suffix") );
+        encoder.setPrefix(new TestEncoder("prefix"));
+        encoder.setSuffix(new TestEncoder("suffix"));
         encoder.start();
         
         assertThat(new String(encoder.encode(event))).isEqualTo("prefix/event{}suffix/event");
@@ -156,12 +156,12 @@ public class CompositeJsonEncoderTest {
     
     
     /*
-     * Prefix/Suffix of type LayoutWrappingEncoder have their charset set to the same value 
+     * Prefix/Suffix of type LayoutWrappingEncoder have their charset set to the same value
      * as the Formatter used by the CompositeJsonEncoder
      */
     @Test
     public void charsetOnLayoutWrappingEncoder() {
-        formatter.setEncoding(JsonEncoding.UTF16_BE.getJavaName()); // use an encoding that is not likely to be 
+        formatter.setEncoding(JsonEncoding.UTF16_BE.getJavaName()); // use an encoding that is not likely to be
                                                                     // the default to avoid false positives
         
         LayoutWrappingEncoder<ILoggingEvent> prefix = mock(LayoutWrappingEncoder.class);
@@ -260,7 +260,7 @@ public class CompositeJsonEncoderTest {
     private static class TestCompositeJsonEncoder extends CompositeJsonEncoder<ILoggingEvent> {
         @Override
         protected CompositeJsonFormatter<ILoggingEvent> createFormatter() {
-            CompositeJsonFormatter<ILoggingEvent> formatter = spy(new CompositeJsonFormatter<ILoggingEvent>(this) {});
+            CompositeJsonFormatter<ILoggingEvent> formatter = spy(new CompositeJsonFormatter<ILoggingEvent>(this) { });
             formatter.getProviders().addProvider(new TestJsonProvider());
             return formatter;
         }
@@ -269,20 +269,20 @@ public class CompositeJsonEncoderTest {
     private static class TestEncoder extends EncoderBase<ILoggingEvent> {
         private final String name;
         
-        public TestEncoder(String name) {
+        private TestEncoder(String name) {
             this.name = name;
         }
         
         public byte[] encode(ILoggingEvent event) {
-            return getBytes(name+"/event");
+            return getBytes(name + "/event");
         }
 
         public byte[] footerBytes()  {
-           return getBytes(name+"/footer");
+           return getBytes(name + "/footer");
         }
 
         public byte[] headerBytes()  {
-            return getBytes(name+"/header");
+            return getBytes(name + "/header");
         }
         
         private byte[] getBytes(String s) {
