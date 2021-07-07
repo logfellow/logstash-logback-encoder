@@ -30,14 +30,7 @@ import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
-import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.junit.jupiter.MockitoExtension;
+import net.logstash.logback.appender.listener.AppenderListener;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -46,7 +39,14 @@ import ch.qos.logback.core.AppenderBase;
 import ch.qos.logback.core.LogbackException;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.EchoEncoder;
-import net.logstash.logback.appender.listener.AppenderListener;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
+import org.mockito.Mock;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class DelegatingAsyncDisruptorAppenderTest {

@@ -19,8 +19,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import ch.qos.logback.classic.pattern.Abbreviator;
 import net.logstash.logback.CachingAbbreviator;
+
+import ch.qos.logback.classic.pattern.Abbreviator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

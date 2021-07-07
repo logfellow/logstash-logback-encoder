@@ -22,7 +22,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**

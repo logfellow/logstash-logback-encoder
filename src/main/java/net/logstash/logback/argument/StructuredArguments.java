@@ -19,13 +19,14 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import ch.qos.logback.core.Context;
-import ch.qos.logback.core.status.StatusManager;
-import ch.qos.logback.core.status.WarnStatus;
 import net.logstash.logback.marker.MapEntriesAppendingMarker;
 import net.logstash.logback.marker.ObjectAppendingMarker;
 import net.logstash.logback.marker.ObjectFieldsAppendingMarker;
 import net.logstash.logback.marker.RawJsonAppendingMarker;
+
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.status.StatusManager;
+import ch.qos.logback.core.status.WarnStatus;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 

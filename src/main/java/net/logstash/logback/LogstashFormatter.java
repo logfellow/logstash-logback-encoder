@@ -40,13 +40,11 @@ import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
-import org.slf4j.MDC;
-
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.MDC;
 
 /**
  * A {@link LoggingEventCompositeJsonFormatter} that contains a common

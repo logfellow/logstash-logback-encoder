@@ -16,13 +16,12 @@
 package net.logstash.logback.encoder;
 
 import java.util.List;
-import java.util.Map;
 
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
-import net.logstash.logback.marker.Markers;
+
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 

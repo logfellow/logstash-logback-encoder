@@ -19,6 +19,7 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonFormatter;
 import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 

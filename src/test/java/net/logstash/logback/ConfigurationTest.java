@@ -21,12 +21,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
-import ch.qos.logback.core.OutputStreamAppender;
-import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.read.ListAppender;
 import net.logstash.logback.appender.AsyncDisruptorAppender;
 import net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender;
 import net.logstash.logback.appender.listener.AppenderListener;
@@ -56,14 +50,20 @@ import net.logstash.logback.composite.loggingevent.UuidProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
+
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.OutputStreamAppender;
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.read.ListAppender;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 
 public class ConfigurationTest {
 

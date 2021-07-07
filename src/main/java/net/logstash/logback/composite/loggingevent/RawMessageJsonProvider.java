@@ -19,8 +19,8 @@ import java.io.IOException;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.JsonWritingUtils;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 public class RawMessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {

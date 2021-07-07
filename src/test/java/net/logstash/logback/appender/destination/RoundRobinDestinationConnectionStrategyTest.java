@@ -17,9 +17,8 @@ package net.logstash.logback.appender.destination;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.Test;
-
 import ch.qos.logback.core.util.Duration;
+import org.junit.jupiter.api.Test;
 
 public class RoundRobinDestinationConnectionStrategyTest {
     

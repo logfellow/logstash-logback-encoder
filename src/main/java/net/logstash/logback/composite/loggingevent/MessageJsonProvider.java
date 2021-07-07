@@ -23,8 +23,8 @@ import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {

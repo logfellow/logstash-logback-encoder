@@ -17,14 +17,13 @@ package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public class LogLevelValueJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 

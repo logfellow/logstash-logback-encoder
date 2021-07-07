@@ -19,11 +19,11 @@ import java.io.IOException;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**

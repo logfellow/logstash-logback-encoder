@@ -15,13 +15,14 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
+
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.JsonWritingUtils;
 
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * Outputs an incrementing sequence number.

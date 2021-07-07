@@ -17,11 +17,10 @@ package net.logstash.logback.argument;
 
 import java.io.IOException;
 
-import org.slf4j.Logger;
-
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Logger;
 
 /**
  * A wrapper for an argument passed to a log method (e.g. {@link Logger#info(String, Object...)})

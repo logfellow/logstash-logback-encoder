@@ -52,10 +52,6 @@ import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.encoder.StreamingEncoder;
 
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.LifecycleAware;
-import com.lmax.disruptor.RingBuffer;
-
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.net.ssl.ConfigurableSSLSocketFactory;
@@ -65,6 +61,9 @@ import ch.qos.logback.core.net.ssl.SSLParametersConfiguration;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.util.CloseUtil;
 import ch.qos.logback.core.util.Duration;
+import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.LifecycleAware;
+import com.lmax.disruptor.RingBuffer;
 
 /**
  * An {@link AsyncDisruptorAppender} appender that writes

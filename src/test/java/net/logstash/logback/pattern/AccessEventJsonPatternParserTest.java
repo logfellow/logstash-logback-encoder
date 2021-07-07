@@ -15,15 +15,15 @@
  */
 package net.logstash.logback.pattern;
 
+import static org.mockito.BDDMockito.given;
+
+import java.io.IOException;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.io.IOException;
-
-import static org.mockito.BDDMockito.given;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>

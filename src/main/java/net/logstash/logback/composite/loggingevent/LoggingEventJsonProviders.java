@@ -15,11 +15,12 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
 
 /**
  * Used to make it make it more convenient to create well-known

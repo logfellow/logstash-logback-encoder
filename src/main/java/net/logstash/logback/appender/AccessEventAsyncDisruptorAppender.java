@@ -16,6 +16,7 @@
 package net.logstash.logback.appender;
 
 import net.logstash.logback.appender.listener.AppenderListener;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 
 /**

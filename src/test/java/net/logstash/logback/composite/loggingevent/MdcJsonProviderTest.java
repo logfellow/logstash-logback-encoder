@@ -25,16 +25,16 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class MdcJsonProviderTest {

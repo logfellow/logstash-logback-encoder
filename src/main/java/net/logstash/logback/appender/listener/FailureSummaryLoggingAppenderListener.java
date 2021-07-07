@@ -21,8 +21,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.TimeZone;
 
-import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.argument.StructuredArguments;
+
+import ch.qos.logback.core.spi.DeferredProcessingAware;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

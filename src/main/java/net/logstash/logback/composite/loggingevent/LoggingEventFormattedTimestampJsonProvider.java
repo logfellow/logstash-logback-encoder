@@ -17,6 +17,7 @@ package net.logstash.logback.composite.loggingevent;
 
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 public class LoggingEventFormattedTimestampJsonProvider extends FormattedTimestampJsonProvider<ILoggingEvent, LogstashFieldNames> {

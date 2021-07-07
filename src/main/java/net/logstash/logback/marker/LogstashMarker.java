@@ -18,9 +18,8 @@ package net.logstash.logback.marker;
 import java.io.IOException;
 import java.util.Objects;
 
-import org.slf4j.Marker;
-
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Marker;
 
 /**
  * A {@link Marker} that is known and understood by the logstash logback encoder.

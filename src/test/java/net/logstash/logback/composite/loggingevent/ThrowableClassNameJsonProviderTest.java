@@ -15,7 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import static org.mockito.Mockito.anyString;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,12 +24,11 @@ import java.io.IOException;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class ThrowableClassNameJsonProviderTest {

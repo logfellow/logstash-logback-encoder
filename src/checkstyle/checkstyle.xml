@@ -36,7 +36,14 @@
         <module name="AvoidStarImport"/>
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
-
+        <module name="ImportOrder">
+            <property name="groups" value="java,javax,net.logstash"/>
+            <property name="ordered" value="true"/>
+            <property name="separated" value="true"/>
+            <property name="option" value="above"/>
+            <property name="sortStaticImportsAlphabetically" value="true"/>
+        </module>
+        
         <!-- Checks for whitespace                             -->
         <!-- See https://checkstyle.org/config_whitespace.html -->
         <module name="EmptyForIteratorPad"/>

@@ -24,8 +24,6 @@ import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import org.slf4j.Marker;
-
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
@@ -35,6 +33,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.DefaultSerializerProvider;
 import com.fasterxml.jackson.databind.ser.ResolvableSerializer;
 import com.fasterxml.jackson.databind.util.NameTransformer;
+import org.slf4j.Marker;
 
 /**
  * A {@link Marker} OR {@link StructuredArgument} that

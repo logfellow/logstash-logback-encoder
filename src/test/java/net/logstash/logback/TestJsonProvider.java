@@ -17,10 +17,10 @@ package net.logstash.logback;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
 import net.logstash.logback.composite.AbstractJsonProvider;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public class TestJsonProvider extends AbstractJsonProvider<ILoggingEvent> {
 

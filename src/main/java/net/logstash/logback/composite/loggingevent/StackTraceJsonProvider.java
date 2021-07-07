@@ -17,16 +17,16 @@ package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.FieldNamesAware;
+import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
-import net.logstash.logback.composite.AbstractFieldJsonProvider;
-import net.logstash.logback.composite.FieldNamesAware;
-import net.logstash.logback.composite.JsonWritingUtils;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 

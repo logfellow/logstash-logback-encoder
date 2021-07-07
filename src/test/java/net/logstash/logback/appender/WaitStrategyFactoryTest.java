@@ -21,8 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.Test;
-
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.BusySpinWaitStrategy;
 import com.lmax.disruptor.LiteBlockingWaitStrategy;
@@ -32,6 +30,7 @@ import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.TimeoutBlockingWaitStrategy;
 import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.YieldingWaitStrategy;
+import org.junit.jupiter.api.Test;
 
 public class WaitStrategyFactoryTest {
     

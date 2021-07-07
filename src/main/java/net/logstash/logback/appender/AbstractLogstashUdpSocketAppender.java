@@ -22,11 +22,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import net.logstash.logback.appender.listener.AppenderListener;
+
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.net.SyslogAppenderBase;
 import ch.qos.logback.core.net.SyslogOutputStream;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import net.logstash.logback.appender.listener.AppenderListener;
 
 /**
  * An appender that sends events over UDP using a custom {@link Layout}.
