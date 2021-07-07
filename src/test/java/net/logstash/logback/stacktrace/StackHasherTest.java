@@ -153,7 +153,7 @@ public class StackHasherTest {
 
             // THEN
             Assertions.assertEquals(1, hashes.size());
-            Assertions.assertEquals("e30d4cae", hashes.getFirst());
+            Assertions.assertEquals("48abcbb0", hashes.getFirst());
         }
     }
 }
