@@ -36,11 +36,12 @@
         <module name="AvoidStarImport"/>
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
+        <module name="UnusedImports"/>
         <module name="ImportOrder">
             <property name="groups" value="java,javax,net.logstash"/>
             <property name="ordered" value="true"/>
             <property name="separated" value="true"/>
-            <property name="option" value="above"/>
+            <property name="option" value="top"/>
             <property name="sortStaticImportsAlphabetically" value="true"/>
         </module>
         
