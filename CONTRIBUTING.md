@@ -120,7 +120,7 @@ Java source files must include the following header at the top of the file, befo
  */
 ```
 
-The project makes use of the great https://github.com/mathieucarbou/license-maven-plugin[Mycila Maven License Plugin] to check for the presence of a valid header in source files during the build process.
+The project makes use of the great [Mycila Maven License Plugin](https://github.com/mathieucarbou/license-maven-plugin) to check for the presence of a valid header in source files during the build process.
 
 You can manually check your source files by invoking the plugin manually on the command line as follows:
 
