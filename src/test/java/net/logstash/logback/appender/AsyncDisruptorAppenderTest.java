@@ -38,7 +38,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import net.logstash.logback.appender.AsyncDisruptorAppender.AsyncMode;
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 import net.logstash.logback.appender.listener.AppenderListener;
 
@@ -231,7 +230,7 @@ public class AsyncDisruptorAppenderTest {
     }
 
     /*
-     * Appender is configured to block indefinitely when ring buffer is full 
+     * Appender is configured to block indefinitely when ring buffer is full
      */
     @Test
     public void appendBlockingWhenFull() {
@@ -240,7 +239,7 @@ public class AsyncDisruptorAppenderTest {
         try {
             TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
             appender.setRingBufferSize(1);
-            appender.setAsyncMode(AsyncMode.BLOCK);
+            appender.setAppendTimeout(toLogback(Duration.ofMillis(-1))); // block until space is available
             appender.setEventHandler(eventHandler);
             appender.start();
             
@@ -248,7 +247,7 @@ public class AsyncDisruptorAppenderTest {
              * First event blocks the ring buffer until eventHandlerWaiter is released
              */
             appender.append(event1);
-            await().until(() -> eventHandlerWaiter.getCount()==1); // wait until the handler is actually invoked before going any further
+            await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is actually invoked before going any further
             
             /*
              * Publishing the second event is blocked until the first is released (buffer full)
@@ -271,7 +270,7 @@ public class AsyncDisruptorAppenderTest {
     
     
     /*
-     * Appender configured in async "block" mode -> assert appending threads are blocked for the 
+     * Appender configured in async "block" mode -> assert appending threads are blocked for the
      * configured timeout.
      */
     @Test
@@ -284,8 +283,7 @@ public class AsyncDisruptorAppenderTest {
         try {
             TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
             appender.setRingBufferSize(1);
-            appender.setAsyncMode(AsyncMode.BLOCK);
-            appender.setRetryTimeout(toLogback(timeout));
+            appender.setAppendTimeout(toLogback(timeout));
             appender.setEventHandler(eventHandler);
             appender.start();
             
@@ -293,7 +291,7 @@ public class AsyncDisruptorAppenderTest {
              * First event blocks the ring buffer until eventHandlerWaiter is released
              */
             appender.append(event1);
-            await().until(() -> eventHandlerWaiter.getCount()==1); // wait until the handler is actually invoked before going any further
+            await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is actually invoked before going any further
             
             
             /*
@@ -309,7 +307,7 @@ public class AsyncDisruptorAppenderTest {
                 .hasSize(1)
                 .allMatch(s -> s.getMessage().startsWith("Dropped"));
             
-            // listeners invoked with appendFailed 
+            // listeners invoked with appendFailed
             verify(listener).eventAppendFailed(eq(appender), eq(event2), any());
             
             
@@ -317,7 +315,7 @@ public class AsyncDisruptorAppenderTest {
              * Unlock the handler and assert only the first event went through
              */
             eventHandlerWaiter.countDown();
-            await().untilAsserted( () -> assertThat(eventHandler.getEvents()).containsExactly(event1) );
+            await().untilAsserted(() -> assertThat(eventHandler.getEvents()).containsExactly(event1));
             
         } finally {
             eventHandlerWaiter.countDown();
@@ -326,7 +324,7 @@ public class AsyncDisruptorAppenderTest {
     
     
     /*
-     * Appender configured in async "block" mode -> assert threads blocked waiting for free space are 
+     * Appender configured in async "block" mode -> assert threads blocked waiting for free space are
      * released when the appender is stopped
      */
     @Test
@@ -336,7 +334,7 @@ public class AsyncDisruptorAppenderTest {
         try {
             TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
             appender.setRingBufferSize(1);
-            appender.setAsyncMode(AsyncMode.BLOCK);
+            appender.setAppendTimeout(toLogback(Duration.ofMillis(-1))); // block until space is available
             appender.setShutdownGracePeriod(toLogback(Duration.ofMillis(0))); // don't want to wait for inflight events...
             appender.setEventHandler(eventHandler);
             appender.start();
@@ -345,7 +343,7 @@ public class AsyncDisruptorAppenderTest {
              * First event will block the ring buffer until eventHandlerWaiter is released
              */
             appender.append(event1);
-            await().until(() -> eventHandlerWaiter.getCount()==1); // wait until the handler is actually invoked before going any further
+            await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is actually invoked before going any further
             
             /*
              * Publishing the second event is blocked until the first is released (buffer full)
@@ -382,12 +380,12 @@ public class AsyncDisruptorAppenderTest {
         private final List<ILoggingEvent> events = new ArrayList<>();
         private final CountDownLatch waiter;
         
-        public TestEventHandler(CountDownLatch waiter) {
+        TestEventHandler(CountDownLatch waiter) {
             this.waiter = waiter;
         }
         @Override
         public void onEvent(LogEvent<ILoggingEvent> event, long sequence, boolean endOfBatch) throws Exception {
-            if (waiter != null ) {
+            if (waiter != null) {
                 waiter.await();
             }
             this.events.add(event.event);

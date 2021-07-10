@@ -49,7 +49,6 @@ import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
-import com.lmax.disruptor.TimeoutException;
 import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -257,40 +256,28 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      */
     protected final List<Listener> listeners = new ArrayList<>();
 
-    public enum AsyncMode {
-        /**
-         * Appender thread is blocked until space is available in the ring buffer
-         * or the retry timeout expires.
-         */
-        BLOCK,
-        
-        /**
-         * Event is dropped when the ring buffer is full
-         */
-        DROP
-    }
-    private AsyncMode asyncMode = AsyncMode.DROP;
-    
     /**
-     * Delay (in millis) between consecutive attempts to append an event in the ring buffer when full.
-     * Applicable only when {@link #asyncMode} is set to {@link AsyncMode#DROP}.
+     * Maximum time to wait when appending events to the ring buffer when full before the event
+     * is dropped. Use the following values:
+     * <ul>
+     * <li>{@code -1} to disable timeout and wait until space becomes available.
+     * <li>{@code 0} for no timeout and drop the event immediately when the buffer is full.
+     * <li>{@code > 0} to retry during the specified amount of time.
+     * </ul>
      */
-    private long retryMillis = 100;
-    
+    private Duration appendTimeout = Duration.buildByMilliseconds(0);
+
     /**
-     * Maximum time to wait for space in the ring buffer before dropping the event.
-     * Applicable only when {@link #asyncMode} is set to {@link AsyncMode#DROP}.
-     * 
-     * <p>Use {@code -1} for no timeout, i.e. block until space is available.
+     * Delay (in millis) between consecutive attempts to append an event in the ring buffer when
+     * full.
      */
-    private Duration retryTimeout = Duration.buildByMilliseconds(1000);
+    private Duration appendRetryFrequency = Duration.buildByMilliseconds(100);
     
     /**
      * How long to wait for in-flight events during shutdown.
      */
     private Duration shutdownGracePeriod = Duration.buildByMinutes(1);
 
-    
     
     /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
@@ -405,7 +392,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void start() {
         if (addDefaultStatusListener && getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
@@ -560,28 +546,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
 
     /**
-     * Enqueue the given {@code event} in the ring buffer according to the configured {@link #asyncMode}.
+     * Enqueue the given {@code event} in the ring buffer.
      * 
      * @param event the {@link Event} to enqueue
      * @return {@code true} when the even is successfully enqueued in the ring buffer
      */
     protected boolean enqueueEvent(Event event) {
-        if (this.asyncMode == AsyncMode.BLOCK) {
-            return enqueueEventBlock(event);
-        } else {
-            return enqueueEventDrop(event);
-        }
-    }
-    
-    /**
-     * Enqueue the given {@code event} in the ring buffer, blocking until enough space
-     * is available or the {@link #retryTimeout} expires (if configured).
-     * 
-     * @param event the {@link Event} to enqueue
-     * @return {@code true} when the even is successfully enqueued in the ring buffer
-     */
-    private boolean enqueueEventBlock(Event event) {
-        long timeout = this.retryTimeout.getMilliseconds() <= 0 ? Long.MAX_VALUE : System.currentTimeMillis() + this.retryTimeout.getMilliseconds();
+        long timeout = this.appendTimeout.getMilliseconds() < 0 ? Long.MAX_VALUE : System.currentTimeMillis() + this.appendTimeout.getMilliseconds();
         
         while (isStarted() && !this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
             // Check for timeout
@@ -592,24 +563,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             
             // Wait before retry
             //
-            long waitDuration = Math.min(this.retryMillis, System.currentTimeMillis() - timeout);
+            long waitDuration = Math.min(this.appendRetryFrequency.getMilliseconds(), System.currentTimeMillis() - timeout);
             if (waitDuration > 0) {
                 LockSupport.parkNanos(waitDuration * 1_000_000L);
             }
         }
         
         return true;
-    }
-    
-    /**
-     * Attempt to enqueue the given {@code event} in the ring buffer without blocking. Drop the event
-     * if the ring buffer is full.
-     * 
-     * @param event the {@link Event} to enqueue
-     * @return {@code true} when the even is successfully enqueued in the ring buffer
-     */
-    private boolean enqueueEventDrop(Event event) {
-        return this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event);
     }
 
     protected String calculateThreadName() {
@@ -718,26 +678,19 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setWaitStrategyType(String waitStrategyType) {
         setWaitStrategy(WaitStrategyFactory.createWaitStrategyFromString(waitStrategyType));
     }
-
-    public AsyncMode getAsyncMode() {
-        return asyncMode;
+    
+    public Duration getAppendRetryFrequency() {
+        return appendRetryFrequency;
     }
-    public void setAsyncMode(AsyncMode asyncMode) {
-        this.asyncMode = asyncMode;
+    public void setAppendRetryFrequency(Duration appendRetryFrequency) {
+        this.appendRetryFrequency = Objects.requireNonNull(appendRetryFrequency);
     }
     
-    public long getRetryMillis() {
-        return retryMillis;
+    public Duration getAppendTimeout() {
+        return appendTimeout;
     }
-    public void setRetryMillis(long retryMillis) {
-        this.retryMillis = retryMillis;
-    }
-    
-    public Duration getRetryTimeout() {
-        return retryTimeout;
-    }
-    public void setRetryTimeout(Duration retryTimeout) {
-        this.retryTimeout = Objects.requireNonNull(retryTimeout);
+    public void setAppendTimeout(Duration appendTimeout) {
+        this.appendTimeout = Objects.requireNonNull(appendTimeout);
     }
     
     public void setShutdownGracePeriod(Duration shutdownGracePeriod) {
