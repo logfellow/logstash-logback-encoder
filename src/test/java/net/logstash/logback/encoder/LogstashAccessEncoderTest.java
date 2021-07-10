@@ -142,7 +142,7 @@ public class LogstashAccessEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
         
         assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
-    }    
+    }
     
     @Test
     public void unixTimestampAsString() throws Exception {
@@ -158,7 +158,7 @@ public class LogstashAccessEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
         
         assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
-    }    
+    }
     
     @Test
     public void customMessagePattern() throws Exception {

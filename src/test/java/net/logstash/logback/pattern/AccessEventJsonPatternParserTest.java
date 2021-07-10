@@ -29,7 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 @ExtendWith(MockitoExtension.class)
-public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserTest<IAccessEvent>{
+public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserTest<IAccessEvent> {
 
     @Mock(lenient = true)
     private IAccessEvent event;

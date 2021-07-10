@@ -46,7 +46,7 @@ public class StructuredArgumentsToStringTest {
                 arguments("[0, 1, 2, 3]", new int[]{0, 1, 2, 3}),
                 arguments("[a, b, c, d]", new String[]{"a", "b", "c", "d"}),
                 arguments("[[a, b, c, d], 1, 2, [0, 1, 2, 3]]", new Object[]{new String[]{"a", "b", "c", "d"}, "1", "2", new int[]{0, 1, 2, 3}}),
-                arguments("[FAILED toString()]" , new BuguyToString())
+                arguments("[FAILED toString()]", new BuguyToString())
         );
     }
 
@@ -54,7 +54,7 @@ public class StructuredArgumentsToStringTest {
     @MethodSource("data")
     public void testToString(String expected, Object arg) throws Exception {
         Assertions.assertEquals(expected, StructuredArguments.toString(arg));
-        Assertions.assertEquals(MessageFormatter.format("{}", arg).getMessage() , StructuredArguments.toString(arg));
+        Assertions.assertEquals(MessageFormatter.format("{}", arg).getMessage(), StructuredArguments.toString(arg));
     }
 
 }

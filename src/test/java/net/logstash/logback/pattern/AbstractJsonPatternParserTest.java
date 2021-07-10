@@ -69,9 +69,9 @@ public abstract class AbstractJsonPatternParserTest<Event> {
         parser = createParser();
     }
 
-    abstract protected Event createEvent();
+    protected abstract Event createEvent();
 
-    abstract protected AbstractJsonPatternParser<Event> createParser();
+    protected abstract AbstractJsonPatternParser<Event> createParser();
 
     private Map<String, Object> parseJson(final String text) throws IOException {
         return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() { });

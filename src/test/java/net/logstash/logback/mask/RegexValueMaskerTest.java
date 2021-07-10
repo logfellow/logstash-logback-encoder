@@ -49,5 +49,4 @@ class RegexValueMaskerTest {
         RegexValueMasker masker = new RegexValueMasker("test", "****");
         assertThat(masker.mask(null, 1)).isNull();
     }
-
 }
