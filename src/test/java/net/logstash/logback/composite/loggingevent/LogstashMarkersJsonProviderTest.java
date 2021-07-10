@@ -21,15 +21,15 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 import java.util.Collections;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.marker.LogstashMarker;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Marker;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class LogstashMarkersJsonProviderTest {

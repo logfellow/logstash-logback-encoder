@@ -15,12 +15,12 @@
  */
 package net.logstash.logback.marker;
 
-import org.slf4j.Marker;
-
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
+
+import org.slf4j.Marker;
 
 /* Copy of {@link org.slf4j.helpers.BasicMarker} from slf4j-api v1.7.12, with minor changes:
  * 1. make the constructor public so that it can be extended in other packages

@@ -18,6 +18,7 @@ package net.logstash.logback.composite.accessevent;
 import net.logstash.logback.composite.AbstractPatternJsonProvider;
 import net.logstash.logback.composite.AbstractPatternJsonProviderTest;
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 
 /**

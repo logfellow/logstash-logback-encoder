@@ -23,11 +23,9 @@ import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
 
-import org.slf4j.Marker;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
-
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Marker;
 
 /**
  * A {@link JsonProvider} that processes {@link LogstashMarker}s

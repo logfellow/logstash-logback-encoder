@@ -17,8 +17,9 @@ package net.logstash.logback.layout;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
 import net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter;
+import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 

@@ -23,14 +23,14 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class MessageJsonProviderTest {

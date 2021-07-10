@@ -22,9 +22,9 @@ import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
-import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
+import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**

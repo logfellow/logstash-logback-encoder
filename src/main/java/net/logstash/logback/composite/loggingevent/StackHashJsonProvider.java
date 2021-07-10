@@ -15,20 +15,21 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
-import net.logstash.logback.composite.AbstractFieldJsonProvider;
-import net.logstash.logback.composite.JsonWritingUtils;
-import net.logstash.logback.stacktrace.StackElementFilter;
-import net.logstash.logback.stacktrace.StackHasher;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.JsonWritingUtils;
+import net.logstash.logback.stacktrace.StackElementFilter;
+import net.logstash.logback.stacktrace.StackHasher;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.ThrowableProxy;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * A JSON provider that adds a {@code stack_hash} Json field on a log with a stack trace

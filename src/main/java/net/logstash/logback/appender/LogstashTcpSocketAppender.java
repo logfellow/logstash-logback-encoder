@@ -16,8 +16,8 @@
 package net.logstash.logback.appender;
 
 import net.logstash.logback.appender.listener.TcpAppenderListener;
-import ch.qos.logback.classic.spi.ILoggingEvent;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.lmax.disruptor.RingBuffer;
 
 /**

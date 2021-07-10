@@ -23,16 +23,14 @@ import java.io.IOException;
 import net.logstash.logback.composite.AbstractJsonProvider;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 
+import ch.qos.logback.core.Layout;
+import ch.qos.logback.core.LayoutBase;
+import ch.qos.logback.core.spi.DeferredProcessingAware;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import com.fasterxml.jackson.core.JsonGenerator;
-
-import ch.qos.logback.core.Layout;
-import ch.qos.logback.core.LayoutBase;
-import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 @ExtendWith(MockitoExtension.class)
 public class CompositeJsonLayoutTest {

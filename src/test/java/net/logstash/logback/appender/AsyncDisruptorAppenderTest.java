@@ -33,6 +33,11 @@ import java.util.concurrent.atomic.AtomicReference;
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 import net.logstash.logback.appender.listener.AppenderListener;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.status.Status;
+import ch.qos.logback.core.status.StatusManager;
+import com.lmax.disruptor.EventHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,20 +50,13 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
-import ch.qos.logback.core.status.Status;
-import ch.qos.logback.core.status.StatusManager;
-
-import com.lmax.disruptor.EventHandler;
-
 @ExtendWith(MockitoExtension.class)
 public class AsyncDisruptorAppenderTest {
     
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
 
     @InjectMocks
-    private AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() {};
+    private AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() { };
     
     @Mock
     private EventHandler<LogEvent<ILoggingEvent>> eventHandler;

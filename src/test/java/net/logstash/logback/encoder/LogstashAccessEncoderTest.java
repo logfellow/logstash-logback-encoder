@@ -25,13 +25,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-import org.junit.jupiter.api.Test;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
 
 public class LogstashAccessEncoderTest {
     

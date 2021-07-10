@@ -39,6 +39,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+import net.logstash.logback.decorate.JsonFactoryDecorator;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
+import net.logstash.logback.fieldnames.ShortenedFieldNames;
+
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -46,12 +52,11 @@ import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.Context;
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
-import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
-import net.logstash.logback.fieldnames.ShortenedFieldNames;
-
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.util.Files;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -59,12 +64,6 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class LogstashEncoderTest {
     

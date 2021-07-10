@@ -15,9 +15,9 @@
  */
 package net.logstash.logback.pattern;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-
 import java.io.IOException;
+
+import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * Writes a JSON pattern node into JSON generator supplied.

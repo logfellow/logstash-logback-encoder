@@ -17,6 +17,7 @@ package net.logstash.logback.composite.loggingevent;
 
 import net.logstash.logback.composite.AbstractNestedJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 

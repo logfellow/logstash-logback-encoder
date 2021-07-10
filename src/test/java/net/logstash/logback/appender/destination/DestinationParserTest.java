@@ -21,11 +21,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import java.net.InetSocketAddress;
 import java.util.List;
 
-import net.logstash.logback.appender.destination.DestinationParser;
-
-import org.junit.jupiter.api.Test;
-
 import ch.qos.logback.core.CoreConstants;
+import org.junit.jupiter.api.Test;
 
 public class DestinationParserTest {
     

@@ -19,7 +19,6 @@ import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.ContextAware;
-
 import com.fasterxml.jackson.core.JsonFactory;
 
 /**

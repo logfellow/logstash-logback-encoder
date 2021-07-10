@@ -18,14 +18,13 @@ package net.logstash.logback.marker;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Supplier;
 
-import ch.qos.logback.classic.AsyncAppender;
 import net.logstash.logback.appender.AsyncDisruptorAppender;
-import org.slf4j.Marker;
 
+import ch.qos.logback.classic.AsyncAppender;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Marker;
 
 /**
  * A {@link LogstashMarker} that defers the creation of another {@link LogstashMarker} until

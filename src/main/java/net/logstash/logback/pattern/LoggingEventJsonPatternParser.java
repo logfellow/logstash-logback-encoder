@@ -15,12 +15,11 @@
  */
 package net.logstash.logback.pattern;
 
-import com.fasterxml.jackson.core.JsonFactory;
-
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.ContextAware;
+import com.fasterxml.jackson.core.JsonFactory;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>

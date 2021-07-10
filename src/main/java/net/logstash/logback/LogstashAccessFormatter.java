@@ -17,9 +17,6 @@ package net.logstash.logback;
 
 import java.util.Collections;
 
-import ch.qos.logback.access.spi.IAccessEvent;
-import ch.qos.logback.core.joran.spi.DefaultClass;
-import ch.qos.logback.core.spi.ContextAware;
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -46,6 +43,9 @@ import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
 import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
+import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
+import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

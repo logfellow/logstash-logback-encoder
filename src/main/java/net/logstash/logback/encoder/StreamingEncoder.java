@@ -18,6 +18,8 @@ package net.logstash.logback.encoder;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import ch.qos.logback.core.encoder.Encoder;
+
 /**
  * Interface implemented by {@link Encoder} that supports writing directly into a {@link OutputStream}
  * instead of returning a byte array.

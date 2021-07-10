@@ -28,11 +28,9 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import ch.qos.logback.core.spi.ContextAware;
-import ch.qos.logback.core.spi.ContextAwareBase;
-import ch.qos.logback.core.spi.LifeCycle;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
+import ch.qos.logback.core.spi.LifeCycle;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**

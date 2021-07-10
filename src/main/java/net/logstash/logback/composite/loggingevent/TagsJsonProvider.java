@@ -23,11 +23,9 @@ import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 
-import org.slf4j.Marker;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
-
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Marker;
 
 /**
  * Writes {@link Marker} names as an array to the 'tags' field.

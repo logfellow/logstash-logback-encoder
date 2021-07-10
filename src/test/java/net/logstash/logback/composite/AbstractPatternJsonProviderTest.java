@@ -26,16 +26,14 @@ import java.io.IOException;
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.NodeWriter;
 
+import ch.qos.logback.core.spi.DeferredProcessingAware;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import ch.qos.logback.core.spi.DeferredProcessingAware;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * This test just verifies that AbstractPatternJsonProvider delegates all the work to Parser.

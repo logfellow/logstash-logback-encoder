@@ -21,8 +21,7 @@ import java.io.OutputStream;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 
-import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.RingBuffer;
+import net.logstash.logback.appender.listener.AppenderListener;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -32,7 +31,8 @@ import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.spi.AppenderAttachable;
 import ch.qos.logback.core.spi.AppenderAttachableImpl;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import net.logstash.logback.appender.listener.AppenderListener;
+import com.lmax.disruptor.EventHandler;
+import com.lmax.disruptor.RingBuffer;
 
 /**
  * An {@link AsyncDisruptorAppender} that delegates appending of an event

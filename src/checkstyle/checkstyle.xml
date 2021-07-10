@@ -36,7 +36,15 @@
         <module name="AvoidStarImport"/>
         <module name="IllegalImport"/> <!-- defaults to sun.* packages -->
         <module name="RedundantImport"/>
-
+        <module name="UnusedImports"/>
+        <module name="ImportOrder">
+            <property name="groups" value="java,javax,net.logstash"/>
+            <property name="ordered" value="true"/>
+            <property name="separated" value="true"/>
+            <property name="option" value="top"/>
+            <property name="sortStaticImportsAlphabetically" value="true"/>
+        </module>
+        
         <!-- Checks for whitespace                             -->
         <!-- See https://checkstyle.org/config_whitespace.html -->
         <module name="EmptyForIteratorPad"/>
@@ -86,5 +94,6 @@
     </module>
     <module name="RegexpHeader">
         <property name="header" value="^/\*\n^ \* Copyright .* the original author or authors\.\n^ *\n^ \* Licensed under the Apache License, Version 2\.0 \(the &quot;License&quot;\);"/>
+        <property name="fileExtensions" value="java"/>
     </module>
 </module>

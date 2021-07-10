@@ -17,13 +17,13 @@ package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import net.logstash.logback.composite.AbstractFieldJsonProvider;
+import net.logstash.logback.composite.JsonWritingUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import net.logstash.logback.composite.AbstractFieldJsonProvider;
-import net.logstash.logback.composite.JsonWritingUtils;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 public abstract class AbstractThrowableClassNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
     static final boolean DEFAULT_USE_SIMPLE_CLASS_NAME = true;

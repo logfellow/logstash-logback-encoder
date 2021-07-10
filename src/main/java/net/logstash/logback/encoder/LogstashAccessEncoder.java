@@ -21,6 +21,7 @@ import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.accessevent.HeaderFilter;
 import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
+
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 

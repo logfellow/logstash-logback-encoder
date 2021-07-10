@@ -23,9 +23,8 @@ import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import org.slf4j.Marker;
-
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Marker;
 
 /**
  * A {@link Marker} OR {@link StructuredArgument} that appends

@@ -19,11 +19,11 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-import ch.qos.logback.classic.spi.LoggingEvent;
 import net.logstash.logback.marker.EmptyLogstashMarker;
-import org.slf4j.Logger;
 
+import ch.qos.logback.classic.spi.LoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.slf4j.Logger;
 
 /**
  * A {@link StructuredArgument} that defers the creation of another {@link StructuredArgument} until

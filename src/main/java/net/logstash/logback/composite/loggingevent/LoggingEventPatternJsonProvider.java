@@ -18,6 +18,7 @@ package net.logstash.logback.composite.loggingevent;
 import net.logstash.logback.composite.AbstractPatternJsonProvider;
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.LoggingEventJsonPatternParser;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
 /**

@@ -22,13 +22,12 @@ import static org.mockito.Mockito.when;
 
 import java.util.Random;
 
+import ch.qos.logback.core.util.Duration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import ch.qos.logback.core.util.Duration;
 
 @ExtendWith(MockitoExtension.class)
 public class RandomDestinationConnectionStrategyTest {

@@ -46,17 +46,19 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+
 import javax.net.SocketFactory;
+
+import net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy;
+import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
+import net.logstash.logback.appender.listener.TcpAppenderListener;
+import net.logstash.logback.encoder.SeparatorParser;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
-import net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy;
-import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
-import net.logstash.logback.appender.listener.TcpAppenderListener;
-import net.logstash.logback.encoder.SeparatorParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
