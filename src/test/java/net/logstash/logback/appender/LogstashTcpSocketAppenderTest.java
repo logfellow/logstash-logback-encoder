@@ -30,6 +30,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -175,7 +176,7 @@ public class LogstashTcpSocketAppenderTest {
         
         appender.stop();
         
-        verify(listener).connectionClosed(appender, socket);
+        verify(listener, timeout(VERIFICATION_TIMEOUT)).connectionClosed(appender, socket);
 
         assertThat(appender.getConnectedDestination()).isNotPresent();
     }
@@ -236,14 +237,16 @@ public class LogstashTcpSocketAppenderTest {
         appender.start();
         verify(encoder).start();
 
+        // Wait for the connection process to be fully completed
+        verify(listener, timeout(VERIFICATION_TIMEOUT)).connectionOpened(appender, socket);
+
         // Only one socket should have been created
-        verify(socket, timeout(VERIFICATION_TIMEOUT).times(1)).connect(any(SocketAddress.class), anyInt());
+        verify(socket, times(1)).connect(any(SocketAddress.class), anyInt());
 
         // The only socket should be connected to primary
         verify(socket).connect(host("localhost", 10000), anyInt());
 
         assertThat(appender.getConnectedDestination()).isPresent();
-
     }
     
     
