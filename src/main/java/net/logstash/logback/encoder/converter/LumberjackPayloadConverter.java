@@ -23,7 +23,7 @@ import static net.logstash.logback.util.ByteUtil.intToBytes;
  * Wraps payload so it should be compatible with a Beats input (Lumberjack protocol).
  * Can be used with Logstash input or Graylog's Beats input.
  *
- * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash's documentation</a>
+ * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash documentation</a>
  * to read more about this protocol.
  */
 public class LumberjackPayloadConverter implements PayloadConverter {

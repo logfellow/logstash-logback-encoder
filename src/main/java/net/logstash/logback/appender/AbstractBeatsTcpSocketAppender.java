@@ -18,7 +18,6 @@ import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
-import net.logstash.logback.encoder.StreamingEncoder;
 import net.logstash.logback.encoder.converter.ChainedPayloadConverter;
 import net.logstash.logback.encoder.converter.LumberjackPayloadConverter;
 import net.logstash.logback.encoder.converter.PayloadConverter;
@@ -33,6 +32,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -42,7 +42,7 @@ import static net.logstash.logback.util.ByteUtil.intToBytes;
 /**
  * An appender that is compatible with Lumberjack protocol (Beats input).
  *
- * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash's documentation</a> for more info.
+ * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash documentation</a> for more info.
  */
 public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProcessingAware, Listener extends TcpAppenderListener<Event>>
         extends AbstractLogstashTcpSocketAppender<Event, Listener> {
@@ -129,14 +129,6 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
     }
 
     private <E> Encoder<E> wrapAsBeatsEncoder(Encoder<E> original, PayloadConverter converter) {
-        if (original instanceof StreamingEncoder) {
-            addWarn(String.format(
-                    "The selected encoder %s is a StreamingEncoder, which is incompatible with %s."
-                            + "It will be used anyway, but streaming will be unavailable.",
-                    original.getClass().getName(), this.getClass().getName()
-            ));
-        }
-
         return new BeatsEncoderWrapper<>(original, converter);
     }
 
@@ -178,6 +170,7 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
                     Thread.currentThread().interrupt();
                 }
             }
+
             byte[] encoded = original.encode(event);
             if (converter != null && converter.isStarted()) {
                 try {
@@ -211,8 +204,7 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
         }
 
         try {
-            ackReaderCallable.setInputStream(socket.getInputStream());
-            ackReaderCallable.readyLock.notify();
+            ackReaderCallable.signalConnectionOpened(socket.getInputStream());
             sendWindowSize(socket.getOutputStream());
         } catch (IOException e) {
             addError("Error during Beats connection initialization", e);
@@ -251,7 +243,12 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
          * Lock that guards {@link #inputStream} state.
          * Used to prevent a race condition during lazy {@link #inputStream} initialization.
          */
-        private final Lock readyLock = new ReentrantLock();
+        private final Lock lock = new ReentrantLock();
+
+        /**
+         * Condition that indicates whether {@link #inputStream} is ready.
+         */
+        private final Condition readyCondition = lock.newCondition();
 
         AckReaderCallable() {
             super();
@@ -261,7 +258,7 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
         public Void call() throws Exception {
             updateCurrentThreadName();
             try {
-                readyLock.wait();
+                waitUntilInputStreamIsReady();
                 while (true) {
                     try {
                         int responseByte = inputStream.read();
@@ -283,6 +280,15 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
                         getDisruptor().getRingBuffer().tryPublishEvent(getEventTranslator(), null);
                     });
                 }
+            }
+        }
+
+        private void waitUntilInputStreamIsReady() throws InterruptedException {
+            lock.lock();
+            try {
+                readyCondition.await();
+            } finally {
+                lock.unlock();
             }
         }
 
@@ -309,8 +315,14 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
             ackEvents.offer(new AckEvent(bytesToInt(sequenceNumber)));
         }
 
-        public void setInputStream(InputStream inputStream) {
-            this.inputStream = inputStream;
+        public void signalConnectionOpened(InputStream inputStream) {
+            lock.lock();
+            try {
+                this.inputStream = inputStream;
+                readyCondition.signal();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 
