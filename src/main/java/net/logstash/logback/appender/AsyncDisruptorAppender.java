@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -26,6 +27,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 import net.logstash.logback.appender.listener.AppenderListener;
@@ -38,6 +40,7 @@ import ch.qos.logback.core.UnsynchronizedAppenderBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
+import ch.qos.logback.core.util.Duration;
 import com.lmax.disruptor.BlockingWaitStrategy;
 import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.EventHandler;
@@ -47,7 +50,6 @@ import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
-import com.lmax.disruptor.TimeoutException;
 import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
@@ -62,14 +64,11 @@ import com.lmax.disruptor.dsl.ProducerType;
  * for more information about the advantages of using a {@link RingBuffer} over a {@link BlockingQueue}.
  * <p>
  *
- * This appender will never block the logging thread, since it uses
- * {@link RingBuffer#tryPublishEvent(EventTranslatorOneArg, Object)}
- * to publish events (rather than {@link RingBuffer#publishEvent(EventTranslatorOneArg, Object)}).
- * <p>
- *
- * If the RingBuffer is full, and the event cannot be published,
- * the event will be dropped.  A warning message will be logged to
- * logback's context every {@link #droppedWarnFrequency} consecutive dropped events.
+ * The behavior of the appender when the RingBuffer is full and the event cannot be published
+ * is controlled by the {@link #appendTimeout} configuration parameter.
+ * By default the appender drops the event immediately, and emits a warning message every
+ * {@link #droppedWarnFrequency} consecutive dropped events.
+ * It can also be configured to wait until some space is available, with or without timeout.
  * <p>
  *
  * A single handler thread will be used to handle the actual handling of the event.
@@ -97,6 +96,10 @@ import com.lmax.disruptor.dsl.ProducerType;
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
 public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAware, Listener extends AppenderListener<Event>> extends UnsynchronizedAppenderBase<Event> {
+    /**
+     * Time in nanos to wait between drain attempts during the shutdown phase
+     */
+    private static final long SLEEP_TIME_DURING_SHUTDOWN = 50 * 1_000_000L; // 50ms
 
     protected static final String APPENDER_NAME_FORMAT = "%1$s";
     protected static final String THREAD_INDEX_FORMAT = "%2$d";
@@ -252,6 +255,29 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     protected final List<Listener> listeners = new ArrayList<>();
 
     /**
+     * Maximum time to wait when appending events to the ring buffer when full before the event
+     * is dropped. Use the following values:
+     * <ul>
+     * <li>{@code -1} to disable timeout and wait until space becomes available.
+     * <li>{@code 0} for no timeout and drop the event immediately when the buffer is full.
+     * <li>{@code > 0} to retry during the specified amount of time.
+     * </ul>
+     */
+    private Duration appendTimeout = Duration.buildByMilliseconds(0);
+
+    /**
+     * Delay between consecutive attempts to append an event in the ring buffer when
+     * full.
+     */
+    private Duration appendRetryFrequency = Duration.buildByMilliseconds(50);
+    
+    /**
+     * How long to wait for in-flight events during shutdown.
+     */
+    private Duration shutdownGracePeriod = Duration.buildByMinutes(1);
+
+    
+    /**
      * Event wrapper object used for each element of the {@link RingBuffer}.
      */
     protected static class LogEvent<Event> {
@@ -364,9 +390,30 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void start() {
+        int errorCount = 0;
+        
+        if (this.eventHandler == null) {
+            addError("No eventHandler was configured for appender " + getName());
+            errorCount++;
+        }
+        if (this.appendRetryFrequency.getMilliseconds() <= 0) {
+            addError("<appendRetryFrequency> must be > 0");
+            errorCount++;
+        }
+        if (this.ringBufferSize <= 0) {
+            addError("<ringBufferSize> must be > 0");
+            errorCount++;
+        }
+        if (!isPowerOfTwo(this.ringBufferSize)) {
+            addError("<ringBufferSize> must be a power of 2");
+            errorCount++;
+        }
+        if (errorCount > 0) {
+            return;
+        }
+        
         if (addDefaultStatusListener && getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
             LevelFilteringStatusListener statusListener = new LevelFilteringStatusListener();
             statusListener.setLevelValue(Status.WARN);
@@ -374,11 +421,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             statusListener.setContext(getContext());
             statusListener.start();
             getStatusManager().add(statusListener);
-        }
-
-        if (this.eventHandler == null) {
-            addError("No eventHandler was configured for appender " + name + ".");
-            return;
         }
 
         this.executorService = new ScheduledThreadPoolExecutor(
@@ -423,58 +465,123 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         if (!super.isStarted()) {
             return;
         }
+        
         /*
          * Don't allow any more events to be appended.
          */
         super.stop();
-        try {
-            this.disruptor.shutdown(1, TimeUnit.MINUTES);
-        } catch (TimeoutException e) {
+
+        
+        /*
+         * Shutdown Disruptor
+         *
+         * Calling Disruptor#shutdown() will wait until all enqueued events are fully processed,
+         * but this waiting happens in a busy-spin. To avoid wasting CPU we wait for at most the configured
+         * grace period before asking the Disruptor for an immediate shutdown.
+         */
+        long deadline = getShutdownGracePeriod().getMilliseconds() < 0 ? Long.MAX_VALUE : System.currentTimeMillis() + getShutdownGracePeriod().getMilliseconds();
+        while (!isRingBufferEmpty() && (System.currentTimeMillis() < deadline)) {
+            LockSupport.parkNanos(SLEEP_TIME_DURING_SHUTDOWN);
+        }
+        
+        this.disruptor.halt();
+        
+        
+        if (!isRingBufferEmpty()) {
             addWarn("Some queued events have not been logged due to requested shutdown");
         }
 
+        
+        /*
+         * Shutdown executor service
+         */
         this.executorService.shutdown();
 
         try {
-            if (!this.executorService.awaitTermination(1, TimeUnit.MINUTES)) {
-                addWarn("Some queued events have not been logged due to requested shutdown");
-            }
+            this.executorService.awaitTermination(deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            addWarn("Some queued events have not been logged due to requested shutdown", e);
+            // ignored
         }
+        
+
+        /*
+         * Notify listeners
+         */
         fireAppenderStopped();
     }
 
+    
+    /**
+     * Test whether the ring buffer is empty or not
+     * 
+     * @return {@code true} if the ring buffer is empty, {@code false} otherwise
+     */
+    protected boolean isRingBufferEmpty() {
+        return this.disruptor.getRingBuffer().hasAvailableCapacity(this.getRingBufferSize());
+    }
+    
     @Override
     protected void append(Event event) {
         long startTime = System.nanoTime();
+        
         try {
             prepareForDeferredProcessing(event);
         } catch (RuntimeException e) {
-            addWarn("Unable to prepare event for deferred processing.  Event output might be missing data.", e);
+            addWarn("Unable to prepare event for deferred processing. Event output might be missing data.", e);
         }
 
-        if (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
-            long consecutiveDropped = this.consecutiveDroppedCount.incrementAndGet();
-            if ((consecutiveDropped) % this.droppedWarnFrequency == 1) {
-                addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+        
+        // Add event to the buffer, retrying as many times as allowed by the configuration
+        //
+        long deadline = this.appendTimeout.getMilliseconds() < 0 ? Long.MAX_VALUE : System.currentTimeMillis() + this.appendTimeout.getMilliseconds();
+
+        while (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
+            // Wait before retrying
+            //
+            long waitDuration = Math.min(this.appendRetryFrequency.getMilliseconds(), deadline - System.currentTimeMillis());
+            if (waitDuration > 0) {
+                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(waitDuration));
+
+            } else {
+                // Log a warning status about the failure
+                //
+                long consecutiveDropped = this.consecutiveDroppedCount.incrementAndGet();
+                if ((consecutiveDropped % this.droppedWarnFrequency) == 1) {
+                    addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+                }
+                
+                // Notify listeners
+                //
+                fireEventAppendFailed(event, RING_BUFFER_FULL_EXCEPTION);
+                return;
             }
-            fireEventAppendFailed(event, RING_BUFFER_FULL_EXCEPTION);
-        } else {
-            long endTime = System.nanoTime();
-            long consecutiveDropped = this.consecutiveDroppedCount.get();
-            if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
-                addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+            
+            // Give up if appender is stopped meanwhile
+            //
+            if (!isStarted()) {
+                // Same message as if Appender#append is called after the appender is stopped...
+                addWarn("Attempted to append to non started appender [" + this.getName() + "].");
+                return;
             }
-            fireEventAppended(event, endTime - startTime);
         }
+        
+        // Enqueue success - notify end of error period
+        //
+        long consecutiveDropped = this.consecutiveDroppedCount.get();
+        if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
+            addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+        }
+        
+        // Notify listeners
+        //
+        fireEventAppended(event, System.nanoTime() - startTime);
     }
 
     protected void prepareForDeferredProcessing(Event event) {
         event.prepareForDeferredProcessing();
     }
-
-
+    
+    
     protected String calculateThreadName() {
         List<Object> threadNameFormatParams = getThreadNameFormatParams();
         return String.format(threadNameFormat, threadNameFormatParams.toArray());
@@ -586,7 +693,28 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setWaitStrategyType(String waitStrategyType) {
         setWaitStrategy(WaitStrategyFactory.createWaitStrategyFromString(waitStrategyType));
     }
-
+    
+    public Duration getAppendRetryFrequency() {
+        return appendRetryFrequency;
+    }
+    public void setAppendRetryFrequency(Duration appendRetryFrequency) {
+        this.appendRetryFrequency = Objects.requireNonNull(appendRetryFrequency);
+    }
+    
+    public Duration getAppendTimeout() {
+        return appendTimeout;
+    }
+    public void setAppendTimeout(Duration appendTimeout) {
+        this.appendTimeout = Objects.requireNonNull(appendTimeout);
+    }
+    
+    public void setShutdownGracePeriod(Duration shutdownGracePeriod) {
+        this.shutdownGracePeriod = Objects.requireNonNull(shutdownGracePeriod);
+    }
+    public Duration getShutdownGracePeriod() {
+        return shutdownGracePeriod;
+    }
+    
     public ThreadFactory getThreadFactory() {
         return threadFactory;
     }
@@ -628,5 +756,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     public void setAddDefaultStatusListener(boolean addDefaultStatusListener) {
         this.addDefaultStatusListener = addDefaultStatusListener;
+    }
+    
+    
+    private static boolean isPowerOfTwo(int x) {
+        /* First x in the below expression is for the case when x is 0 */
+        return x != 0 && ((x & (x - 1)) == 0);
     }
 }

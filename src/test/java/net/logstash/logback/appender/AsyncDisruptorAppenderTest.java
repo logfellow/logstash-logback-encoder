@@ -16,6 +16,7 @@
 package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -23,10 +24,17 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -34,6 +42,7 @@ import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 import net.logstash.logback.appender.listener.AppenderListener;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.BasicStatusManager;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
@@ -46,6 +55,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
@@ -64,8 +74,8 @@ public class AsyncDisruptorAppenderTest {
     @Mock(lenient = true)
     private Context context;
     
-    @Mock
-    private StatusManager statusManager;
+    @Spy
+    private StatusManager statusManager = new BasicStatusManager();
     
     @Mock
     private ILoggingEvent event1;
@@ -75,6 +85,9 @@ public class AsyncDisruptorAppenderTest {
     
     @Mock
     private AppenderListener<ILoggingEvent> listener;
+    
+    private ExecutorService executorService = Executors.newCachedThreadPool();
+
     
     @BeforeEach
     public void setup() {
@@ -87,6 +100,7 @@ public class AsyncDisruptorAppenderTest {
     @AfterEach
     public void tearDown() {
         appender.stop();
+        executorService.shutdownNow();
     }
     
     @SuppressWarnings("unchecked")
@@ -198,7 +212,6 @@ public class AsyncDisruptorAppenderTest {
         Assertions.assertTrue(statusCaptor.getValue().getMessage().startsWith("Dropped"));
         
         eventHandlerWaiter.countDown();
-        
     }
 
     @SuppressWarnings("unchecked")
@@ -220,4 +233,212 @@ public class AsyncDisruptorAppenderTest {
         
     }
 
+    /*
+     * Appender is configured to block indefinitely when ring buffer is full
+     */
+    @Test
+    public void appendBlockingWhenFull() {
+        CountDownLatch eventHandlerWaiter = new CountDownLatch(1);
+
+        try {
+            TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
+            appender.setRingBufferSize(1);
+            appender.setAppendTimeout(toLogback(Duration.ofMillis(-1))); // block until space is available
+            appender.setEventHandler(eventHandler);
+            appender.start();
+            
+            /*
+             * First event blocks the ring buffer until eventHandlerWaiter is released
+             */
+            appender.append(event1);
+            await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is actually invoked before going any further
+            
+            /*
+             * Publishing the second event is blocked until the first is released (buffer full)
+             */
+            Future<?> future = execute(() -> appender.append(event2));
+            
+            /*
+             * Release the handler -> both events are now unblocked
+             */
+            eventHandlerWaiter.countDown();
+    
+            await().untilAsserted(() -> assertThat(eventHandler.getEvents()).containsExactly(event1, event2));
+            assertThat(future).isDone();
+            assertThat(statusManager.getCopyOfStatusList()).isEmpty();
+            
+        } finally {
+            eventHandlerWaiter.countDown();
+        }
+    }
+    
+    
+    /*
+     * Appender configured to block with a timeout -> assert appending threads are blocked for the
+     * configured timeout.
+     */
+    @Test
+    public void appendBlockingWithTimeout() throws Exception {
+        // Block for the specified timeout
+        final Duration timeout = Duration.ofMillis(150);
+        
+        final CountDownLatch eventHandlerWaiter = new CountDownLatch(1);
+        
+        try {
+            TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
+            appender.setRingBufferSize(1);
+            appender.setAppendTimeout(toLogback(timeout));
+            appender.setEventHandler(eventHandler);
+            appender.start();
+            
+            /*
+             * First event blocks the ring buffer until eventHandlerWaiter is released
+             */
+            appender.append(event1);
+            await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is actually invoked before going any further
+            
+            
+            /*
+             * Second event is blocked until the first is released (buffer full) - but no more than the configured timeout
+             */
+            Future<?> future = execute(() -> appender.append(event2));
+            
+            // wait for the timeout
+            await().atLeast(timeout).and().atMost(timeout.plusMillis(100)).until(future::isDone);
+            
+            // a WARN status is logged
+            assertThat(statusManager.getCopyOfStatusList())
+                .hasSize(1)
+                .allMatch(s -> s.getMessage().startsWith("Dropped"));
+            
+            // listeners invoked with appendFailed
+            verify(listener).eventAppendFailed(eq(appender), eq(event2), any());
+            
+            
+            /*
+             * Unlock the handler and assert only the first event went through
+             */
+            eventHandlerWaiter.countDown();
+            await().untilAsserted(() -> assertThat(eventHandler.getEvents()).containsExactly(event1));
+            
+        } finally {
+            eventHandlerWaiter.countDown();
+        }
+    }
+    
+    
+    /*
+     * Appender configured to block until space is available -> assert threads blocked waiting for free space are
+     * released when the appender is stopped
+     */
+    @Test
+    public void appendBlockingReleasedOnStop() {
+        final CountDownLatch eventHandlerWaiter = new CountDownLatch(1);
+        
+        try {
+            TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
+            appender.setRingBufferSize(1);
+            appender.setAppendTimeout(toLogback(Duration.ofMillis(-1))); // block until space is available
+            appender.setShutdownGracePeriod(toLogback(Duration.ofMillis(0))); // don't want to wait for inflight events...
+            appender.setEventHandler(eventHandler);
+            appender.start();
+            
+            /*
+             * First event will block the ring buffer until eventHandlerWaiter is released
+             */
+            appender.append(event1);
+            await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is actually invoked before going any further
+            
+            /*
+             * Publishing the second event is blocked until the first is released (buffer full)
+             */
+            Future<?> future = execute(() -> appender.append(event2));
+            
+            /*
+             * Stop appender
+             */
+            appender.stop();
+            
+            // appending thread is released
+            await().until(future::isDone);
+
+            // no events handled
+            assertThat(eventHandler.getEvents()).isEmpty();
+
+            // no listener invoked
+            verify(listener, times(0)).eventAppendFailed(eq(appender), eq(event2), any());
+            
+        } finally {
+            eventHandlerWaiter.countDown();
+        }
+    }
+    
+    
+    @Test
+    public void configRingBufferSize_negative() {
+        appender.setRingBufferSize(-1);
+        appender.start();
+        
+        assertThat(appender.isStarted()).isFalse();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be > 0") && s.getLevel() == Status.ERROR);
+    }
+    
+    
+    @Test
+    public void configRingBufferSize_powerOfTwo() {
+        appender.setRingBufferSize(3);
+        appender.start();
+        
+        assertThat(appender.isStarted()).isFalse();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be a power of 2") && s.getLevel() == Status.ERROR);
+    }
+    
+    
+    @Test
+    public void configAppendRetryFrequency() {
+        appender.setAppendRetryFrequency(toLogback(Duration.ofMillis(-1)));
+        appender.start();
+        
+        assertThat(appender.isStarted()).isFalse();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .anyMatch(s -> s.getMessage().startsWith("<appendRetryFrequency> must be > 0") && s.getLevel() == Status.ERROR);
+    }
+    
+    
+    
+    // --------------------------------------------------------------------------------------------
+
+   
+    private Future<?> execute(Runnable runnable) {
+        return executorService.submit(runnable);
+    }
+       
+    private static class TestEventHandler implements EventHandler<LogEvent<ILoggingEvent>> {
+        private final List<ILoggingEvent> events = new ArrayList<>();
+        private final CountDownLatch waiter;
+        
+        TestEventHandler(CountDownLatch waiter) {
+            this.waiter = waiter;
+        }
+        @Override
+        public void onEvent(LogEvent<ILoggingEvent> event, long sequence, boolean endOfBatch) throws Exception {
+            if (waiter != null) {
+                waiter.await();
+            }
+            this.events.add(event.event);
+        }
+        
+        public List<ILoggingEvent> getEvents() {
+            return events;
+        }
+    }
+    
+    private static ch.qos.logback.core.util.Duration toLogback(Duration duration) {
+        return ch.qos.logback.core.util.Duration.buildByMilliseconds(duration.toMillis());
+    }
 }
