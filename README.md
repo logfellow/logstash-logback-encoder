@@ -625,8 +625,36 @@ For example:
   </appender>
 ```
 
-The async appenders will never block the logging thread.
+#### RingBuffer Full
+
+The async appenders will by default never block the logging thread.
 If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
+
+Alternatively, you can configure the appender to wait until space becomes available instead of dropping the events immediately. This may come in handy when you want to rely on the buffering and the async nature of the appender but don't want to loose any event in case of large logging bursts that exceed the size of the RingBuffer.
+
+The behaviour of the appender when the RingBuffer is controlled by the `appendTimeout` configuration property:
+
+| `appendTimeout` | Behaviour when RingBuffer is full                                      |
+|-----------------|------------------------------------------------------------------------|
+| `< 0`           | disable timeout and wait until space is available                      |
+| `0`             | no timeout, give up immediately and drop event (this is the *default*) |
+| `> 0`           | retry during the specified amount of time                              |
+
+
+Logging threads waiting for space in the RingBuffer wake up periodically at a frequency defined by  `appendRetryFrequency` (default `50ms`). You may increase this frequency for faster reaction time at the expense of higher CPU usage.
+
+When the appender drops an event, it emits a warning status message every `droppedWarnFrequency` consecutive dropped events. Another status message is emitted when the drop period is over and a first event is succesfully enqueued reporting the total number of events that were dropped.
+
+
+#### Graceful Shutdown
+
+When stopped, async appenders perform a _graceful shutdown_ waiting until all events in the buffer are processed and the buffer is empty.
+The maximum time to wait is configured by the `shutdownGracePeriod` parameter and is set to `1 minute` by default.
+
+Events still in the buffer after this period is elapsed are dropped and the appender is stopped.
+
+
+#### Wait Strategy
 
 By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BlockingWaitStrategy.html)
 is used by the worker thread spawned by this appender.
