@@ -648,9 +648,10 @@ When the appender drops an event, it emits a warning status message every `dropp
 
 #### Graceful Shutdown
 
-When stopped, async appenders perform a _graceful shutdown_ waiting until all events in the buffer are processed and the buffer is empty.
-The maximum time to wait is configured by the `shutdownGracePeriod` parameter and is set to `1 minute` by default.
+In order to guarantees that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
+When gracefully stopped, async appenders wait until all events in the buffer are processed and the buffer is empty.
+The maximum time to wait is configured by the `shutdownGracePeriod` parameter and is set to `1 minute` by default.
 Events still in the buffer after this period is elapsed are dropped and the appender is stopped.
 
 
@@ -771,7 +772,6 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
 for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
 
-In order to guarantees that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
 ### Appender Listeners
 
