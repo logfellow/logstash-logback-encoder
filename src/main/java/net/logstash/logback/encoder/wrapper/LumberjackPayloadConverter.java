@@ -16,6 +16,9 @@ package net.logstash.logback.encoder.wrapper;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static net.logstash.logback.util.ByteUtil.intToBytes;
 
 /**
  * Wraps payload so it should be compatible with a Beats input (Lumberjack protocol).
@@ -26,21 +29,24 @@ import java.math.BigInteger;
  */
 public class LumberjackPayloadConverter implements PayloadConverter {
 
-    private static final int INT_SIZE_IN_BYTES = 4;
-
     private static final byte PROTOCOL_VERSION = '2';
     private static final byte PAYLOAD_JSON_TYPE = 'J';
 
-    private int counter;
+    private AtomicInteger counter;
+    /**
+     * A maximum counter number. Counter will be reset after this value is reached.
+     */
+    private int windowSize;
 
     public LumberjackPayloadConverter() {
-        this.counter = 0;
+        this.counter = new AtomicInteger();
+        this.windowSize = 10;
     }
 
     @Override
     public byte[] convert(byte[] encoded) throws IOException {
         byte[] payloadLength = intToBytes(encoded.length);
-        byte[] sequenceNumber = intToBytes(counter++);
+        byte[] sequenceNumber = intToBytes(nextSequenceNumber());
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(
                 2 + encoded.length + payloadLength.length + sequenceNumber.length
@@ -55,12 +61,27 @@ public class LumberjackPayloadConverter implements PayloadConverter {
         }
     }
 
-    private static byte[] intToBytes(int value) {
-        byte[] result = new byte[INT_SIZE_IN_BYTES];
-        byte[] unpadded = BigInteger.valueOf(value).toByteArray();
-        for (int i = unpadded.length - 1, j = result.length - 1; i >= 0 && j >= 0; i--, j--) {
-            result[j] = unpadded[i];
-        }
-        return result;
+    private int nextSequenceNumber() {
+        int maxSize = getWindowSize();
+        return counter.updateAndGet(old -> {
+            int updated = old + 1;
+            if (updated > maxSize) {
+                return 1;
+            } else {
+                return updated;
+            }
+        });
+    }
+
+    public int getWindowSize() {
+        return windowSize;
+    }
+
+    public void setWindowSize(int windowSize) {
+        this.windowSize = windowSize;
+    }
+
+    public void setCounter(AtomicInteger counter) {
+        this.counter = counter;
     }
 }

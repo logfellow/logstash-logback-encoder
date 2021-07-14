@@ -38,7 +38,7 @@ class LumberjackPayloadConverterTest {
         // payload type
         assertEquals('J', buffer.get());
         // sequence number
-        assertEquals(0, buffer.getInt());
+        assertEquals(1, buffer.getInt());
         // payload length
         int payloadLength = buffer.getInt();
         assertEquals(encoded.length, payloadLength);
@@ -57,7 +57,7 @@ class LumberjackPayloadConverterTest {
         String payload = "{\"message\":\"Log message\"}";
         byte[] encoded = payload.getBytes(StandardCharsets.UTF_8);
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 1; i <= 5; i++) {
             byte[] wrapped = assertDoesNotThrow(() -> payloadWrapper.convert(encoded));
             assertSequenceNumberIs(wrapped, i);
         }
