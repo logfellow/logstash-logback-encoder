@@ -49,6 +49,8 @@ import com.lmax.disruptor.ExceptionHandler;
 import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
+import com.lmax.disruptor.Sequence;
+import com.lmax.disruptor.SequenceReportingEventHandler;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -353,9 +355,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Clears the event after a delegate event handler has processed the event,
      * so that the event can be garbage collected.
      */
-    private static class EventClearingEventHandler<Event> implements EventHandler<LogEvent<Event>>, LifecycleAware {
+    private static class EventClearingEventHandler<Event> implements SequenceReportingEventHandler<LogEvent<Event>>, LifecycleAware {
 
         private final EventHandler<LogEvent<Event>> delegate;
+        private Sequence sequenceCallback;
 
         EventClearingEventHandler(EventHandler<LogEvent<Event>> delegate) {
             super();
@@ -371,6 +374,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                  * Clear the event so that it can be garbage collected.
                  */
                 event.event = null;
+                
+                /*
+                 * Notify the BatchEventProcessor that the sequence has progressed.
+                 * Without this callback the sequence would not be progressed
+                 * until the batch has completely finished.
+                 */
+                sequenceCallback.set(sequence);
             }
         }
 
@@ -388,6 +398,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             }
         }
 
+        @Override
+        public void setSequenceCallback(final Sequence sequenceCallback) {
+            this.sequenceCallback = sequenceCallback;
+        }
     }
 
     @Override
@@ -433,11 +447,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          * do not hold up shutdown.
          */
         this.executorService.setRemoveOnCancelPolicy(true);
-
+     
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
                 this.ringBufferSize,
-                this.executorService,
+                this.threadFactory,
                 this.producerType,
                 this.waitStrategy);
 

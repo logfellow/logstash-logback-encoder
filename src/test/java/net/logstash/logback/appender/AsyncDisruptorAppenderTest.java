@@ -32,6 +32,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -374,6 +375,58 @@ public class AsyncDisruptorAppenderTest {
     }
     
     
+    /*
+     * Assert that LogEvent are released from the RingBuffer before the end of a batch.
+     */
+    @Test
+    public void logEventsClearedBeforeEndOfBatch() throws Exception {
+        final CyclicBarrier barrier = new CyclicBarrier(2);
+        
+        try {
+            TestEventHandler eventHandler = new TestEventHandler(barrier);
+            appender.setRingBufferSize(4);
+            appender.setShutdownGracePeriod(toLogback(Duration.ofMillis(0))); // don't want to wait for inflight events...
+            appender.setEventHandler(eventHandler);
+            appender.setAddDefaultStatusListener(true);
+            appender.start();
+            
+            /*
+             * Append enough events to fill the buffer
+             */
+            appender.append(event1);
+            appender.append(event1);
+            appender.append(event1);
+            appender.append(event1);
+            
+            /*
+             * We now have 1 event followed by a batch of 3.
+             * Release 2 events which means the batch is not yet fully processed but we should have room
+             * for 2 additional events in the buffer.
+             */
+            barrier.await();
+            barrier.await();
+            await().until(() -> eventHandler.getEvents().size() == 2);
+
+            appender.append(event1);
+            appender.append(event1);
+            verify(listener, times(0)).eventAppendFailed(eq(appender), any(), any()); // nothing dropped - they all fit in the buffer
+            
+            /*
+             * Release them all and assert we got 6 in total
+             */
+            barrier.await();
+            barrier.await();
+            barrier.await();
+            barrier.await();
+            
+            await().until(() -> eventHandler.getEvents().size() == 6);
+            
+        } finally {
+            barrier.reset();
+        }
+    }
+    
+    
     @Test
     public void configRingBufferSize_negative() {
         appender.setRingBufferSize(-1);
@@ -421,14 +474,24 @@ public class AsyncDisruptorAppenderTest {
     private static class TestEventHandler implements EventHandler<LogEvent<ILoggingEvent>> {
         private final List<ILoggingEvent> events = new ArrayList<>();
         private final CountDownLatch waiter;
+        private final CyclicBarrier barrier;
         
         TestEventHandler(CountDownLatch waiter) {
             this.waiter = waiter;
+            this.barrier = null;
         }
+        TestEventHandler(CyclicBarrier barrier) {
+            this.waiter = null;
+            this.barrier = barrier;
+        }
+        
         @Override
         public void onEvent(LogEvent<ILoggingEvent> event, long sequence, boolean endOfBatch) throws Exception {
             if (waiter != null) {
                 waiter.await();
+            }
+            if (barrier != null) {
+                barrier.await();
             }
             this.events.add(event.event);
         }
