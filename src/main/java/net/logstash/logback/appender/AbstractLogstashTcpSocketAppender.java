@@ -995,32 +995,23 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     protected void fireEventSent(Socket socket, Event event, long durationInNanos) {
-        for (Listener listener : listeners) {
-            listener.eventSent(this, socket, event, durationInNanos);
-        }
+        safelyFireEvent(l -> l.eventSent(this, socket, event, durationInNanos));
     }
+
     protected void fireEventSendFailure(Event event, Throwable reason) {
-        for (Listener listener : listeners) {
-            listener.eventSendFailure(this, event, reason);
-        }
+        safelyFireEvent(l -> l.eventSendFailure(this, event, reason));
     }
 
     protected void fireConnectionOpened(Socket socket) {
-        for (Listener listener : listeners) {
-            listener.connectionOpened(this, socket);
-        }
+        safelyFireEvent(l -> l.connectionOpened(this, socket));
     }
 
     protected void fireConnectionClosed(Socket socket) {
-        for (Listener listener : listeners) {
-            listener.connectionClosed(this, socket);
-        }
+        safelyFireEvent(l -> l.connectionClosed(this, socket));
     }
 
     protected void fireConnectionFailed(InetSocketAddress address, Throwable throwable) {
-        for (Listener listener : listeners) {
-            listener.connectionFailed(this, address, throwable);
-        }
+        safelyFireEvent(l -> l.connectionFailed(this, address, throwable));
     }
 
 
