@@ -26,6 +26,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import net.logstash.logback.appender.listener.AppenderListener;
 import net.logstash.logback.status.LevelFilteringStatusListener;
@@ -486,23 +487,28 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
 
     protected void fireAppenderStarted() {
-        for (Listener listener : listeners) {
-            listener.appenderStarted(this);
-        }
+        safelyFireEvent(l -> l.appenderStarted(this));
     }
+
     protected void fireAppenderStopped() {
-        for (Listener listener : listeners) {
-            listener.appenderStopped(this);
-        }
+        safelyFireEvent(l -> l.appenderStopped(this));
     }
+
     protected void fireEventAppended(Event event, long durationInNanos) {
-        for (Listener listener : listeners) {
-            listener.eventAppended(this, event, durationInNanos);
-        }
+        safelyFireEvent(l -> l.eventAppended(this, event, durationInNanos));
     }
+
     protected void fireEventAppendFailed(Event event, Throwable reason) {
+        safelyFireEvent(l -> l.eventAppendFailed(this, event, reason));
+    }
+
+    protected void safelyFireEvent(Consumer<Listener> callback) {
         for (Listener listener : listeners) {
-            listener.eventAppendFailed(this, event, reason);
+            try {
+                callback.accept(listener);
+            } catch (Exception e) {
+                addError("Failed to invoke listener " + listener, e);
+            }
         }
     }
 
