@@ -86,6 +86,9 @@ public class AsyncDisruptorAppenderTest {
     @Mock
     private AppenderListener<ILoggingEvent> listener;
     
+    private ExecutorService executorService = Executors.newCachedThreadPool();
+
+    
     @BeforeEach
     public void setup() {
         when(context.getStatusManager()).thenReturn(statusManager);
@@ -97,6 +100,7 @@ public class AsyncDisruptorAppenderTest {
     @AfterEach
     public void tearDown() {
         appender.stop();
+        executorService.shutdownNow();
     }
     
     @SuppressWarnings("unchecked")
@@ -270,7 +274,7 @@ public class AsyncDisruptorAppenderTest {
     
     
     /*
-     * Appender configured in async "block" mode -> assert appending threads are blocked for the
+     * Appender configured to block with a timeout -> assert appending threads are blocked for the
      * configured timeout.
      */
     @Test
@@ -324,7 +328,7 @@ public class AsyncDisruptorAppenderTest {
     
     
     /*
-     * Appender configured in async "block" mode -> assert threads blocked waiting for free space are
+     * Appender configured to block until space is available -> assert threads blocked waiting for free space are
      * released when the appender is stopped
      */
     @Test
@@ -369,9 +373,47 @@ public class AsyncDisruptorAppenderTest {
         }
     }
     
-
-    private ExecutorService executorService = Executors.newCachedThreadPool();
     
+    @Test
+    public void configRingBufferSize_negative() {
+        appender.setRingBufferSize(-1);
+        appender.start();
+        
+        assertThat(appender.isStarted()).isFalse();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be > 0") && s.getLevel() == Status.ERROR);
+    }
+    
+    
+    @Test
+    public void configRingBufferSize_powerOfTwo() {
+        appender.setRingBufferSize(3);
+        appender.start();
+        
+        assertThat(appender.isStarted()).isFalse();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be a power of 2") && s.getLevel() == Status.ERROR);
+    }
+    
+    
+    @Test
+    public void configAppendRetryFrequency() {
+        appender.setAppendRetryFrequency(toLogback(Duration.ofMillis(-1)));
+        appender.start();
+        
+        assertThat(appender.isStarted()).isFalse();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .anyMatch(s -> s.getMessage().startsWith("<appendRetryFrequency> must be > 0") && s.getLevel() == Status.ERROR);
+    }
+    
+    
+    
+    // --------------------------------------------------------------------------------------------
+
+   
     private Future<?> execute(Runnable runnable) {
         return executorService.submit(runnable);
     }
