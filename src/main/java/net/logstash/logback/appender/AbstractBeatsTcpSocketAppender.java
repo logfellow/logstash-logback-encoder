@@ -19,9 +19,9 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import net.logstash.logback.encoder.StreamingEncoder;
-import net.logstash.logback.encoder.wrapper.ChainedPayloadConverter;
-import net.logstash.logback.encoder.wrapper.LumberjackPayloadConverter;
-import net.logstash.logback.encoder.wrapper.PayloadConverter;
+import net.logstash.logback.encoder.converter.ChainedPayloadConverter;
+import net.logstash.logback.encoder.converter.LumberjackPayloadConverter;
+import net.logstash.logback.encoder.converter.PayloadConverter;
 
 import java.io.IOException;
 import java.io.InputStream;

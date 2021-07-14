@@ -11,11 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder.wrapper;
+package net.logstash.logback.encoder.converter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.logstash.logback.util.ByteUtil.intToBytes;

@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder.wrapper;
+package net.logstash.logback.encoder.converter;
 
 import org.junit.jupiter.api.Test;
 

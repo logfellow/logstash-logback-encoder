@@ -21,7 +21,7 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
-import net.logstash.logback.encoder.wrapper.PayloadStreamingConverter;
+import net.logstash.logback.encoder.converter.PayloadStreamingConverter;
 import net.logstash.logback.util.ReusableByteBuffer;
 import net.logstash.logback.util.ReusableByteBufferPool;
 
@@ -30,7 +30,7 @@ import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import net.logstash.logback.encoder.wrapper.PayloadConverter;
+import net.logstash.logback.encoder.converter.PayloadConverter;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
         extends EncoderBase<Event> implements StreamingEncoder<Event> {

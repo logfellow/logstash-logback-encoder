@@ -1814,7 +1814,7 @@ which is used by Beats input.
 ```xml
 
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <payloadConverter class="net.logstash.logback.encoder.wrapper.LumberjackPayloadConverter"/>
+    <payloadConverter class="net.logstash.logback.encoder.converter.LumberjackPayloadConverter"/>
 </encoder>
 ```
 

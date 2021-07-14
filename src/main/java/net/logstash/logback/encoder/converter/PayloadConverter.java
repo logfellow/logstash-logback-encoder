@@ -11,12 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder.wrapper;
+package net.logstash.logback.encoder.converter;
 
-import java.io.OutputStream;
+import java.io.IOException;
 
-public abstract class PayloadStreamingConverter extends OutputStream
-        implements PayloadConverter {
+/**
+ * Converts encoded payload (with prefix and suffix).
+ * Can be used to convert plain bytes to a given format.
+ */
+public interface PayloadConverter {
+    default void start() { }
+    default void stop() { }
+    default boolean isStarted() {
+        return true;
+    }
 
-    public abstract PayloadStreamingConverter streamTo(OutputStream outputStream);
+    byte[] convert(byte[] encoded) throws IOException;
 }
