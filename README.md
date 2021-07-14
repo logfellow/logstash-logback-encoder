@@ -158,15 +158,16 @@ To log using JSON format, you must configure logback to use either:
 
 The appenders, encoders, and layouts provided by the logstash-logback-encoder library are as follows:
 
-| Format        | Protocol   | Function | LoggingEvent | AccessEvent
-|---------------|------------|----------| ------------ | -----------
-| Logstash JSON | Syslog/UDP | Appender | [`LogstashUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashUdpSocketAppender.java) | [`LogstashAccessUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessUdpSocketAppender.java)
-| Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
-| any           | any        | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
-| Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
-| Logstash JSON | any        | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
-| General JSON  | any        | Encoder  | [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java) | [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)
-| General JSON  | any        | Layout   | [`LoggingEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/layout/LoggingEventCompositeJsonLayout.java) | [`AccessEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonLayout.java)
+| Format        | Protocol       | Function | LoggingEvent | AccessEvent
+|---------------|----------------|----------| ------------ | -----------
+| Logstash JSON | Syslog/UDP     | Appender | [`LogstashUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashUdpSocketAppender.java) | [`LogstashAccessUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessUdpSocketAppender.java)
+| Logstash JSON | TCP            | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
+| Beats JSON    | Lumberjack/TCP | Appender | [`BeatsTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/BeatsTcpSocketAppender.java) | [`BeatsAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/BeatsAccessTcpSocketAppender.java)
+| any           | any            | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
+| Logstash JSON | any            | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
+| Logstash JSON | any            | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
+| General JSON  | any            | Encoder  | [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java) | [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)
+| General JSON  | any            | Layout   | [`LoggingEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/layout/LoggingEventCompositeJsonLayout.java) | [`AccessEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonLayout.java)
 
 These encoders/layouts can generally be used by any logback appender (such as `RollingFileAppender`).
 
@@ -275,8 +276,26 @@ in your `logback.xml`, like this:
 </configuration>
 ```
 
+Alternatively, you can use `Beats` variant, which supports the same features as `LogstashTcpSocketAppender`.
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="beats" class="net.logstash.logback.appender.BeatsTcpSocketAppender">
+      <destination>127.0.0.1:5044</destination>
+      <!-- maximum number of messages until we wait for ACK -->
+      <windowSize>20</windowSize>
 
-To output JSON for AccessEvents over TCP, use a `LogstashAccessTcpSocketAppender`
+      <!-- encoder is required -->
+      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+  </appender>
+
+  <root level="DEBUG">
+      <appender-ref ref="stash" />
+  </root>
+</configuration>
+```
+
+To output JSON for AccessEvents over TCP, use a `LogstashAccessTcpSocketAppender` or `BeatsAccessTcpSocketAppender`
 with a `LogstashAccessEncoder` or `AccessEventCompositeJsonEncoder`
 in your `logback-access.xml`, like this:
 
@@ -312,8 +331,23 @@ If the RingBuffer is full (e.g. due to slow network, etc), then events will be d
 The TCP appenders will automatically reconnect if the connection breaks.
 However, events may be lost before Java's socket realizes the connection has broken.
 
+To receive logs in Logstash, you have two options:
+* configure [`Beats` input](http://www.logstash.net/docs/latest/inputs/beats) (same as for Filebeat) and use `BeatsTcpSocketAppender`/`BeatsAccessTcpSocketAppender`,
+* configure [`tcp` input](http://www.logstash.net/docs/latest/inputs/tcp) and use other TCP appenders.
+
+To receive messages via `Beats` input, you configure a basic input. 
+However, this is only compatible with `BeatsTcpSocketAppender`/`BeatsAccessTcpSocketAppender`.
+```
+input {
+  beats {
+    port => 5044
+  }
+}
+```
+
 To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
 input with the [`json_lines`](http://www.logstash.net/docs/latest/codecs/json_lines) codec in logstash's configuration like this:
+This method is compatible with all the other TCP appenders.
 
 ```
 input {
@@ -1821,9 +1855,8 @@ which is used by Beats input.
 The encoder will prepare the output JSON and pass it to given _payloadConverter_, 
 which will then convert it to a proper format.
 
-The logstash-logback-encoder library contains `LumberjackPayloadConverter`.
-It can be used in situation when it is needed to reuse Beats input (in Logstash or Graylog for example)
-that is also used by Filebeat (or other tools).
+The logstash-logback-encoder library contains `net.logstash.logback.encoder.converter.LumberjackPayloadConverter`, 
+which adds additional metadata to serialized output, which are needed by Lumberjack protocol.
 
 #### Providers for LoggingEvents
 
