@@ -447,11 +447,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          * do not hold up shutdown.
          */
         this.executorService.setRemoveOnCancelPolicy(true);
-     
+
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
                 this.ringBufferSize,
-                this.threadFactory,
+                this.executorService,
                 this.producerType,
                 this.waitStrategy);
 
