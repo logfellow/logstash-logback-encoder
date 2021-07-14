@@ -451,7 +451,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
                 this.ringBufferSize,
-                this.executorService,
+                this.threadFactory,
                 this.producerType,
                 this.waitStrategy);
 
