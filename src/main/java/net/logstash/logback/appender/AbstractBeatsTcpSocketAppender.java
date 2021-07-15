@@ -286,7 +286,9 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
         private void waitUntilInputStreamIsReady() throws InterruptedException {
             lock.lock();
             try {
-                readyCondition.await();
+                if (inputStream == null) {
+                    readyCondition.await();
+                }
             } finally {
                 lock.unlock();
             }
@@ -319,7 +321,7 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
             lock.lock();
             try {
                 this.inputStream = inputStream;
-                readyCondition.signal();
+                readyCondition.signalAll();
             } finally {
                 lock.unlock();
             }
