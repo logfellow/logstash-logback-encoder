@@ -282,7 +282,7 @@ Alternatively, you can use `Beats` variant, which supports the same features as 
 <configuration>
   <appender name="beats" class="net.logstash.logback.appender.BeatsTcpSocketAppender">
       <destination>127.0.0.1:5044</destination>
-      <!-- maximum number of messages until we wait for ACK -->
+      <!-- maximum number of messages until we wait for ACK, default: 10 -->
       <windowSize>20</windowSize>
 
       <!-- encoder is required -->
@@ -290,7 +290,7 @@ Alternatively, you can use `Beats` variant, which supports the same features as 
   </appender>
 
   <root level="DEBUG">
-      <appender-ref ref="stash" />
+      <appender-ref ref="beats" />
   </root>
 </configuration>
 ```
@@ -309,13 +309,27 @@ in your `logback-access.xml`, like this:
       <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
   </appender>
 
-  <appender-ref ref="stash" />
+  <appender name="beats" class="net.logstash.logback.appender.BeatsAccessTcpSocketAppender">
+      <destination>127.0.0.1:5044</destination>
+      <!-- maximum number of messages until we wait for ACK, default: 10 -->
+      <windowSize>20</windowSize>
+
+      <!-- encoder is required -->
+      <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+  </appender>
+  
+  <root level="DEBUG">
+    <!-- Logstash TCP -->
+    <appender-ref ref="stash" />
+    <!-- Beats -->
+    <appender-ref ref="beats" />
+  </root>
 </configuration>
 ```
 
 The TCP appenders use an encoder, rather than a layout as the [UDP appenders](#udp) . 
 You can use a `Logstash*Encoder`, `*EventCompositeJsonEncoder`, or any other logback encoder.
-All of the output formatting options are configured at the encoder level.
+All the output formatting options are configured at the encoder level.
 
 Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)).
 All the encoding and TCP communication is delegated to a single writer thread.
@@ -1855,7 +1869,7 @@ which is used by Beats input.
 The encoder will prepare the output JSON and pass it to given _payloadConverter_, 
 which will then convert it to a proper format.
 
-The logstash-logback-encoder library contains `net.logstash.logback.encoder.converter.LumberjackPayloadConverter`, 
+The logstash-logback-encoder library contains [`LumberjackPayloadConverter`](/src/main/java/net/logstash/logback/encoder/converter/LumberjackPayloadConverter), 
 which adds additional metadata to serialized output, which are needed by Lumberjack protocol.
 
 #### Providers for LoggingEvents
