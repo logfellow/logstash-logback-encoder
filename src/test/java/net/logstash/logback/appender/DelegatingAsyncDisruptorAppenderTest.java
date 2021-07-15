@@ -251,7 +251,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
         appender.append(event);
         
         verify(flushableDelegate, timeout(VERIFICATION_TIMEOUT)).doAppend(event);
-        verify(flushableDelegate).flush();
+        verify(flushableDelegate, timeout(VERIFICATION_TIMEOUT)).flush();
     }
 
 
