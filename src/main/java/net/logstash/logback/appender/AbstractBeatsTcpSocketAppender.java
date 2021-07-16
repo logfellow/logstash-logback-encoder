@@ -157,6 +157,28 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
         }
 
         @Override
+        public boolean isStarted() {
+            return original.isStarted() && super.isStarted();
+        }
+
+        @Override
+        public void start() {
+            if (isStarted()) {
+                return;
+            }
+            original.start();
+            super.start();
+        }
+
+        @Override
+        public void stop() {
+            if (isStarted()) {
+                super.stop();
+                original.stop();
+            }
+        }
+
+        @Override
         public byte[] headerBytes() {
             return original.headerBytes();
         }
