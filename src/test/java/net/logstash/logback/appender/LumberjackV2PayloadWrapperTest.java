@@ -11,18 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.encoder.converter;
+package net.logstash.logback.appender;
 
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class LumberjackPayloadConverterTest {
-    private final LumberjackPayloadConverter payloadConverter = new LumberjackPayloadConverter();
+class LumberjackV2PayloadWrapperTest {
+    private final AbstractBeatsTcpSocketAppender.LumberjackV2PayloadWrapper payloadConverter
+            = new AbstractBeatsTcpSocketAppender.LumberjackV2PayloadWrapper(new AtomicInteger(), 10);
 
     @Test
     void testPayloadProperlyConverted() {
@@ -57,9 +59,9 @@ class LumberjackPayloadConverterTest {
         String payload = "{\"message\":\"Log message\"}";
         byte[] encoded = payload.getBytes(StandardCharsets.UTF_8);
 
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 20; i++) {
             byte[] wrapped = assertDoesNotThrow(() -> payloadConverter.convert(encoded));
-            assertSequenceNumberIs(wrapped, i);
+            assertSequenceNumberIs(wrapped, ((i - 1) % 10) + 1);
         }
     }
 

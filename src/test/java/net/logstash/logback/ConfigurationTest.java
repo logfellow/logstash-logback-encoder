@@ -221,10 +221,6 @@ public class ConfigurationTest {
 
         byte[] encoded = encoder.encode(listAppender.list.get(0));
 
-        if (encoded[0] == '2') {
-            encoded = stripLumberjackMeta(encoded);
-        }
-
         Map<String, Object> output = parseJson(new String(encoded, StandardCharsets.UTF_8));
         Assertions.assertNotNull(output.get("@timestamp"));
         Assertions.assertEquals("1", output.get("@version"));
@@ -266,11 +262,5 @@ public class ConfigurationTest {
     private Map<String, Object> parseJson(final String text) throws IOException {
         return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() {
         });
-    }
-
-    private byte[] stripLumberjackMeta(byte[] encoded) {
-        byte[] result = new byte[encoded.length - 10];
-        System.arraycopy(encoded, 10, result, 0, result.length);
-        return result;
     }
 }

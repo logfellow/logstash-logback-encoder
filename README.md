@@ -162,7 +162,7 @@ The appenders, encoders, and layouts provided by the logstash-logback-encoder li
 |---------------|----------------|----------| ------------ | -----------
 | Logstash JSON | Syslog/UDP     | Appender | [`LogstashUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashUdpSocketAppender.java) | [`LogstashAccessUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessUdpSocketAppender.java)
 | Logstash JSON | TCP            | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
-| Beats JSON    | Lumberjack/TCP | Appender | [`BeatsTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/BeatsTcpSocketAppender.java) | [`BeatsAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/BeatsAccessTcpSocketAppender.java)
+| Beats JSON    | [Lumberjack v2](https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md) | Appender | [`BeatsTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/BeatsTcpSocketAppender.java) | [`BeatsAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/BeatsAccessTcpSocketAppender.java)
 | any           | any            | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
 | Logstash JSON | any            | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
 | Logstash JSON | any            | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
@@ -1852,25 +1852,6 @@ Each provider has its own configuration options to further customize it.
 These encoders/layouts make use of an internal buffer to hold the JSON output during the rendering process. 
 The size of this buffer is set to `1024` bytes by default. A different size can be configured by setting the `minBufferSize` property to the desired value.
 The buffer automatically grows above the `minBufferSize` when needed to accommodate with larger events. However, only the first `minBufferSize` bytes will be reused by subsequent invocations. It is therefore strongly advised to set the minimum size at least equal to the average size of the encoded events to reduce unnecessary memory allocations and reduce pressure on the garbage collector.
-
-Apart from providers, if you need to further customize the output format of encoded JSON, 
-you can specify the _payloadConverter_. 
-A _payloadConverter_ can wrap or convert the encoded JSON (with a prefix, suffix and other providers) to another byte format.
-For example, it can be used to convert plain JSON to Lumberjack protocol, 
-which is used by Beats input.
-
-```xml
-
-<encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-    <payloadConverter class="net.logstash.logback.encoder.converter.LumberjackPayloadConverter"/>
-</encoder>
-```
-
-The encoder will prepare the output JSON and pass it to given _payloadConverter_, 
-which will then convert it to a proper format.
-
-The logstash-logback-encoder library contains [`LumberjackPayloadConverter`](/src/main/java/net/logstash/logback/encoder/converter/LumberjackPayloadConverter), 
-which adds additional metadata to serialized output, which are needed by Lumberjack protocol.
 
 #### Providers for LoggingEvents
 

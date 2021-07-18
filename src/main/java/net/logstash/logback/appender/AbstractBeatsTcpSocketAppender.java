@@ -17,11 +17,8 @@ import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
-import net.logstash.logback.encoder.CompositeJsonEncoder;
-import net.logstash.logback.encoder.converter.ChainedPayloadConverter;
-import net.logstash.logback.encoder.converter.LumberjackPayloadConverter;
-import net.logstash.logback.encoder.converter.PayloadConverter;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,14 +37,17 @@ import static net.logstash.logback.util.ByteUtil.bytesToInt;
 import static net.logstash.logback.util.ByteUtil.intToBytes;
 
 /**
- * An appender that is compatible with Lumberjack protocol (Beats input).
+ * An appender that is compatible with Lumberjack v2 protocol (Beats input).
  *
- * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash documentation</a> for more info.
+ * Implemented according to current <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Lumberjack specification</a>.
+ * Verified with <a href="https://github.com/Graylog2/graylog2-server/blob/f35df42/graylog2-server/src/main/java/org/graylog/plugins/beats/Beats2Codec.java">Graylog's Lumberjack v2 implementation</a>.
  */
 public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProcessingAware, Listener extends TcpAppenderListener<Event>>
         extends AbstractLogstashTcpSocketAppender<Event, Listener> {
 
     private static final byte PROTOCOL_VERSION = '2';
+
+    private static final byte PAYLOAD_JSON_TYPE = 'J';
     private static final byte PAYLOAD_WINDOW_TYPE = 'W';
     private static final byte PAYLOAD_ACK_TYPE = 'A';
 
@@ -80,56 +80,18 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
     @Override
     public synchronized void start() {
         Encoder<Event> encoder = getEncoder();
-        PayloadConverter converter = installOrCreateConverter(encoder);
-        setEncoder(wrapAsBeatsEncoder(encoder, converter));
+        setEncoder(wrapAsBeatsEncoder(encoder));
         super.start();
     }
 
-    /**
-     * Setups {@link LumberjackPayloadConverter}.
-     * Installs it into an encoder if possible or else creates a new instance.
-     * @param encoder an encoder to install the converter in
-     * @return a converter if installing was not possible
-     */
-    private PayloadConverter installOrCreateConverter(Encoder<Event> encoder) {
-        if (encoder instanceof CompositeJsonEncoder) {
-            installConverter((CompositeJsonEncoder<? extends DeferredProcessingAware>) encoder);
-            return null;
-        } else {
-            return createConverter();
-        }
+    private <E> Encoder<E> wrapAsBeatsEncoder(Encoder<E> original) {
+        return new BeatsEncoderWrapper<>(original, createConverter());
     }
 
-    /**
-     * Installs and configures {@link LumberjackPayloadConverter} into {@link CompositeJsonEncoder<E>}.
-     * @param encoder a target encoder to install the converter
-     * @param <E> log event type
-     */
-    private <E extends DeferredProcessingAware> void installConverter(CompositeJsonEncoder<E> encoder) {
-        PayloadConverter payloadConverter = encoder.getPayloadConverter();
-        if (payloadConverter == null) {
-            encoder.setPayloadConverter(createConverter());
-        } else if (payloadConverter instanceof LumberjackPayloadConverter) {
-            LumberjackPayloadConverter lumberjackPayloadConverter = (LumberjackPayloadConverter) payloadConverter;
-            lumberjackPayloadConverter.setWindowSize(windowSize);
-            lumberjackPayloadConverter.setCounter(counter);
-        } else {
-            ChainedPayloadConverter chain = new ChainedPayloadConverter();
-            chain.add(createConverter());
-            chain.add(payloadConverter);
-            encoder.setPayloadConverter(chain);
-        }
-    }
-
-    private LumberjackPayloadConverter createConverter() {
-        LumberjackPayloadConverter lumberjackPayloadConverter = new LumberjackPayloadConverter();
-        lumberjackPayloadConverter.setWindowSize(windowSize);
-        lumberjackPayloadConverter.setCounter(counter);
-        return lumberjackPayloadConverter;
-    }
-
-    private <E> Encoder<E> wrapAsBeatsEncoder(Encoder<E> original, PayloadConverter converter) {
-        return new BeatsEncoderWrapper<>(original, converter);
+    private LumberjackV2PayloadWrapper createConverter() {
+        return new LumberjackV2PayloadWrapper(
+                counter, windowSize
+        );
     }
 
     public void setWindowSize(int windowSize) {
@@ -149,11 +111,11 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
     private class BeatsEncoderWrapper<E> extends EncoderBase<E> {
 
         private final Encoder<E> original;
-        private final PayloadConverter converter;
+        private final LumberjackV2PayloadWrapper wrapper;
 
-        BeatsEncoderWrapper(Encoder<E> original, PayloadConverter converter) {
+        BeatsEncoderWrapper(Encoder<E> original, LumberjackV2PayloadWrapper wrapper) {
             this.original = original;
-            this.converter = converter;
+            this.wrapper = wrapper;
         }
 
         @Override
@@ -194,15 +156,11 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
             }
 
             byte[] encoded = original.encode(event);
-            if (converter != null && converter.isStarted()) {
-                try {
-                    return converter.convert(encoded);
-                } catch (IOException e) {
-                    addWarn("Error encountered while converting log event. Event: " + event, e);
-                    return new byte[0];
-                }
-            } else {
-                return encoded;
+            try {
+                return wrapper.convert(encoded);
+            } catch (IOException e) {
+                addWarn("Error encountered while converting log event. Event: " + event, e);
+                return new byte[0];
             }
         }
 
@@ -360,6 +318,56 @@ public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProce
 
         public int getSequenceNumber() {
             return sequenceNumber;
+        }
+    }
+
+
+    /**
+     * Wraps payload so it should be compatible with a Beats input (Lumberjack protocol).
+     * Can be used with Logstash input or Graylog's Beats input.
+     *
+     * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash documentation</a>
+     * to read more about this protocol.
+     */
+    static class LumberjackV2PayloadWrapper {
+
+        private final AtomicInteger counter;
+        /**
+         * A maximum counter number. Counter will be reset after this value is reached.
+         */
+        private final int windowSize;
+
+        LumberjackV2PayloadWrapper(AtomicInteger counter, int windowSize) {
+            this.counter = counter;
+            this.windowSize = windowSize;
+        }
+
+        public byte[] convert(byte[] encoded) throws IOException {
+            byte[] payloadLength = intToBytes(encoded.length);
+            byte[] sequenceNumber = intToBytes(nextSequenceNumber());
+
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(
+                    2 + encoded.length + payloadLength.length + sequenceNumber.length
+            )) {
+                outputStream.write(PROTOCOL_VERSION);
+                outputStream.write(PAYLOAD_JSON_TYPE);
+                outputStream.write(sequenceNumber);
+                outputStream.write(payloadLength);
+                outputStream.write(encoded);
+
+                return outputStream.toByteArray();
+            }
+        }
+
+        private int nextSequenceNumber() {
+            return counter.updateAndGet(old -> {
+                int updated = old + 1;
+                if (updated > windowSize) {
+                    return 1;
+                } else {
+                    return updated;
+                }
+            });
         }
     }
 }
