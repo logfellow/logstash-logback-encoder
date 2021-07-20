@@ -36,7 +36,9 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.SocketFactory;
@@ -274,6 +276,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private volatile CountDownLatch shutdownLatch;
 
     /**
+     * The {@link ScheduledExecutorService} used to execute house keeping tasks.
+     */
+    private ScheduledThreadPoolExecutor executorService;
+    
+    /**
      * Event handler responsible for performing the TCP transmission.
      */
     private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
@@ -443,7 +450,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     }
                 } finally {
                     if (!Thread.currentThread().isInterrupted()) {
-                        getExecutorService().submit(() -> {
+                        executorService.submit(() -> {
                             /*
                              * https://github.com/logstash/logstash-logback-encoder/issues/341
                              *
@@ -805,7 +812,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
                 long delay = TimeUnit.MILLISECONDS.toNanos(keepAliveDuration.getMilliseconds()) - (System.nanoTime() - basedOnNanoTime);
                 try {
-                    keepAliveFuture = getExecutorService().schedule(
+                    keepAliveFuture = executorService.schedule(
                         keepAliveRunnable,
                         delay,
                         TimeUnit.NANOSECONDS);
@@ -837,7 +844,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
                 long delay = writeTimeout.getMilliseconds();
                 try {
-                    writeTimeoutFuture = getExecutorService().scheduleWithFixedDelay(
+                    writeTimeoutFuture = executorService.scheduleWithFixedDelay(
                             writeTimeoutRunnable,
                             delay,
                             delay,
@@ -950,16 +957,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
 
         if (errorCount == 0) {
-
+          
             encoder.setContext(getContext());
             if (!encoder.isStarted()) {
                 encoder.start();
             }
 
-            /*
-             * Increase the core size to handle the reader thread
-             */
-            int threadPoolCoreSize = getThreadPoolCoreSize() + 1;
+            int threadPoolCoreSize = 0;
+
             /*
              * Increase the core size to handle the keep alive thread
              */
@@ -972,7 +977,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             if (isWriteTimeoutEnabled()) {
                 threadPoolCoreSize++;
             }
-            setThreadPoolCoreSize(threadPoolCoreSize);
+            this.executorService = new ScheduledThreadPoolExecutor(
+                    threadPoolCoreSize,
+                    getThreadFactory());
+
+            /*
+             * This ensures that cancelled tasks do not hold up shutdown.
+             */
+            this.executorService.setRemoveOnCancelPolicy(true);
+            
             this.shutdownLatch = new CountDownLatch(1);
             super.start();
         }
@@ -983,15 +996,29 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         if (!isStarted()) {
             return;
         }
+        
+        super.stop();
+
         /*
          * Stop waiting to reconnect (if reconnect logic is currently waiting)
          */
         this.shutdownLatch.countDown();
-        super.stop();
+             
+        /*
+         * Stop executor service
+         */
+        this.executorService.shutdown();
+        try {
+            if (!this.executorService.awaitTermination(1, TimeUnit.MINUTES)) {
+                addWarn("Some queued events have not been logged due to requested shutdown");
+            }
+        } catch (InterruptedException e) {
+            addWarn("Some queued events have not been logged due to requested shutdown", e);
+        }
     }
 
     protected Future<?> scheduleReaderCallable(Callable<Void> readerCallable) {
-        return getExecutorService().submit(readerCallable);
+        return executorService.submit(readerCallable);
     }
 
     protected void fireEventSent(Socket socket, Event event, long durationInNanos) {
