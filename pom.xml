@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <ch.qos.logback.version>1.2.3</ch.qos.logback.version>
+        <ch.qos.logback.version>1.2.4</ch.qos.logback.version>
         <com.fasterxml.jackson.version>2.12.4</com.fasterxml.jackson.version>
         <com.fasterxml.uuid.version>4.0.1</com.fasterxml.uuid.version>
 
