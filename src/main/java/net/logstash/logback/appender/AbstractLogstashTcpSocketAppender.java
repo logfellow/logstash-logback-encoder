@@ -963,6 +963,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 encoder.start();
             }
 
+            /*
+             * Start with an initial core size of 1 to handle the Reader thread
+             */
             int threadPoolCoreSize = 1;
 
             /*
