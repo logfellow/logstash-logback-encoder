@@ -963,7 +963,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 encoder.start();
             }
 
-            int threadPoolCoreSize = 0;
+            int threadPoolCoreSize = 1;
 
             /*
              * Increase the core size to handle the keep alive thread
