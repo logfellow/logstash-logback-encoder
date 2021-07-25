@@ -21,8 +21,6 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -202,16 +200,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * The {@link ThreadFactory} used to create the handler thread.
      */
     private ThreadFactory threadFactory = new WorkerThreadFactory();
-
-    /**
-     * The {@link ScheduledExecutorService} used to execute the handler task.
-     */
-    private ScheduledThreadPoolExecutor executorService;
-
-    /**
-     * Size of the thread pool to create.
-     */
-    private int threadPoolCoreSize = 1;
 
     /**
      * The {@link Disruptor} containing the {@link RingBuffer} onto
@@ -437,21 +425,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             getStatusManager().add(statusListener);
         }
 
-        this.executorService = new ScheduledThreadPoolExecutor(
-                getThreadPoolCoreSize(),
-                this.threadFactory);
-
-        /*
-         * This ensures that cancelled tasks
-         * (such as the keepAlive task in AbstractLogstashTcpSocketAppender)
-         * do not hold up shutdown.
-         */
-        this.executorService.setRemoveOnCancelPolicy(true);
-
         this.disruptor = new Disruptor<LogEvent<Event>>(
                 this.eventFactory,
                 this.ringBufferSize,
-                this.executorService,
+                this.threadFactory,
                 this.producerType,
                 this.waitStrategy);
 
@@ -504,23 +481,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         if (!isRingBufferEmpty()) {
             addWarn("Some queued events have not been logged due to requested shutdown");
         }
-
-        
-        /*
-         * Shutdown executor service
-         */
-        this.executorService.shutdown();
-
-        try {
-            this.executorService.awaitTermination(deadline - System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            // ignored
-        }
-        
-
-        /*
-         * Notify listeners
-         */
         fireAppenderStopped();
     }
 
@@ -645,19 +605,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.eventTranslator = eventTranslator;
     }
 
-    protected ScheduledExecutorService getExecutorService() {
-        return executorService;
-    }
-
     protected Disruptor<LogEvent<Event>> getDisruptor() {
         return disruptor;
-    }
-
-    protected int getThreadPoolCoreSize() {
-        return threadPoolCoreSize;
-    }
-    protected void setThreadPoolCoreSize(int threadPoolCoreSize) {
-        this.threadPoolCoreSize = threadPoolCoreSize;
     }
 
     public String getThreadNameFormat() {
