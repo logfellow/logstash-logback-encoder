@@ -23,17 +23,18 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <ch.qos.logback.version>1.2.4</ch.qos.logback.version>
-        <com.fasterxml.jackson.version>2.12.4</com.fasterxml.jackson.version>
-        <com.fasterxml.uuid.version>4.0.1</com.fasterxml.uuid.version>
+        <jackson.version>2.12.4</jackson.version>
+        <java-uuid-generator.version>4.0.1</java-uuid-generator.version>
+        <logback.version>1.2.4</logback.version>
 
         <!-- shaded runtime dependencies -->
-        <com.lmax.disruptor.version>3.4.4</com.lmax.disruptor.version>
+        <disruptor.version>3.4.4</disruptor.version>
 
         <!-- test dependencies -->
+        <assertj.version>3.20.2</assertj.version>
+        <awaitility.version>4.1.0</awaitility.version>
         <junit.version>5.7.2</junit.version>
-        <org.assertj.version>3.20.2</org.assertj.version>
-        <org.mockito.version>3.11.2</org.mockito.version>
+        <mockito.version>3.11.2</mockito.version>
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.20</animal-sniffer-maven-plugin.version>
@@ -94,7 +95,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
-                <version>${com.fasterxml.jackson.version}</version>
+                <version>${jackson.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -112,7 +113,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>${ch.qos.logback.version}</version>
+            <version>${logback.version}</version>
             <!--
                Required for logging regular ILoggingEvents with a Logger.
                Not needed if only logging IAccessEvents for access logs. 
@@ -122,7 +123,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-access</artifactId>
-            <version>${ch.qos.logback.version}</version>
+            <version>${logback.version}</version>
             <!--
                Required for logging IAccessEvents for access logs. 
                Not needed if only logging regular ILoggingEvents with a Logger.
@@ -132,7 +133,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>${ch.qos.logback.version}</version>
+            <version>${logback.version}</version>
             <!--
                "provided" since users of logstash-logback-encoder must also
                directly depend on logback-classic or logback-access,
@@ -177,7 +178,7 @@
         <dependency>
             <groupId>com.fasterxml.uuid</groupId>
             <artifactId>java-uuid-generator</artifactId>
-            <version>${com.fasterxml.uuid.version}</version>
+            <version>${java-uuid-generator.version}</version>
             <!--
                Only needed if the UuidProvider is used.
             -->
@@ -186,7 +187,7 @@
         <dependency>
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
-            <version>${com.lmax.disruptor.version}</version>
+            <version>${disruptor.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -196,27 +197,27 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>${org.assertj.version}</version>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>${org.mockito.version}</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>${org.mockito.version}</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-<dependency>
-    <groupId>org.awaitility</groupId>
-    <artifactId>awaitility</artifactId>
-    <version>4.1.0</version>
-    <scope>test</scope>
-</dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
