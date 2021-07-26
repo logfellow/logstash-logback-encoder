@@ -394,25 +394,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     @Override
     public void start() {
-        int errorCount = 0;
-        
         if (this.eventHandler == null) {
             addError("No eventHandler was configured for appender " + getName());
-            errorCount++;
-        }
-        if (this.appendRetryFrequency.getMilliseconds() <= 0) {
-            addError("<appendRetryFrequency> must be > 0");
-            errorCount++;
-        }
-        if (this.ringBufferSize <= 0) {
-            addError("<ringBufferSize> must be > 0");
-            errorCount++;
-        }
-        if (!isPowerOfTwo(this.ringBufferSize)) {
-            addError("<ringBufferSize> must be a power of 2");
-            errorCount++;
-        }
-        if (errorCount > 0) {
             return;
         }
         
@@ -629,13 +612,16 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Other arguments can be made available by subclasses.
      */
     public void setThreadNameFormat(String threadNameFormat) {
-        this.threadNameFormat = threadNameFormat;
+        this.threadNameFormat = Objects.requireNonNull(threadNameFormat);
     }
 
     public int getRingBufferSize() {
         return ringBufferSize;
     }
     public void setRingBufferSize(int ringBufferSize) {
+        if (ringBufferSize <= 0 || !isPowerOfTwo(ringBufferSize)) {
+            throw new IllegalArgumentException("ringBufferSize must be a positive power of 2");
+        }
         this.ringBufferSize = ringBufferSize;
     }
 
@@ -643,14 +629,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return producerType;
     }
     public void setProducerType(ProducerType producerType) {
-        this.producerType = producerType;
+        this.producerType = Objects.requireNonNull(producerType);
     }
 
     public WaitStrategy getWaitStrategy() {
         return waitStrategy;
     }
     public void setWaitStrategy(WaitStrategy waitStrategy) {
-        this.waitStrategy = waitStrategy;
+        this.waitStrategy = Objects.requireNonNull(waitStrategy);
     }
 
     public void setWaitStrategyType(String waitStrategyType) {
@@ -661,7 +647,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return appendRetryFrequency;
     }
     public void setAppendRetryFrequency(Duration appendRetryFrequency) {
-        this.appendRetryFrequency = Objects.requireNonNull(appendRetryFrequency);
+        if (Objects.requireNonNull(appendRetryFrequency).getMilliseconds() <= 0) {
+            throw new IllegalArgumentException("appendRetryFrequency must be > 0");
+        }
+        this.appendRetryFrequency = appendRetryFrequency;
     }
     
     public Duration getAppendTimeout() {
@@ -682,7 +671,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return threadFactory;
     }
     public void setThreadFactory(ThreadFactory threadFactory) {
-        this.threadFactory = threadFactory;
+        this.threadFactory = Objects.requireNonNull(threadFactory);
     }
 
     public int getDroppedWarnFrequency() {
@@ -696,7 +685,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return eventHandler;
     }
     protected void setEventHandler(EventHandler<LogEvent<Event>> eventHandler) {
-        this.eventHandler = eventHandler;
+        this.eventHandler = Objects.requireNonNull(eventHandler);
     }
 
     public boolean isDaemon() {
@@ -707,7 +696,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
 
     public void addListener(Listener listener) {
-        this.listeners.add(listener);
+        this.listeners.add(Objects.requireNonNull(listener));
     }
     public void removeListener(Listener listener) {
         this.listeners.remove(listener);

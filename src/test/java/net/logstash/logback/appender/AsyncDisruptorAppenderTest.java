@@ -16,6 +16,7 @@
 package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -428,38 +429,16 @@ public class AsyncDisruptorAppenderTest {
     
     
     @Test
-    public void configRingBufferSize_negative() {
-        appender.setRingBufferSize(-1);
-        appender.start();
+    public void testConfigParams() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setRingBufferSize(-1));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setRingBufferSize(3));
         
-        assertThat(appender.isStarted()).isFalse();
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setAppendRetryFrequency(toLogback(Duration.ofMillis(-1))));
         
-        assertThat(statusManager.getCopyOfStatusList())
-            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be > 0") && s.getLevel() == Status.ERROR);
-    }
-    
-    
-    @Test
-    public void configRingBufferSize_powerOfTwo() {
-        appender.setRingBufferSize(3);
-        appender.start();
-        
-        assertThat(appender.isStarted()).isFalse();
-        
-        assertThat(statusManager.getCopyOfStatusList())
-            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be a power of 2") && s.getLevel() == Status.ERROR);
-    }
-    
-    
-    @Test
-    public void configAppendRetryFrequency() {
-        appender.setAppendRetryFrequency(toLogback(Duration.ofMillis(-1)));
-        appender.start();
-        
-        assertThat(appender.isStarted()).isFalse();
-        
-        assertThat(statusManager.getCopyOfStatusList())
-            .anyMatch(s -> s.getMessage().startsWith("<appendRetryFrequency> must be > 0") && s.getLevel() == Status.ERROR);
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setThreadNameFormat(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setProducerType(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setWaitStrategy(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setThreadFactory(null));
     }
     
     

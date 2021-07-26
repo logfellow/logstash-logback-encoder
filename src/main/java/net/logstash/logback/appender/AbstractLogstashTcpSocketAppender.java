@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -176,6 +177,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Socket connection timeout in milliseconds.
+     * Must be positive. A value of zero is interpreted as an infinite timeout.
      */
     private int acceptConnectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
 
@@ -952,7 +954,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
 
-        if (keepAliveMessage != null && keepAliveCharset != null) {
+        if (keepAliveMessage != null) {
             keepAliveBytes = keepAliveMessage.getBytes(keepAliveCharset);
         }
 
@@ -967,11 +969,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
              * Start with an initial core size of 1 to handle the Reader thread
              */
             int threadPoolCoreSize = 1;
-
             /*
              * Increase the core size to handle the keep alive thread
              */
-            if (keepAliveDuration != null) {
+            if (isKeepAliveEnabled()) {
                 threadPoolCoreSize++;
             }
             /*
@@ -1171,7 +1172,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         if (connectionStrategy instanceof PreferPrimaryDestinationConnectionStrategy) {
             ((PreferPrimaryDestinationConnectionStrategy) connectionStrategy).setSecondaryConnectionTTL(secondaryConnectionTTL);
         } else {
-            throw new IllegalStateException(String.format("When setting the secondaryConnectionTTL, the strategy must be a %s.  It is currently a %s", PreferPrimaryDestinationConnectionStrategy.class, connectionStrategy));
+            throw new IllegalStateException(String.format("When setting the secondaryConnectionTTL, the strategy must be a %s. It is currently a %s", PreferPrimaryDestinationConnectionStrategy.class, connectionStrategy));
         }
     }
 
@@ -1186,6 +1187,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Socket connection timeout in milliseconds.
      */
     void setAcceptConnectionTimeout(int acceptConnectionTimeout) {
+        if (acceptConnectionTimeout < 0) {
+            throw new IllegalArgumentException("acceptConnectionTimeout must be >= 0");
+        }
         this.acceptConnectionTimeout = acceptConnectionTimeout;
     }
 
@@ -1195,13 +1199,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * The number of bytes available in the write buffer.
-     * Defaults to {@value #DEFAULT_WRITE_BUFFER_SIZE}
+     * Defaults to {@value #DEFAULT_WRITE_BUFFER_SIZE}.
      *
+     * <p>
      * If less than or equal to zero, buffering the output stream will be disabled.
      * If buffering is disabled, the writer thread can slow down, but
      * it will also can prevent dropping events in the buffer on flaky connections.
      */
-   public void setWriteBufferSize(int writeBufferSize) {
+    public void setWriteBufferSize(int writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
     }
 
@@ -1245,7 +1250,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * then the {@link #keepAliveMessage} will be sent to the socket in
      * order to keep the connection alive.
      *
-     * When null, no keepAlive messages will be sent.
+     * When {@code null}, zero or negative, no keepAlive messages will be sent.
      */
     public void setKeepAliveDuration(Duration keepAliveDuration) {
         this.keepAliveDuration = keepAliveDuration;
@@ -1256,7 +1261,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
     /**
      * Message to send for keeping the connection alive
-     * if {@link #keepAliveDuration} is non-null.
+     * if {@link #keepAliveDuration} is non-null and strictly positive.
      *
      * The following values have special meaning:
      * <ul>
@@ -1274,7 +1279,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     public boolean isKeepAliveEnabled() {
         return this.keepAliveDuration != null
-                && this.keepAliveMessage != null;
+            && this.keepAliveDuration.getMilliseconds() > 0
+            && this.keepAliveMessage != null;
     }
 
     public boolean isWriteTimeoutEnabled() {
@@ -1290,7 +1296,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Defaults to UTF-8.
      */
     public void setKeepAliveCharset(Charset keepAliveCharset) {
-        this.keepAliveCharset = keepAliveCharset;
+        this.keepAliveCharset = Objects.requireNonNull(keepAliveCharset);
     }
 
     /**
@@ -1321,7 +1327,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
     @DefaultClass(DelegateDestinationConnectionStrategy.class)
     public void setConnectionStrategy(DestinationConnectionStrategy destinationConnectionStrategy) {
-        this.connectionStrategy = destinationConnectionStrategy;
+        this.connectionStrategy = Objects.requireNonNull(destinationConnectionStrategy);
     }
 
     /**
