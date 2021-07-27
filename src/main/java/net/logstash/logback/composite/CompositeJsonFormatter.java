@@ -85,7 +85,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
 
     @Override
     public void start() {
-        if (isStarted() ) {
+        if (isStarted()) {
             return;
         }
         if (jsonFactoryDecorator == null) {
