@@ -230,7 +230,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
 
     public void setEncoding(String encodingName) {
         for (JsonEncoding encoding: JsonEncoding.values()) {
-            if (encoding.getJavaName().equals(encodingName) || encoding.name().equals(encodingName)) {
+            if (encoding.getJavaName().equalsIgnoreCase(encodingName) || encoding.name().equalsIgnoreCase(encodingName)) {
                 this.encoding = encoding;
                 return;
             }
