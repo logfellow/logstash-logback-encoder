@@ -44,12 +44,13 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     
     @Override
     public void start() {
-        super.start();
         getProviders().start();
+        super.start();
     }
     
     @Override
     public void stop() {
+        // stop components in reverse order they were started
         super.stop();
         getProviders().stop();
     }
