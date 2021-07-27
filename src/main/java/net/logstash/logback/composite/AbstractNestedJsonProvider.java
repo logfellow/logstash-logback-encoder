@@ -16,6 +16,7 @@
 package net.logstash.logback.composite;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -67,12 +68,12 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     }
     
     public void setProviders(JsonProviders<Event> jsonProviders) {
-        this.jsonProviders = jsonProviders;
+        this.jsonProviders = Objects.requireNonNull(jsonProviders);
     }
 
     @Override
     public void setJsonFactory(final JsonFactory jsonFactory) {
-        getProviders().setJsonFactory(jsonFactory);
+        getProviders().setJsonFactory(Objects.requireNonNull(jsonFactory));
     }
     
     @Override
