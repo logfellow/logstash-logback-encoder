@@ -39,12 +39,7 @@ public class CachingAbbreviator implements Abbreviator {
 
     @Override
     public String abbreviate(String in) {
-        String abbreviation = cache.get(in);
-        if (abbreviation == null) {
-            abbreviation = delegate.abbreviate(in);
-            cache.putIfAbsent(in, abbreviation);
-        }
-        return abbreviation;
+        return cache.computeIfAbsent(in, delegate::abbreviate);
     }
     
     /**
