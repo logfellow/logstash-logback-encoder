@@ -214,6 +214,8 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     /**
      * The character encoding to use (default = "<tt>UTF-8</tt>").
      * Must an encoding supported by {@link com.fasterxml.jackson.core.JsonEncoding}
+     * 
+     * @param encodingName encoding name
      */
     public void setEncoding(String encodingName) {
         formatter.setEncoding(encodingName);
@@ -244,6 +246,8 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * </ul>
      * <p>
      * Any other value will be used as given as the lineSeparator.
+     * 
+     * @param lineSeparator the line separator
      */
     public void setLineSeparator(String lineSeparator) {
         this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
@@ -264,6 +268,8 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      *
      * <p>Note: changes to the buffer size will not be taken into account after the encoder
      *          is started.
+     *
+     * @param minBufferSize minimum size of the byte buffer (in bytes)
      */
     public void setMinBufferSize(int minBufferSize) {
         this.minBufferSize = minBufferSize;
@@ -286,5 +292,4 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     public void setSuffix(Encoder<Event> suffix) {
         this.suffix = suffix;
     }
-
 }

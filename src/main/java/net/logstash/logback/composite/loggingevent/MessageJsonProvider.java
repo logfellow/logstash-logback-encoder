@@ -64,8 +64,7 @@ public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent
     /**
      * Write the message as a JSON array by splitting the message text using the specified regex.
      *
-     * <p>
-     * The allowed values are:
+     * <p>The allowed values are:
      * <ul>
      *     <li>Null/Empty : Disable message splitting. This is also the default behavior.</li>
      *     <li>Any valid regex : Use the specified regex.</li>
@@ -73,12 +72,13 @@ public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent
      *     <li><tt>UNIX</tt> : Use <tt>\n</tt>.</li>
      *     <li><tt>WINDOWS</tt> : Use <tt>\r\n</tt>.</li>
      * </ul>
-     * </p>
-     * <p>
+     * 
      * For example, if this parameter is set to the regex {@code #+}, then the logging statement:
+     * 
      * <pre>
      * log.info("First line##Second line###Third line")
      * </pre>
+     * 
      * will produce:
      * <pre>
      * {
@@ -91,7 +91,6 @@ public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent
      *     ...
      * }
      * </pre>
-     * </p>
      *
      * @param messageSplitRegex The regex used to split the message text
      */

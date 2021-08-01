@@ -44,35 +44,35 @@ public class Markers {
     private Markers() {
     }
 
-    /**
+    /*
      * @see MapEntriesAppendingMarker
      */
     public static LogstashMarker appendEntries(Map<?, ?> map) {
         return new MapEntriesAppendingMarker(map);
     }
 
-    /**
+    /*
      * @see ObjectFieldsAppendingMarker
      */
     public static LogstashMarker appendFields(Object object) {
         return new ObjectFieldsAppendingMarker(object);
     }
 
-    /**
+    /*
      * @see ObjectAppendingMarker
      */
     public static LogstashMarker append(String fieldName, Object object) {
         return new ObjectAppendingMarker(fieldName, object);
     }
 
-    /**
+    /*
      * @see ObjectAppendingMarker
      */
     public static LogstashMarker appendArray(String fieldName, Object... objects) {
         return new ObjectAppendingMarker(fieldName, objects);
     }
 
-    /**
+    /*
      * @see RawJsonAppendingMarker
      */
     public static LogstashMarker appendRaw(String fieldName, String rawJsonValue) {
@@ -81,6 +81,7 @@ public class Markers {
 
     /**
      * Aggregates the given markers into a single marker.
+     * 
      * @param markers the markers to aggregate
      * @return the aggregated marker.
      */
@@ -96,6 +97,7 @@ public class Markers {
 
     /**
      * Aggregates the given markers into a single marker.
+     * 
      * @param markers the markers to aggregate
      * @return the aggregated marker.
      */
@@ -109,14 +111,14 @@ public class Markers {
         return m;
     }
 
-    /**
+    /*
      * @see DeferredLogstashMarker
      */
     public static LogstashMarker defer(Supplier<? extends LogstashMarker> logstashMarkerSupplier) {
         return new DeferredLogstashMarker(logstashMarkerSupplier);
     }
 
-    /**
+    /*
      * @see EmptyLogstashMarker
      */
     public static LogstashMarker empty() {

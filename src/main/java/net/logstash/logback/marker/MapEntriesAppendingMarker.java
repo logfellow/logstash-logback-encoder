@@ -37,7 +37,6 @@ import org.slf4j.Marker;
  * <li>Keys are converted to a {@link String} via {@link String#valueOf(Object)}, and used as field names.</li>
  * <li>Values are converted using an {@link ObjectMapper}.</li>
  * </ul>
- * <p>
  *
  * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
  * {@link String#valueOf(Object)} is used to convert the map to a string.
@@ -53,7 +52,7 @@ import org.slf4j.Marker;
  * name4= a map containing  name5=6
  * }
  * </pre>
- * <p>
+ * 
  * Then the message, name1, name2, name3, name4 fields will be added to the json for the logstash event.
  * <p>
  * For example:
@@ -66,8 +65,6 @@ import org.slf4j.Marker;
  *     "name3"   : [1, 2, 3],
  *     "name4"   : { "name5" : 6 }
  * }
- * <p>
- *
  * </pre>
  */
 @SuppressWarnings("serial")
@@ -76,7 +73,7 @@ public class MapEntriesAppendingMarker extends LogstashMarker implements Structu
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "MAP_FIELDS";
 
     /**
-     * The map from which entries will be appended to the logstash json event.
+     * The map from which entries will be appended to the logstash JSON event.
      */
     private final Map<?, ?> map;
 

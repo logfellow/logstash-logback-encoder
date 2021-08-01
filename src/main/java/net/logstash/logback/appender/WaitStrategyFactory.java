@@ -42,7 +42,6 @@ public class WaitStrategyFactory {
      * Creates a {@link WaitStrategy} from a string.
      * <p>
      * The following strategies are supported:
-     * <p>
      * <ul>
      * <li><tt>blocking</tt> - {@link BlockingWaitStrategy}</li>
      * <li><tt>busySpin</tt> - {@link BusySpinWaitStrategy}</li>
@@ -67,6 +66,8 @@ public class WaitStrategyFactory {
      * </li>
      * </ul>
      *
+     * @param waitStrategyType the name of the desired wait strategy
+     * @return a {@link WaitStrategy} instance or {@code null} if the supplied name is {@code null} or empty
      * @throws IllegalArgumentException if an unknown wait strategy type is given, or the parameters are unable to be parsed.
      */
     public static WaitStrategy createWaitStrategyFromString(String waitStrategyType) {

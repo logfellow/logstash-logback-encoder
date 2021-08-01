@@ -358,8 +358,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
      *     <li><tt>UNIX</tt> : Use <tt>\n</tt>.</li>
      *     <li><tt>WINDOWS</tt> : Use <tt>\r\n</tt>.</li>
      * </ul>
-     * </p>
-     * <p>
+     *
      * For example, if this parameter is set to the regex {@code #+}, then the logging statement:
      * <pre>
      * log.info("First line##Second line###Third line")
@@ -376,7 +375,6 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
      *     ...
      * }
      * </pre>
-     * </p>
      *
      * @param messageSplitRegex The regex used to split the message text
      */

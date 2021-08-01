@@ -27,13 +27,14 @@ public abstract class StackElementFilter {
      * accepted when computing a stack hash.
      *
      * @param element The {@link StackTraceElement} to be tested
-     * @return <code>true</code> if and only if <code>element</code>
-     * should be accepted
+     * @return {@code true} if and only if {@code element} should be accepted
      */
     public abstract boolean accept(StackTraceElement element);
 
     /**
      * Creates a {@link StackElementFilter} that accepts any stack trace elements
+     * 
+     * @return the filter
      */
     public static final StackElementFilter any() {
         return new StackElementFilter() {
@@ -47,6 +48,8 @@ public abstract class StackElementFilter {
     /**
      * Creates a {@link StackElementFilter} that accepts all stack trace elements with a non {@code null}
      * {@code {@link StackTraceElement#getFileName()} filename} and positive {@link StackTraceElement#getLineNumber()} line number}
+     * 
+     * @return the filter
      */
     public static final StackElementFilter withSourceInfo() {
         return new StackElementFilter() {

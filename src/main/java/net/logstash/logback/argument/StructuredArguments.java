@@ -56,7 +56,12 @@ public class StructuredArguments {
      * Basically, adds "key":"value" to the JSON event AND
      * name=value to the formatted message.
      *
+     * @param key the key (field name)
+     * @param value the value
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
      * @see ObjectAppendingMarker
+     * @see #keyValue(String, Object, String)
      * @see #DEFAULT_KEY_VALUE_MESSAGE_FORMAT_PATTERN
      */
     public static StructuredArgument keyValue(String key, Object value) {
@@ -66,7 +71,11 @@ public class StructuredArguments {
     /**
      * Abbreviated convenience method for calling {@link #keyValue(String, Object)}.
      *
-     * @see ObjectAppendingMarker
+     * @param key the key (field name)
+     * @param value the value
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #keyValue(String, Object)
      */
     public static StructuredArgument kv(String key, Object value) {
         return keyValue(key, value);
@@ -75,6 +84,11 @@ public class StructuredArguments {
     /**
      * Adds "key":"value" to the JSON event AND
      * name/value to the formatted message using the given messageFormatPattern.
+     *
+     * @param key the key (field name)
+     * @param value the value
+     * @param messageFormatPattern the pattern used to concatenate the key and the value
+     * @return a pre-populated {@link StructuredArgument} instance
      *
      * @see ObjectAppendingMarker
      */
@@ -85,7 +99,12 @@ public class StructuredArguments {
     /**
      * Abbreviated convenience method for calling {@link #keyValue(String, Object, String)}.
      *
-     * @see ObjectAppendingMarker
+     * @param key the key (field name)
+     * @param value the value
+     * @param messageFormatPattern the pattern used to concatenate the key and the value
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #keyValue(String, Object, String)
      */
     public static StructuredArgument kv(String key, Object value, String messageFormatPattern) {
         return keyValue(key, value, messageFormatPattern);
@@ -95,7 +114,11 @@ public class StructuredArguments {
      * Adds "key":"value" to the JSON event AND
      * value to the formatted message (without the key).
      *
-     * @see ObjectAppendingMarker
+     * @param key the key (field name)
+     * @param value the value
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #keyValue(String, Object, String)
      * @see #VALUE_ONLY_MESSAGE_FORMAT_PATTERN
      */
     public static StructuredArgument value(String key, Object value) {
@@ -105,7 +128,11 @@ public class StructuredArguments {
     /**
      * Abbreviated convenience method for calling {@link #value(String, Object)}.
      *
-     * @see ObjectAppendingMarker
+     * @param key the key (field name)
+     * @param value the value
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #value(String, Object)
      */
     public static StructuredArgument v(String key, Object value) {
         return value(key, value);
@@ -114,7 +141,10 @@ public class StructuredArguments {
 
     /**
      * Adds a "key":"value" entry for each Map entry to the JSON event AND
-     * map.toString() to the formatted message.
+     * {@code map.toString()} to the formatted message.
+     *
+     * @param map {@link Map} holding the key/value pairs
+     * @return a pre-populated {@link StructuredArgument} instance
      *
      * @see MapEntriesAppendingMarker
      */
@@ -125,7 +155,10 @@ public class StructuredArguments {
     /**
      * Abbreviated convenience method for calling {@link #entries(Map)}.
      *
-     * @see MapEntriesAppendingMarker
+     * @param map {@link Map} holding the key/value pairs
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #entries(Map)
      */
     public static StructuredArgument e(Map<?, ?> map) {
         return entries(map);
@@ -133,35 +166,51 @@ public class StructuredArguments {
 
     /**
      * Adds a "key":"value" entry for each field in the given object to the JSON event AND
-     * object.toString() to the formatted message.
+     * {@code object.toString()} to the formatted message.
+     *
+     * @param object the object to write fields from
+     * @return a pre-populated {@link StructuredArgument} instance
      *
      * @see ObjectFieldsAppendingMarker
      */
     public static StructuredArgument fields(Object object) {
         return new ObjectFieldsAppendingMarker(object);
     }
+
     /**
      * Abbreviated convenience method for calling {@link #fields(Object)}.
      *
-     * @see ObjectFieldsAppendingMarker
+     * @param object the object to write fields from
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #fields(Object)
      */
     public static StructuredArgument f(Object object) {
         return fields(object);
     }
 
     /**
-     * Adds a field to the JSON event whose key is fieldName and whose value is a JSON array of objects AND
-     * a string version of the array to the formatted message.
+     * Adds a field to the JSON event whose key is {@code fieldName} and whose value
+     * is a JSON array of objects AND a string version of the array to the formatted message.
+     *
+     * @param fieldName field name
+     * @param objects elements of the array to write under the {@code fieldName} key
+     * @return a pre-populated {@link StructuredArgument} instance
      *
      * @see ObjectAppendingMarker
      */
     public static StructuredArgument array(String fieldName, Object... objects) {
         return new ObjectAppendingMarker(fieldName, objects);
     }
+
     /**
      * Abbreviated convenience method for calling {@link #array(String, Object...)}.
      *
-     * @see ObjectAppendingMarker
+     * @param fieldName field name
+     * @param objects elements of the array to write under the {@code fieldName} key
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #array(String, Object...)
      */
     public static StructuredArgument a(String fieldName, Object... objects) {
         return array(fieldName, objects);
@@ -169,17 +218,26 @@ public class StructuredArguments {
 
     /**
      * Adds the rawJsonValue to the JSON event AND
-     * the rawJsonValue to the formatted message.
+     * the {@code rawJsonValue} to the formatted message.
+     *
+     * @param fieldName field name
+     * @param rawJsonValue the raw JSON value
+     * @return a pre-populated {@link StructuredArgument} instance
      *
      * @see RawJsonAppendingMarker
      */
     public static StructuredArgument raw(String fieldName, String rawJsonValue) {
         return new RawJsonAppendingMarker(fieldName, rawJsonValue);
     }
+
     /**
      * Abbreviated convenience method for calling {@link #raw(String, String)}.
      *
-     * @see RawJsonAppendingMarker
+     * @param fieldName field name
+     * @param rawJsonValue the raw JSON value
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
+     * @see #raw(String, String)
      */
     public static StructuredArgument r(String fieldName, String rawJsonValue) {
         return raw(fieldName, rawJsonValue);
@@ -194,13 +252,15 @@ public class StructuredArguments {
 
     /**
      * Format the argument into a string.
-     * <p>
-     * This method mimics the slf4j behaviour:
+     *
+     * This method mimics the slf4j behavior:
      * array objects are formatted as array using {@link Arrays#toString},
      * non array object using {@link String#valueOf}.
-     * <p>
      *
-     * see org.slf4j.helpers.MessageFormatter#deeplyAppendParameter(StringBuilder, Object, Map)}.
+     * <p>See org.slf4j.helpers.MessageFormatter#deeplyAppendParameter(StringBuilder, Object, Map)}
+     *
+     * @param arg the argument to format
+     * @return formatted string version of the argument
      */
     public static String toString(Object arg) {
 
@@ -208,7 +268,7 @@ public class StructuredArguments {
             return "null";
         }
 
-        Class argClass = arg.getClass();
+        Class<?> argClass = arg.getClass();
 
         try {
             if (!argClass.isArray()) {
