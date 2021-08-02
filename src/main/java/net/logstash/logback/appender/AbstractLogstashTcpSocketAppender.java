@@ -1285,10 +1285,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      *
      * The following values have special meaning:
      * <ul>
-     * <li><tt>null</tt> or empty string = no keep alive.</li>
-     * <li>"<tt>SYSTEM</tt>" = operating system new line (default).</li>
-     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
-     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * <li>{@code null} or empty string = no keep alive.</li>
+     * <li>"{@code SYSTEM}" = operating system new line (default).</li>
+     * <li>"{@code UNIX}" = unix line ending (\n).</li>
+     * <li>"{@code WINDOWS}" = windows line ending (\r\n).</li>
      * </ul>
      * <p>
      * Any other value will be used as-is.

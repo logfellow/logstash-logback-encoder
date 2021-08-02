@@ -225,10 +225,10 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
      *
      * The following values have special meaning:
      * <ul>
-     * <li><tt>null</tt> or empty string = no new line. (default)</li>
-     * <li>"<tt>SYSTEM</tt>" = operating system new line.</li>
-     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
-     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * <li>{@code null} or empty string = no new line. (default)</li>
+     * <li>"{@code SYSTEM}" = operating system new line.</li>
+     * <li>"{@code UNIX}" = unix line ending ({@code \n}).</li>
+     * <li>"{@code WINDOWS}" = windows line ending ({@code \r\n}).</li>
      * </ul>
      *
      * Any other value will be used as given as the lineSeparator.

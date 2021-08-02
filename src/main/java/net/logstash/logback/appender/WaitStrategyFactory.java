@@ -43,26 +43,26 @@ public class WaitStrategyFactory {
      * <p>
      * The following strategies are supported:
      * <ul>
-     * <li><tt>blocking</tt> - {@link BlockingWaitStrategy}</li>
-     * <li><tt>busySpin</tt> - {@link BusySpinWaitStrategy}</li>
-     * <li><tt>liteBlocking</tt> - {@link LiteBlockingWaitStrategy}</li>
-     * <li><tt>sleeping{retries,sleepTimeNs}</tt> - {@link SleepingWaitStrategy}
-     *         - <tt>retries</tt> an integer number of times to spin before sleeping. (default = 200)
-     *           <tt>sleepTimeNs</tt> nanosecond time to sleep each iteration after spinning (default = 100)
+     * <li><code>blocking</code> - {@link BlockingWaitStrategy}</li>
+     * <li><code>busySpin</code> - {@link BusySpinWaitStrategy}</li>
+     * <li><code>liteBlocking</code> - {@link LiteBlockingWaitStrategy}</li>
+     * <li><code>sleeping{retries,sleepTimeNs}</code> - {@link SleepingWaitStrategy}
+     *         - <code>retries</code> an integer number of times to spin before sleeping. (default = 200)
+     *           <code>sleepTimeNs</code> nanosecond time to sleep each iteration after spinning (default = 100)
      * </li>
-     * <li><tt>yielding</tt> - {@link YieldingWaitStrategy}</li>
-     * <li><tt>phasedBackoff{spinTimeout,yieldTimeout,timeUnit,fallackStrategy}</tt> - {@link PhasedBackoffWaitStrategy}
-     *         - <tt>spinTimeout</tt> and <tt>yieldTimeout</tt> are long values.
-     *           <tt>timeUnit</tt> is a string name of one of the {@link TimeUnit} values.
-     *           <tt>fallbackStrategy</tt> is a wait strategy string (e.g. <tt>blocking</tt>).
+     * <li><code>yielding</code> - {@link YieldingWaitStrategy}</li>
+     * <li><code>phasedBackoff{spinTimeout,yieldTimeout,timeUnit,fallackStrategy}</code> - {@link PhasedBackoffWaitStrategy}
+     *         - <code>spinTimeout</code> and <code>yieldTimeout</code> are long values.
+     *           <code>timeUnit</code> is a string name of one of the {@link TimeUnit} values.
+     *           <code>fallbackStrategy</code> is a wait strategy string (e.g. <code>blocking</code>).
      * </li>
-     * <li><tt>timeoutBlocking{timeout,timeUnit}</tt> - {@link TimeoutBlockingWaitStrategy}
-     *         - <tt>timeout</tt> is a long value.
-     *           <tt>timeUnit</tt> is a string name of one of the {@link TimeUnit} values.
+     * <li><code>timeoutBlocking{timeout,timeUnit}</code> - {@link TimeoutBlockingWaitStrategy}
+     *         - <code>timeout</code> is a long value.
+     *           <code>timeUnit</code> is a string name of one of the {@link TimeUnit} values.
      * </li>
-     * <li><tt>liteTimeoutBlocking{timeout,timeUnit}</tt> - {@link LiteTimeoutBlockingWaitStrategy}
-     *         - <tt>timeout</tt> is a long value.
-     *           <tt>timeUnit</tt> is a string name of one of the {@link TimeUnit} values.
+     * <li><code>liteTimeoutBlocking{timeout,timeUnit}</code> - {@link LiteTimeoutBlockingWaitStrategy}
+     *         - <code>timeout</code> is a long value.
+     *           <code>timeUnit</code> is a string name of one of the {@link TimeUnit} values.
      * </li>
      * </ul>
      *

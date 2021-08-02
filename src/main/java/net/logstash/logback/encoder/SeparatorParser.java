@@ -23,9 +23,9 @@ public class SeparatorParser {
      * The following values have special meaning:
      * <ul>
      * <li>{@code null} or empty string = no separator.</li>
-     * <li>"<tt>SYSTEM}</tt>" = operating system new line.</li>
-     * <li>"<tt>UNIX</tt>" = unix line ending ({@code \n}).</li>
-     * <li>"<tt>WINDOWS</tt>" = windows line ending ({@code \r\n}).</li>
+     * <li>"{@code SYSTEM}}" = operating system new line.</li>
+     * <li>"{@code UNIX}" = unix line ending ({@code \n}).</li>
+     * <li>"{@code WINDOWS}" = windows line ending ({@code \r\n}).</li>
      * </ul>
      * <p>
      * Any other value will be returned as-is.

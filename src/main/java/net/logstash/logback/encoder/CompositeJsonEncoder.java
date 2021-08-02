@@ -212,7 +212,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     }
 
     /**
-     * The character encoding to use (default = "<tt>UTF-8</tt>").
+     * The character encoding to use (default = "{@code UTF-8}").
      * Must an encoding supported by {@link com.fasterxml.jackson.core.JsonEncoding}
      * 
      * @param encodingName encoding name
@@ -239,10 +239,10 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      *
      * The following values have special meaning:
      * <ul>
-     * <li><tt>null</tt> or empty string = no new line.</li>
-     * <li>"<tt>SYSTEM</tt>" = operating system new line (default).</li>
-     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
-     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * <li>{@code null} or empty string = no new line.</li>
+     * <li>"{@code SYSTEM}" = operating system new line (default).</li>
+     * <li>"{@code UNIX}" = unix line ending ({@code \n}).</li>
+     * <li>"{@code WINDOWS}" = windows line ending {@code \r\n}).</li>
      * </ul>
      * <p>
      * Any other value will be used as given as the lineSeparator.

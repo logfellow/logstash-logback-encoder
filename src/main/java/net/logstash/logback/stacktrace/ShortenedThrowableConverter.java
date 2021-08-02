@@ -61,8 +61,7 @@ import ch.qos.logback.core.status.ErrorStatus;
  *     See {@link #rootCauseFirst}.</li>
  * </ul>
  *
- * <p>
- * To use this with a {@link PatternLayout}, you must configure <tt>conversionRule</tt>
+ * To use this with a {@link PatternLayout}, you must configure {@code conversionRule}
  * as described <a href="http://logback.qos.ch/manual/layouts.html#customConversionSpecifier">here</a>.
  * Options can be specified in the pattern in the following order:
  * <ol>
@@ -70,6 +69,7 @@ import ch.qos.logback.core.status.ErrorStatus;
  * <li>shortenedClassNameLength = "full" or "short" or an integer value</li>
  * <li>maxLength = "full" or "short" or an integer value</li>
  * </ol>
+ * 
  * If any other remaining options are "rootFirst",
  * then the converter awill be configured as root-cause-first.
  * If any other remaining options equal to an evaluator name,
@@ -89,9 +89,6 @@ import ch.qos.logback.core.status.ErrorStatus;
  *     </appender>
  * }
  * </pre>
- *
- *
- *
  */
 public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 

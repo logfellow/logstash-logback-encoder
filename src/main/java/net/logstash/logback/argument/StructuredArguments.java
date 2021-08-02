@@ -217,7 +217,7 @@ public class StructuredArguments {
     }
 
     /**
-     * Adds the rawJsonValue to the JSON event AND
+     * Adds the {@code rawJsonValue} to the JSON event AND
      * the {@code rawJsonValue} to the formatted message.
      *
      * @param fieldName field name
@@ -244,6 +244,11 @@ public class StructuredArguments {
     }
 
     /**
+     * Defer the evaluation of the argument until actually required.
+     * 
+     * @param structuredArgumentSupplier a supplier for the argument value
+     * @return a pre-populated {@link StructuredArgument} instance
+     *
      * @see DeferredStructuredArgument
      */
     public static StructuredArgument defer(Supplier<? extends StructuredArgument> structuredArgumentSupplier) {

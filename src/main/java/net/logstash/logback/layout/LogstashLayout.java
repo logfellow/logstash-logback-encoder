@@ -201,12 +201,12 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
      * <ul>
      *     <li>Null/Empty : Disable message splitting. This is also the default behavior.</li>
      *     <li>Any valid regex : Use the specified regex.</li>
-     *     <li><tt>SYSTEM</tt> : Use the system-default line separator.</li>
-     *     <li><tt>UNIX</tt> : Use <tt>\n</tt>.</li>
-     *     <li><tt>WINDOWS</tt> : Use <tt>\r\n</tt>.</li>
+     *     <li>{@code SYSTEM} : Use the system-default line separator.</li>
+     *     <li>{@code UNIX} : Use {@code \n}.</li>
+     *     <li>{@code WINDOWS} : Use {@code \r\n}.</li>
      * </ul>
      * 
-     * <p>For example, if this parameter is set to the regex {@code #+}, then the logging statement:
+     * For example, if this parameter is set to the regex {@code #+}, then the logging statement:
      * <pre>
      * log.info("First line##Second line###Third line")
      * </pre>
