@@ -21,10 +21,10 @@ import com.fasterxml.jackson.databind.node.NullNode;
 /**
  * Masks JSON string and number values within a JSON stream.
  *
- * <p>Invoked by {@link MaskingJsonGenerator} before a number or string value is written
- * to determine if the value should be masked.</p>
+ * Invoked by {@link MaskingJsonGenerator} before a number or string value is written
+ * to determine if the value should be masked.
  *
- * <h3>Comparison with {@link FieldMasker}</h3>
+ * <h2>Comparison with {@link FieldMasker}:</h2>
  *
  * <ul>
  *     <li>{@link FieldMasker}s are more efficient than {@link ValueMasker}s, since {@link FieldMasker}s do not inspect values.</li>
