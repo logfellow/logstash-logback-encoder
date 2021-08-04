@@ -9,38 +9,59 @@ jobs:
     name: build
     runs-on: ubuntu-20.04
     strategy:
+      fail-fast: false
       matrix:
         java: [ '8', '11', '16' ]
+      env:
+        JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
     steps:
-      - uses: actions/checkout@v1.1.0
-      - name: setup JDK
-        uses: actions/setup-java@v1
+      - uses: actions/checkout@v2
+      - name: Setup JDK
+        uses: actions/setup-java@v2
         with:
           java-version: ${{ matrix.java }}
-      - name: build
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Build
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml verify
+
   release:
     name: release
     if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     runs-on: ubuntu-20.04
     needs: [build]
     steps:
-      - uses: actions/checkout@v1.1.0
+      - uses: actions/checkout@v2
         with:
           ref: main
-      - uses: actions/setup-java@v1
+      - name: Setup JDK
+        uses: actions/setup-java@v2
         with:
           java-version: 1.8
-      - name: setup-gpg
+      - name: Setup GPG
         run: .github/workflows/steps/setup-gpg.sh
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-      - name: setup-git
+      - name: Setup GIT
         run: |
           .github/workflows/steps/setup-git.sh
           git switch main
-      - name: release
+      - uses: actions/cache@v2.1.6
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Release
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml --activate-profiles ossrh release:prepare release:perform
         env:
           OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
