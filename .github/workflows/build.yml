@@ -12,8 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         java: [ '8', '11', '16' ]
-      env:
-        JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
+    env:
+      JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
     steps:
       - uses: actions/checkout@v2
       - name: Setup JDK
@@ -36,6 +36,8 @@ jobs:
     if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     runs-on: ubuntu-20.04
     needs: [build]
+    env:
+      JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
     steps:
       - uses: actions/checkout@v2
         with:
