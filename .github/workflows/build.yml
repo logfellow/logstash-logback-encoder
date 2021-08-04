@@ -19,6 +19,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v2
         with:
+          distribution: "adopt"
           java-version: ${{ matrix.java }}
       - uses: actions/cache@v2.1.6
         with:
@@ -45,6 +46,7 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v2
         with:
+          distribution: "adopt"
           java-version: 1.8
       - name: Setup GPG
         run: .github/workflows/steps/setup-gpg.sh
