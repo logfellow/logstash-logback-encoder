@@ -473,8 +473,8 @@
                          -->
                         <links>
                             <link>http://logback.qos.ch/apidocs</link>
-                            <link>https://fasterxml.github.io/jackson-core/javadoc/2.10</link>
-                            <link>https://fasterxml.github.io/jackson-databind/javadoc/2.10</link>
+                            <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/${jackson.version}</link>
+                            <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/${jackson.version}</link>
                         </links>
                         
                         <!-- Explicitly set version. This should help to get rid of the following
