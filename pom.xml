@@ -318,11 +318,6 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>${maven-release-plugin.version}</version>
-            </plugin>
-            <plugin>
                 <groupId>com.mycila</groupId>
                 <artifactId>license-maven-plugin</artifactId>
                 <executions>
@@ -532,6 +527,16 @@
                         </defaultProperties>
                     </configuration>
                 </plugin>
+                
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-release-plugin</artifactId>
+                    <version>${maven-release-plugin.version}</version>
+                    <configuration>
+                        <!-- Use our own profile instead of the default "release-profile" -->
+                        <releaseProfiles>release</releaseProfiles>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -579,6 +584,33 @@
                 -->
                 <maven.javadoc.failOnWarnings>false</maven.javadoc.failOnWarnings>
             </properties>
+        </profile>
+
+        <!-- Profile activated during release:prepare and release:perform instead
+             of the legacy release-profile that is otherwise activated during a release 
+             build by the maven-release-plugin.
+             
+             Reasons are:
+             - the "sources" artifact is produced by the shade plugin. The one produced by
+               the legacy profile must be discarded.
+             - javadoc is already produced by normal builds.
+             
+             Note: maven-deploy-plugin:3.0.0 does not support the "updateReleaseInfo" configuration
+                   parameter anymore. This profile can be removed after upgrading.
+         -->
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-deploy-plugin</artifactId>
+                        <configuration>
+                            <updateReleaseInfo>true</updateReleaseInfo>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
