@@ -140,7 +140,7 @@ public class AbstractLogstashUdpSocketAppender<Event extends DeferredProcessingA
     /**
      * Just an alias for syslogHost (since that name doesn't make much sense here)
      * 
-     * @param host
+     * @param host the name of the the host where log output should go
      */
     public void setHost(String host) {
         setSyslogHost(host);

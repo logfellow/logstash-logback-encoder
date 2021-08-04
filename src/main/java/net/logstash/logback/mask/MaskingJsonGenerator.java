@@ -28,35 +28,34 @@ import com.fasterxml.jackson.core.Base64Variant;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.core.SerializableString;
-import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
 
 
 /**
  * A {@link JsonGenerator} that can mask sensitive field values before delegating to a delegate {@link JsonGenerator}.
  *
- * <h1>Identifying field values to mask by <em>path</em></h1>
+ * <h2>Identifying field values to mask by <em>path</em></h2>
  *
- * <p>The {@code MaskingJsonGenerator} uses a collection of {@link FieldMasker}s
+ * The {@code MaskingJsonGenerator} uses a collection of {@link FieldMasker}s
  * to identify fields to mask by <em>JSON path</em>.
  *
  * <p>These field maskers are invoked after a new field name is written
  * to determine if the field's value should be masked.
  * If any masker returns a non-null value, then the returned value will
  * be written as the field's value (instead of the original field value).
- * Note that the masked value's type might differ from the fields original type.</p>
+ * Note that the masked value's type might differ from the fields original type.
  *
- * <p>Example {@link FieldMasker}s:</p>
+ * <p>Example {@link FieldMasker}s:
  *
  * <ul>
  *     <li>{@link FieldNameBasedFieldMasker}</li>
  *     <li>{@link PathBasedFieldMasker}</li>
  * </ul>
  *
- * <h1>Identifying field values to mask by <em>value</em></h1>
+ * <h2>Identifying field values to mask by <em>value</em></h2>
  *
- * <p>The {@code MaskingJsonGenerator} uses a collection of {@link ValueMasker}s
- * to mask field values by <em>JSON path and field value</em></p>
+ * The {@code MaskingJsonGenerator} uses a collection of {@link ValueMasker}s
+ * to mask field values by <em>JSON path and field value</em>.
  *
  * <p>These value maskers are invoked each time a new number or string scalar value
  * is written to determine if the value should be masked.
@@ -64,23 +63,20 @@ import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
  * If any masker returns non-null, then the returned value
  * will be written as the field value.
  *
- * <p>Raw values are NOT masked.</p>
+ * <p>Raw values are NOT masked.
  *
  * <p>It is much more efficient to mask field values by <em>path</em>, rather than by <em>field value</em>.
- * Therefore, prefer using {@link FieldMasker}s instead of {@link ValueMasker}s whenever possible.</p>
+ * Therefore, prefer using {@link FieldMasker}s instead of {@link ValueMasker}s whenever possible.
  *
- * <p>Example value maskers:</p>
+ * <p>Example value maskers:
  *
  * <ul>
  *     <li>{@link RegexValueMasker}</li>
  * </ul>
- *
  */
 public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     public static final String MASK = "****";
-
-    private static final SerializedString MASK_SERIALIZED = new SerializedString(MASK);
 
     private final Collection<FieldMasker> fieldMaskers;
 

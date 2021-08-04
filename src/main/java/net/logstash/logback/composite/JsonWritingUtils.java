@@ -27,6 +27,12 @@ public class JsonWritingUtils {
 
     /**
      * Writes entries of the map as fields.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param map map whose entries are written as JSON field/values
+     * 
+     * @throws IOException if an I/O error occurs
+     * @throws JsonMappingException when problem to convert map values of type Object into JSON
      */
     public static void writeMapEntries(JsonGenerator generator, Map<?, ?> map) throws IOException, JsonMappingException {
         if (map != null) {
@@ -40,15 +46,32 @@ public class JsonWritingUtils {
     }
 
     /**
-     * Writes a map as String fields to the generator if and only if the fieldName and values are not null.
+     * Writes a map as String fields to the generator if and only if the {@code fieldName}
+     * and values are not {@code null}.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param fieldName name of the JSON property to write the map content under
+     * @param map map whose entries are written as JSON field/values
+     * 
+     * @throws IOException if an I/O error occurs
+     * @throws JsonMappingException when problem to convert map values of type Object into JSON
+
      */
     public static void writeMapStringFields(JsonGenerator generator, String fieldName, Map<String, String> map) throws IOException, JsonMappingException {
         writeMapStringFields(generator, fieldName, map, false);
     }
-    
+
     /**
-     * Writes a map as String fields to the generator if and only if the fieldName and values are not null.
-     * @param lowerCaseKeys when true, the map keys will be written in lowercase.
+     * Writes a map as String fields to the generator if and only if the {@code fieldName}
+     * and values are not {@code null}.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param fieldName name of the JSON property to write the map content under
+     * @param map map whose entries are written as JSON field/values
+     * @param lowerCaseKeys when true, the map keys will be written in lower case.
+     * 
+     * @throws IOException if an I/O error occurs
+     * @throws JsonMappingException when problem to convert map values of type Object into JSON
      */
     public static void writeMapStringFields(JsonGenerator generator, String fieldName, Map<String, String> map, boolean lowerCaseKeys) throws IOException, JsonMappingException {
         if (shouldWriteField(fieldName) && map != null && !map.isEmpty()) {
@@ -62,9 +85,16 @@ public class JsonWritingUtils {
             generator.writeEndObject();
         }
     }
-    
+
     /**
-     * Writes an array of strings to the generator if and only if the fieldName and values are not null.
+     * Writes an array of strings to the generator if and only if the {@code fieldName}
+     * and values are not {@code null}.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param fieldName the field name
+     * @param fieldValues the field values
+     * 
+     * @throws IOException if an I/O error occurs
      */
     public static void writeStringArrayField(JsonGenerator generator, String fieldName, String[] fieldValues) throws IOException {
         if (shouldWriteField(fieldName) && fieldValues != null && fieldValues.length > 0) {
@@ -77,7 +107,14 @@ public class JsonWritingUtils {
     }
 
     /**
-     * Writes the field to the generator if and only if the fieldName and fieldValue are not null.
+     * Writes the field to the generator if and only if the {@code fieldName} and
+     * {@code fieldValue} are not {@code null}.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param fieldName the field name
+     * @param fieldValue the field value
+     * 
+     * @throws IOException if an I/O error occurs
      */
     public static void writeStringField(JsonGenerator generator, String fieldName, String fieldValue) throws IOException {
         if (shouldWriteField(fieldName) && fieldValue != null) {
@@ -86,7 +123,13 @@ public class JsonWritingUtils {
     }
 
     /**
-     * Writes the field to the generator if and only if the fieldName is not null.
+     * Writes the field to the generator if and only if the {@code fieldName} is not {@code null}.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param fieldName the field name
+     * @param fieldValue the field value
+     * 
+     * @throws IOException if an I/O error occurs
      */
     public static void writeNumberField(JsonGenerator generator, String fieldName, int fieldValue) throws IOException {
         if (shouldWriteField(fieldName)) {
@@ -95,7 +138,13 @@ public class JsonWritingUtils {
     }
 
     /**
-     * Writes the field to the generator if and only if the fieldName is not null.
+     * Writes the field to the generator if and only if the {@code fieldName} is not {@code null}.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param fieldName the field name
+     * @param fieldValue the field value
+     * 
+     * @throws IOException if an I/O error occurs
      */
     public static void writeNumberField(JsonGenerator generator, String fieldName, long fieldValue) throws IOException {
         if (shouldWriteField(fieldName)) {
@@ -103,6 +152,15 @@ public class JsonWritingUtils {
         }
     }
 
+    /**
+     * Indicates whether the given field name must be written or not.
+     * A field should be written if its name is not null and not ignored.
+     * 
+     * @param fieldName the field name
+     * @return {@code true} if the field should be written, {@code false} otherwise
+     * 
+     * @see LogstashCommonFieldNames#IGNORE_FIELD_INDICATOR
+     */
     public static boolean shouldWriteField(String fieldName) {
         return fieldName != null && !fieldName.equals(LogstashCommonFieldNames.IGNORE_FIELD_INDICATOR);
     }

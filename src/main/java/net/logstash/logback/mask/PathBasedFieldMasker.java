@@ -24,11 +24,11 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  *
  * <p>Values for paths that match a given path string will be replaced with a given mask string.</p>
  *
- * <h1>Path String Format</h1>
+ * <h2>Path String Format</h2>
  *
- * <p>The path string to match follows a format similar to (but not exactly the same as) a
+ * The path string to match follows a format similar to (but not exactly the same as) a
  * <a href="http://tools.ietf.org/html/draft-ietf-appsawg-json-pointer-03">JSON Pointer</a> string,
- * with the differences being:</p>
+ * with the differences being:
  * <ul>
  *     <li>At least one reference token is required  (e.g. "" and "/" are not allowed)</li>
  *     <li>The path string does not need to start with {@value #TOKEN_SEPARATOR}.
@@ -38,13 +38,13 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  *     <li>The path string must end with a field name (not an array index)</li>
  * </ul>
  *
- * <h1>Absolute Paths</h1>
+ * <h2>Absolute Paths</h2>
  *
- * <p>Absolute paths start with {@value #TOKEN_SEPARATOR}, followed by one or more
+ * Absolute paths start with {@value #TOKEN_SEPARATOR}, followed by one or more
  * reference tokens separated by {@value #TOKEN_SEPARATOR}.
- * Absolute paths must match the full path from the root of the streaming context.</p>
+ * Absolute paths must match the full path from the root of the streaming context.
  *
- * <p>For example, given the following JSON:</p>
+ * <p>For example, given the following JSON:
  *
  * <pre>
  * {
@@ -63,7 +63,7 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  * }
  * </pre>
  *
- * <p>Then the following matches occur:</p>
+ * Then the following matches occur:
  *
  * <ul>
  *     <li><code>/aaa</code> matches <code>{ "bbb" : [ { "ccc" : "ddd" } ] }</code></li>
@@ -71,13 +71,13 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  *     <li><code>/aaa/bbb/0/ccc</code> matches <code>"ddd"</code></li>
  * </ul>
  *
- * <h1>Partial Paths</h1>
+ * <h2>Partial Paths</h2>
  *
- * <p>Partial paths do NOT start with {@value #TOKEN_SEPARATOR}, and contain
+ * Partial paths do NOT start with {@value #TOKEN_SEPARATOR}, and contain
  * one or more reference tokens separated by {@value #TOKEN_SEPARATOR}.
- * Partial paths mask a partial path anywhere in the stream.</p>
+ * Partial paths mask a partial path anywhere in the stream.
  *
- * <p>For example, given the following JSON:</p>
+ * <p>For example, given the following JSON:
  *
  * <pre>
  * {
@@ -96,7 +96,7 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  * }
  * </pre>
  *
- * <p>Then the following matches occur:</p>
+ * Then the following matches occur:
  *
  * <ul>
  *     <li><code>aaa</code> matches <code>{ "bbb" : [ { "ccc" : "ddd" } ] }</code></li>
@@ -108,17 +108,17 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  *     <li><code>ccc</code> matches <code>"ddd"</code></li>
  * </ul>
  *
- * <p>For single field values (e.g. partial paths with only one token), consider
+ * For single field values (e.g. partial paths with only one token), consider
  * using a {@link FieldNameBasedFieldMasker} instead.
  * A single {@link FieldNameBasedFieldMasker} configured with many field names,
- * is much more efficient than having a {@link PathBasedFieldMasker} per field name.</p>
+ * is much more efficient than having a {@link PathBasedFieldMasker} per field name.
  *
- * <h1>Wildcard Tokens</h1>
+ * <h2>Wildcard Tokens</h2>
  *
- * <p>The wildcard value ({@value WILDCARD_TOKEN}) can be used as a token in the path string.
- * The wildcard token will match any token.</p>
+ * The wildcard value ({@value WILDCARD_TOKEN}) can be used as a token in the path string.
+ * The wildcard token will match any token.
  *
- * <p>For example, given the following JSON:</p>
+ * <p>For example, given the following JSON:
  *
  * <pre>
  * {
@@ -139,16 +139,16 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  * }
  * </pre>
  *
- * <p>Then the following matches occur:</p>
+ * Then the following matches occur:
  *
  * <ul>
  *     <li><code>aaa/*&#47;ccc</code> matches <code>"ddd"</code> and <code>"hhh"</code></li>
  *     <li><code>*&#47;ccc</code> matches <code>"ddd"</code> and <code>"hhh"</code> and <code>"lll"</code></li>
  * </ul>
  *
- * <h1>Escaping</h1>
+ * <h2>Escaping</h2>
  *
- * <p>JSON Pointer escaping can be used to escape '/' and '~' within tokens.  Specifically, use:</p>
+ * JSON Pointer escaping can be used to escape '/' and '~' within tokens.  Specifically, use:
  * <ul>
  *     <li>'~1' to represent '/' within a token</li>
  *     <li>'~0' to represent '~' within a token</li>

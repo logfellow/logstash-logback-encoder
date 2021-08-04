@@ -627,6 +627,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * The first argument (%1$s) is the string appender name.
      * The second argument (%2$d) is the numerical thread index.
      * Other arguments can be made available by subclasses.
+     * 
+     * @param threadNameFormat the thread name format pattern
      */
     public void setThreadNameFormat(String threadNameFormat) {
         this.threadNameFormat = threadNameFormat;

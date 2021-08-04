@@ -90,20 +90,22 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
     }
 
     /**
-     * When true, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
-     * will be omitted from json output.
+     * When {@code true}, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
+     * will be omitted from JSON output.
+     * 
+     * @return {@code true} if empty fields are omitted from JSON output, {@code false} otherwise.
      */
     public boolean isOmitEmptyFields() {
         return omitEmptyFields;
     }
 
     /**
-     * When true, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
-     * will be omitted from json output.
+     * When {@code true}, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
+     * will be omitted from JSON output.
+     * 
+     * @param omitEmptyFields whether empty fields are omitted or not
      */
     public void setOmitEmptyFields(boolean omitEmptyFields) {
         this.omitEmptyFields = omitEmptyFields;
     }
-
-
 }

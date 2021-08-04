@@ -24,7 +24,7 @@ import org.slf4j.Marker;
 
 /**
  * An empty marker that does nothing itself, but can be used as a base marker when you want to conditionally chain other markers with {@link #and(Marker)}.
- * For example:</p>
+ * For example:
  *
  * <pre>
  *     LogstashMarker marker = Markers.empty();

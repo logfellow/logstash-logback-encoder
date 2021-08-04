@@ -1058,8 +1058,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     /**
-     * Used to create client {@link Socket}s to which to communicate.
-     * By default, it is the system default SocketFactory.
+     * Set the {@link SocketFactory} used to create client {@link Socket}s to which to communicate.
+     * Use {@code null} to use the system default SocketFactory.
+     * 
+     * @param socketFactory the socket factory to use to create connections with remote destinations.
      */
     public void setSocketFactory(SocketFactory socketFactory) {
         this.socketFactory = socketFactory;
@@ -1076,6 +1078,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * <p>
      *
      * For example, "host1.domain.com,host2.domain.com:5560"
+     * 
+     * @param destination comma-separated list of destinations in the form of {@code hostName[:portNumber]}
      */
     public void addDestination(final String destination) throws IllegalArgumentException {
 
@@ -1086,6 +1090,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Adds the given destinations to the list of potential destinations.
+     * 
+     * @param destinations the {@link InetSocketAddress} to add to the list of valid destinations
      */
     public void addDestinations(InetSocketAddress... destinations) throws IllegalArgumentException  {
         if (destinations == null) {
@@ -1109,6 +1115,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Returns the host string from the given destination,
      * avoiding a DNS hit if possible.
+     * 
+     * @param destination the {@link InetSocketAddress} to get the host string from
+     * @return the host string of the given destination
      */
     protected String getHostString(InetSocketAddress destination) {
 
@@ -1136,6 +1145,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Return the destinations in which to attempt to send logs.
+     * 
+     * @return an ordered list of {@link InetSocketAddress} representing the configured destinations
      */
     public List<InetSocketAddress> getDestinations() {
         return Collections.unmodifiableList(destinations);
@@ -1145,6 +1156,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Time period for which to wait after failing to connect to all servers,
      * before attempting to reconnect.
      * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
+     * 
+     * @param delay the reconnection delay
      */
     public void setReconnectionDelay(Duration delay) {
         if (delay == null || delay.getMilliseconds() <= 0) {
@@ -1165,6 +1178,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * this will set its {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.
      *
      * @see PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)
+     * @param secondaryConnectionTTL the TTL of a connection when connected to a secondary destination
      * @throws IllegalStateException if the {@link #connectionStrategy} is not a {@link PreferPrimaryDestinationConnectionStrategy}
      */
     public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
@@ -1184,6 +1198,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Socket connection timeout in milliseconds.
+     * 
+     * @param acceptConnectionTimeout connection timeout in milliseconds
      */
     void setAcceptConnectionTimeout(int acceptConnectionTimeout) {
         this.acceptConnectionTimeout = acceptConnectionTimeout;
@@ -1200,6 +1216,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * If less than or equal to zero, buffering the output stream will be disabled.
      * If buffering is disabled, the writer thread can slow down, but
      * it will also can prevent dropping events in the buffer on flaky connections.
+     * 
+     * @param writeBufferSize the write buffer size in bytes
      */
    public void setWriteBufferSize(int writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
@@ -1207,6 +1225,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Returns the maximum number of events in the queue.
+     * Alias for {@link #getRingBufferSize()}.
+     * 
+     * @return the size of the ring buffer
      */
     public int getQueueSize() {
         return getRingBufferSize();
@@ -1232,6 +1253,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Set this to non-null to use SSL.
      * See <a href="http://logback.qos.ch/manual/usingSSL.html"> the logback manual</a>
      * for details on how to configure SSL for a client.
+     * 
+     * @param sslConfiguration the SSL configuration
      */
     public void setSsl(SSLConfiguration sslConfiguration) {
         this.sslConfiguration = sslConfiguration;
@@ -1246,6 +1269,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * order to keep the connection alive.
      *
      * When null, no keepAlive messages will be sent.
+     * 
+     * @param keepAliveDuration duration between consecutive keep alive messages
      */
     public void setKeepAliveDuration(Duration keepAliveDuration) {
         this.keepAliveDuration = keepAliveDuration;
@@ -1260,13 +1285,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      *
      * The following values have special meaning:
      * <ul>
-     * <li><tt>null</tt> or empty string = no keep alive.</li>
-     * <li>"<tt>SYSTEM</tt>" = operating system new line (default).</li>
-     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
-     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * <li>{@code null} or empty string = no keep alive.</li>
+     * <li>"{@code SYSTEM}" = operating system new line (default).</li>
+     * <li>"{@code UNIX}" = unix line ending (\n).</li>
+     * <li>"{@code WINDOWS}" = windows line ending (\r\n).</li>
      * </ul>
      * <p>
      * Any other value will be used as-is.
+     * 
+     * @param keepAliveMessage the keep alive message
      */
     public void setKeepAliveMessage(String keepAliveMessage) {
         this.keepAliveMessage = SeparatorParser.parseSeparator(keepAliveMessage);
@@ -1288,6 +1315,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * The charset to use when writing the {@link #keepAliveMessage}.
      * Defaults to UTF-8.
+     * 
+     * @param keepAliveCharset charset encoding for the keep alive message
      */
     public void setKeepAliveCharset(Charset keepAliveCharset) {
         this.keepAliveCharset = keepAliveCharset;
@@ -1310,6 +1339,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * The third argument (%3$s) is the string hostname of the currently connected destination.
      * The fourth argument (%4$d) is the numerical port of the currently connected destination.
      * Other arguments can be made available by subclasses.
+     * 
+     * @param threadNameFormat thread name format pattern
      */
     @Override
     public void setThreadNameFormat(String threadNameFormat) {
@@ -1346,15 +1377,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      *
      * <p>Used to detect connections where the receiver stops reading.</p>
      *
-     * <p>Note that since a blocking java socket output stream
-     * does not have a concept of a write timeout,
-     * a task will be scheduled on the {@link #getExecutorService()}
-     * with the same frequency as the write timeout
-     * in order to detect stuck writes.
+     * <p>Note that since a blocking java socket output stream does not have a concept
+     * of a write timeout, a task will be scheduled with the same frequency as the write
+     * timeout in order to detect stuck writes.
      * It is recommended to use longer write timeouts (e.g. &gt; 30s, or minutes),
      * rather than short write timeouts, so that this task does not execute too frequently.
      * Also, this approach means that it could take up to two times the write timeout
      * before a write timeout is detected.</p>
+     * 
+     * @param writeTimeout the write timeout
      */
     public void setWriteTimeout(Duration writeTimeout) {
         this.writeTimeout = writeTimeout == null

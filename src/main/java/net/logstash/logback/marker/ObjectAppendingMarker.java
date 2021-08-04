@@ -53,7 +53,6 @@ import org.slf4j.Marker;
  * <p>
  *
  * Example:
- * <p>
  *
  * <pre>
  * logger.info("My Message {}", StructuredArguments.keyValue("key", "value"));
@@ -66,8 +65,7 @@ import org.slf4j.Marker;
  *     "message" : "My Message key=value",
  *     "key"     : "value"
  * }
- * <p>
- *
+ * </pre>
  */
 @SuppressWarnings("serial")
 public class ObjectAppendingMarker extends SingleFieldAppendingMarker {

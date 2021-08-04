@@ -56,6 +56,10 @@
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
         
         <checkstyle.version>8.45</checkstyle.version>
+        
+        <!-- maven-javadoc-plugin configuration -->
+        <maven.javadoc.failOnError>true</maven.javadoc.failOnError>
+        <maven.javadoc.failOnWarnings>true</maven.javadoc.failOnWarnings>
     </properties>
 
     <licenses>
@@ -303,6 +307,18 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
                 <version>${maven-release-plugin.version}</version>
             </plugin>
@@ -449,12 +465,30 @@
                     <artifactId>maven-javadoc-plugin</artifactId>
                     <version>${maven-javadoc-plugin.version}</version>
                     <configuration>
-                        <doclint>none</doclint>
+                        <!-- Enable all validation checks except "accessibility"
+                         -->
+                        <doclint>all,-accessibility</doclint>
+                        
+                        <!-- Setup links to external api docs
+                         -->
                         <links>
                             <link>http://logback.qos.ch/apidocs</link>
                             <link>https://fasterxml.github.io/jackson-core/javadoc/2.10</link>
                             <link>https://fasterxml.github.io/jackson-databind/javadoc/2.10</link>
                         </links>
+                        
+                        <!-- Explicitly set version. This should help to get rid of the following
+                             warning when building the project with JDK 11+:
+                             
+                                The code being documented uses modules but the packages defined in
+                                https://docs.oracle.com/javase/8/docs/api/ are in the unnamed module.
+                         -->
+                        <source>${java.version}</source>
+                        
+                        <!-- Shuts off non-error and non-warning messages, leaving only the
+                             warnings and errors appear.
+                         -->
+                        <quiet>true</quiet>
                     </configuration>
                 </plugin>
                 
@@ -532,6 +566,19 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        
+        <profile>
+            <id>java15</id>
+            <activation>
+                <jdk>[1.15,)</jdk>
+            </activation>
+            <properties>
+                <!-- A warning is emitted when javadoc is missing on a public/protected method.
+                     Temporarily disable failure in this case until the code is fully documented.
+                -->
+                <maven.javadoc.failOnWarnings>false</maven.javadoc.failOnWarnings>
+            </properties>
         </profile>
     </profiles>
 

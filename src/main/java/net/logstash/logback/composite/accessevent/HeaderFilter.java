@@ -21,8 +21,11 @@ package net.logstash.logback.composite.accessevent;
 public interface HeaderFilter {
 
     /**
-     * Returns true if the given header should be included in the log event output
-     * @return true if the given header should be included in the log event output
+     * Returns {@code true} if the given header should be included in the log event output
+     * 
+     * @param headerName the header name
+     * @param headerValue the header value
+     * @return {@code true} if the given header should be included in the log event output
      */
     boolean includeHeader(String headerName, String headerValue);
 

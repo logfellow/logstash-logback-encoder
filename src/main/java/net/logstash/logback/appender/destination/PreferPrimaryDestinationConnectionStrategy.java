@@ -127,7 +127,8 @@ public class PreferPrimaryDestinationConnectionStrategy implements DestinationCo
      * When the value is null (the default), the feature is disabled:
      * the appender will stay on the current destination until an error occurs.
      * 
-     * @param secondaryConnectionTTL
+     * @param secondaryConnectionTTL time to stay connected to a secondary connection
+     *                               before attempting to reconnect to the primary
      */
     public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
         if (secondaryConnectionTTL != null && secondaryConnectionTTL.getMilliseconds() <= 0) {
