@@ -39,7 +39,7 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Build
-        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml verify
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Dmaven.test.failure.ignore=true verify
 
       - name: Publish Test Results
         # If the CI run is not initiated from the primary repository, it is highly likely that this is a PR from a user who doesn't have commit rights.
@@ -49,6 +49,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           check_name: Test Report (${{ matrix.java }})
+          fail_on_test_failures: true
 
   release:
     name: release
