@@ -623,35 +623,6 @@
             <properties>
                 <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.0.2</version>
-                        <executions>
-                            <execution>
-                                <id>copy-resource-one</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${basedir}/target/surefire-reports</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>samples</directory>
-                                            <includes>
-                                                <include>**/*</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                    <overwrite>true</overwrite>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
     </profiles>
 

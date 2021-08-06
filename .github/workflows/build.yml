@@ -47,6 +47,9 @@ jobs:
           name: test-reports-${{ matrix.java }}
           path: '**/*-reports'
 
+      - name: Postprocess Surefire Test Reports
+        run: .github/workflows/steps/surefire.sh
+
       - name: Publish Test Reports
         # If the CI run is not initiated from the primary repository, it is highly likely that this is a PR from a user who doesn't have commit rights.
         # Hence, skip this step to avoid permission failures.
