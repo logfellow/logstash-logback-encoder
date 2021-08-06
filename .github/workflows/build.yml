@@ -45,11 +45,11 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: test-reports-${{ matrix.java }}
-          path: '**/*-reports'
+          path: '**/*-reports*'
 
       - name: Install xmllint
         run: sudo apt-get install -y xsltproc
-        
+
       - name: Postprocess Surefire Test Reports
         run: .github/workflows/steps/surefire.sh
 
@@ -62,6 +62,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           check_name: Test Report (${{ matrix.java }})
           fail_on_test_failures: true
+          report_paths: target/surefire-reports-github/TEST-*.xml
 
   release:
     name: release
