@@ -7,8 +7,6 @@
 
 set -e
 
-xalan
-
 # Fast exit
 [ -d target/surefire-reports ] || exit 0
 
