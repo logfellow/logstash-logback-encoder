@@ -41,7 +41,13 @@ jobs:
       - name: Build
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Dmaven.test.failure.ignore=true verify
 
-      - name: Publish Test Results
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: test-reports-${{ matrix.java }}
+          path: '**/*-reports'
+
+      - name: Publish Test Reports
         # If the CI run is not initiated from the primary repository, it is highly likely that this is a PR from a user who doesn't have commit rights.
         # Hence, skip this step to avoid permission failures.
         if: github.repository == 'logstash/logstash-logback-encoder'

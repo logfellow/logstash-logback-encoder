@@ -80,7 +80,8 @@ public class ConfigurationTest {
 
     @Test
     public void failingTest() {
-        Assertions.assertEquals(1,  2);
+        System.out.println("Before the failing test");
+        Assertions.assertEquals(1, 2);
     }
     
     @Test
