@@ -612,6 +612,18 @@
                 </plugins>
             </build>
         </profile>
+        
+        <profile>
+            <id>github</id>
+            <activation>
+                <property>
+                    <name>env.CI</name>
+                </property>
+            </activation>
+            <properties>
+                <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
+            </properties>
+        </profile>
     </profiles>
 
     <distributionManagement>
