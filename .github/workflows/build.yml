@@ -47,6 +47,9 @@ jobs:
           name: test-reports-${{ matrix.java }}
           path: '**/*-reports'
 
+      - name: Install xmllint
+        run: sudo apt-get install -y xsltproc
+        
       - name: Postprocess Surefire Test Reports
         run: .github/workflows/steps/surefire.sh
 
