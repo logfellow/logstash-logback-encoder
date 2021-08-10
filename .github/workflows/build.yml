@@ -8,9 +8,6 @@ on:
     paths-ignore:
     - "*.md"
 
-env:
-  JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
-
 jobs:
   build:
     name: build
