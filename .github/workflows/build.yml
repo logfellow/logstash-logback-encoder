@@ -29,7 +29,7 @@ jobs:
           distribution: "adopt"
           java-version: ${{ matrix.java }}
 
-      - uses: actions/cache@v2.1.6
+      - uses: actions/cache@v2
         with:
           path: |
             ~/.m2/repository
@@ -45,24 +45,18 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: test-reports-${{ matrix.java }}
-          path: '**/*-reports*'
+          path: '**/target/surefire-reports/**'
 
-      - name: Install xmllint
-        run: sudo apt-get install -y xsltproc
-
-      - name: Postprocess Surefire Test Reports
-        run: .github/workflows/steps/surefire.sh
-
-      - name: Publish Test Reports
+      - name: Process Test Reports
         # If the CI run is not initiated from the primary repository, it is highly likely that this is a PR from a user who doesn't have commit rights.
         # Hence, skip this step to avoid permission failures.
         if: github.repository == 'logstash/logstash-logback-encoder'
-        uses: scacap/action-surefire-report@v1.0.12
+        uses: mikepenz/action-junit-report@v2
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           check_name: Test Report (${{ matrix.java }})
           fail_on_test_failures: true
-          report_paths: target/surefire-reports-github/TEST-*.xml
+          report_paths: '**/target/surefire-reports/TEST-*.xml'
 
   release:
     name: release
@@ -92,7 +86,7 @@ jobs:
           .github/workflows/steps/setup-git.sh
           git switch main
 
-      - uses: actions/cache@v2.1.6
+      - uses: actions/cache@v2
         with:
           path: |
             ~/.m2/repository
