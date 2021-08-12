@@ -50,7 +50,6 @@ jobs:
         if: github.repository == 'logstash/logstash-logback-encoder'
         uses: brenuart/action-junit-report@v3.0.1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
           check_name: Test Report (${{ matrix.java }})
           fail_on_failure: true
           report_paths: '**/target/surefire-reports/TEST-*.xml'
