@@ -79,12 +79,6 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void failingTest() {
-        System.out.println("Before the failing test");
-        Assertions.assertEquals(1, 2);
-    }
-    
-    @Test
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
