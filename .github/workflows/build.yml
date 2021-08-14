@@ -8,9 +8,6 @@ on:
     paths-ignore:
     - "*.md"
 
-env:
-  JAVA_OPTS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
-
 jobs:
   build:
     name: build
@@ -20,13 +17,16 @@ jobs:
       matrix:
         java: [ '8', '11', '16' ]
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
       - name: Setup JAVA
         uses: actions/setup-java@v2
         with:
           distribution: "adopt"
           java-version: ${{ matrix.java }}
-      - uses: actions/cache@v2.1.6
+
+      - uses: actions/cache@v2
         with:
           path: |
             ~/.m2/repository
@@ -34,33 +34,47 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
       - name: Build
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml verify
 
+      - name: Upload Test Reports
+        uses: actions/upload-artifact@v2
+        if: ${{ always() }}
+        with:
+          name: test-reports-${{ matrix.java }}
+          path: '**/target/surefire-reports/**'
+          if-no-files-found: ignore
+
   release:
     name: release
-    if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     runs-on: ubuntu-20.04
     needs: [build]
+    if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v2
         with:
           ref: main
+
       - name: Setup JAVA
         uses: actions/setup-java@v2
         with:
           distribution: "adopt"
           java-version: 1.8
+
       - name: Setup GPG
         run: .github/workflows/steps/setup-gpg.sh
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
       - name: Setup GIT
         run: |
           .github/workflows/steps/setup-git.sh
           git switch main
-      - uses: actions/cache@v2.1.6
+
+      - uses: actions/cache@v2
         with:
           path: |
             ~/.m2/repository
@@ -68,6 +82,7 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
       - name: Release
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml --activate-profiles ossrh release:prepare release:perform
         env:
