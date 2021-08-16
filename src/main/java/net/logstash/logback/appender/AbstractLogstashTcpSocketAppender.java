@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
@@ -118,7 +119,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Default timeout when waiting for the remote server to accept our
-     * connection.
+     * connection. The same timeout is used as a read timeout during SSL
+     * handshake.
      */
     public static final int DEFAULT_CONNECTION_TIMEOUT = 5000;
 
@@ -175,9 +177,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     private Duration reconnectionDelay = new Duration(DEFAULT_RECONNECTION_DELAY);
 
     /**
-     * Socket connection timeout in milliseconds.
+     * Socket connection timeout.
      */
-    private int acceptConnectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+    private Duration connectionTimeout = new Duration(DEFAULT_CONNECTION_TIMEOUT);
 
     /**
      * Human readable identifier of the client (used for logback status messages)
@@ -718,13 +720,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Note that SO_TIMEOUT only applies to reads (which occur during the handshake process).
                      */
                     tempSocket = socketFactory.createSocket();
-                    tempSocket.setSoTimeout(acceptConnectionTimeout);
+                    tempSocket.setSoTimeout((int) connectionTimeout.getMilliseconds());
+                    
                     /*
                      * currentDestination is unresolved, so a new InetSocketAddress
                      * must be created to resolve the hostname.
                      */
-                    tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
-
+                    tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), (int) connectionTimeout.getMilliseconds());
+                    
                     /*
                      * Trigger SSL handshake immediately and declare the socket unconnected if it fails
                      */
@@ -1197,14 +1200,29 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     /**
-     * Socket connection timeout in milliseconds.
+     * Set the connection timeout when establishing a connection to a remote destination.
      * 
-     * @param acceptConnectionTimeout connection timeout in milliseconds
+     * Use {@code 0} for an "infinite timeout" which often really means "use the OS defaults".
+     * 
+     * @param connectionTimeout connection timeout
      */
-    void setAcceptConnectionTimeout(int acceptConnectionTimeout) {
-        this.acceptConnectionTimeout = acceptConnectionTimeout;
+    public void setConnectionTimeout(Duration connectionTimeout) {
+        if (Objects.requireNonNull(connectionTimeout).getMilliseconds() < 0) {
+            throw new IllegalArgumentException("connectionTimeout must be a positive value");
+        }
+        this.connectionTimeout = connectionTimeout;
     }
 
+    /**
+     * Get the connection timeout used when establishing a TCP connection to a remote destination.
+     * 
+     * @return the connection timeout (never null).
+     */
+    public Duration getConnectionTimeout() {
+        return connectionTimeout;
+    }
+    
+    
     public int getWriteBufferSize() {
         return writeBufferSize;
     }
