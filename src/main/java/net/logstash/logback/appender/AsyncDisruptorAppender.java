@@ -117,18 +117,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     /**
      * The size of the {@link RingBuffer}.
-     * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
-     * If the handler thread is not as fast as the producing threads,
-     * then the {@link RingBuffer} will eventually fill up,
-     * at which point events will be dropped.
-     * <p>
-     * Must be a positive power of 2.
      */
     private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
 
     /**
-     * The {@link ProducerType} to use to configure the disruptor.
-     * By default this is {@link ProducerType#MULTI}.
+     * The {@link ProducerType} to use to configure the Disruptor.
      * Only set to {@link ProducerType#SINGLE} if only one thread
      * will ever be appending to this appender.
      */
@@ -615,9 +608,24 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.threadNameFormat = Objects.requireNonNull(threadNameFormat);
     }
 
+    /**
+     * Get the size of the {@link RingBuffer}.
+     * 
+     * @return the size of the ring buffer.
+     */
     public int getRingBufferSize() {
         return ringBufferSize;
     }
+    
+    /**
+     * Sets the size of the {@link RingBuffer}.
+     * Must be a positive power of 2.
+     * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
+     * 
+     * <p>If the handler thread is not as fast as the producing threads, then the {@link RingBuffer}
+     * will eventually fill up, at which point events will be dropped or producing threads blocked 
+     * depending on the {@link #appendRetryFrequency}.
+     */
     public void setRingBufferSize(int ringBufferSize) {
         if (ringBufferSize <= 0 || !isPowerOfTwo(ringBufferSize)) {
             throw new IllegalArgumentException("ringBufferSize must be a positive power of 2");
@@ -625,9 +633,25 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.ringBufferSize = ringBufferSize;
     }
 
+    /**
+     * Get the {@link ProducerType} configured for the Disruptor.
+     * 
+     * @return the {@link ProducerType}.
+     */
     public ProducerType getProducerType() {
         return producerType;
     }
+    
+    /**
+     * The {@link ProducerType} to use to configure the Disruptor.
+     * By default this is {@link ProducerType#MULTI}.
+     * 
+     * Can be set to {@link ProducerType#SINGLE} for increase performance if (and only if) only
+     * one thread will ever be appending to this appender.
+     * 
+     * <p>WARNING: unexpected behavior may occur if this parameter is set to {@link ProducerType#SINGLE}
+     * and multiple threads are appending to this appender. 
+     */
     public void setProducerType(ProducerType producerType) {
         this.producerType = Objects.requireNonNull(producerType);
     }
