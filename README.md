@@ -26,8 +26,9 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Keep-alive](#keep-alive)
     * [Multiple Destinations](#multiple-destinations)
     * [Reconnection Delay](#reconnection-delay)
-    * [Write buffer size](#write-buffer-size)
-    * [Write timeouts](#write-timeouts)
+    * [Connection Timeout](#connection-timeout)
+    * [Write Buffer Size](#write-buffer-size)
+    * [Write Timeouts](#write-timeouts)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
   * [Appender Listeners](#appender-listeners)
@@ -66,7 +67,8 @@ The structure of the output, and the data it contains, is fully configurable.
     * [AccessEvent patterns](#accessevent-patterns)
   * [Custom JSON Provider](#custom-json-provider)
 * [Status Listeners](#status-listeners)
-
+* [Joran/XML Configuration](#joran-xml-configuration)
+	* [Duration Property](#duration-property)
 
 
 ## Including it in your project
@@ -339,15 +341,16 @@ then you can enable keep alive functionality by configuring a `keepAliveDuration
   </appender>
 ```
 
-When the `keepAliveDuration` is set, then a keep alive message will be sent
-if an event has not occurred for the length of the duration.
-The keep alive message defaults to the system's line separator,
-but can be changed by setting the `keepAliveMessage` property.
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
+
+When the `keepAliveDuration` is set, then a keep alive message will be sent if an event has not occurred for the length of the duration.
+The keep alive message defaults to the system's line separator, but can be changed by setting the `keepAliveMessage` property.
 
 
 #### Multiple Destinations
 
 The TCP appenders can be configured to try to connect to one of several destinations like this:
+
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
       <destination>destination1.domain.com:4560</destination>
@@ -516,8 +519,27 @@ This amount of time to delay can be changed by setting the `reconnectionDelay` f
   </appender>
 ```
 
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
 
-#### Write buffer size
+
+#### Connection Timeout
+
+By default, a connection timeout of 5 seconds is used when connecting to a remote destination.
+You can adjust this by setting the appender's `connectionTimeout` configuration property to the desired value.
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      ...
+      <connectionTimeout>5 seconds</connectionTimeout>
+  </appender>
+```
+
+A value of `0` means "don't use a timeout and wait indefinitely" which often really means "use OS defaults".
+
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
+
+
+#### Write Buffer Size
 
 By default, a buffer size of 8192 is used to buffer socket output stream writes.
 You can adjust this by setting the appender's `writeBufferSize`.
@@ -536,7 +558,7 @@ but in some environments, this does not seem to affect overall performance.
 See [this discussion](https://github.com/logstash/logstash-logback-encoder/issues/342).
 
 
-#### Write timeouts
+#### Write Timeouts
 
 If a destination stops reading from its socket input, but does not close the connection,
 then writes from the TCP appender will eventually backup,
@@ -556,14 +578,13 @@ By default there is no write timeout.  To enable a write timeout, do the followi
   </appender>
 ```
 
-Note that since the blocking java socket output stream used to send events does not have a concept of a write timeout,
-write timeouts are detected using a task scheduled periodically with the same frequency as the write timeout.
-For example, if the write timeout is set to 30 seconds, then a task will execute every 30 seconds
-to see if 30 seconds has elapsed since the start of the current write operation.
-Therefore, it is recommended to use longer write timeouts (e.g. > 30s, or minutes),
-rather than short write timeouts, so that this task does not execute too frequently.
-Also, this approach means that it could take up to two times the write timeout
-before a write timeout is detected.
+Note that since the blocking java socket output stream used to send events does not have a concept of a write timeout, write timeouts are detected using a task scheduled periodically with the same frequency as the write timeout.
+For example, if the write timeout is set to 30 seconds, then a task will execute every 30 seconds to see if 30 seconds has elapsed since the start of the current write operation.
+Therefore, it is recommended to use longer write timeouts (e.g. > 30s, or minutes), rather than short write timeouts, so that this task does not execute too frequently.
+Also, this approach means that it could take up to two times the write timeout before a write timeout is detected.
+
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
+
 
 #### SSL
 
@@ -667,6 +688,7 @@ a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/l
 > For example, in some configurations, `SleepingWaitStrategy` can consume 90% CPU utilization at rest.
 
 The wait strategy can be configured on the async appender using the `waitStrategyType` parameter, like this:
+
 ```xml
   <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
     <waitStrategyType>sleeping</waitStrategyType>
@@ -842,6 +864,7 @@ with the `RollingFileAppender` in your `logback.xml` like this:
 ```
 
 To log AccessEvents to a file, configure your `logback-access.xml` like this:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -919,6 +942,7 @@ You can also configure specific entries in the MDC to be included or excluded as
   <includeMdcKeyName>key2ToInclude</includeMdcKeyName>
 </encoder>
 ```
+
 or
 
 ```xml
@@ -986,6 +1010,7 @@ In addition to the fields above, you can add other fields to the LoggingEvent ei
 #### Global Custom Fields
 
 Add custom fields that will appear in every LoggingEvent like this :
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
@@ -1313,6 +1338,7 @@ can be used to configure data-format-specific generator features:
 * [`YamlFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlFeatureJsonGeneratorDecorator.java)
 
 For example:
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
@@ -1524,6 +1550,7 @@ Therefore, prefer identifying data to mask by path.
 The standard field names above for LoggingEvents and AccessEvents can be customized by using the `fieldNames`configuration element in the encoder or appender configuration.
 
 For example:
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <fieldNames>
@@ -1538,6 +1565,7 @@ Prevent a field from being output by setting the field name to `[ignore]`.
 
 For LoggingEvents, see [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
 for all the field names that can be customized.  Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `logger`, `levelValue`).  Additionally, a separate set of [shortened field names](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java) can be configured like this:
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
@@ -2272,7 +2300,7 @@ Use the `nestedField` provider to create a sub-object in the JSON event output.
 
 For example...
 
-```
+```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
   <providers>
     <timestamp/>
@@ -2567,7 +2595,27 @@ To disable the automatic registering of the default status listener by an append
 * register a different logback [status listener](https://logback.qos.ch/manual/configuration.html#dumpingStatusData), or
 * set `<addDefaultStatusListener>false</addDefaultStatusListener` in each async appender.
 
-### Profiling
+
+## Joran/XML Configuration
+
+Configuring Logback using XML is handled by Logback's Joran configuration system. This section is a short description of the high level data types supported by Joran. For more information, please refer to the [official documentation](http://logback.qos.ch/manual).
+
+### Duration property
+
+Duration represents a laps of time.
+It can be specified as an integer value representing a number of milliseconds, or a string such as "20 seconds", "3.5 minutes" or "5 hours" that will be automatically  converted by logback's configuration system into Duration instances.
+The recognized units of time are the `millisecond`, `second`, `minute`, `hour` and `day`. The unit name may be followed by an "s". Thus, "2000 millisecond" and "2000 milliseconds" are equivalent. In the absence of a time unit specification, milliseconds are assumed.
+
+The following examples are therefore equivalent:
+
+```xml
+<duration>2000</duration>
+<duration>2000 millisecond</duration>
+<duration>2000 milliseconds</duration>
+```
+
+
+## Profiling
 
 <a href="https://www.yourkit.com/java/profiler/"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
 
