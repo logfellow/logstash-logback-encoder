@@ -560,16 +560,12 @@ See [this discussion](https://github.com/logstash/logstash-logback-encoder/issue
 
 #### Write Timeouts
 
-If a destination stops reading from its socket input, but does not close the connection,
-then writes from the TCP appender will eventually backup,
-causing the ring buffer to backup, causing events to be dropped.
+If a destination stops reading from its socket input, but does not close the connection, then writes from the TCP appender will eventually backup, causing the ring buffer to backup, causing events to be dropped.
 
-To detect this situation, you can enable a write timeout, so that "stuck" writes will
-eventually timeout, at which point the connection will be re-established.
-When the [write buffer](#write-buffer-size) is enabled, any buffered data will be lost
-when the connection is reestablished.
+To detect this situation, you can enable a write timeout, so that "stuck" writes will eventually timeout, at which point the connection will be re-established.
+When the [write buffer](#write-buffer-size) is enabled, any buffered data will be lost when the connection is reestablished.
 
-By default there is no write timeout.  To enable a write timeout, do the following:
+By default there is no write timeout. To enable a write timeout, do the following:
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
@@ -582,6 +578,8 @@ Note that since the blocking java socket output stream used to send events does 
 For example, if the write timeout is set to 30 seconds, then a task will execute every 30 seconds to see if 30 seconds has elapsed since the start of the current write operation.
 Therefore, it is recommended to use longer write timeouts (e.g. > 30s, or minutes), rather than short write timeouts, so that this task does not execute too frequently.
 Also, this approach means that it could take up to two times the write timeout before a write timeout is detected.
+
+The write timeout must be >0. A timeout of zero is interpreted as an infinite timeout which effecively means "no write timeout".
 
 This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
 

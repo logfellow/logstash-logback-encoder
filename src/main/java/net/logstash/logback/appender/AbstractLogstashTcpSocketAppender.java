@@ -255,19 +255,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Time period for which to wait for a write to complete before timing out
      * and attempting to reconnect to that destination.
-     * Zero (the default) means no write timeout.
-     *
-     * <p>Used to detect connections where the receiver stops reading.</p>
-     *
-     * <p>Note that since a blocking java socket output stream
-     * does not have a concept of a write timeout,
-     * a task will be scheduled on the {@link #getExecutorService()}
-     * with the same frequency as the write timeout
-     * in order to detect stuck writes.
-     * It is recommended to use longer write timeouts (e.g. &gt; 30s, or minutes),
-     * rather than short write timeouts, so that this task does not execute too frequently.
-     * Also, this approach means that it could take up to two times the write timeout
-     * before a write timeout is detected.</p>
      */
     private Duration writeTimeout = new Duration(DEFAULT_WRITE_TIMEOUT);
 
@@ -1322,6 +1309,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 && this.keepAliveMessage != null;
     }
 
+    /**
+     * Whether the write timeout feature is enabled or not.
+     * 
+     * @return {@code true} when the appender should try to detect write timeouts, {@code false} otherwise.
+     */
     public boolean isWriteTimeoutEnabled() {
         return this.writeTimeout.getMilliseconds() > 0;
     }
@@ -1391,9 +1383,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Sets the time period for which to wait for a write to complete before timing out
      * and attempting to reconnect to that destination.
-     * Zero (the default) means no write timeout.
-     *
-     * <p>Used to detect connections where the receiver stops reading.</p>
+     * This timeout is used to detect connections where the receiver stops reading.
+     * 
+     * <p>The timeout must be &gt; 0. A timeout of zero is interpreted as an infinite timeout
+     * which effectively means "no write timeout".
      *
      * <p>Note that since a blocking java socket output stream does not have a concept
      * of a write timeout, a task will be scheduled with the same frequency as the write
@@ -1401,13 +1394,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * It is recommended to use longer write timeouts (e.g. &gt; 30s, or minutes),
      * rather than short write timeouts, so that this task does not execute too frequently.
      * Also, this approach means that it could take up to two times the write timeout
-     * before a write timeout is detected.</p>
+     * before a write timeout is detected.
      * 
      * @param writeTimeout the write timeout
      */
     public void setWriteTimeout(Duration writeTimeout) {
-        this.writeTimeout = writeTimeout == null
-                ? new Duration(DEFAULT_WRITE_TIMEOUT)
-                : writeTimeout;
+        if (writeTimeout == null || writeTimeout.getMilliseconds() < 0) {
+            throw new IllegalArgumentException("writeTimeout must be >= 0");
+        }
+        this.writeTimeout = writeTimeout;
     }
 }
