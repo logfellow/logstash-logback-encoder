@@ -79,7 +79,7 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
     public abstract void writeTo(JsonGenerator generator) throws IOException;
 
     @Override
-    public synchronized void add(Marker reference) {
+    public void add(Marker reference) {
         if (reference instanceof EmptyLogstashMarker) {
             for (Marker m : (EmptyLogstashMarker) reference) {
                 add(m);
@@ -142,8 +142,10 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
                 sb.append(", ");
             }
             String referenceToString = marker.toString();
-            sb.append(referenceToString);
-            appendSeparator = !referenceToString.isEmpty();
+            if (!referenceToString.isEmpty()) {
+                sb.append(referenceToString);
+                appendSeparator = true;
+            }
         }
 
         return sb.toString();
@@ -160,6 +162,4 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
     protected String toStringSelf() {
         return getName();
     }
-
-
 }
