@@ -16,6 +16,7 @@
 package net.logstash.logback.marker;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatObject;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -101,6 +102,47 @@ public class MarkersTest {
         map.put("fieldName2", "fieldValue2");
         assertThat(Markers.appendEntries(map).toString())
                 .isEqualTo("{fieldName1=fieldValue1, fieldName2=fieldValue2}");
+    }
+    
+    
+    /*
+     * LogstashMarkers are equals when same name and same references
+     */
+    @Test
+    public void testEqualsAndHashCode() {
+        assertThat(Markers.empty()).isEqualTo(Markers.empty());
+        assertThat(Markers.empty()).hasSameHashCodeAs(Markers.empty());
+        
+        assertThatObject(
+                Markers.empty().and(Markers.empty()))
+            .isEqualTo(
+                Markers.empty());
+        
+        assertThatObject(
+                Markers.empty().and(Markers.empty()))
+            .hasSameHashCodeAs(
+                Markers.empty());
+        
+        
+        assertThat(
+                Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")))
+            .isEqualTo(
+                Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")));
+        
+        assertThat(
+                Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")))
+            .hasSameHashCodeAs(
+                    Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")));
+        
+        
+        assertThat(
+                Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")))
+            .isNotEqualTo(
+                Markers.aggregate(MarkerFactory.getMarker("m2"), MarkerFactory.getMarker("m1")));
 
+        assertThat(
+                Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")))
+            .doesNotHaveSameHashCodeAs(
+                Markers.aggregate(MarkerFactory.getMarker("m2"), MarkerFactory.getMarker("m1")));
     }
 }
