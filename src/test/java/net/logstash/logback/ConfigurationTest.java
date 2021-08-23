@@ -222,7 +222,6 @@ public class ConfigurationTest {
                 });
 
         byte[] encoded = encoder.encode(listAppender.list.get(0));
-        
 
         Map<String, Object> output = parseJson(new String(encoded, StandardCharsets.UTF_8));
         Assertions.assertNotNull(output.get("@timestamp"));

@@ -1,0 +1,373 @@
+/**
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package net.logstash.logback.appender;
+
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.encoder.EncoderBase;
+import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.appender.listener.TcpAppenderListener;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+
+import static net.logstash.logback.util.ByteUtil.bytesToInt;
+import static net.logstash.logback.util.ByteUtil.intToBytes;
+
+/**
+ * An appender that is compatible with Lumberjack v2 protocol (Beats input).
+ *
+ * Implemented according to current <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Lumberjack specification</a>.
+ * Verified with <a href="https://github.com/Graylog2/graylog2-server/blob/f35df42/graylog2-server/src/main/java/org/graylog/plugins/beats/Beats2Codec.java">Graylog's Lumberjack v2 implementation</a>.
+ */
+public abstract class AbstractBeatsTcpSocketAppender<Event extends DeferredProcessingAware, Listener extends TcpAppenderListener<Event>>
+        extends AbstractLogstashTcpSocketAppender<Event, Listener> {
+
+    private static final byte PROTOCOL_VERSION = '2';
+
+    private static final byte PAYLOAD_JSON_TYPE = 'J';
+    private static final byte PAYLOAD_WINDOW_TYPE = 'W';
+    private static final byte PAYLOAD_ACK_TYPE = 'A';
+
+    /**
+     * Counter for sequence number of published events.
+     * Sent to remote Beats input to track how many messages were sent
+     * and used to track when to wait for remote to be ready to accept new logs.
+     */
+    private final AtomicInteger counter = new AtomicInteger();
+    /**
+     * A queue of currently accepted ACKs from remote
+     */
+    private final BlockingQueue<AckEvent> ackEvents = new ArrayBlockingQueue<>(10);
+
+    /**
+     * Used to tell the reader the maximum number of unacknowledged data frames
+     * the writer (this appender) will send before blocking for ACKs.
+     */
+    private int windowSize;
+
+    /**
+     * Callable that reads ACKs from remote reader.
+     */
+    private AckReaderCallable ackReaderCallable;
+
+    public AbstractBeatsTcpSocketAppender() {
+        this.windowSize = 10;
+    }
+
+    @Override
+    public synchronized void start() {
+        Encoder<Event> encoder = getEncoder();
+        setEncoder(wrapAsBeatsEncoder(encoder));
+        super.start();
+    }
+
+    private <E> Encoder<E> wrapAsBeatsEncoder(Encoder<E> original) {
+        return new BeatsEncoderWrapper<>(original, createConverter());
+    }
+
+    private LumberjackV2PayloadWrapper createConverter() {
+        return new LumberjackV2PayloadWrapper(
+                counter, windowSize
+        );
+    }
+
+    public void setWindowSize(int windowSize) {
+        this.windowSize = windowSize;
+    }
+
+    public int getWindowSize() {
+        return windowSize;
+    }
+
+    /**
+     * Beats-compatible encoder.
+     * Wraps the original encoder and blocks if we should wait for ACK.
+     *
+     * @param <E> log event type
+     */
+    private class BeatsEncoderWrapper<E> extends EncoderBase<E> {
+
+        private final Encoder<E> original;
+        private final LumberjackV2PayloadWrapper wrapper;
+
+        BeatsEncoderWrapper(Encoder<E> original, LumberjackV2PayloadWrapper wrapper) {
+            this.original = original;
+            this.wrapper = wrapper;
+        }
+
+        @Override
+        public boolean isStarted() {
+            return original.isStarted() && super.isStarted();
+        }
+
+        @Override
+        public void start() {
+            if (isStarted()) {
+                return;
+            }
+            original.start();
+            super.start();
+        }
+
+        @Override
+        public void stop() {
+            if (isStarted()) {
+                super.stop();
+                original.stop();
+            }
+        }
+
+        @Override
+        public byte[] headerBytes() {
+            return original.headerBytes();
+        }
+
+        @Override
+        public byte[] encode(E event) {
+            if (counter.get() == windowSize) {
+                try {
+                    ackEvents.take();
+                } catch (InterruptedException interruptedException) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+
+            byte[] encoded = original.encode(event);
+            try {
+                return wrapper.convert(encoded);
+            } catch (IOException e) {
+                addWarn("Error encountered while converting log event. Event: " + event, e);
+                return new byte[0];
+            }
+        }
+
+        @Override
+        public byte[] footerBytes() {
+            return original.footerBytes();
+        }
+    }
+
+    @Override
+    protected Future<?> scheduleReaderCallable(Callable<Void> readerCallable) {
+        this.ackReaderCallable = new AckReaderCallable();
+        return getExecutorService().submit(this.ackReaderCallable);
+    }
+
+    @Override
+    protected void fireConnectionOpened(Socket socket) {
+        if (this.ackReaderCallable == null) {
+            addError("Connection was not initialized properly - the ACK reader is not running. This will block the appender.");
+            throw new IllegalStateException("ACK reader not running - appender would hang");
+        }
+
+        try {
+            ackReaderCallable.signalConnectionOpened(socket.getInputStream());
+            sendWindowSize(socket.getOutputStream());
+        } catch (IOException e) {
+            addError("Error during Beats connection initialization", e);
+        }
+
+        counter.set(0);
+        super.fireConnectionOpened(socket);
+    }
+
+    /**
+     * Writes window size frame to the output stream to tell the reader
+     * how often we would like to receive ACKs.
+     */
+    private void sendWindowSize(OutputStream outputStream) throws IOException {
+        byte[] message = new byte[6];
+        message[0] = PROTOCOL_VERSION;
+        message[1] = PAYLOAD_WINDOW_TYPE;
+        byte[] windowSizeBytes = intToBytes(windowSize);
+        System.arraycopy(windowSizeBytes, 0, message, 2, windowSizeBytes.length);
+        outputStream.write(message);
+        outputStream.flush();
+    }
+
+    /**
+     * Callable that reads all ACKs from the remote log reader.
+     */
+    private class AckReaderCallable implements Callable<Void> {
+
+        /**
+         * An InputStream that will be read from.
+         * Due to current {@link AbstractLogstashTcpSocketAppender} implementation,
+         * this field is lazily initialized.
+         */
+        private volatile InputStream inputStream;
+        /**
+         * Lock that guards {@link #inputStream} state.
+         * Used to prevent a race condition during lazy {@link #inputStream} initialization.
+         */
+        private final Lock lock = new ReentrantLock();
+
+        /**
+         * Condition that indicates whether {@link #inputStream} is ready.
+         */
+        private final Condition readyCondition = lock.newCondition();
+
+        AckReaderCallable() {
+            super();
+        }
+
+        @Override
+        public Void call() throws Exception {
+            updateCurrentThreadName();
+            try {
+                waitUntilInputStreamIsReady();
+                while (true) {
+                    try {
+                        int responseByte = inputStream.read();
+                        if (responseByte == -1) {
+                            // end of stream
+                            return null;
+                        } else {
+                            readAckResponse(responseByte);
+                        }
+                    } catch (SocketTimeoutException e) {
+                        // try again
+                    }
+                }
+            } finally {
+                if (!Thread.currentThread().isInterrupted()) {
+                    getExecutorService().submit(() -> {
+                        // https://github.com/logstash/logstash-logback-encoder/issues/341
+                        // see ReaderCallable from AbstractLogstashTcpSocketAppender for more clarification
+                        getDisruptor().getRingBuffer().tryPublishEvent(getEventTranslator(), null);
+                    });
+                }
+            }
+        }
+
+        private void waitUntilInputStreamIsReady() throws InterruptedException {
+            lock.lock();
+            try {
+                if (inputStream == null) {
+                    readyCondition.await();
+                }
+            } finally {
+                lock.unlock();
+            }
+        }
+
+        private void readAckResponse(int responseByte) throws IOException {
+            if (responseByte != PROTOCOL_VERSION) {
+                addWarn(String.format("Protocol version is incorrect: %d, expected: %d.", responseByte, PROTOCOL_VERSION));
+                return;
+            }
+
+            int payloadType = inputStream.read();
+            if (payloadType != PAYLOAD_ACK_TYPE) {
+                addWarn(String.format("Unknown payload type: %d, expected: %d (ACK)", payloadType, PAYLOAD_ACK_TYPE));
+                return;
+            }
+
+            byte[] sequenceNumber = new byte[4];
+            for (int i = 0; i < 4; i++) {
+                int next = inputStream.read();
+                if (next == -1) {
+                    throw new IOException("End of stream while reading ACK sequence number");
+                }
+                sequenceNumber[i] = (byte) next;
+            }
+            ackEvents.offer(new AckEvent(bytesToInt(sequenceNumber)));
+        }
+
+        public void signalConnectionOpened(InputStream inputStream) {
+            lock.lock();
+            try {
+                this.inputStream = inputStream;
+                readyCondition.signalAll();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    private static class AckEvent {
+
+        private final int sequenceNumber;
+
+        private AckEvent(int sequenceNumber) {
+            this.sequenceNumber = sequenceNumber;
+        }
+
+        public int getSequenceNumber() {
+            return sequenceNumber;
+        }
+    }
+
+
+    /**
+     * Wraps payload so it should be compatible with a Beats input (Lumberjack protocol).
+     * Can be used with Logstash input or Graylog's Beats input.
+     *
+     * See <a href="https://github.com/logstash-plugins/logstash-input-beats/blob/master/PROTOCOL.md">Logstash documentation</a>
+     * to read more about this protocol.
+     */
+    static class LumberjackV2PayloadWrapper {
+
+        private final AtomicInteger counter;
+        /**
+         * A maximum counter number. Counter will be reset after this value is reached.
+         */
+        private final int windowSize;
+
+        LumberjackV2PayloadWrapper(AtomicInteger counter, int windowSize) {
+            this.counter = counter;
+            this.windowSize = windowSize;
+        }
+
+        public byte[] convert(byte[] encoded) throws IOException {
+            byte[] payloadLength = intToBytes(encoded.length);
+            byte[] sequenceNumber = intToBytes(nextSequenceNumber());
+
+            try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(
+                    2 + encoded.length + payloadLength.length + sequenceNumber.length
+            )) {
+                outputStream.write(PROTOCOL_VERSION);
+                outputStream.write(PAYLOAD_JSON_TYPE);
+                outputStream.write(sequenceNumber);
+                outputStream.write(payloadLength);
+                outputStream.write(encoded);
+
+                return outputStream.toByteArray();
+            }
+        }
+
+        private int nextSequenceNumber() {
+            return counter.updateAndGet(old -> {
+                int updated = old + 1;
+                if (updated > windowSize) {
+                    return 1;
+                } else {
+                    return updated;
+                }
+            });
+        }
+    }
+}

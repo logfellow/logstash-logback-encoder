@@ -15,10 +15,11 @@
  */
 package net.logstash.logback.encoder;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.charset.Charset;
-
+import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.encoder.EncoderBase;
+import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
+import ch.qos.logback.core.pattern.PatternLayoutBase;
+import ch.qos.logback.core.spi.DeferredProcessingAware;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
@@ -26,11 +27,9 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.util.ReusableByteBuffer;
 import net.logstash.logback.util.ReusableByteBufferPool;
 
-import ch.qos.logback.core.encoder.Encoder;
-import ch.qos.logback.core.encoder.EncoderBase;
-import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
-import ch.qos.logback.core.pattern.PatternLayoutBase;
-import ch.qos.logback.core.spi.DeferredProcessingAware;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware>
         extends EncoderBase<Event> implements StreamingEncoder<Event> {
@@ -46,7 +45,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      * unnecessary memory allocations and reduce pressure on the garbage collector.
      */
     private int minBufferSize = 1024;
-    
+
     /**
      * Provides reusable byte buffers (initialized when the encoder is started).
      */
@@ -79,16 +78,16 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         encode(prefix, event, outputStream);
         formatter.writeEventToOutputStream(event, outputStream);
         encode(suffix, event, outputStream);
-        
+
         outputStream.write(lineSeparatorBytes);
     }
-    
+
     @Override
     public byte[] encode(Event event) {
         if (!isStarted()) {
             throw new IllegalStateException("Encoder is not started");
         }
-        
+
         ReusableByteBuffer buffer = bufferPool.acquire();
         try {
             encode(event, buffer);
@@ -100,7 +99,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             bufferPool.release(buffer);
         }
     }
-    
+
     private void encode(Encoder<Event> encoder, Event event, OutputStream outputStream) throws IOException {
         if (encoder != null) {
             byte[] data = encoder.encode(event);
@@ -115,7 +114,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         if (isStarted()) {
             return;
         }
-        
+
         super.start();
         this.bufferPool = new ReusableByteBufferPool(this.minBufferSize);
         formatter.setContext(getContext());
@@ -256,7 +255,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     public int getMinBufferSize() {
         return minBufferSize;
     }
-    
+
     /**
      * The minimum size of the byte buffer used when encoding events.
      *
