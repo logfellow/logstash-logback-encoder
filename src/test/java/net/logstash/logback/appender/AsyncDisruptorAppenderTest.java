@@ -21,12 +21,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -36,30 +34,23 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 import net.logstash.logback.appender.listener.AppenderListener;
 
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.BasicStatusManager;
-import ch.qos.logback.core.Context;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
 import com.lmax.disruptor.EventHandler;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.stubbing.Answer;
 
 @ExtendWith(MockitoExtension.class)
 public class AsyncDisruptorAppenderTest {
@@ -71,13 +62,7 @@ public class AsyncDisruptorAppenderTest {
     
     @Mock
     private EventHandler<LogEvent<ILoggingEvent>> eventHandler;
-    
-    @Mock(lenient = true)
-    private Context context;
-    
-    @Spy
-    private StatusManager statusManager = new BasicStatusManager();
-    
+
     @Mock
     private ILoggingEvent event1;
     
@@ -86,15 +71,18 @@ public class AsyncDisruptorAppenderTest {
     
     @Mock
     private AppenderListener<ILoggingEvent> listener;
-    
+
+    private StatusManager statusManager = new BasicStatusManager();
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
     
     @BeforeEach
     public void setup() {
-        when(context.getStatusManager()).thenReturn(statusManager);
-
-        appender.setAddDefaultStatusListener(false);
+        LoggerContext ctx = new LoggerContext();
+        ctx.setStatusManager(statusManager);
+        ctx.start();
+        
+        appender.setContext(ctx);
         appender.addListener(listener);
     }
     
@@ -104,20 +92,15 @@ public class AsyncDisruptorAppenderTest {
         executorService.shutdownNow();
     }
     
-    @SuppressWarnings("unchecked")
+    
+    /*
+     * Verify that the EventHandler is invoked and LogEvent cleared after processing
+     */
     @Test
     public void testEventHandlerCalled() throws Exception {
-        final AtomicReference<Object> capturedEvent = new AtomicReference<Object>();
-        
-        doAnswer(new Answer<Void>() {
 
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                capturedEvent.set(invocation.<LogEvent>getArgument(0).event);
-                return null;
-            }
-        }).when(eventHandler).onEvent(any(LogEvent.class), anyLong(), eq(true));
-        
+        TestEventHandler eventHandler = new TestEventHandler();
+        appender.setEventHandler(eventHandler);
         appender.start();
         
         verify(listener).appenderStarted(appender);
@@ -126,24 +109,22 @@ public class AsyncDisruptorAppenderTest {
         
         verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
         
+        // Wait until "event1" is async processed
+        await().until(() -> !eventHandler.events.isEmpty());
+        assertThat(eventHandler.events).containsExactly(event1);
         
-        @SuppressWarnings("rawtypes")
-        ArgumentCaptor<LogEvent> captor = ArgumentCaptor.forClass(LogEvent.class);
-        verify(eventHandler, timeout(VERIFICATION_TIMEOUT)).onEvent(captor.capture(), anyLong(), eq(true));
-
-        // When eventHandler is invoked, the event should be event1
-        Assertions.assertEquals(event1, capturedEvent.get());
-        // The event should be set back to null after invocation
-        Assertions.assertNull(captor.getValue().event);
-        
+        // Assert that "event1" has been prepared for deferred processing
         verify(event1).prepareForDeferredProcessing();
         
-        appender.stop();
-
-        verify(listener).appenderStopped(appender);
+        // Assert the LogEvent holder is cleared after event is processed by the handler
+        assertThat(eventHandler.logEventHolders).hasSize(1).allMatch(logevent -> logevent.event == null);
         
+        
+        appender.stop();
+        verify(listener).appenderStopped(appender);
     }
-
+    
+    
     @Test
     public void testThreadDaemon() throws Exception {
         
@@ -160,6 +141,7 @@ public class AsyncDisruptorAppenderTest {
         assertThat(appender.getThreadFactory().newThread(runnable).isDaemon()).isFalse();
     }
 
+    
     @Test
     public void testThreadName() throws Exception {
         
@@ -173,67 +155,76 @@ public class AsyncDisruptorAppenderTest {
         assertThat(appender.getThreadFactory().newThread(runnable).getName()).startsWith("threadNamePrefix");
     }
 
-    @SuppressWarnings("unchecked")
+    
+    /*
+     * Assert event is dropped (without blocking) when buffer is full
+     */
     @Test
     public void testEventDroppedWhenFull() throws Exception {
-        appender.setRingBufferSize(1);
-        appender.start();
-        
         final CountDownLatch eventHandlerWaiter = new CountDownLatch(1);
-        final CountDownLatch mainWaiter = new CountDownLatch(1);
         
-        /*
-         * Cause the first event handling to block until we're done with the test.
-         */
-        doAnswer(new Answer<Void>() {
+        try {
+            TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
 
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                mainWaiter.countDown();
-                eventHandlerWaiter.await();
-                return null;
-            }
-        }).when(eventHandler).onEvent(any(LogEvent.class), anyLong(), anyBoolean());
-        
-        /*
-         * This one will block during event handling
-         */
-        appender.append(event1);
-        
-        mainWaiter.await(VERIFICATION_TIMEOUT, TimeUnit.MILLISECONDS);
-        /*
-         * This one should be dropped
-         */
-        appender.append(event2);
-        
-        ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
-        verify(statusManager, timeout(VERIFICATION_TIMEOUT)).add(statusCaptor.capture());
-        
-        Assertions.assertEquals(Status.WARN, statusCaptor.getValue().getLevel());
-        Assertions.assertTrue(statusCaptor.getValue().getMessage().startsWith("Dropped"));
-        
-        eventHandlerWaiter.countDown();
+            appender.setRingBufferSize(1);
+            appender.setAppendTimeout(toLogback(Duration.ZERO)); // no timeout - drop when full
+            appender.setEventHandler(eventHandler);
+            appender.start();
+            
+            /*
+             * First event blocks the ring buffer until eventHandlerWaiter is released
+             */
+            appender.append(event1);
+            await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is invoked before going any further
+            
+            /*
+             * RingBuffer is full - second event is dropped and warning emitted
+             */
+            appender.append(event2);
+            assertThat(statusManager.getCopyOfStatusList())
+                .hasSize(1)
+                .allMatch(s -> s.getMessage().startsWith("Dropped"));
+            
+            // listeners invoked with appendFailed
+            verify(listener).eventAppendFailed(eq(appender), eq(event2), any());
+            
+        } finally {
+            eventHandlerWaiter.countDown();
+        }
     }
-
+    
+    
     @SuppressWarnings("unchecked")
     @Test
     public void testEventHandlerThrowsException() throws Exception {
         appender.start();
         
+        /*
+         *  Make the EventHandler throw an exception when called
+         */
         final Throwable throwable = new RuntimeException("message");
-        
         doThrow(throwable).when(eventHandler).onEvent(any(LogEvent.class), anyLong(), anyBoolean());
         
+        /*
+         *  Append event and wait until handler invoked
+         */
         appender.append(event1);
+        verify(eventHandler, timeout(VERIFICATION_TIMEOUT)).onEvent(any(), anyLong(), anyBoolean());
         
-        ArgumentCaptor<Status> statusCaptor = ArgumentCaptor.forClass(Status.class);
-        verify(statusManager, timeout(VERIFICATION_TIMEOUT)).add(statusCaptor.capture());
+        /*
+         * ERROR status message
+         */
+        assertThat(statusManager.getCopyOfStatusList())
+            .hasSize(1)
+            .allMatch(s -> s.getMessage().startsWith("Unable to process event") && s.getLevel() == Status.ERROR);
         
-        Assertions.assertEquals(Status.ERROR, statusCaptor.getValue().getLevel());
-        Assertions.assertTrue(statusCaptor.getValue().getMessage().startsWith("Unable to process event"));
-        
+        /*
+         * listener#eventAppended() is invoked...
+         */
+        verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
     }
 
+    
     /*
      * Appender is configured to block indefinitely when ring buffer is full
      */
@@ -472,16 +463,19 @@ public class AsyncDisruptorAppenderTest {
     }
        
     private static class TestEventHandler implements EventHandler<LogEvent<ILoggingEvent>> {
+        // LogEvent holders - may be reused multiple times with different ILoggingEvent payload
+        private final List<LogEvent<ILoggingEvent>> logEventHolders = new ArrayList<>();
+        // Captured ILoggingEvent (need to be extracted from the LogEvent holder before it is reset)
         private final List<ILoggingEvent> events = new ArrayList<>();
-        private final CountDownLatch waiter;
-        private final CyclicBarrier barrier;
+        private CountDownLatch waiter;
+        private CyclicBarrier barrier;
         
+        TestEventHandler() {
+        }
         TestEventHandler(CountDownLatch waiter) {
             this.waiter = waiter;
-            this.barrier = null;
         }
         TestEventHandler(CyclicBarrier barrier) {
-            this.waiter = null;
             this.barrier = barrier;
         }
         
@@ -493,11 +487,15 @@ public class AsyncDisruptorAppenderTest {
             if (barrier != null) {
                 barrier.await();
             }
+            this.logEventHolders.add(event);
             this.events.add(event.event);
         }
         
         public List<ILoggingEvent> getEvents() {
             return events;
+        }
+        public List<LogEvent<ILoggingEvent>> getLogEventHolders() {
+            return logEventHolders;
         }
     }
     
