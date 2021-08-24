@@ -94,7 +94,6 @@ public class AsyncDisruptorAppenderTest {
     public void setup() {
         when(context.getStatusManager()).thenReturn(statusManager);
 
-        appender.setAddDefaultStatusListener(false);
         appender.addListener(listener);
     }
     
