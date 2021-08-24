@@ -106,7 +106,7 @@ public class MarkersTest {
     
     
     /*
-     * LogstashMarkers are equals when same name and same references
+     * LogstashMarkers are equals when same name, irrespective of their references
      */
     @Test
     public void testEqualsAndHashCode() {
@@ -137,12 +137,12 @@ public class MarkersTest {
         
         assertThat(
                 Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")))
-            .isNotEqualTo(
+            .isEqualTo(
                 Markers.aggregate(MarkerFactory.getMarker("m2"), MarkerFactory.getMarker("m1")));
 
         assertThat(
                 Markers.aggregate(MarkerFactory.getMarker("m1"), MarkerFactory.getMarker("m2")))
-            .doesNotHaveSameHashCodeAs(
+            .hasSameHashCodeAs(
                 Markers.aggregate(MarkerFactory.getMarker("m2"), MarkerFactory.getMarker("m1")));
     }
 }
