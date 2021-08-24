@@ -644,8 +644,17 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public ProducerType getProducerType() {
         return producerType;
     }
+    
+    /**
+     * Set the {@link ProducerType} to use to configure the disruptor.
+     * 
+     * @deprecated ProducerType will be fixed to MULTI in future release and this method removed without any replacement.
+     * @param producerType the type of producer
+     */
+    @Deprecated
     public void setProducerType(ProducerType producerType) {
-        this.producerType = producerType;
+        this.producerType = Objects.requireNonNull(producerType);
+        addWarn("setProducerType() is deprecated and will be removed without replacement in future release");
     }
 
     public WaitStrategy getWaitStrategy() {

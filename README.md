@@ -790,7 +790,7 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 </table>
 
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
-for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
+for other configuration parameters (such as `ringBufferSize`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
 
 
 ### Appender Listeners
