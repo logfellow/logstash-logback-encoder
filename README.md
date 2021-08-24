@@ -31,6 +31,9 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Write Timeouts](#write-timeouts)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
+  	* [RingBuffer Full](#ringbuffer-full)
+  	* [Graceful Shutdown](#graceful-shutdown)
+  	* [Wait Strategy](#wait-strategy)
   * [Appender Listeners](#appender-listeners)
   * [Encoders / Layouts](#encoders--layouts)
 * [LoggingEvent Fields](#loggingevent-fields)
@@ -660,7 +663,7 @@ The behaviour of the appender when the RingBuffer is controlled by the `appendTi
 | `> 0`           | retry during the specified amount of time                              |
 
 
-Logging threads waiting for space in the RingBuffer wake up periodically at a frequency defined by  `appendRetryFrequency` (default `50ms`). You may increase this frequency for faster reaction time at the expense of higher CPU usage.
+Logging threads waiting for space in the RingBuffer wake up periodically at a frequency defined by  `appendRetryFrequency` (default `5ms`). You may increase this frequency for faster reaction time at the expense of higher CPU usage.
 
 When the appender drops an event, it emits a warning status message every `droppedWarnFrequency` consecutive dropped events. Another status message is emitted when the drop period is over and a first event is succesfully enqueued reporting the total number of events that were dropped.
 
@@ -676,8 +679,7 @@ Events still in the buffer after this period is elapsed are dropped and the appe
 
 #### Wait Strategy
 
-By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BlockingWaitStrategy.html)
-is used by the worker thread spawned by this appender.
+By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BlockingWaitStrategy.html) is used by the worker thread spawned by this appender.
 The `BlockingWaitStrategy` minimizes CPU utilization, but results in slower latency and throughput.
 If you need faster latency and throughput (at the expense of higher CPU utilization), consider
 a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/WaitStrategy.html) offered by the disruptor.
