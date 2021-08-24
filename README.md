@@ -329,7 +329,7 @@ input {
 In order to guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
 
-#### Keep-alive
+#### Keep-Alive
 
 If events occur infrequently, and the connection breaks consistently due to a server-side idle timeout,
 then you can enable keep alive functionality by configuring a `keepAliveDuration` like this:
@@ -344,7 +344,14 @@ then you can enable keep alive functionality by configuring a `keepAliveDuration
 This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
 
 When the `keepAliveDuration` is set, then a keep alive message will be sent if an event has not occurred for the length of the duration.
-The keep alive message defaults to the system's line separator, but can be changed by setting the `keepAliveMessage` property.
+The keep alive message defaults to unix line ending (`\n`), but can be changed by setting the `keepAliveMessage` property to the desired value. The following values have special meaning:
+
+- `<empty string>`: no keep alive
+- `SYSTEM`: system's line separator
+- `UNIX`: unix line ending (`\n`)
+- `WINDOWS`: windows line ending (`\r\n`)
+
+Any other value will be used as-is.
 
 
 #### Multiple Destinations
