@@ -663,7 +663,8 @@ The behaviour of the appender when the RingBuffer is controlled by the `appendTi
 | `> 0`           | retry during the specified amount of time                              |
 
 
-Logging threads waiting for space in the RingBuffer wake up periodically at a frequency defined by  `appendRetryFrequency` (default `5ms`). You may increase this frequency for faster reaction time at the expense of higher CPU usage.
+Logging threads waiting for space in the RingBuffer wake up periodically at a frequency starting at `1ns` and increasing exponentially up to `appendRetryFrequency` (default `5ms`). 
+Only one thread is allowed to retry at a time. If a thread is already retrying, additional threads are waiting on a lock until the first is finished. This strategy should help to limit CPU consumption while providing good enough latency and throughput when the ring buffer is at (or close) to its maximal capacity.
 
 When the appender drops an event, it emits a warning status message every `droppedWarnFrequency` consecutive dropped events. Another status message is emitted when the drop period is over and a first event is succesfully enqueued reporting the total number of events that were dropped.
 
