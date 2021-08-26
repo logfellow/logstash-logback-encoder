@@ -23,7 +23,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -56,8 +55,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class AsyncDisruptorAppenderTest {
-    
-    private static final int VERIFICATION_TIMEOUT = 1000 * 30;
 
     @InjectMocks
     private AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() { };
@@ -242,19 +239,19 @@ public class AsyncDisruptorAppenderTest {
         // NOTE:
         //   need to wait until async processing is completed.
         //   In this case, waiting for the event handler to be called is not enough -> it throws an exception
-        //   that needs to be capture by the ExceptionHandler then logged... Better to wait for the StatusManager
-        //   to be invoked...
+        //   that needs to be captured by the ExceptionHandler then logged... Better to wait for the StatusManager
+        //   to contain what we expect...
         
-        verify(statusManager, timeout(VERIFICATION_TIMEOUT)).add(any(Status.class));
         
         /*
          * ... but async processing failed -> ERROR status message
          */
-        assertThat(statusManager.getCopyOfStatusList())
-            .hasSize(1)
-            .allMatch(s -> s.getMessage().startsWith("Unable to process event") && s.getLevel() == Status.ERROR);
+        await().untilAsserted(() ->
+            assertThat(statusManager.getCopyOfStatusList())
+                .hasSize(1)
+                .allMatch(s -> s.getMessage().startsWith("Unable to process event") && s.getLevel() == Status.ERROR));
     }
-
+    
     
     /*
      * Appender is configured to block indefinitely when ring buffer is full
