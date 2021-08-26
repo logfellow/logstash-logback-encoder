@@ -110,14 +110,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public static final int DEFAULT_WRITE_TIMEOUT = 0;
 
     /**
-     * Default size of the queue used to hold logging events that are destined
-     * for the remote peer.
-     * Assuming an average log entry to take 1k, this would result in the application
-     * using about 10MB additional memory if the queue is full
-     */
-    public static final int DEFAULT_QUEUE_SIZE = DEFAULT_RING_BUFFER_SIZE;
-
-    /**
      * Default timeout when waiting for the remote server to accept our
      * connection. The same timeout is used as a read timeout during SSL
      * handshake.
@@ -1233,7 +1225,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Alias for {@link #getRingBufferSize()}.
      * 
      * @return the size of the ring buffer
+     * @deprecated use {@link #getRingBufferSize()} instead
      */
+    @Deprecated
     public int getQueueSize() {
         return getRingBufferSize();
     }
@@ -1246,14 +1240,18 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Must be a positive power of 2.
      *
      * @param queueSize the maximum number of entries in the queue.
+     * @deprecated use {@link #setRingBufferSize(int)} instead.
      */
+    @Deprecated
     public void setQueueSize(int queueSize) {
+        addWarn("<queueSize> is deprecated, use <ringBufferSize> instead");
         setRingBufferSize(queueSize);
     }
 
     public SSLConfiguration getSsl() {
         return sslConfiguration;
     }
+    
     /**
      * Set this to non-null to use SSL.
      * See <a href="http://logback.qos.ch/manual/usingSSL.html"> the logback manual</a>
@@ -1268,6 +1266,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public Duration getKeepAliveDuration() {
         return keepAliveDuration;
     }
+    
     /**
      * If this duration elapses without an event being sent,
      * then the {@link #keepAliveMessage} will be sent to the socket in
@@ -1284,6 +1283,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public String getKeepAliveMessage() {
         return keepAliveMessage;
     }
+    
     /**
      * Message to send for keeping the connection alive
      * if {@link #keepAliveDuration} is non-null.

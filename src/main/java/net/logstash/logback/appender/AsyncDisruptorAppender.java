@@ -119,9 +119,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     /**
      * The size of the {@link RingBuffer}.
      * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
-     * If the handler thread is not as fast as the producing threads,
-     * then the {@link RingBuffer} will eventually fill up,
-     * at which point events will be dropped.
      * <p>
      * Must be a positive power of 2.
      */
@@ -697,9 +694,21 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         this.threadNameFormat = threadNameFormat;
     }
 
+    /**
+     * Returns the maximum number of events allowed in the queue.
+     * 
+     * @return the size of the ring buffer
+     */
     public int getRingBufferSize() {
         return ringBufferSize;
     }
+    
+    /**
+     * Sets the maximum number of events in the queue.
+     * Must be a positive power of 2.
+     *
+     * @param ringBufferSize the maximum number of entries in the queue.
+     */
     public void setRingBufferSize(int ringBufferSize) {
         this.ringBufferSize = ringBufferSize;
     }
@@ -717,7 +726,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     @Deprecated
     public void setProducerType(ProducerType producerType) {
         this.producerType = Objects.requireNonNull(producerType);
-        addWarn("setProducerType() is deprecated and will be removed without replacement in future release");
+        addWarn("<producerType> is deprecated and will be removed without replacement in future release");
     }
 
     public WaitStrategy getWaitStrategy() {
