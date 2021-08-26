@@ -17,6 +17,10 @@ package net.logstash.logback.encoder;
 
 public class SeparatorParser {
     
+    private SeparatorParser() {
+        // utility class
+    }
+    
     /**
      * Parses the given separator string.
      * 

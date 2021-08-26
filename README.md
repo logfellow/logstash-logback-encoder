@@ -13,7 +13,7 @@ Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to l
 
 Supports both regular _LoggingEvents_ (logged through a `Logger`) and _AccessEvents_ (logged via [logback-access](http://logback.qos.ch/access.html)).
 
-Originally written to support output in [logstash](http://logstash.net/)'s JSON format, but has evolved into a highly-configurable, general-purpose, structured logging mechanism for JSON and other Jackson dataformats.
+Originally written to support output in [logstash](https://www.elastic.co/guide/en/logstash/current)'s JSON format, but has evolved into a highly-configurable, general-purpose, structured logging mechanism for JSON and other Jackson dataformats.
 The structure of the output, and the data it contains, is fully configurable.
 
 #### Contents:
@@ -248,7 +248,7 @@ in your `logback-access.xml`, like this:
 ```
 
 
-To receive syslog/UDP input in logstash, configure a [`syslog`](http://www.logstash.net/docs/latest/inputs/syslog) or [`udp`](http://www.logstash.net/docs/latest/inputs/udp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
+To receive syslog/UDP input in logstash, configure a [`syslog`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html) or [`udp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-udp.html) input with the [`json`](https://www.elastic.co/guide/en/logstash/current/plugins-codecs-json.html) codec in logstash's configuration like this:
 ```
 input {
   syslog {
@@ -317,8 +317,7 @@ If the RingBuffer is full (e.g. due to slow network, etc), then events will be d
 The TCP appenders will automatically reconnect if the connection breaks.
 However, events may be lost before Java's socket realizes the connection has broken.
 
-To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
-input with the [`json_lines`](http://www.logstash.net/docs/latest/codecs/json_lines) codec in logstash's configuration like this:
+To receive TCP input in logstash, configure a [`tcp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-tcp.html) input with the [`json_lines`](https://www.elastic.co/guide/en/logstash/current/plugins-codecs-json_lines.html) codec in logstash's configuration like this:
 
 ```
 input {
@@ -332,7 +331,7 @@ input {
 In order to guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
 
-#### Keep-alive
+#### Keep-Alive
 
 If events occur infrequently, and the connection breaks consistently due to a server-side idle timeout,
 then you can enable keep alive functionality by configuring a `keepAliveDuration` like this:
@@ -347,7 +346,16 @@ then you can enable keep alive functionality by configuring a `keepAliveDuration
 This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
 
 When the `keepAliveDuration` is set, then a keep alive message will be sent if an event has not occurred for the length of the duration.
-The keep alive message defaults to the system's line separator, but can be changed by setting the `keepAliveMessage` property.
+The keep alive message defaults to unix line ending (`\n`), but can be changed by setting the `keepAliveMessage` property to the desired value. The following values have special meaning:
+
+- `<empty string>`: no keep alive
+- `SYSTEM`: system's line separator
+- `UNIX`: unix line ending (`\n`)
+- `WINDOWS`: windows line ending (`\r\n`)
+
+Any other value will be used as-is.
+
+The keep alive message is encoded in `UTF-8` by default. This can be changed by setting the `keepAliveCharset` property to the name of the desired charset.
 
 
 #### Multiple Destinations
@@ -626,8 +634,7 @@ All the customizations that [logback](http://logback.qos.ch/manual/usingSSL.html
 (such as configuring cipher specs, protocols, algorithms, providers, etc.)
 are supported by the `Logback*TcpSocketAppender`s.
 
-See the logstash documentation for the [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input
-for how to configure it to use SSL.
+See the logstash documentation for the [`tcp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-tcp.html) input for how to configure it to use SSL.
 
 
 ### Async Appenders
@@ -793,7 +800,7 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 </table>
 
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
-for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
+for other configuration parameters (such as `ringBufferSize`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
 
 
 ### Appender Listeners
@@ -882,7 +889,7 @@ The `LogstashLayout` and `LogstashAccessLayout` can be configured the same way a
 the `LogstashEncoder` and `LogstashAccessEncoder`.  All the other examples
 in this document use encoders, but the same options apply to the layouts as well.
 
-To receive file input in logstash, configure a [`file`](http://www.logstash.net/docs/latest/inputs/file) input in logstash's configuration like this:
+To receive file input in logstash, configure a [`file`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-file.html) input in logstash's configuration like this:
 
 ```
 input {
