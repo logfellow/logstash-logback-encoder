@@ -204,7 +204,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Sets the {@link LogEvent#event} to the logback Event.
      * Used when publishing events to the {@link RingBuffer}.
      */
-    private EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<Event>();
+    private EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<>();
 
     /**
      * Used by the handler thread to process the event.
@@ -225,7 +225,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     /**
      * The {@link EventFactory} used to create {@link LogEvent}s for the RingBuffer.
      */
-    private LogEventFactory<Event> eventFactory = new LogEventFactory<Event>();
+    private LogEventFactory<Event> eventFactory = new LogEventFactory<>();
 
     /**
      * Incrementor number used as part of thread names for uniqueness.
@@ -278,7 +278,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
         @Override
         public LogEvent<Event> newInstance() {
-            return new LogEvent<Event>();
+            return new LogEvent<>();
         }
     }
 
@@ -401,7 +401,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             getStatusManager().add(statusListener);
         }
 
-        this.disruptor = new Disruptor<LogEvent<Event>>(
+        this.disruptor = new Disruptor<>(
                 this.eventFactory,
                 this.ringBufferSize,
                 this.threadFactory,
@@ -414,7 +414,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          */
         this.disruptor.setDefaultExceptionHandler(this.exceptionHandler);
 
-        this.disruptor.handleEventsWith(new EventClearingEventHandler<Event>(this.eventHandler));
+        this.disruptor.handleEventsWith(new EventClearingEventHandler<>(this.eventHandler));
 
         this.disruptor.start();
         super.start();
@@ -623,7 +623,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
      * 
      * <p>If the handler thread is not as fast as the producing threads, then the {@link RingBuffer}
-     * will eventually fill up, at which point events will be dropped or producing threads blocked 
+     * will eventually fill up, at which point events will be dropped or producing threads blocked
      * depending on the {@link #appendRetryFrequency}.
      */
     public void setRingBufferSize(int ringBufferSize) {
@@ -650,7 +650,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * one thread will ever be appending to this appender.
      * 
      * <p>WARNING: unexpected behavior may occur if this parameter is set to {@link ProducerType#SINGLE}
-     * and multiple threads are appending to this appender. 
+     * and multiple threads are appending to this appender.
      */
     public void setProducerType(ProducerType producerType) {
         this.producerType = Objects.requireNonNull(producerType);

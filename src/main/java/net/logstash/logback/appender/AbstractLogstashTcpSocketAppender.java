@@ -452,7 +452,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     }
                 } finally {
                     if (!Thread.currentThread().isInterrupted()) {
-                        executorService.submit(() -> {
+                        executorService.submit(() ->
                             /*
                              * https://github.com/logstash/logstash-logback-encoder/issues/341
                              *
@@ -474,8 +474,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                              * We reduce (but not eliminate) the chance of that happening by
                              * scheduling this task on the executorService.
                              */
-                            getDisruptor().getRingBuffer().tryPublishEvent(getEventTranslator(), null);
-                        });
+                            getDisruptor().getRingBuffer().tryPublishEvent(getEventTranslator(), null)
+                        );
                     }
                 }
             }
@@ -1017,6 +1017,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 addWarn("Some queued events have not been logged due to requested shutdown");
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             addWarn("Some queued events have not been logged due to requested shutdown", e);
         }
     }
@@ -1126,7 +1127,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     @Override
     protected List<Object> getThreadNameFormatParams() {
         List<Object> superThreadNameFormatParams = super.getThreadNameFormatParams();
-        List<Object> threadNameFormatParams = new ArrayList<Object>(superThreadNameFormatParams.size() + 2);
+        List<Object> threadNameFormatParams = new ArrayList<>(superThreadNameFormatParams.size() + 2);
 
         threadNameFormatParams.addAll(superThreadNameFormatParams);
         InetSocketAddress currentDestination = this.destinations.get(connectedDestinationIndex);
