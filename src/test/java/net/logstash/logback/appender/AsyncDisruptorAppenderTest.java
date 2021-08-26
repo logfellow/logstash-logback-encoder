@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -50,6 +51,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -62,7 +64,10 @@ public class AsyncDisruptorAppenderTest {
     
     @Mock
     private EventHandler<LogEvent<ILoggingEvent>> eventHandler;
-
+    
+    @Spy
+    private StatusManager statusManager = new BasicStatusManager();
+    
     @Mock
     private ILoggingEvent event1;
     
@@ -71,8 +76,7 @@ public class AsyncDisruptorAppenderTest {
     
     @Mock
     private AppenderListener<ILoggingEvent> listener;
-
-    private StatusManager statusManager = new BasicStatusManager();
+    
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
     
@@ -94,6 +98,19 @@ public class AsyncDisruptorAppenderTest {
     
     
     /*
+     * Verify that AppenderListenre#start()/stop() are invoked
+     */
+    @Test
+    public void startStopListeners() {
+        appender.start();
+        verify(listener).appenderStarted(appender);
+        
+        appender.stop();
+        verify(listener).appenderStopped(appender);
+    }
+    
+    
+    /*
      * Verify that the EventHandler is invoked and LogEvent cleared after processing
      */
     @Test
@@ -102,8 +119,6 @@ public class AsyncDisruptorAppenderTest {
         TestEventHandler eventHandler = new TestEventHandler();
         appender.setEventHandler(eventHandler);
         appender.start();
-        
-        verify(listener).appenderStarted(appender);
         
         appender.append(event1);
         
@@ -117,11 +132,9 @@ public class AsyncDisruptorAppenderTest {
         verify(event1).prepareForDeferredProcessing();
         
         // Assert the LogEvent holder is cleared after event is processed by the handler
-        assertThat(eventHandler.logEventHolders).hasSize(1).allMatch(logevent -> logevent.event == null);
-        
-        
-        appender.stop();
-        verify(listener).appenderStopped(appender);
+        assertThat(eventHandler.logEventHolders)
+            .hasSize(1)
+            .allMatch(logevent -> logevent.event == null);
     }
     
     
@@ -157,7 +170,7 @@ public class AsyncDisruptorAppenderTest {
 
     
     /*
-     * Assert event is dropped (without blocking) when buffer is full
+     * Assert event is dropped when buffer is full
      */
     @Test
     public void testEventDroppedWhenFull() throws Exception {
@@ -181,12 +194,23 @@ public class AsyncDisruptorAppenderTest {
              * RingBuffer is full - second event is dropped and warning emitted
              */
             appender.append(event2);
+
+            /*
+             * Failed to append event...
+             */
+            verify(listener).eventAppendFailed(eq(appender), eq(event2), any());
+            
+            // NOTE:
+            //   no need to wait for the completion of async processing -> everything happens
+            //   on the logging thread
+            
+            /*
+             * ... event dropped -> WARN status message
+             */
             assertThat(statusManager.getCopyOfStatusList())
                 .hasSize(1)
                 .allMatch(s -> s.getMessage().startsWith("Dropped"));
             
-            // listeners invoked with appendFailed
-            verify(listener).eventAppendFailed(eq(appender), eq(event2), any());
             
         } finally {
             eventHandlerWaiter.countDown();
@@ -206,22 +230,29 @@ public class AsyncDisruptorAppenderTest {
         doThrow(throwable).when(eventHandler).onEvent(any(LogEvent.class), anyLong(), anyBoolean());
         
         /*
-         *  Append event and wait until handler invoked
+         *  Append event
          */
         appender.append(event1);
-        verify(eventHandler, timeout(VERIFICATION_TIMEOUT)).onEvent(any(), anyLong(), anyBoolean());
         
         /*
-         * ERROR status message
+         * Event successfully appended...
+         */
+        verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
+        
+        // NOTE:
+        //   need to wait until async processing is completed.
+        //   In this case, waiting for the event handler to be called is not enough -> it throws an exception
+        //   that needs to be capture by the ExceptionHandler then logged... Better to wait for the StatusManager
+        //   to be invoked...
+        
+        verify(statusManager, timeout(VERIFICATION_TIMEOUT)).add(any(Status.class));
+        
+        /*
+         * ... but async processing failed -> ERROR status message
          */
         assertThat(statusManager.getCopyOfStatusList())
             .hasSize(1)
             .allMatch(s -> s.getMessage().startsWith("Unable to process event") && s.getLevel() == Status.ERROR);
-        
-        /*
-         * listener#eventAppended() is invoked...
-         */
-        verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
     }
 
     
@@ -424,6 +455,7 @@ public class AsyncDisruptorAppenderTest {
         appender.start();
         
         assertThat(appender.isStarted()).isFalse();
+        verify(listener, never()).appenderStarted(any());
         
         assertThat(statusManager.getCopyOfStatusList())
             .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be > 0") && s.getLevel() == Status.ERROR);
@@ -436,6 +468,7 @@ public class AsyncDisruptorAppenderTest {
         appender.start();
         
         assertThat(appender.isStarted()).isFalse();
+        verify(listener, never()).appenderStarted(any());
         
         assertThat(statusManager.getCopyOfStatusList())
             .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be a power of 2") && s.getLevel() == Status.ERROR);
@@ -448,6 +481,7 @@ public class AsyncDisruptorAppenderTest {
         appender.start();
         
         assertThat(appender.isStarted()).isFalse();
+        verify(listener, never()).appenderStarted(any());
         
         assertThat(statusManager.getCopyOfStatusList())
             .anyMatch(s -> s.getMessage().startsWith("<appendRetryFrequency> must be > 0") && s.getLevel() == Status.ERROR);
