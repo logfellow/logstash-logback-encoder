@@ -26,6 +26,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.lang.Thread.State;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 import net.logstash.logback.appender.listener.AppenderListener;
@@ -275,8 +277,17 @@ public class AsyncDisruptorAppenderTest {
             
             /*
              * Publishing the second event is blocked until the first is released (buffer full)
+             * Wait until async exec is actually started and assert thread is blocked
              */
-            Future<?> future = execute(() -> appender.append(event2));
+            final AtomicReference<Thread> asyncThread = new AtomicReference<>();
+            Future<?> future = execute(() -> {
+                asyncThread.set(Thread.currentThread());
+                appender.append(event2);
+            });
+            
+            await().until(() -> asyncThread.get() != null);
+            assertThat(asyncThread.get().getState()).isEqualTo(State.TIMED_WAITING);
+            assertThat(future).isNotDone();
             
             /*
              * Release the handler -> both events are now unblocked

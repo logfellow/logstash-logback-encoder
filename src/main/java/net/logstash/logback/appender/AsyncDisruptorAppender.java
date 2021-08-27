@@ -567,23 +567,24 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             return false;
         }
         
-        // Determine how long we can retry
-        //
-        final long waitTime = this.appendTimeout.getMilliseconds() < 0
-                ? Long.MAX_VALUE
-                : this.appendTimeout.getMilliseconds();
-        final long deadline = System.currentTimeMillis() + waitTime;
-
-        long backoff = 1L;
-        long backoffLimit = TimeUnit.MILLISECONDS.toNanos(this.appendRetryFrequency.getMilliseconds());
-        
-        
         // Limit retries to a single thread at once to avoid burning CPU cycles "for nothing"
         // in CPU constraint environments.
         //
-        if (!lock.tryLock(waitTime, TimeUnit.MILLISECONDS)) {
-            return false;
+        long deadline = Long.MAX_VALUE;
+        if (this.appendTimeout.getMilliseconds() < 0) {
+            lock.lockInterruptibly();
+            
+        } else {
+            deadline = System.currentTimeMillis() + this.appendTimeout.getMilliseconds();
+            if (!lock.tryLock(this.appendTimeout.getMilliseconds(), TimeUnit.MILLISECONDS)) {
+                return false;
+            }
         }
+        
+        // Retry until deadline
+        //
+        long backoff = 1L;
+        long backoffLimit = TimeUnit.MILLISECONDS.toNanos(this.appendRetryFrequency.getMilliseconds());
         
         try {
             do {
