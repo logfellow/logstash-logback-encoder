@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import net.logstash.logback.appender.listener.AppenderListener;
@@ -117,6 +118,9 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     /**
      * The size of the {@link RingBuffer}.
+     * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
+     * <p>
+     * Must be a positive power of 2.
      */
     private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
 
@@ -252,12 +256,17 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Delay between consecutive attempts to append an event in the ring buffer when
      * full.
      */
-    private Duration appendRetryFrequency = Duration.buildByMilliseconds(50);
+    private Duration appendRetryFrequency = Duration.buildByMilliseconds(5);
     
     /**
      * How long to wait for in-flight events during shutdown.
      */
     private Duration shutdownGracePeriod = Duration.buildByMinutes(1);
+
+    /**
+     * Lock used to limit the number of concurrent threads retrying at the same time
+     */
+    private final ReentrantLock lock = new ReentrantLock();
 
     
     /**
@@ -480,18 +489,19 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
             addWarn("Unable to prepare event for deferred processing. Event output might be missing data.", e);
         }
 
-        
-        // Add event to the buffer, retrying as many times as allowed by the configuration
-        //
-        long deadline = this.appendTimeout.getMilliseconds() < 0 ? Long.MAX_VALUE : System.currentTimeMillis() + this.appendTimeout.getMilliseconds();
-
-        while (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
-            // Wait before retrying
-            //
-            long waitDuration = Math.min(this.appendRetryFrequency.getMilliseconds(), deadline - System.currentTimeMillis());
-            if (waitDuration > 0) {
-                LockSupport.parkNanos(TimeUnit.MILLISECONDS.toNanos(waitDuration));
-
+        try {
+            if (enqueue(event)) {
+                // Log warning if we had drop before
+                //
+                long consecutiveDropped = this.consecutiveDroppedCount.get();
+                if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
+                    addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+                }
+                
+                // Notify listeners
+                //
+                fireEventAppended(event, System.nanoTime() - startTime);
+                
             } else {
                 // Log a warning status about the failure
                 //
@@ -503,30 +513,86 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 // Notify listeners
                 //
                 fireEventAppendFailed(event, RING_BUFFER_FULL_EXCEPTION);
-                return;
             }
             
-            // Give up if appender is stopped meanwhile
-            //
-            if (!isStarted()) {
-                // Same message as if Appender#append is called after the appender is stopped...
-                addWarn("Attempted to append to non started appender [" + this.getName() + "].");
-                return;
-            }
+        } catch (ShutdownInProgressException e) {
+            // Same message as if Appender#append is called after the appender is stopped...
+            addWarn("Attempted to append to non started appender [" + this.getName() + "].");
+            
+        } catch (InterruptedException e) {
+            // be silent but re-interrupt the thread
+            Thread.currentThread().interrupt();
         }
-        
-        // Enqueue success - notify end of error period
-        //
-        long consecutiveDropped = this.consecutiveDroppedCount.get();
-        if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
-            addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
-        }
-        
-        // Notify listeners
-        //
-        fireEventAppended(event, System.nanoTime() - startTime);
     }
 
+    
+    /**
+     * Enqueue an event in the ring buffer, retrying if allowed by the configuration.
+     * 
+     * @param event the event to add to the ring buffer
+     * @return {@code true} if the event is successfully enqueued, {@code false} if the event
+     *         could not be added to the ring buffer.
+     * @throws ShutdownInProgressException thrown when the appender is shutdown while retrying
+     *         to enqueue the event
+     * @throws InterruptedException thrown when the logging thread is interrupted while retrying
+     */
+    private boolean enqueue(Event event) throws ShutdownInProgressException, InterruptedException {
+        // Try enqueue the "normal" way
+        //
+        if (this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event)) {
+            return true;
+        }
+        
+        // Drop event immediately when no retry
+        //
+        if (this.appendTimeout.getMilliseconds() == 0) {
+            return false;
+        }
+        
+        // Determine how long we can retry
+        //
+        final long waitTime = this.appendTimeout.getMilliseconds() < 0
+                ? Long.MAX_VALUE
+                : this.appendTimeout.getMilliseconds();
+        final long deadline = System.currentTimeMillis() + waitTime;
+
+        long backoff = 1L;
+        long backoffLimit = TimeUnit.MILLISECONDS.toNanos(this.appendRetryFrequency.getMilliseconds());
+        
+        
+        // Limit retries to a single thread at once to avoid burning CPU cycles "for nothing"
+        // in CPU constraint environments.
+        //
+        if (!lock.tryLock(waitTime, TimeUnit.MILLISECONDS)) {
+            return false;
+        }
+        
+        try {
+            do {
+                if (!isStarted()) {
+                    throw new ShutdownInProgressException();
+                }
+
+                if (deadline <= System.currentTimeMillis()) {
+                    return false;
+                }
+                
+                if (Thread.currentThread().isInterrupted()) {
+                    throw new InterruptedException();
+                }
+                
+                LockSupport.parkNanos(backoff);
+                backoff = Math.min(backoff * 2, backoffLimit);
+                
+            } while (!this.disruptor.getRingBuffer().tryPublishEvent(this.eventTranslator, event));
+
+            return true;
+            
+        } finally {
+            lock.unlock();
+        }
+    }
+    
     protected void prepareForDeferredProcessing(Event event) {
         event.prepareForDeferredProcessing();
     }
@@ -603,15 +669,17 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * The first argument (%1$s) is the string appender name.
      * The second argument (%2$d) is the numerical thread index.
      * Other arguments can be made available by subclasses.
+     * 
+     * @param threadNameFormat the thread name format pattern
      */
     public void setThreadNameFormat(String threadNameFormat) {
         this.threadNameFormat = Objects.requireNonNull(threadNameFormat);
     }
 
     /**
-     * Get the size of the {@link RingBuffer}.
+     * Returns the maximum number of events allowed in the queue.
      * 
-     * @return the size of the ring buffer.
+     * @return the size of the ring buffer
      */
     public int getRingBufferSize() {
         return ringBufferSize;
@@ -624,7 +692,9 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * 
      * <p>If the handler thread is not as fast as the producing threads, then the {@link RingBuffer}
      * will eventually fill up, at which point events will be dropped or producing threads blocked
-     * depending on the {@link #appendRetryFrequency}.
+     * depending on {@link #appendTimeout}.
+     *
+     * @param ringBufferSize the maximum number of entries in the queue.
      */
     public void setRingBufferSize(int ringBufferSize) {
         if (ringBufferSize <= 0 || !isPowerOfTwo(ringBufferSize)) {
@@ -651,9 +721,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * 
      * <p>WARNING: unexpected behavior may occur if this parameter is set to {@link ProducerType#SINGLE}
      * and multiple threads are appending to this appender.
+     * 
+     * @deprecated ProducerType will be fixed to MULTI in future release and this method removed without any replacement.
+     * @param producerType the type of producer
      */
+    @Deprecated
     public void setProducerType(ProducerType producerType) {
         this.producerType = Objects.requireNonNull(producerType);
+        addWarn("<producerType> is deprecated and will be removed without replacement in future release");
     }
 
     public WaitStrategy getWaitStrategy() {

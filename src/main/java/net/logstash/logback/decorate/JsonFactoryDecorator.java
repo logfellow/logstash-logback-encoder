@@ -42,6 +42,7 @@ public interface JsonFactoryDecorator {
      * is a {@link MappingJsonFactory}, but can be changed by {@link JsonFactoryDecorator}s
      * to any subclass of {@link JsonFactory}.</p>
      *
+     * @param factory the factory to decorate
      * @return the decorated {@link JsonFactory}
      */
     default JsonFactory decorate(JsonFactory factory) {

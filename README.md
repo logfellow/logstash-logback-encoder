@@ -13,7 +13,7 @@ Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to l
 
 Supports both regular _LoggingEvents_ (logged through a `Logger`) and _AccessEvents_ (logged via [logback-access](http://logback.qos.ch/access.html)).
 
-Originally written to support output in [logstash](http://logstash.net/)'s JSON format, but has evolved into a highly-configurable, general-purpose, structured logging mechanism for JSON and other Jackson dataformats.
+Originally written to support output in [logstash](https://www.elastic.co/guide/en/logstash/current)'s JSON format, but has evolved into a highly-configurable, general-purpose, structured logging mechanism for JSON and other Jackson dataformats.
 The structure of the output, and the data it contains, is fully configurable.
 
 #### Contents:
@@ -26,10 +26,14 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Keep-alive](#keep-alive)
     * [Multiple Destinations](#multiple-destinations)
     * [Reconnection Delay](#reconnection-delay)
-    * [Write buffer size](#write-buffer-size)
-    * [Write timeouts](#write-timeouts)
+    * [Connection Timeout](#connection-timeout)
+    * [Write Buffer Size](#write-buffer-size)
+    * [Write Timeouts](#write-timeouts)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
+  	* [RingBuffer Full](#ringbuffer-full)
+  	* [Graceful Shutdown](#graceful-shutdown)
+  	* [Wait Strategy](#wait-strategy)
   * [Appender Listeners](#appender-listeners)
   * [Encoders / Layouts](#encoders--layouts)
 * [LoggingEvent Fields](#loggingevent-fields)
@@ -66,7 +70,8 @@ The structure of the output, and the data it contains, is fully configurable.
     * [AccessEvent patterns](#accessevent-patterns)
   * [Custom JSON Provider](#custom-json-provider)
 * [Status Listeners](#status-listeners)
-
+* [Joran/XML Configuration](#joran-xml-configuration)
+	* [Duration Property](#duration-property)
 
 
 ## Including it in your project
@@ -243,7 +248,7 @@ in your `logback-access.xml`, like this:
 ```
 
 
-To receive syslog/UDP input in logstash, configure a [`syslog`](http://www.logstash.net/docs/latest/inputs/syslog) or [`udp`](http://www.logstash.net/docs/latest/inputs/udp) input with the [`json`](http://www.logstash.net/docs/latest/codecs/json) codec in logstash's configuration like this:
+To receive syslog/UDP input in logstash, configure a [`syslog`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html) or [`udp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-udp.html) input with the [`json`](https://www.elastic.co/guide/en/logstash/current/plugins-codecs-json.html) codec in logstash's configuration like this:
 ```
 input {
   syslog {
@@ -312,8 +317,7 @@ If the RingBuffer is full (e.g. due to slow network, etc), then events will be d
 The TCP appenders will automatically reconnect if the connection breaks.
 However, events may be lost before Java's socket realizes the connection has broken.
 
-To receive TCP input in logstash, configure a [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp)
-input with the [`json_lines`](http://www.logstash.net/docs/latest/codecs/json_lines) codec in logstash's configuration like this:
+To receive TCP input in logstash, configure a [`tcp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-tcp.html) input with the [`json_lines`](https://www.elastic.co/guide/en/logstash/current/plugins-codecs-json_lines.html) codec in logstash's configuration like this:
 
 ```
 input {
@@ -327,7 +331,7 @@ input {
 In order to guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
 
-#### Keep-alive
+#### Keep-Alive
 
 If events occur infrequently, and the connection breaks consistently due to a server-side idle timeout,
 then you can enable keep alive functionality by configuring a `keepAliveDuration` like this:
@@ -339,15 +343,25 @@ then you can enable keep alive functionality by configuring a `keepAliveDuration
   </appender>
 ```
 
-When the `keepAliveDuration` is set, then a keep alive message will be sent
-if an event has not occurred for the length of the duration.
-The keep alive message defaults to the system's line separator,
-but can be changed by setting the `keepAliveMessage` property.
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
+
+When the `keepAliveDuration` is set, then a keep alive message will be sent if an event has not occurred for the length of the duration.
+The keep alive message defaults to unix line ending (`\n`), but can be changed by setting the `keepAliveMessage` property to the desired value. The following values have special meaning:
+
+- `<empty string>`: no keep alive
+- `SYSTEM`: system's line separator
+- `UNIX`: unix line ending (`\n`)
+- `WINDOWS`: windows line ending (`\r\n`)
+
+Any other value will be used as-is.
+
+The keep alive message is encoded in `UTF-8` by default. This can be changed by setting the `keepAliveCharset` property to the name of the desired charset.
 
 
 #### Multiple Destinations
 
 The TCP appenders can be configured to try to connect to one of several destinations like this:
+
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
       <destination>destination1.domain.com:4560</destination>
@@ -516,8 +530,27 @@ This amount of time to delay can be changed by setting the `reconnectionDelay` f
   </appender>
 ```
 
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
 
-#### Write buffer size
+
+#### Connection Timeout
+
+By default, a connection timeout of 5 seconds is used when connecting to a remote destination.
+You can adjust this by setting the appender's `connectionTimeout` configuration property to the desired value.
+
+```xml
+  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+      ...
+      <connectionTimeout>5 seconds</connectionTimeout>
+  </appender>
+```
+
+A value of `0` means "don't use a timeout and wait indefinitely" which often really means "use OS defaults".
+
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
+
+
+#### Write Buffer Size
 
 By default, a buffer size of 8192 is used to buffer socket output stream writes.
 You can adjust this by setting the appender's `writeBufferSize`.
@@ -536,18 +569,14 @@ but in some environments, this does not seem to affect overall performance.
 See [this discussion](https://github.com/logstash/logstash-logback-encoder/issues/342).
 
 
-#### Write timeouts
+#### Write Timeouts
 
-If a destination stops reading from its socket input, but does not close the connection,
-then writes from the TCP appender will eventually backup,
-causing the ring buffer to backup, causing events to be dropped.
+If a destination stops reading from its socket input, but does not close the connection, then writes from the TCP appender will eventually backup, causing the ring buffer to backup, causing events to be dropped.
 
-To detect this situation, you can enable a write timeout, so that "stuck" writes will
-eventually timeout, at which point the connection will be re-established.
-When the [write buffer](#write-buffer-size) is enabled, any buffered data will be lost
-when the connection is reestablished.
+To detect this situation, you can enable a write timeout, so that "stuck" writes will eventually timeout, at which point the connection will be re-established.
+When the [write buffer](#write-buffer-size) is enabled, any buffered data will be lost when the connection is reestablished.
 
-By default there is no write timeout.  To enable a write timeout, do the following:
+By default there is no write timeout. To enable a write timeout, do the following:
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
@@ -556,14 +585,15 @@ By default there is no write timeout.  To enable a write timeout, do the followi
   </appender>
 ```
 
-Note that since the blocking java socket output stream used to send events does not have a concept of a write timeout,
-write timeouts are detected using a task scheduled periodically with the same frequency as the write timeout.
-For example, if the write timeout is set to 30 seconds, then a task will execute every 30 seconds
-to see if 30 seconds has elapsed since the start of the current write operation.
-Therefore, it is recommended to use longer write timeouts (e.g. > 30s, or minutes),
-rather than short write timeouts, so that this task does not execute too frequently.
-Also, this approach means that it could take up to two times the write timeout
-before a write timeout is detected.
+Note that since the blocking java socket output stream used to send events does not have a concept of a write timeout, write timeouts are detected using a task scheduled periodically with the same frequency as the write timeout.
+For example, if the write timeout is set to 30 seconds, then a task will execute every 30 seconds to see if 30 seconds has elapsed since the start of the current write operation.
+Therefore, it is recommended to use longer write timeouts (e.g. > 30s, or minutes), rather than short write timeouts, so that this task does not execute too frequently.
+Also, this approach means that it could take up to two times the write timeout before a write timeout is detected.
+
+The write timeout must be >0. A timeout of zero is interpreted as an infinite timeout which effecively means "no write timeout".
+
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
+
 
 #### SSL
 
@@ -604,8 +634,7 @@ All the customizations that [logback](http://logback.qos.ch/manual/usingSSL.html
 (such as configuring cipher specs, protocols, algorithms, providers, etc.)
 are supported by the `Logback*TcpSocketAppender`s.
 
-See the logstash documentation for the [`tcp`](http://www.logstash.net/docs/latest/inputs/tcp) input
-for how to configure it to use SSL.
+See the logstash documentation for the [`tcp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-tcp.html) input for how to configure it to use SSL.
 
 
 ### Async Appenders
@@ -641,7 +670,8 @@ The behaviour of the appender when the RingBuffer is controlled by the `appendTi
 | `> 0`           | retry during the specified amount of time                              |
 
 
-Logging threads waiting for space in the RingBuffer wake up periodically at a frequency defined by  `appendRetryFrequency` (default `50ms`). You may increase this frequency for faster reaction time at the expense of higher CPU usage.
+Logging threads waiting for space in the RingBuffer wake up periodically at a frequency starting at `1ns` and increasing exponentially up to `appendRetryFrequency` (default `5ms`). 
+Only one thread is allowed to retry at a time. If a thread is already retrying, additional threads are waiting on a lock until the first is finished. This strategy should help to limit CPU consumption while providing good enough latency and throughput when the ring buffer is at (or close) to its maximal capacity.
 
 When the appender drops an event, it emits a warning status message every `droppedWarnFrequency` consecutive dropped events. Another status message is emitted when the drop period is over and a first event is succesfully enqueued reporting the total number of events that were dropped.
 
@@ -657,8 +687,7 @@ Events still in the buffer after this period is elapsed are dropped and the appe
 
 #### Wait Strategy
 
-By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BlockingWaitStrategy.html)
-is used by the worker thread spawned by this appender.
+By default, the [`BlockingWaitStrategy`](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/BlockingWaitStrategy.html) is used by the worker thread spawned by this appender.
 The `BlockingWaitStrategy` minimizes CPU utilization, but results in slower latency and throughput.
 If you need faster latency and throughput (at the expense of higher CPU utilization), consider
 a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/WaitStrategy.html) offered by the disruptor.
@@ -667,6 +696,7 @@ a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/l
 > For example, in some configurations, `SleepingWaitStrategy` can consume 90% CPU utilization at rest.
 
 The wait strategy can be configured on the async appender using the `waitStrategyType` parameter, like this:
+
 ```xml
   <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
     <waitStrategyType>sleeping</waitStrategyType>
@@ -770,7 +800,7 @@ e.g.<br/><tt>phasedBackoff{10,60,seconds,blocking}</tt></td>
 </table>
 
 See [AsyncDisruptorAppender](/src/main/java/net/logstash/logback/appender/AsyncDisruptorAppender.java)
-for other configuration parameters (such as `ringBufferSize`, `producerType`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
+for other configuration parameters (such as `ringBufferSize`, `threadNamePrefix`, `daemon`, and `droppedWarnFrequency`)
 
 
 ### Appender Listeners
@@ -842,6 +872,7 @@ with the `RollingFileAppender` in your `logback.xml` like this:
 ```
 
 To log AccessEvents to a file, configure your `logback-access.xml` like this:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -858,7 +889,7 @@ The `LogstashLayout` and `LogstashAccessLayout` can be configured the same way a
 the `LogstashEncoder` and `LogstashAccessEncoder`.  All the other examples
 in this document use encoders, but the same options apply to the layouts as well.
 
-To receive file input in logstash, configure a [`file`](http://www.logstash.net/docs/latest/inputs/file) input in logstash's configuration like this:
+To receive file input in logstash, configure a [`file`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-file.html) input in logstash's configuration like this:
 
 ```
 input {
@@ -919,6 +950,7 @@ You can also configure specific entries in the MDC to be included or excluded as
   <includeMdcKeyName>key2ToInclude</includeMdcKeyName>
 </encoder>
 ```
+
 or
 
 ```xml
@@ -986,6 +1018,7 @@ In addition to the fields above, you can add other fields to the LoggingEvent ei
 #### Global Custom Fields
 
 Add custom fields that will appear in every LoggingEvent like this :
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
@@ -1313,6 +1346,7 @@ can be used to configure data-format-specific generator features:
 * [`YamlFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlFeatureJsonGeneratorDecorator.java)
 
 For example:
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
@@ -1524,6 +1558,7 @@ Therefore, prefer identifying data to mask by path.
 The standard field names above for LoggingEvents and AccessEvents can be customized by using the `fieldNames`configuration element in the encoder or appender configuration.
 
 For example:
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <fieldNames>
@@ -1538,6 +1573,7 @@ Prevent a field from being output by setting the field name to `[ignore]`.
 
 For LoggingEvents, see [`LogstashFieldNames`](/src/main/java/net/logstash/logback/fieldnames/LogstashFieldNames.java)
 for all the field names that can be customized.  Each java field name in that class is the name of the xml element that you would use to specify the field name (e.g. `logger`, `levelValue`).  Additionally, a separate set of [shortened field names](/src/main/java/net/logstash/logback/fieldnames/ShortenedFieldNames.java) can be configured like this:
+
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
   <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
@@ -2272,7 +2308,7 @@ Use the `nestedField` provider to create a sub-object in the JSON event output.
 
 For example...
 
-```
+```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
   <providers>
     <timestamp/>
@@ -2567,7 +2603,27 @@ To disable the automatic registering of the default status listener by an append
 * register a different logback [status listener](https://logback.qos.ch/manual/configuration.html#dumpingStatusData), or
 * set `<addDefaultStatusListener>false</addDefaultStatusListener` in each async appender.
 
-### Profiling
+
+## Joran/XML Configuration
+
+Configuring Logback using XML is handled by Logback's Joran configuration system. This section is a short description of the high level data types supported by Joran. For more information, please refer to the [official documentation](http://logback.qos.ch/manual).
+
+### Duration property
+
+Duration represents a laps of time.
+It can be specified as an integer value representing a number of milliseconds, or a string such as "20 seconds", "3.5 minutes" or "5 hours" that will be automatically  converted by logback's configuration system into Duration instances.
+The recognized units of time are the `millisecond`, `second`, `minute`, `hour` and `day`. The unit name may be followed by an "s". Thus, "2000 millisecond" and "2000 milliseconds" are equivalent. In the absence of a time unit specification, milliseconds are assumed.
+
+The following examples are therefore equivalent:
+
+```xml
+<duration>2000</duration>
+<duration>2000 millisecond</duration>
+<duration>2000 milliseconds</duration>
+```
+
+
+## Profiling
 
 <a href="https://www.yourkit.com/java/profiler/"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
 

@@ -153,6 +153,8 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
 
         /**
          * Sets the target character that will be replaced with the {@link #escapeSequence}.
+         * 
+         * @param targetCharacter the target character
          */
         public void setTargetCharacter(char targetCharacter) {
             setTargetCharacterCode((char) targetCharacter);

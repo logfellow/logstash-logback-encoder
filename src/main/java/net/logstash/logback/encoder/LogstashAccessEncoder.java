@@ -77,7 +77,10 @@ public class LogstashAccessEncoder extends AccessEventCompositeJsonEncoder {
     }
 
     /**
-     * When true, names of headers will be written to JSON output in lowercase.
+     * When {@code true}, names of headers will be written to JSON output in lower case.
+     * 
+     * @param lowerCaseHeaderNames When {@code true}, names of headers will be written to
+     *                             JSON output in lower case.
      */
     public void setLowerCaseHeaderNames(boolean lowerCaseHeaderNames) {
         getFormatter().setLowerCaseHeaderNames(lowerCaseHeaderNames);

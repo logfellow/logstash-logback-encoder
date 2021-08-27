@@ -32,13 +32,15 @@ import com.fasterxml.jackson.core.JsonGenerator;
 public interface JsonProvider<Event extends DeferredProcessingAware> extends LifeCycle, ContextAware {
 
     /**
-     * Writes information about the event,
-     * to the given generator.
+     * Writes information about the event, to the given generator.
      *
-     * When called, the generator is assumed to be within a JSON object context
+     * <p>When called, the generator is assumed to be within a JSON object context
      * (i.e. this provider should write fields and their values to the generator).
-     *
      * Upon return, the generator should be within the same JSON object context.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param event the event to convert into JSON
+     * @throws IOException if an I/O error occurs
      */
     void writeTo(JsonGenerator generator, Event event) throws IOException;
 
@@ -46,6 +48,8 @@ public interface JsonProvider<Event extends DeferredProcessingAware> extends Lif
      * Gives the provider a chance to perform more deferred processing
      * (in addition to what is already provided by
      * {@link DeferredProcessingAware#prepareForDeferredProcessing()}).
+     * 
+     * @param event the event to prepare for deferred processing
      */
     void prepareForDeferredProcessing(Event event);
 

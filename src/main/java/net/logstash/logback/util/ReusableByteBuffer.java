@@ -172,6 +172,7 @@ public class ReusableByteBuffer extends OutputStream {
      * Write the buffers content to the given OutputStream.
      *
      * @param out the OutputStream to write to
+     * @throws IOException in case of problems writing into the output stream
      */
     public void writeTo(OutputStream out) throws IOException {
         Iterator<byte[]> it = this.buffers.iterator();
@@ -188,13 +189,12 @@ public class ReusableByteBuffer extends OutputStream {
 
     /**
      * Creates a newly allocated byte array.
-     * <p>Its size is the current
-     * size of this output stream and the valid contents of the buffer
-     * have been copied into it.</p>
+     * 
+     * <p>Its size is the current size of this output stream and the valid contents
+     * of the buffer have been copied into it.</p>
      *
      * @return the current contents of this output stream, as a byte array.
      * @see #size()
-     * @see #toByteArrayUnsafe()
      */
     public byte[] toByteArray() {
         int totalSize = size();

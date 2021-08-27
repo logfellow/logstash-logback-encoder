@@ -39,7 +39,6 @@ import org.slf4j.Marker;
  * When writing to a String (when used as a {@link StructuredArgument} to the event's formatted message),
  * the raw string is written as the field value.
  * Note that using {@link RawJsonAppendingMarker} as a {@link StructuredArgument} is not very common.
- * <p>
  */
 @SuppressWarnings("serial")
 public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {

@@ -28,21 +28,24 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 public interface NodeWriter<Event> {
     /**
-     * Writes this node to the given generator
+     * Writes this node to the given generator.
+     * 
      * @param generator the generator to which to write the node
      * @param event the event from which to get data to write
+     * @throws IOException if an I/O error occurs
      */
     void write(JsonGenerator generator, Event event) throws IOException;
 
     /**
      * Returns true if this node should be written.
-     * If this returns true, then {@link #write(JsonGenerator, Object)} should not be called.
+     * If this returns {@code false}, then {@link #write(JsonGenerator, Object)} should not be called.
      *
      * This is used to potentially omit fields containing this node
      * (e.g. for omitting empty values)
-     * @param generator
-     * @param event
-     * @return true if this node should be written.
+     * 
+     * @param generator the generator to which to write the node
+     * @param event the event from which to get data to write
+     * @return {@code true} if this node should be written.
      */
     boolean shouldWrite(JsonGenerator generator, Event event);
 }

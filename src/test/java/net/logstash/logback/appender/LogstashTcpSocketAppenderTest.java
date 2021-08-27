@@ -16,7 +16,9 @@
 package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -568,6 +570,16 @@ public class LogstashTcpSocketAppenderTest {
         verify(goodOutputStream, timeout(1000)).flush();
     }
 
+    
+    @Test
+    public void testInvalidWriteTimeout() {
+        assertThatThrownBy(() -> appender.setWriteTimeout(null)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> appender.setWriteTimeout(Duration.buildByMilliseconds(-1))).isInstanceOf(IllegalArgumentException.class);
+        
+        assertThatCode(() -> appender.setWriteTimeout(Duration.buildByMilliseconds(0))).doesNotThrowAnyException();
+        assertThatCode(() -> appender.setWriteTimeout(Duration.buildByMilliseconds(0))).doesNotThrowAnyException();
+    }
+    
     
     /**
      * Make sure keep alive messages trigger a reconnect to another host upon failure.

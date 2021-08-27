@@ -30,6 +30,9 @@ public interface StructuredArgument {
 
     /**
      * Writes the data associated with this argument to the given {@link JsonGenerator}.
+     * 
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @throws IOException if an I/O error occurs
      */
     void writeTo(JsonGenerator generator) throws IOException;
     
@@ -39,9 +42,9 @@ public interface StructuredArgument {
      * <p>
      * Note that this will only be included in the log event's formatted
      * message if the message format includes a parameter for this argument.
+     * 
+     * @return String representation of the data associated with this argument
      */
     String toString();
 
 }
-
-

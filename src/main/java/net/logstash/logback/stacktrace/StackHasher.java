@@ -28,7 +28,7 @@ public class StackHasher {
     private final StackElementFilter filter;
 
     /**
-     * Constructs a {@link StackHasher} with the given filter
+     * Constructs a {@link StackHasher} with the given filter.
      *
      * @param filter filter
      */
@@ -44,9 +44,12 @@ public class StackHasher {
     }
 
     /**
-     * Generates a Hexadecimal hash for the given error stack
+     * Generates a Hexadecimal hash for the given error stack.
      * <p>
-     * Two errors with the same stack hash are most probably same errors
+     * Two errors with the same stack hash are most probably same errors.
+     * 
+     * @param error the error to generate a hash from
+     * @return the generated hexadecimal hash
      */
     public String hexHash(Throwable error) {
         // compute topmost error hash, but don't queue the complete hashes chain
@@ -54,10 +57,13 @@ public class StackHasher {
     }
 
     /**
-     * Generates and returns Hexadecimal hashes for the error stack and each ancestor {@link Throwable#getCause() cause}
+     * Generates and returns Hexadecimal hashes for the error stack and each ancestor {@link Throwable#getCause() cause}.
      * <p>
      * The first queue element is the stack hash for the topmost error, the next one (if any) is it's direct
      * {@link Throwable#getCause() cause} hash, and so on...
+     * 
+     * @param error the error to generate a hash from
+     * @return a Dequeue with hashes
      */
     public Deque<String> hexHashes(Throwable error) {
         Deque<String> hexHashes = new ArrayDeque<String>();
@@ -66,9 +72,13 @@ public class StackHasher {
     }
 
     /**
-     * Generates a hash (int) of the given error stack
+     * Generates a hash (int) of the given error stack.
      * <p>
-     * Two errors with the same stack hash are most probably same errors
+     * Two errors with the same stack hash are most probably same errors.
+     * 
+     * @param error the error to generate a hash from
+     * @param hexHashes
+     * @return the generated hexadecimal hash
      */
     int hash(Throwable error, Deque<String> hexHashes) {
         int hash = 0;

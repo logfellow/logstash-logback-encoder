@@ -42,6 +42,10 @@ public class DestinationParser {
      * <p>
      *
      * If portNumber is not provided, then the given defaultPort will be used.
+     * 
+     * @param destinations comma-separated list of destinations in the form of {@code hostName[:portNumber]}
+     * @param defaultPort the port number to use when a destination does not specify one explicitly
+     * @return ordered list of {@link InetSocketAddress} instances
      */
     public static List<InetSocketAddress> parse(String destinations, int defaultPort) {
 

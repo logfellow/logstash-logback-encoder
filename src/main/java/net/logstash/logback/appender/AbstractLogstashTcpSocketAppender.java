@@ -110,16 +110,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public static final int DEFAULT_WRITE_TIMEOUT = 0;
 
     /**
-     * Default size of the queue used to hold logging events that are destined
-     * for the remote peer.
-     * Assuming an average log entry to take 1k, this would result in the application
-     * using about 10MB additional memory if the queue is full
-     */
-    public static final int DEFAULT_QUEUE_SIZE = DEFAULT_RING_BUFFER_SIZE;
-
-    /**
      * Default timeout when waiting for the remote server to accept our
-     * connection.
+     * connection. The same timeout is used as a read timeout during SSL
+     * handshake.
      */
     public static final int DEFAULT_CONNECTION_TIMEOUT = 5000;
 
@@ -179,7 +172,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Socket connection timeout in milliseconds.
      * Must be positive. A value of zero is interpreted as an infinite timeout.
      */
-    private int acceptConnectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+    private Duration connectionTimeout = new Duration(DEFAULT_CONNECTION_TIMEOUT);
 
     /**
      * Human readable identifier of the client (used for logback status messages)
@@ -238,7 +231,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Message to send for keeping the connection alive
      * if {@link #keepAliveDuration} is non-null.
      */
-    private String keepAliveMessage = System.getProperty("line.separator");
+    private String keepAliveMessage = SeparatorParser.parseSeparator("UNIX");
 
     /**
      * The charset to use when writing the {@link #keepAliveMessage}.
@@ -255,19 +248,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Time period for which to wait for a write to complete before timing out
      * and attempting to reconnect to that destination.
-     * Zero (the default) means no write timeout.
-     *
-     * <p>Used to detect connections where the receiver stops reading.</p>
-     *
-     * <p>Note that since a blocking java socket output stream
-     * does not have a concept of a write timeout,
-     * a task will be scheduled on the {@link #getExecutorService()}
-     * with the same frequency as the write timeout
-     * in order to detect stuck writes.
-     * It is recommended to use longer write timeouts (e.g. &gt; 30s, or minutes),
-     * rather than short write timeouts, so that this task does not execute too frequently.
-     * Also, this approach means that it could take up to two times the write timeout
-     * before a write timeout is detected.</p>
      */
     private Duration writeTimeout = new Duration(DEFAULT_WRITE_TIMEOUT);
 
@@ -720,13 +700,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Note that SO_TIMEOUT only applies to reads (which occur during the handshake process).
                      */
                     tempSocket = socketFactory.createSocket();
-                    tempSocket.setSoTimeout(acceptConnectionTimeout);
+                    tempSocket.setSoTimeout((int) connectionTimeout.getMilliseconds());
+                    
                     /*
                      * currentDestination is unresolved, so a new InetSocketAddress
                      * must be created to resolve the hostname.
                      */
-                    tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), acceptConnectionTimeout);
-
+                    tempSocket.connect(new InetSocketAddress(getHostString(currentDestination), currentDestination.getPort()), (int) connectionTimeout.getMilliseconds());
+                    
                     /*
                      * Trigger SSL handshake immediately and declare the socket unconnected if it fails
                      */
@@ -1060,8 +1041,10 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     /**
-     * Used to create client {@link Socket}s to which to communicate.
-     * By default, it is the system default SocketFactory.
+     * Set the {@link SocketFactory} used to create client {@link Socket}s to which to communicate.
+     * Use {@code null} to use the system default SocketFactory.
+     * 
+     * @param socketFactory the socket factory to use to create connections with remote destinations.
      */
     public void setSocketFactory(SocketFactory socketFactory) {
         this.socketFactory = socketFactory;
@@ -1078,6 +1061,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * <p>
      *
      * For example, "host1.domain.com,host2.domain.com:5560"
+     * 
+     * @param destination comma-separated list of destinations in the form of {@code hostName[:portNumber]}
      */
     public void addDestination(final String destination) throws IllegalArgumentException {
 
@@ -1088,6 +1073,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Adds the given destinations to the list of potential destinations.
+     * 
+     * @param destinations the {@link InetSocketAddress} to add to the list of valid destinations
      */
     public void addDestinations(InetSocketAddress... destinations) throws IllegalArgumentException  {
         if (destinations == null) {
@@ -1111,6 +1098,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Returns the host string from the given destination,
      * avoiding a DNS hit if possible.
+     * 
+     * @param destination the {@link InetSocketAddress} to get the host string from
+     * @return the host string of the given destination
      */
     protected String getHostString(InetSocketAddress destination) {
 
@@ -1138,6 +1128,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Return the destinations in which to attempt to send logs.
+     * 
+     * @return an ordered list of {@link InetSocketAddress} representing the configured destinations
      */
     public List<InetSocketAddress> getDestinations() {
         return Collections.unmodifiableList(destinations);
@@ -1147,6 +1139,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Time period for which to wait after failing to connect to all servers,
      * before attempting to reconnect.
      * Default is {@value #DEFAULT_RECONNECTION_DELAY} milliseconds.
+     * 
+     * @param delay the reconnection delay
      */
     public void setReconnectionDelay(Duration delay) {
         if (delay == null || delay.getMilliseconds() <= 0) {
@@ -1167,6 +1161,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * this will set its {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.
      *
      * @see PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)
+     * @param secondaryConnectionTTL the TTL of a connection when connected to a secondary destination
      * @throws IllegalStateException if the {@link #connectionStrategy} is not a {@link PreferPrimaryDestinationConnectionStrategy}
      */
     public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
@@ -1185,15 +1180,29 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     /**
-     * Socket connection timeout in milliseconds.
+     * Set the connection timeout when establishing a connection to a remote destination.
+     * 
+     * Use {@code 0} for an "infinite timeout" which often really means "use the OS defaults".
+     * 
+     * @param connectionTimeout connection timeout
      */
-    void setAcceptConnectionTimeout(int acceptConnectionTimeout) {
-        if (acceptConnectionTimeout < 0) {
-            throw new IllegalArgumentException("acceptConnectionTimeout must be >= 0");
+    public void setConnectionTimeout(Duration connectionTimeout) {
+        if (Objects.requireNonNull(connectionTimeout).getMilliseconds() < 0) {
+            throw new IllegalArgumentException("connectionTimeout must be a positive value");
         }
-        this.acceptConnectionTimeout = acceptConnectionTimeout;
+        this.connectionTimeout = connectionTimeout;
     }
 
+    /**
+     * Get the connection timeout used when establishing a TCP connection to a remote destination.
+     * 
+     * @return the connection timeout (never null).
+     */
+    public Duration getConnectionTimeout() {
+        return connectionTimeout;
+    }
+    
+    
     public int getWriteBufferSize() {
         return writeBufferSize;
     }
@@ -1206,6 +1215,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * If less than or equal to zero, buffering the output stream will be disabled.
      * If buffering is disabled, the writer thread can slow down, but
      * it will also can prevent dropping events in the buffer on flaky connections.
+     * 
+     * @param writeBufferSize the write buffer size in bytes
      */
     public void setWriteBufferSize(int writeBufferSize) {
         this.writeBufferSize = writeBufferSize;
@@ -1213,7 +1224,12 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Returns the maximum number of events in the queue.
+     * Alias for {@link #getRingBufferSize()}.
+     * 
+     * @return the size of the ring buffer
+     * @deprecated use {@link #getRingBufferSize()} instead
      */
+    @Deprecated
     public int getQueueSize() {
         return getRingBufferSize();
     }
@@ -1226,18 +1242,24 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Must be a positive power of 2.
      *
      * @param queueSize the maximum number of entries in the queue.
+     * @deprecated use {@link #setRingBufferSize(int)} instead.
      */
+    @Deprecated
     public void setQueueSize(int queueSize) {
+        addWarn("<queueSize> is deprecated, use <ringBufferSize> instead");
         setRingBufferSize(queueSize);
     }
 
     public SSLConfiguration getSsl() {
         return sslConfiguration;
     }
+    
     /**
      * Set this to non-null to use SSL.
      * See <a href="http://logback.qos.ch/manual/usingSSL.html"> the logback manual</a>
      * for details on how to configure SSL for a client.
+     * 
+     * @param sslConfiguration the SSL configuration
      */
     public void setSsl(SSLConfiguration sslConfiguration) {
         this.sslConfiguration = sslConfiguration;
@@ -1246,12 +1268,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public Duration getKeepAliveDuration() {
         return keepAliveDuration;
     }
+    
     /**
      * If this duration elapses without an event being sent,
      * then the {@link #keepAliveMessage} will be sent to the socket in
      * order to keep the connection alive.
      *
      * When {@code null}, zero or negative, no keepAlive messages will be sent.
+     * 
+     * @param keepAliveDuration duration between consecutive keep alive messages
      */
     public void setKeepAliveDuration(Duration keepAliveDuration) {
         this.keepAliveDuration = keepAliveDuration;
@@ -1260,30 +1285,37 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public String getKeepAliveMessage() {
         return keepAliveMessage;
     }
+    
     /**
      * Message to send for keeping the connection alive
      * if {@link #keepAliveDuration} is non-null and strictly positive.
      *
      * The following values have special meaning:
      * <ul>
-     * <li><tt>null</tt> or empty string = no keep alive.</li>
-     * <li>"<tt>SYSTEM</tt>" = operating system new line (default).</li>
-     * <li>"<tt>UNIX</tt>" = unix line ending (\n).</li>
-     * <li>"<tt>WINDOWS</tt>" = windows line ending (\r\n).</li>
+     * <li>{@code null} or empty string = no keep alive.</li>
+     * <li>"{@code SYSTEM}" = operating system new line (default).</li>
+     * <li>"{@code UNIX}" = unix line ending (\n).</li>
+     * <li>"{@code WINDOWS}" = windows line ending (\r\n).</li>
      * </ul>
      * <p>
      * Any other value will be used as-is.
+     * 
+     * @param keepAliveMessage the keep alive message
      */
     public void setKeepAliveMessage(String keepAliveMessage) {
         this.keepAliveMessage = SeparatorParser.parseSeparator(keepAliveMessage);
     }
 
     public boolean isKeepAliveEnabled() {
-        return this.keepAliveDuration != null
-            && this.keepAliveDuration.getMilliseconds() > 0
-            && this.keepAliveMessage != null;
+        return this.keepAliveDuration != null && this.keepAliveDuration.getMilliseconds() > 0
+            && this.keepAliveMessage != null && !this.keepAliveMessage.isEmpty();
     }
 
+    /**
+     * Whether the write timeout feature is enabled or not.
+     * 
+     * @return {@code true} when the appender should try to detect write timeouts, {@code false} otherwise.
+     */
     public boolean isWriteTimeoutEnabled() {
         return this.writeTimeout.getMilliseconds() > 0;
     }
@@ -1295,6 +1327,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * The charset to use when writing the {@link #keepAliveMessage}.
      * Defaults to UTF-8.
+     * 
+     * @param keepAliveCharset charset encoding for the keep alive message
      */
     public void setKeepAliveCharset(Charset keepAliveCharset) {
         this.keepAliveCharset = Objects.requireNonNull(keepAliveCharset);
@@ -1317,6 +1351,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * The third argument (%3$s) is the string hostname of the currently connected destination.
      * The fourth argument (%4$d) is the numerical port of the currently connected destination.
      * Other arguments can be made available by subclasses.
+     * 
+     * @param threadNameFormat thread name format pattern
      */
     @Override
     public void setThreadNameFormat(String threadNameFormat) {
@@ -1349,23 +1385,25 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Sets the time period for which to wait for a write to complete before timing out
      * and attempting to reconnect to that destination.
-     * Zero (the default) means no write timeout.
+     * This timeout is used to detect connections where the receiver stops reading.
+     * 
+     * <p>The timeout must be &gt; 0. A timeout of zero is interpreted as an infinite timeout
+     * which effectively means "no write timeout".
      *
-     * <p>Used to detect connections where the receiver stops reading.</p>
-     *
-     * <p>Note that since a blocking java socket output stream
-     * does not have a concept of a write timeout,
-     * a task will be scheduled on the {@link #getExecutorService()}
-     * with the same frequency as the write timeout
-     * in order to detect stuck writes.
+     * <p>Note that since a blocking java socket output stream does not have a concept
+     * of a write timeout, a task will be scheduled with the same frequency as the write
+     * timeout in order to detect stuck writes.
      * It is recommended to use longer write timeouts (e.g. &gt; 30s, or minutes),
      * rather than short write timeouts, so that this task does not execute too frequently.
      * Also, this approach means that it could take up to two times the write timeout
-     * before a write timeout is detected.</p>
+     * before a write timeout is detected.
+     * 
+     * @param writeTimeout the write timeout
      */
     public void setWriteTimeout(Duration writeTimeout) {
-        this.writeTimeout = writeTimeout == null
-                ? new Duration(DEFAULT_WRITE_TIMEOUT)
-                : writeTimeout;
+        if (writeTimeout == null || writeTimeout.getMilliseconds() < 0) {
+            throw new IllegalArgumentException("writeTimeout must be >= 0");
+        }
+        this.writeTimeout = writeTimeout;
     }
 }

@@ -18,11 +18,11 @@ package net.logstash.logback.marker;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Marker;
 
-/* Copy of {@link org.slf4j.helpers.BasicMarker} from slf4j-api v1.7.12, with minor changes:
+/* Copy of {@link org.slf4j.helpers.BasicMarker} from slf4j-api v1.7.31, with minor changes:
  * 1. make the constructor public so that it can be extended in other packages
  * 2. add getReferences() method
 
@@ -62,9 +62,13 @@ import org.slf4j.Marker;
 @SuppressWarnings("serial")
 public class LogstashBasicMarker implements Marker {
 
+    private static final String OPEN = "[ ";
+    private static final String CLOSE = " ]";
+    private static final String SEP = ", ";
+    
     private final String name;
-    private List<Marker> refereceList;
-
+    private final List<Marker> referenceList = new CopyOnWriteArrayList<>();
+    
     /*
      * BEGIN Modification in logstash-logback-encoder to make this constructor public
      */
@@ -78,77 +82,81 @@ public class LogstashBasicMarker implements Marker {
         this.name = name;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public String getName() {
         return name;
     }
 
-    public synchronized void add(Marker reference) {
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void add(Marker reference) {
         if (reference == null) {
-            throw new IllegalArgumentException(
-                "A null value cannot be added to a Marker as reference.");
+            throw new IllegalArgumentException("A null value cannot be added to a Marker as reference.");
         }
 
         // no point in adding the reference multiple times
         if (this.contains(reference)) {
             return;
-
-        } else if (reference.contains(this)) { // avoid recursion
-            // a potential reference should not its future "parent" as a reference
-            return;
-        } else {
-            // let's add the reference
-            if (refereceList == null) {
-                refereceList = new Vector<Marker>();
-            }
-            refereceList.add(reference);
         }
-
+        if (reference.contains(this)) { // avoid recursion, a potential reference should not hold its future "parent" as a reference
+            return;
+        }
+        
+        referenceList.add(reference);
     }
 
-    public synchronized boolean hasReferences() {
-        return ((refereceList != null) && (refereceList.size() > 0));
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean hasReferences() {
+        return !referenceList.isEmpty();
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Deprecated
+    @Override
     public boolean hasChildren() {
         return hasReferences();
     }
 
-    public synchronized Iterator<Marker> iterator() {
-        if (refereceList != null) {
-            return refereceList.iterator();
-        } else {
-            return Collections.emptyIterator();
-        }
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Iterator<Marker> iterator() {
+        return referenceList.iterator();
     }
 
     /*
      * BEGIN Modification in logstash-logback-encoder to add this method
      */
     protected List<Marker> getReferences() {
-        return refereceList == null
-                ? Collections.emptyList()
-                : Collections.unmodifiableList(refereceList);
+        return Collections.unmodifiableList(referenceList);
     }
     /*
      * END Modification in logstash-logback-encoder to add this method
      */
 
-    public synchronized boolean remove(Marker referenceToRemove) {
-        if (refereceList == null) {
-            return false;
-        }
-
-        int size = refereceList.size();
-        for (int i = 0; i < size; i++) {
-            Marker m = (Marker) refereceList.get(i);
-            if (referenceToRemove.equals(m)) {
-                refereceList.remove(i);
-                return true;
-            }
-        }
-        return false;
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean remove(Marker referenceToRemove) {
+        return referenceList.remove(referenceToRemove);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean contains(Marker other) {
         if (other == null) {
             throw new IllegalArgumentException("Other cannot be null");
@@ -159,19 +167,20 @@ public class LogstashBasicMarker implements Marker {
         }
 
         if (hasReferences()) {
-            for (int i = 0; i < refereceList.size(); i++) {
-                Marker ref = (Marker) refereceList.get(i);
+            for (Marker ref : referenceList) {
                 if (ref.contains(other)) {
                     return true;
                 }
             }
         }
+        
         return false;
     }
 
     /**
-     * This method is mainly used with Expression Evaluators.
+     * {@inheritDoc}
      */
+    @Override
     public boolean contains(String name) {
         if (name == null) {
             throw new IllegalArgumentException("Other cannot be null");
@@ -182,21 +191,21 @@ public class LogstashBasicMarker implements Marker {
         }
 
         if (hasReferences()) {
-            for (int i = 0; i < refereceList.size(); i++) {
-                Marker ref = (Marker) refereceList.get(i);
+            for (Marker ref : referenceList) {
                 if (ref.contains(name)) {
                     return true;
                 }
             }
         }
+        
         return false;
     }
 
-    private static String OPEN = "[ ";
-    private static String CLOSE = " ]";
-    private static String SEP = ", ";
 
-
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -212,6 +221,10 @@ public class LogstashBasicMarker implements Marker {
         return name.equals(other.getName());
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int hashCode() {
         return name.hashCode();
     }
@@ -220,13 +233,12 @@ public class LogstashBasicMarker implements Marker {
         if (!this.hasReferences()) {
             return this.getName();
         }
+        StringBuilder sb = new StringBuilder(this.getName())
+                .append(' ')
+                .append(OPEN);
         Iterator<Marker> it = this.iterator();
-        Marker reference;
-        StringBuffer sb = new StringBuffer(this.getName());
-        sb.append(' ').append(OPEN);
         while (it.hasNext()) {
-            reference = (Marker) it.next();
-            sb.append(reference.getName());
+            sb.append(it.next().getName());
             if (it.hasNext()) {
                 sb.append(SEP);
             }
@@ -236,4 +248,3 @@ public class LogstashBasicMarker implements Marker {
         return sb.toString();
     }
 }
-

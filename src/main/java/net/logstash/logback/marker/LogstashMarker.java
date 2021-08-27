@@ -16,7 +16,6 @@
 package net.logstash.logback.marker;
 
 import java.io.IOException;
-import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
@@ -79,7 +78,7 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
     public abstract void writeTo(JsonGenerator generator) throws IOException;
 
     @Override
-    public synchronized void add(Marker reference) {
+    public void add(Marker reference) {
         if (reference instanceof EmptyLogstashMarker) {
             for (Marker m : (EmptyLogstashMarker) reference) {
                 add(m);
@@ -87,31 +86,6 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
         } else {
             super.add(reference);
         }
-    }
-
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + super.hashCode();
-        result = prime * result + this.getReferences().hashCode();
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (!(obj instanceof LogstashMarker)) {
-            return false;
-        }
-
-        LogstashMarker other = (LogstashMarker) obj;
-        return Objects.equals(this.getReferences(), other.getReferences());
     }
 
     /**
@@ -142,8 +116,10 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
                 sb.append(", ");
             }
             String referenceToString = marker.toString();
-            sb.append(referenceToString);
-            appendSeparator = !referenceToString.isEmpty();
+            if (!referenceToString.isEmpty()) {
+                sb.append(referenceToString);
+                appendSeparator = true;
+            }
         }
 
         return sb.toString();
@@ -160,6 +136,4 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
     protected String toStringSelf() {
         return getName();
     }
-
-
 }
