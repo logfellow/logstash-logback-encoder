@@ -125,8 +125,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private int ringBufferSize = DEFAULT_RING_BUFFER_SIZE;
 
     /**
-     * The {@link ProducerType} to use to configure the disruptor.
-     * By default this is {@link ProducerType#MULTI}.
+     * The {@link ProducerType} to use to configure the Disruptor.
      * Only set to {@link ProducerType#SINGLE} if only one thread
      * will ever be appending to this appender.
      */
@@ -209,7 +208,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Sets the {@link LogEvent#event} to the logback Event.
      * Used when publishing events to the {@link RingBuffer}.
      */
-    private EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<Event>();
+    private EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<>();
 
     /**
      * Used by the handler thread to process the event.
@@ -230,7 +229,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     /**
      * The {@link EventFactory} used to create {@link LogEvent}s for the RingBuffer.
      */
-    private LogEventFactory<Event> eventFactory = new LogEventFactory<Event>();
+    private LogEventFactory<Event> eventFactory = new LogEventFactory<>();
 
     /**
      * Incrementor number used as part of thread names for uniqueness.
@@ -288,7 +287,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
         @Override
         public LogEvent<Event> newInstance() {
-            return new LogEvent<Event>();
+            return new LogEvent<>();
         }
     }
 
@@ -397,25 +396,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     @Override
     public void start() {
-        int errorCount = 0;
-        
         if (this.eventHandler == null) {
             addError("No eventHandler was configured for appender " + getName());
-            errorCount++;
-        }
-        if (this.appendRetryFrequency.getMilliseconds() <= 0) {
-            addError("<appendRetryFrequency> must be > 0");
-            errorCount++;
-        }
-        if (this.ringBufferSize <= 0) {
-            addError("<ringBufferSize> must be > 0");
-            errorCount++;
-        }
-        if (!isPowerOfTwo(this.ringBufferSize)) {
-            addError("<ringBufferSize> must be a power of 2");
-            errorCount++;
-        }
-        if (errorCount > 0) {
             return;
         }
         
@@ -441,7 +423,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          */
         this.disruptor.setDefaultExceptionHandler(this.exceptionHandler);
 
-        this.disruptor.handleEventsWith(new EventClearingEventHandler<Event>(this.eventHandler));
+        this.disruptor.handleEventsWith(new EventClearingEventHandler<>(this.eventHandler));
 
         this.disruptor.start();
         super.start();
@@ -692,7 +674,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * @param threadNameFormat the thread name format pattern
      */
     public void setThreadNameFormat(String threadNameFormat) {
-        this.threadNameFormat = threadNameFormat;
+        this.threadNameFormat = Objects.requireNonNull(threadNameFormat);
     }
 
     /**
@@ -705,21 +687,41 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
     
     /**
-     * Sets the maximum number of events in the queue.
+     * Sets the size of the {@link RingBuffer}.
      * Must be a positive power of 2.
+     * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
+     * 
+     * <p>If the handler thread is not as fast as the producing threads, then the {@link RingBuffer}
+     * will eventually fill up, at which point events will be dropped or producing threads blocked
+     * depending on {@link #appendTimeout}.
      *
      * @param ringBufferSize the maximum number of entries in the queue.
      */
     public void setRingBufferSize(int ringBufferSize) {
+        if (ringBufferSize <= 0 || !isPowerOfTwo(ringBufferSize)) {
+            throw new IllegalArgumentException("ringBufferSize must be a positive power of 2");
+        }
         this.ringBufferSize = ringBufferSize;
     }
 
+    /**
+     * Get the {@link ProducerType} configured for the Disruptor.
+     * 
+     * @return the {@link ProducerType}.
+     */
     public ProducerType getProducerType() {
         return producerType;
     }
     
     /**
-     * Set the {@link ProducerType} to use to configure the disruptor.
+     * The {@link ProducerType} to use to configure the Disruptor.
+     * By default this is {@link ProducerType#MULTI}.
+     * 
+     * Can be set to {@link ProducerType#SINGLE} for increase performance if (and only if) only
+     * one thread will ever be appending to this appender.
+     * 
+     * <p>WARNING: unexpected behavior may occur if this parameter is set to {@link ProducerType#SINGLE}
+     * and multiple threads are appending to this appender.
      * 
      * @deprecated ProducerType will be fixed to MULTI in future release and this method removed without any replacement.
      * @param producerType the type of producer
@@ -734,7 +736,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return waitStrategy;
     }
     public void setWaitStrategy(WaitStrategy waitStrategy) {
-        this.waitStrategy = waitStrategy;
+        this.waitStrategy = Objects.requireNonNull(waitStrategy);
     }
 
     public void setWaitStrategyType(String waitStrategyType) {
@@ -745,7 +747,10 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return appendRetryFrequency;
     }
     public void setAppendRetryFrequency(Duration appendRetryFrequency) {
-        this.appendRetryFrequency = Objects.requireNonNull(appendRetryFrequency);
+        if (Objects.requireNonNull(appendRetryFrequency).getMilliseconds() <= 0) {
+            throw new IllegalArgumentException("appendRetryFrequency must be > 0");
+        }
+        this.appendRetryFrequency = appendRetryFrequency;
     }
     
     public Duration getAppendTimeout() {
@@ -766,7 +771,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return threadFactory;
     }
     public void setThreadFactory(ThreadFactory threadFactory) {
-        this.threadFactory = threadFactory;
+        this.threadFactory = Objects.requireNonNull(threadFactory);
     }
 
     public int getDroppedWarnFrequency() {
@@ -780,7 +785,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         return eventHandler;
     }
     protected void setEventHandler(EventHandler<LogEvent<Event>> eventHandler) {
-        this.eventHandler = eventHandler;
+        this.eventHandler = Objects.requireNonNull(eventHandler);
     }
 
     public boolean isDaemon() {
@@ -791,7 +796,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
 
     public void addListener(Listener listener) {
-        this.listeners.add(listener);
+        this.listeners.add(Objects.requireNonNull(listener));
     }
     public void removeListener(Listener listener) {
         this.listeners.remove(listener);

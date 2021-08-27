@@ -16,6 +16,7 @@
 package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -23,7 +24,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.lang.Thread.State;
@@ -131,7 +131,7 @@ public class AsyncDisruptorAppenderTest {
         verify(event1).prepareForDeferredProcessing();
         
         // Assert the LogEvent holder is cleared after event is processed by the handler
-        assertThat(eventHandler.logEventHolders)
+        assertThat(eventHandler.getLogEventHolders())
             .hasSize(1)
             .allMatch(logevent -> logevent.event == null);
     }
@@ -397,7 +397,7 @@ public class AsyncDisruptorAppenderTest {
             assertThat(eventHandler.getEvents()).isEmpty();
 
             // no listener invoked
-            verify(listener, times(0)).eventAppendFailed(eq(appender), eq(event2), any());
+            verify(listener, never()).eventAppendFailed(eq(appender), eq(event2), any());
             
         } finally {
             eventHandlerWaiter.countDown();
@@ -439,7 +439,7 @@ public class AsyncDisruptorAppenderTest {
 
             appender.append(event1);
             appender.append(event1);
-            verify(listener, times(0)).eventAppendFailed(eq(appender), any(), any()); // nothing dropped - they all fit in the buffer
+            verify(listener, never()).eventAppendFailed(eq(appender), any(), any()); // nothing dropped - they all fit in the buffer
             
             /*
              * Release them all and assert we got 6 in total
@@ -457,42 +457,19 @@ public class AsyncDisruptorAppenderTest {
     }
     
     
+    @SuppressWarnings("deprecation")
     @Test
-    public void configRingBufferSize_negative() {
-        appender.setRingBufferSize(-1);
-        appender.start();
+    public void testConfigParams() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setRingBufferSize(-1));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setRingBufferSize(3));
         
-        assertThat(appender.isStarted()).isFalse();
-        verify(listener, never()).appenderStarted(any());
-        
-        assertThat(statusManager.getCopyOfStatusList())
-            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be > 0") && s.getLevel() == Status.ERROR);
-    }
-    
-    
-    @Test
-    public void configRingBufferSize_powerOfTwo() {
-        appender.setRingBufferSize(3);
-        appender.start();
-        
-        assertThat(appender.isStarted()).isFalse();
-        verify(listener, never()).appenderStarted(any());
-        
-        assertThat(statusManager.getCopyOfStatusList())
-            .anyMatch(s -> s.getMessage().startsWith("<ringBufferSize> must be a power of 2") && s.getLevel() == Status.ERROR);
-    }
-    
-    
-    @Test
-    public void configAppendRetryFrequency() {
-        appender.setAppendRetryFrequency(toLogback(Duration.ofMillis(-1)));
-        appender.start();
-        
-        assertThat(appender.isStarted()).isFalse();
-        verify(listener, never()).appenderStarted(any());
-        
-        assertThat(statusManager.getCopyOfStatusList())
-            .anyMatch(s -> s.getMessage().startsWith("<appendRetryFrequency> must be > 0") && s.getLevel() == Status.ERROR);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setAppendRetryFrequency(toLogback(Duration.ofMillis(-1))));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setAppendRetryFrequency(null));
+
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setThreadNameFormat(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setProducerType(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setWaitStrategy(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setThreadFactory(null));
     }
     
     

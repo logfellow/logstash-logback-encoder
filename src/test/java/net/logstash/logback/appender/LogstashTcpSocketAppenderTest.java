@@ -17,6 +17,7 @@ package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -56,9 +57,11 @@ import net.logstash.logback.appender.destination.RoundRobinDestinationConnection
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
 
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
+import ch.qos.logback.core.BasicStatusManager;
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
 import org.junit.jupiter.api.AfterEach;
@@ -81,11 +84,9 @@ public class LogstashTcpSocketAppenderTest {
     @InjectMocks
     private final LogstashTcpSocketAppender appender = new TestableLogstashTcpSocketAppender();
     
-    @Mock(lenient = true)
-    private Context context;
+    private LoggerContext context = new LoggerContext();
     
-    @Mock
-    private StatusManager statusManager;
+    private StatusManager statusManager = new BasicStatusManager();
     
     @Mock
     private ILoggingEvent event1;
@@ -120,10 +121,12 @@ public class LogstashTcpSocketAppenderTest {
     
     @BeforeEach
     public void setup() throws IOException {
-        when(context.getStatusManager()).thenReturn(statusManager);
+        context.setStatusManager(statusManager);
+        
         when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);
         when(encoder.encode(event1)).thenReturn("event1".getBytes(StandardCharsets.UTF_8));
+        
         appender.addListener(listener);
         appender.setContext(context);
     }
@@ -502,6 +505,29 @@ public class LogstashTcpSocketAppenderTest {
 
     
     @Test
+    public void testKeepAlive_Enabled() {
+        // keep alive disabled by default
+        assertThat(appender.isKeepAliveEnabled()).isFalse();
+        
+        // keep alive enabled only when both keepAliveMessage and keepAliveDuration are set
+        appender.setKeepAliveMessage("UNIX");
+        assertThat(appender.isKeepAliveEnabled()).isFalse();
+
+        appender.setKeepAliveDuration(null);
+        assertThat(appender.isKeepAliveEnabled()).isFalse();
+        
+        appender.setKeepAliveDuration(Duration.buildByMilliseconds(-1));
+        assertThat(appender.isKeepAliveEnabled()).isFalse();
+
+        appender.setKeepAliveDuration(Duration.buildByMilliseconds(0));
+        assertThat(appender.isKeepAliveEnabled()).isFalse();
+
+        appender.setKeepAliveDuration(Duration.buildByMilliseconds(100));
+        assertThat(appender.isKeepAliveEnabled()).isTrue();
+    }
+    
+    
+    @Test
     public void testWriteTimeout() throws Exception {
 
         appender.addDestination("localhost");
@@ -600,8 +626,30 @@ public class LogstashTcpSocketAppenderTest {
     @Test
     public void testDestination_None() {
         appender.start();
-        Assertions.assertFalse(appender.isStarted());
+        
+        assertThat(appender.isStarted()).isFalse();
+        assertThat(statusManager.getCopyOfStatusList()).anySatisfy(status -> {
+            assertThat(status.getLevel()).isEqualTo(Status.ERROR);
+            assertThat(status.getMessage()).contains("No destination was configured");
+        });
     }
+    
+    
+    /**
+     * Appender does not start when no encoder is specified
+     */
+    @Test
+    public void testEncoder_None() {
+        appender.setEncoder(null);
+        appender.start();
+        
+        assertThat(appender.isStarted()).isFalse();
+        assertThat(statusManager.getCopyOfStatusList()).anySatisfy(status -> {
+            assertThat(status.getLevel()).isEqualTo(Status.ERROR);
+            assertThat(status.getMessage()).contains("No encoder was configured");
+        });
+    }
+    
     
     @Test
     public void testRoundRobin() throws Exception {
@@ -630,6 +678,14 @@ public class LogstashTcpSocketAppenderTest {
         
         // 2) connected to next destination by round-robin
         inOrder.verify(socket).connect(host("localhost", 10001), anyInt());
+    }
+    
+    
+    @Test
+    public void testConfigParams() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setConnectionTimeout(Duration.buildByMilliseconds(-1)));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setKeepAliveCharset(null));
+        assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setConnectionStrategy(null));
     }
     
     
