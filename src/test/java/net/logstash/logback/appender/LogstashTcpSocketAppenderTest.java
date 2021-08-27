@@ -683,7 +683,7 @@ public class LogstashTcpSocketAppenderTest {
     
     @Test
     public void testConfigParams() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setAcceptConnectionTimeout(-1));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> appender.setConnectionTimeout(Duration.buildByMilliseconds(-1)));
         assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setKeepAliveCharset(null));
         assertThatExceptionOfType(NullPointerException.class).isThrownBy(() -> appender.setConnectionStrategy(null));
     }
