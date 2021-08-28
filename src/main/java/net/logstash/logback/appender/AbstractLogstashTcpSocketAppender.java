@@ -110,6 +110,16 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public static final int DEFAULT_WRITE_TIMEOUT = 0;
 
     /**
+     * Default size of the queue used to hold logging events that are destined
+     * for the remote peer.
+     * Assuming an average log entry to take 1k, this would result in the application
+     * using about 10MB additional memory if the queue is full
+     * @deprecated Use {@link #DEFAULT_RING_BUFFER_SIZE} instead
+     */
+    @Deprecated
+    public static final int DEFAULT_QUEUE_SIZE = DEFAULT_RING_BUFFER_SIZE;
+
+    /**
      * Default timeout when waiting for the remote server to accept our
      * connection. The same timeout is used as a read timeout during SSL
      * handshake.
