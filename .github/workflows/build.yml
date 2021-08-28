@@ -23,7 +23,7 @@ jobs:
       - name: Setup JAVA
         uses: actions/setup-java@v2
         with:
-          distribution: "adopt"
+          distribution: "zulu"
           java-version: ${{ matrix.java }}
 
       - uses: actions/cache@v2
@@ -60,7 +60,7 @@ jobs:
       - name: Setup JAVA
         uses: actions/setup-java@v2
         with:
-          distribution: "adopt"
+          distribution: "zulu"
           java-version: 1.8
 
       - name: Setup GPG
