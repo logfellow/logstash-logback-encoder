@@ -71,7 +71,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     /**
      * The providers that are used to populate the output JSON object.
      */
-    private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
+    private JsonProviders<Event> jsonProviders = new JsonProviders<>();
 
     private JsonEncoding encoding = JsonEncoding.UTF8;
 
@@ -118,6 +118,56 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         return started;
     }
 
+    /**
+     * Create a reusable {@link JsonFormatter} bound to the given {@link OutputStream}.
+     * 
+     * @param outputStream the output stream used by the {@link JsonFormatter}
+     * @return {@link JsonFormatter} writing JSON content in the output stream
+     * @throws IOException thrown when unable to write in the output stream or when Jackson fails to produce JSON content
+     */
+    public JsonFormatter createJsonFormatter(OutputStream outputStream) throws IOException {
+        if (!isStarted()) {
+            throw new IllegalStateException("Formatter is not started");
+        }
+        
+        JsonGenerator generator = createGenerator(outputStream);
+        return new JsonFormatter(generator);
+    }
+
+    /**
+     * Create a reusable {@link JsonFormatter} bound to the given {@link Writer}.
+     * 
+     * @param writer the {@link Writer} used by the {@link JsonFormatter}
+     * @return {@link JsonFormatter} writing JSON content in the writer
+     * @throws IOException thrown when unable to write in the writer or when Jackson fails to produce JSON content
+     */
+    public JsonFormatter createJsonFormatter(Writer writer) throws IOException {
+        if (!isStarted()) {
+            throw new IllegalStateException("Formatter is not started");
+        }
+        
+        JsonGenerator generator = createGenerator(writer);
+        return new JsonFormatter(generator);
+    }
+    
+    
+    public class JsonFormatter {
+        private final JsonGenerator generator;
+        
+        public JsonFormatter(JsonGenerator generator) {
+            this.generator = generator;
+        }
+        
+        public void writeEvent(Event event) throws IOException {
+            writeEventToGenerator(generator, event);
+        }
+        
+        public void dispose() throws IOException {
+            this.generator.close();
+        }
+    }
+    
+    
     private JsonFactory createJsonFactory() {
         ObjectMapper objectMapper = new ObjectMapper()
                 /*
@@ -134,24 +184,6 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         }
 
         return this.jsonFactoryDecorator.decorate(objectMapper.getFactory());
-    }
-
-    public void writeEventToOutputStream(Event event, OutputStream outputStream) throws IOException {
-        try (JsonGenerator generator = createGenerator(outputStream)) {
-            writeEventToGenerator(generator, event);
-        }
-        /*
-         * Do not flush the outputStream.
-         *
-         * Allow something higher in the stack (e.g. the encoder/appender)
-         * to determine appropriate times to flush.
-         */
-    }
-
-    public void writeEventToWriter(Event event, Writer writer) throws IOException {
-        try (JsonGenerator generator = createGenerator(writer)) {
-            writeEventToGenerator(generator, event);
-        }
     }
 
     protected void writeEventToGenerator(JsonGenerator generator, Event event) throws IOException {

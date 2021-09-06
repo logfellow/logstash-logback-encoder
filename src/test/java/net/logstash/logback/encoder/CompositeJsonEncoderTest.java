@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -45,6 +44,7 @@ import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.status.WarnStatus;
 import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,7 +57,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class CompositeJsonEncoderTest {
     
     @InjectMocks
-    private final CompositeJsonEncoder<ILoggingEvent> encoder = new TestCompositeJsonEncoder();
+    private final TestCompositeJsonEncoder encoder = new TestCompositeJsonEncoder();
     
     private CompositeJsonFormatter<ILoggingEvent> formatter;
     
@@ -218,20 +218,17 @@ public class CompositeJsonEncoderTest {
 
     
     /*
-     * Failure to encode log event should log an warning status
+     * Failure to encode event should log an warning status
      */
     @Test
     public void testIOException() throws IOException {
+    encoder.exceptionToThrow = new IOException();
         encoder.start();
-        
-        IOException exception = new IOException();
-        
-        doThrow(exception).when(formatter).writeEventToOutputStream(eq(event), any(OutputStream.class));
         
         encoder.encode(event);
         
         verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
-                + "Event: " + event, context, exception));
+                + "Event: " + event, context, encoder.exceptionToThrow));
     }
 
     
@@ -258,9 +255,19 @@ public class CompositeJsonEncoderTest {
     
     
     private static class TestCompositeJsonEncoder extends CompositeJsonEncoder<ILoggingEvent> {
+    private IOException exceptionToThrow;
+    
         @Override
         protected CompositeJsonFormatter<ILoggingEvent> createFormatter() {
-            CompositeJsonFormatter<ILoggingEvent> formatter = spy(new CompositeJsonFormatter<ILoggingEvent>(this) { });
+            CompositeJsonFormatter<ILoggingEvent> formatter = spy(new CompositeJsonFormatter<ILoggingEvent>(this) {
+                @Override
+                protected void writeEventToGenerator(JsonGenerator generator, ILoggingEvent event) throws IOException {
+                    if (exceptionToThrow != null) {
+                        throw exceptionToThrow;
+                    }
+                    super.writeEventToGenerator(generator, event);
+                }
+            });
             formatter.getProviders().addProvider(new TestJsonProvider());
             return formatter;
         }

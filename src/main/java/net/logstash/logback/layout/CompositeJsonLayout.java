@@ -18,6 +18,7 @@ package net.logstash.logback.layout;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.util.Objects;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
@@ -25,8 +26,7 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import net.logstash.logback.encoder.SeparatorParser;
-import net.logstash.logback.util.ReusableByteBuffer;
-import net.logstash.logback.util.ReusableByteBufferPool;
+import net.logstash.logback.util.ReusableJsonFormatterPool;
 
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
@@ -61,17 +61,13 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
      */
     private int minBufferSize = 1024;
     
-    /**
-     * Provides reusable byte buffers (initialized when layout is started)
-     */
-    private ReusableByteBufferPool bufferPool;
-    
     
     private final CompositeJsonFormatter<Event> formatter;
-
+    private ReusableJsonFormatterPool<Event> formatterPool;
+    
     public CompositeJsonLayout() {
         super();
-        this.formatter = createFormatter();
+        this.formatter = Objects.requireNonNull(createFormatter());
     }
 
     protected abstract CompositeJsonFormatter<Event> createFormatter();
@@ -82,26 +78,29 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             throw new IllegalStateException("Layout is not started");
         }
         
-        ReusableByteBuffer buffer = this.bufferPool.acquire();
-        try (OutputStreamWriter writer = new OutputStreamWriter(buffer)) {
+        try (ReusableJsonFormatterPool<Event>.ReusableJsonFormatter cachedFormatter = formatterPool.acquire()) {
+            writeEvent(cachedFormatter, event);
+            return new String(cachedFormatter.getBuffer().toByteArray());
+        
+        } catch (IOException e) {
+            addWarn("Error formatting logging event", e);
+            return null;
+            
+        }
+    }
+
+    private void writeEvent(ReusableJsonFormatterPool<Event>.ReusableJsonFormatter cachedFormatter, Event event) throws IOException {
+        try (Writer writer = new OutputStreamWriter(cachedFormatter.getBuffer())) {
             writeLayout(prefix, writer, event);
-            writeFormatter(writer, event);
+            cachedFormatter.write(event);
             writeLayout(suffix, writer, event);
            
             if (lineSeparator != null) {
                 writer.write(lineSeparator);
             }
             writer.flush();
-
-            return new String(buffer.toByteArray());
-        } catch (IOException e) {
-            addWarn("Error formatting logging event", e);
-            return null;
-        } finally {
-            bufferPool.release(buffer);
         }
     }
-
     
     private void writeLayout(Layout<Event> wrapped, Writer writer, Event event) throws IOException {
         if (wrapped == null) {
@@ -111,22 +110,25 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         String str = wrapped.doLayout(event);
         if (str != null) {
             writer.write(str);
+            writer.flush();
         }
-    }
-    
-    private void writeFormatter(Writer writer, Event event) throws IOException {
-        this.formatter.writeEventToWriter(event, writer);
     }
 
 
     @Override
     public void start() {
+        if (isStarted()) {
+            return;
+        }
+        
         super.start();
-        this.bufferPool = new ReusableByteBufferPool(this.minBufferSize);
         formatter.setContext(getContext());
         formatter.start();
+        
         startWrapped(prefix);
         startWrapped(suffix);
+        
+        this.formatterPool = new ReusableJsonFormatterPool<>(formatter, minBufferSize);
     }
 
     private void startWrapped(Layout<Event> wrapped) {
@@ -151,10 +153,16 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
 
     @Override
     public void stop() {
+        if (!isStarted()) {
+            return;
+        }
+        
         super.stop();
         formatter.stop();
         stopWrapped(prefix);
         stopWrapped(suffix);
+        
+        this.formatterPool = null;
     }
 
     private void stopWrapped(Layout<Event> wrapped) {
