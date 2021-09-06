@@ -61,6 +61,7 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.BasicStatusManager;
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
@@ -83,8 +84,6 @@ public class LogstashTcpSocketAppenderTest {
 
     @InjectMocks
     private final LogstashTcpSocketAppender appender = new TestableLogstashTcpSocketAppender();
-    
-    private LoggerContext context = new LoggerContext();
     
     private StatusManager statusManager = new BasicStatusManager();
     
@@ -121,6 +120,13 @@ public class LogstashTcpSocketAppenderTest {
     
     @BeforeEach
     public void setup() throws IOException {
+        // Output statuses on the console for easy debugging. Must be initialized early to capture
+        // warnings emitted by setter/getter methods before the appender is started.
+        OnConsoleStatusListener consoleListener = new OnConsoleStatusListener();
+        consoleListener.start();
+        statusManager.add(consoleListener);
+        
+        LoggerContext context = new LoggerContext();
         context.setStatusManager(statusManager);
         
         when(socketFactory.createSocket()).thenReturn(socket);

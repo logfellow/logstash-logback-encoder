@@ -1173,8 +1173,13 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * @see PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)
      * @param secondaryConnectionTTL the TTL of a connection when connected to a secondary destination
      * @throws IllegalStateException if the {@link #connectionStrategy} is not a {@link PreferPrimaryDestinationConnectionStrategy}
+     * 
+     * @deprecated use {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)} instead.
      */
+    @Deprecated
     public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
+        addWarn("Setting <secondaryConnectionTTL> on the appender is deprecated, set it on the connection strategy using <preferPrimary.secondaryConnectionTTL> instead.");
+
         if (connectionStrategy instanceof PreferPrimaryDestinationConnectionStrategy) {
             ((PreferPrimaryDestinationConnectionStrategy) connectionStrategy).setSecondaryConnectionTTL(secondaryConnectionTTL);
         } else {
@@ -1182,6 +1187,16 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         }
     }
 
+    /**
+     * Convenience method for accessing {@link PreferPrimaryDestinationConnectionStrategy#getSecondaryConnectionTTL()}.
+     * 
+     * @return the secondary connection TTL or {@code null} if the connection strategy is not a {@link PreferPrimaryDestinationConnectionStrategy}.
+     * @deprecated use {@link PreferPrimaryDestinationConnectionStrategy#getSecondaryConnectionTTL()} instead.
+     * 
+     * @see #getConnectionStrategy()
+     * @see PreferPrimaryDestinationConnectionStrategy#getSecondaryConnectionTTL()
+     */
+    @Deprecated
     public Duration getSecondaryConnectionTTL() {
         if (connectionStrategy instanceof PreferPrimaryDestinationConnectionStrategy) {
             return ((PreferPrimaryDestinationConnectionStrategy) connectionStrategy).getSecondaryConnectionTTL();
@@ -1237,7 +1252,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Alias for {@link #getRingBufferSize()}.
      * 
      * @return the size of the ring buffer
-     * @deprecated use {@link #getRingBufferSize()} instead
+     * @deprecated use {@link #getRingBufferSize()} instead.
      */
     @Deprecated
     public int getQueueSize() {
