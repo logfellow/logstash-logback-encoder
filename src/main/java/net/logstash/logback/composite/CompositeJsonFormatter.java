@@ -34,6 +34,7 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonFactory.Feature;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -168,9 +169,23 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
             }
         }
 
-        return this.jsonFactoryDecorator.decorate(objectMapper.getFactory());
+        return decorateFactory(objectMapper.getFactory());
     }
 
+    private JsonFactory decorateFactory(JsonFactory factory) {
+        return this.jsonFactoryDecorator.decorate(factory)
+                /*
+                 * Jackson buffer recycling works by maintaining a pool of buffers per thread. This
+                 * feature works best when one JsonGenerator is created per thread, typically in J2EE
+                 * environments.
+                 * 
+                 * Each JsonFormatter uses its own instance of JsonGenerator and is reused multiple times
+                 * possibly on different threads. The memory buffers allocated by the JsonGenerator do
+                 * not belong to a particular thread - hence the recycling feature should be disabled.
+                 */
+                .disable(Feature.USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING);
+    }
+    
     protected void writeEventToGenerator(JsonGenerator generator, Event event) throws IOException {
         if (!isStarted()) {
             throw new IllegalStateException("Encoding attempted before starting.");
