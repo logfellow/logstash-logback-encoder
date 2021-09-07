@@ -1178,7 +1178,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     @Deprecated
     public void setSecondaryConnectionTTL(Duration secondaryConnectionTTL) {
-        addWarn("Setting <secondaryConnectionTTL> on the appender is deprecated, set it on the connection strategy using <preferPrimary.secondaryConnectionTTL> instead.");
+        addWarn(
+              "Setting <secondaryConnectionTTL> directly on the appender is deprecated. "
+            + "Instead you should explicitly set the connection strategy to <preferPrimary> and set its <secondaryConnectionTTL> property to the desired value.");
 
         if (connectionStrategy instanceof PreferPrimaryDestinationConnectionStrategy) {
             ((PreferPrimaryDestinationConnectionStrategy) connectionStrategy).setSecondaryConnectionTTL(secondaryConnectionTTL);
