@@ -52,7 +52,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,7 +63,6 @@ public class AsyncDisruptorAppenderTest {
     @Mock
     private EventHandler<LogEvent<ILoggingEvent>> eventHandler;
     
-    @Spy
     private StatusManager statusManager = new BasicStatusManager();
     
     @Mock
@@ -285,8 +283,7 @@ public class AsyncDisruptorAppenderTest {
                 appender.append(event2);
             });
             
-            await().until(() -> asyncThread.get() != null);
-            assertThat(asyncThread.get().getState()).isEqualTo(State.TIMED_WAITING);
+            await().until(() -> asyncThread.get() != null && asyncThread.get().getState().equals(State.TIMED_WAITING));
             assertThat(future).isNotDone();
             
             /*
