@@ -15,9 +15,9 @@
  */
 package net.logstash.logback.composite;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.util.Objects;
 import java.util.ServiceConfigurationError;
 
@@ -133,25 +133,9 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         JsonGenerator generator = createGenerator(outputStream);
         return new JsonFormatter(generator);
     }
-
-    /**
-     * Create a reusable {@link JsonFormatter} bound to the given {@link Writer}.
-     * 
-     * @param writer the {@link Writer} used by the {@link JsonFormatter}
-     * @return {@link JsonFormatter} writing JSON content in the writer
-     * @throws IOException thrown when unable to write in the writer or when Jackson fails to produce JSON content
-     */
-    public JsonFormatter createJsonFormatter(Writer writer) throws IOException {
-        if (!isStarted()) {
-            throw new IllegalStateException("Formatter is not started");
-        }
-        
-        JsonGenerator generator = createGenerator(writer);
-        return new JsonFormatter(generator);
-    }
     
     
-    public class JsonFormatter {
+    public class JsonFormatter implements Closeable {
         private final JsonGenerator generator;
         
         public JsonFormatter(JsonGenerator generator) {
@@ -162,7 +146,8 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
             writeEventToGenerator(generator, event);
         }
         
-        public void dispose() throws IOException {
+        @Override
+        public void close() throws IOException {
             this.generator.close();
         }
     }
@@ -203,10 +188,6 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
 
     private JsonGenerator createGenerator(OutputStream outputStream) throws IOException {
         return decorateGenerator(jsonFactory.createGenerator(outputStream, encoding));
-    }
-    
-    private JsonGenerator createGenerator(Writer writer) throws IOException {
-        return decorateGenerator(jsonFactory.createGenerator(writer));
     }
 
     private JsonGenerator decorateGenerator(JsonGenerator generator) {
