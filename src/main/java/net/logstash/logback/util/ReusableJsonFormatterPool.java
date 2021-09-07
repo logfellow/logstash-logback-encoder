@@ -23,20 +23,60 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.CompositeJsonFormatter.JsonFormatter;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 
 /**
+ * Pool of {@link ReusableJsonFormatter} that can be safely reused multiple times.
+ * A {@link ReusableJsonFormatter} is made of an internal {@link ReusableByteBuffer} and a
+ * {@link CompositeJsonFormatter.JsonFormatter} bound to it.
+ * 
+ * <p>Instances must be returned to the pool after use by calling {@link ReusableJsonFormatter#close()}
+ * or {@link #release(net.logstash.logback.util.ReusableJsonFormatterPool.ReusableJsonFormatter)
+ * release(ReusableJsonFormatter)}.
+ * 
+ * Instances are not recycled (and therefore not returned to the pool) after their internal
+ * {@link CompositeJsonFormatter.JsonFormatter} threw an exception. This is to prevent reusing an
+ * instance whose internal components are potentially in an unpredictable state.
+ * 
+ * <p>The internal byte buffer is created with an initial size of {@link #minBufferSize}.
+ * The buffer automatically grows above the {@code #minBufferSize} when needed to
+ * accommodate with larger events. However, only the first {@code minBufferSize} bytes
+ * will be reused by subsequent invocations. It is therefore strongly advised to set
+ * the minimum size at least equal to the average size of the encoded events to reduce
+ * unnecessary memory allocations and reduce pressure on the garbage collector.
+ * 
+ * <p>The pool is technically unbounded but will never hold more entries than the number of concurrent
+ * threads accessing it. Entries are kept in the pool using soft references so they can be garbage
+ * collected by the JVM when running low in memory.
+ * 
  * @author brenuart
- *
  */
 public class ReusableJsonFormatterPool<Event extends DeferredProcessingAware> {
 
+    /**
+     * The minimum size of the byte buffer used when encoding events.
+     */
     private final int minBufferSize;
     
+    /**
+     * The factory used to create {@link JsonFormatter} instances
+     */
     private final CompositeJsonFormatter<Event> formatterFactory;
     
-    private SoftReference<Deque<ReusableJsonFormatter>> formatters = new SoftReference<>(null);
+    /**
+     * The pool of reusable JsonFormatter instances.
+     * May be cleared by the GC when running low in memory.
+     * 
+     * Note:
+     *   JsonFormatters are not explicitly disposed when the GC clears the SoftReference. This means that
+     *   the underlying Jackson JsonGenerator is not explicitly closed and the associated memory buffers
+     *   are not returned to Jackson's internal memory pools.
+     *   This behavior is desired and makes the associated memory immediately reclaimable - which is what
+     *   we need since we are "running low in memory".
+     */
+    private volatile SoftReference<Deque<ReusableJsonFormatter>> formatters = new SoftReference<>(null);
     
 
     public ReusableJsonFormatterPool(CompositeJsonFormatter<Event> formatterFactory, int minBufferSize) {
@@ -44,97 +84,140 @@ public class ReusableJsonFormatterPool<Event extends DeferredProcessingAware> {
         this.minBufferSize = minBufferSize;
     }
 
+    /**
+     * A reusable JsonFormatter holding a JsonFormatter writing inside a dedicated {@link ReusableByteBuffer}.
+     * Closing the instance returns it to the pool and makes it available for subsequent usage, unless the
+     * underlying {@link CompositeJsonFormatter.JsonFormatter} threw an exception during its use.
+     * 
+     * <p>Note: usage is not thread-safe.
+     */
     public class ReusableJsonFormatter implements Closeable {
         private final ReusableByteBuffer buffer;
         private final CompositeJsonFormatter<Event>.JsonFormatter formatter;
+        private boolean recyclable = true;
         
         ReusableJsonFormatter(ReusableByteBuffer buffer, CompositeJsonFormatter<Event>.JsonFormatter formatter) {
             this.buffer = buffer;
             this.formatter = formatter;
         }
-        
+
+        /**
+         * Return the underlying buffer into which the JsonFormatter is writing.
+         * 
+         * @return the underlying byte buffer
+         */
         public ReusableByteBuffer getBuffer() {
             return buffer;
         }
         
+        /**
+         * Write the Event in JSON format into the enclosed buffer using the enclosed JsonFormatter.
+         * 
+         * @param event the event to write
+         * @throws IOException thrown when the JsonFormatter has problem to convert the Event into JSON format
+         */
         public void write(Event event) throws IOException {
-            this.formatter.writeEvent(event);
+            try {
+                this.formatter.writeEvent(event);
+                
+            } catch (IOException e) {
+                // Do not recycle the instance after an exception is thrown: the underlying
+                // JsonGenerator may not be in a safe state.
+                this.recyclable = false;
+                throw e;
+            }
         }
         
-        @Override
-        protected void finalize() throws Throwable {
-            dispose();
-        }
-        
-        public void dispose() throws IOException {
-            this.formatter.dispose();
-            this.buffer.reset();
-        }
-        
-        public void reset() {
-            this.buffer.reset();
-        }
-        
+        /**
+         * Close the JsonFormatter, release associated resources and return it to the pool.
+         */
         @Override
         public void close() throws IOException {
             release(this);
         }
+        
+        /**
+         * Dispose associated resources
+         */
+        protected void dispose() {
+            try {
+                this.formatter.close();
+                this.buffer.reset();
+                
+            } catch (IOException e) {
+                // ignore and proceed
+            }
+        }
     }
     
+    
+    /**
+     * Get a {@link ReusableJsonFormatter} out of the pool, creating a new one if needed.
+     * The instance must be closed after use to return it to the pool.
+     * 
+     * @return a {@link ReusableJsonFormatter}
+     * @throws IOException thrown when unable to create a new instance
+     */
     public ReusableJsonFormatter acquire() throws IOException {
-        ReusableJsonFormatter cachedFormatter = null;
+        ReusableJsonFormatter reusableFormatter = null;
 
         Deque<ReusableJsonFormatter> cachedFormatters = formatters.get();
         if (cachedFormatters != null) {
-            cachedFormatter = cachedFormatters.poll();
+            reusableFormatter = cachedFormatters.poll();
         }
         
-        if (cachedFormatter == null) {
-            cachedFormatter = createJsonFormatter();
+        if (reusableFormatter == null) {
+            reusableFormatter = createJsonFormatter();
         }
         
-        return cachedFormatter;
+        return reusableFormatter;
     }
     
-    protected ReusableJsonFormatter createJsonFormatter() throws IOException {
-        ReusableByteBuffer buffer = new ReusableByteBuffer(this.minBufferSize);
-        CompositeJsonFormatter<Event>.JsonFormatter jsonFormatter = formatterFactory.createJsonFormatter(buffer);
-        return new ReusableJsonFormatter(buffer, jsonFormatter);
-    }
     
-    public void release(ReusableJsonFormatter cachedFormatter) {
-        if (cachedFormatter == null) {
+    /**
+     * Return an instance to the pool.
+     * An alternative is to call {@link ReusableJsonFormatter#close()}.
+     * 
+     * @param reusableFormatter the instance to return to the pool
+     */
+    public void release(ReusableJsonFormatter reusableFormatter) {
+        if (reusableFormatter == null) {
             return;
         }
         
-//        if (isStarted()) {
-            /*
-             * Create a new Deque if the SoftReference has been cleared.
-             * The new instance may be lost if another thread executes this code concurrently and the
-             * released JsonFormatter won't be reused. This behavior is expected and is far cheaper than
-             * implementing a more robust concurrent solution.
-             */
-            Deque<ReusableJsonFormatter> cachedFormatters = formatters.get();
-            if (cachedFormatters == null) {
-                cachedFormatters = new ConcurrentLinkedDeque<>();
-                formatters = new SoftReference<>(cachedFormatters);
-            }
+        /*
+         * Dispose the formatter instead of returning to the pool when marked not recyclable
+         */
+        if (!reusableFormatter.recyclable) {
+            reusableFormatter.dispose();
+            return;
+        }
+        
+        Deque<ReusableJsonFormatter> cachedFormatters = this.formatters.get();
+        if (cachedFormatters == null) {
+            cachedFormatters = new ConcurrentLinkedDeque<>();
+            this.formatters = new SoftReference<>(cachedFormatters);
+        }
 
-            /*
-             * Reset the internal buffer and return the cached JsonFormatter to the pool.
-             */
-            cachedFormatter.reset();
-            cachedFormatters.addFirst(cachedFormatter); // try to reuse the same as much as we can -> add it first
-            
-//        } else {
-//            // Encoder is stopped - dispose the JSON formatter instead of adding it
-//            // back into the pool
-//            try {
-//                cachedFormatter.dispose();
-//            } catch (IOException e) {
-//                // ignore
-//            }
-//        }
+        /*
+         * Reset the internal buffer and return the cached JsonFormatter to the pool.
+         */
+        reusableFormatter.getBuffer().reset();
+        cachedFormatters.addFirst(reusableFormatter); // try to reuse the same as much as we can -> add it first
     }
+
     
+    /**
+     * Create a new {@link ReusableJsonFormatter} instance by allocating a new {@link ReusableByteBuffer}
+     * and a {@link CompositeJsonFormatter.JsonFormatter} bound to it.
+     * 
+     * @return a new {@link ReusableJsonFormatter}
+     * @throws IOException thrown when the {@link CompositeJsonFormatter} is unable to create a new instance
+     *                     of {@link CompositeJsonFormatter.JsonFormatter}.
+     */
+    protected ReusableJsonFormatter createJsonFormatter() throws IOException {
+        ReusableByteBuffer buffer = new ReusableByteBuffer(this.minBufferSize);
+        CompositeJsonFormatter<Event>.JsonFormatter jsonFormatter = this.formatterFactory.createJsonFormatter(buffer);
+        return new ReusableJsonFormatter(buffer, jsonFormatter);
+    }
 }
