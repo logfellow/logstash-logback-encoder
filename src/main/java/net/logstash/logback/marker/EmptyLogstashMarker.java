@@ -36,6 +36,7 @@ import org.slf4j.Marker;
  *     }
  * </pre>
  */
+@SuppressWarnings("serial")
 public class EmptyLogstashMarker extends LogstashMarker implements StructuredArgument {
 
     public static final String EMPTY_MARKER_NAME = "EMPTY";

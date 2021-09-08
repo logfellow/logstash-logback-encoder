@@ -91,8 +91,8 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
      *
      * Since apps will typically serialize the same types of objects repeatedly, they shouldn't grow too much.
      */
-    private static final ConcurrentHashMap<Class<?>, JsonSerializer<Object>> beanSerializers = new ConcurrentHashMap<Class<?>, JsonSerializer<Object>>();
-    private static final ConcurrentHashMap<ObjectMapper, SerializerProvider> serializerProviders = new ConcurrentHashMap<ObjectMapper, SerializerProvider>();
+    private static final ConcurrentHashMap<Class<?>, JsonSerializer<Object>> beanSerializers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<ObjectMapper, SerializerProvider> serializerProviders = new ConcurrentHashMap<>();
 
     public ObjectFieldsAppendingMarker(Object object) {
         super(MARKER_NAME);
@@ -168,13 +168,7 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
 
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!super.equals(obj)) {
-            return false;
-        }
-        if (!(obj instanceof ObjectFieldsAppendingMarker)) {
+        if (!(obj instanceof ObjectFieldsAppendingMarker && super.equals(obj))) {
             return false;
         }
 
