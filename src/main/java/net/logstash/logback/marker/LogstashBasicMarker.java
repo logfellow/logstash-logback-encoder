@@ -22,60 +22,23 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Marker;
 
-/* Copy of {@link org.slf4j.helpers.BasicMarker} from slf4j-api v1.7.31, with minor changes:
- * 1. make the constructor public so that it can be extended in other packages
- * 2. add getReferences() method
-
- * slf4j-api, {@link org.slf4j.helpers.BasicMarker}, and the portions
- * of this class that have been copied from BasicMarker are provided under
- * the MIT License copied here:
- * 
- * Copyright (c) 2004-2011 QOS.ch
- * All rights reserved.
- *
- * Permission is hereby granted, free of charge, to any person obtaining
- * a copy of this software and associated documentation files (the
- * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modify, merge, publish,
- * distribute, sublicense, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to do so, subject to
- * the following conditions:
- *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- */
 /**
- * A simple implementation of the {@link Marker} interface.
- *
- * @author Ceki G&uuml;lc&uuml;
- * @author Joern Huxhorn
-*/
+ * A simple implementation of the SLF4J {@link Marker} interface.
+ */
 @SuppressWarnings("serial")
 public class LogstashBasicMarker implements Marker {
 
-    private static final String OPEN = "[ ";
-    private static final String CLOSE = " ]";
-    private static final String SEP = ", ";
-    
+    /**
+     * The marker name
+     */
     private final String name;
+    
+    /**
+     * Referenced markers - initialized the first time a marker is added
+     */
     private volatile List<Marker> referenceList;
     
-    /*
-     * BEGIN Modification in logstash-logback-encoder to make this constructor public
-     */
     public LogstashBasicMarker(String name) {
-    /*
-     * END Modification in logstash-logback-encoder to make this constructor public
-     */
         if (name == null) {
             throw new IllegalArgumentException("A marker name cannot be null");
         }
@@ -145,20 +108,6 @@ public class LogstashBasicMarker implements Marker {
             return referenceList.iterator();
         }
     }
-
-    /*
-     * BEGIN Modification in logstash-logback-encoder to add this method
-     */
-    protected List<Marker> getReferences() {
-        if (referenceList == null) {
-            return Collections.emptyList();
-        } else {
-            return Collections.unmodifiableList(referenceList);
-        }
-    }
-    /*
-     * END Modification in logstash-logback-encoder to add this method
-     */
 
     /**
      * {@inheritDoc}
@@ -253,16 +202,15 @@ public class LogstashBasicMarker implements Marker {
             return this.getName();
         }
         StringBuilder sb = new StringBuilder(this.getName())
-                .append(' ')
-                .append(OPEN);
+                .append(" [ ");
         Iterator<Marker> it = this.iterator();
         while (it.hasNext()) {
             sb.append(it.next().getName());
             if (it.hasNext()) {
-                sb.append(SEP);
+                sb.append(", ");
             }
         }
-        sb.append(CLOSE);
+        sb.append(" ]");
 
         return sb.toString();
     }
