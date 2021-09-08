@@ -26,7 +26,7 @@ import org.slf4j.Marker;
  * A simple implementation of the SLF4J {@link Marker} interface.
  */
 @SuppressWarnings("serial")
-public class LogstashBasicMarker implements Marker {
+class LogstashBasicMarker implements Marker {
 
     /**
      * The marker name
@@ -38,7 +38,7 @@ public class LogstashBasicMarker implements Marker {
      */
     private volatile List<Marker> referenceList;
     
-    public LogstashBasicMarker(String name) {
+    LogstashBasicMarker(String name) {
         if (name == null) {
             throw new IllegalArgumentException("A marker name cannot be null");
         }
