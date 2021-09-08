@@ -67,7 +67,7 @@ public class LogstashBasicMarker implements Marker {
     private static final String SEP = ", ";
     
     private final String name;
-    private final List<Marker> referenceList = new CopyOnWriteArrayList<>();
+    private volatile List<Marker> referenceList;
     
     /*
      * BEGIN Modification in logstash-logback-encoder to make this constructor public
@@ -107,6 +107,13 @@ public class LogstashBasicMarker implements Marker {
             return;
         }
         
+        if (referenceList == null) {
+            synchronized (this) {
+                if (referenceList == null) {
+                    this.referenceList = new CopyOnWriteArrayList<>();
+                }
+            }
+        }
         referenceList.add(reference);
     }
 
@@ -115,7 +122,7 @@ public class LogstashBasicMarker implements Marker {
      */
     @Override
     public boolean hasReferences() {
-        return !referenceList.isEmpty();
+        return referenceList != null && !referenceList.isEmpty();
     }
 
     /**
@@ -132,14 +139,22 @@ public class LogstashBasicMarker implements Marker {
      */
     @Override
     public Iterator<Marker> iterator() {
-        return referenceList.iterator();
+        if (referenceList == null) {
+            return Collections.emptyIterator();
+        } else {
+            return referenceList.iterator();
+        }
     }
 
     /*
      * BEGIN Modification in logstash-logback-encoder to add this method
      */
     protected List<Marker> getReferences() {
-        return Collections.unmodifiableList(referenceList);
+        if (referenceList == null) {
+            return Collections.emptyList();
+        } else {
+            return Collections.unmodifiableList(referenceList);
+        }
     }
     /*
      * END Modification in logstash-logback-encoder to add this method
@@ -150,7 +165,11 @@ public class LogstashBasicMarker implements Marker {
      */
     @Override
     public boolean remove(Marker referenceToRemove) {
-        return referenceList.remove(referenceToRemove);
+        if (referenceList != null) {
+            return referenceList.remove(referenceToRemove);
+        } else {
+            return false;
+        }
     }
 
     /**
