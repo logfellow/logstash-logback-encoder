@@ -73,7 +73,7 @@ class LogstashBasicMarker implements Marker {
         if (referenceList == null) {
             synchronized (this) {
                 if (referenceList == null) {
-                    this.referenceList = new CopyOnWriteArrayList<>();
+                    referenceList = new CopyOnWriteArrayList<>();
                 }
             }
         }
