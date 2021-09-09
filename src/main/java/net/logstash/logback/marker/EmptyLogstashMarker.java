@@ -54,4 +54,14 @@ public class EmptyLogstashMarker extends LogstashMarker implements StructuredArg
     protected String toStringSelf() {
         return "";
     }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof EmptyLogstashMarker && super.equals(obj);
+    }
+    
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }
