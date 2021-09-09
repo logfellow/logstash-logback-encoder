@@ -92,13 +92,13 @@ public class ReusableJsonFormatterPool<Event extends DeferredProcessingAware> {
      * <p>Note: usage is not thread-safe.
      */
     public class ReusableJsonFormatter implements Closeable {
-        private final ReusableByteBuffer buffer;
-        private final CompositeJsonFormatter<Event>.JsonFormatter formatter;
+        private ReusableByteBuffer buffer;
+        private CompositeJsonFormatter<Event>.JsonFormatter formatter;
         private boolean recyclable = true;
         
         ReusableJsonFormatter(ReusableByteBuffer buffer, CompositeJsonFormatter<Event>.JsonFormatter formatter) {
-            this.buffer = buffer;
-            this.formatter = formatter;
+            this.buffer = Objects.requireNonNull(buffer);
+            this.formatter = Objects.requireNonNull(formatter);
         }
 
         /**
@@ -107,6 +107,7 @@ public class ReusableJsonFormatterPool<Event extends DeferredProcessingAware> {
          * @return the underlying byte buffer
          */
         public ReusableByteBuffer getBuffer() {
+            assertNotDisposed();
             return buffer;
         }
         
@@ -117,6 +118,8 @@ public class ReusableJsonFormatterPool<Event extends DeferredProcessingAware> {
          * @throws IOException thrown when the JsonFormatter has problem to convert the Event into JSON format
          */
         public void write(Event event) throws IOException {
+            assertNotDisposed();
+            
             try {
                 this.formatter.writeEvent(event);
                 
@@ -142,10 +145,21 @@ public class ReusableJsonFormatterPool<Event extends DeferredProcessingAware> {
         protected void dispose() {
             try {
                 this.formatter.close();
-                this.buffer.reset();
-                
             } catch (IOException e) {
                 // ignore and proceed
+            }
+            
+            this.formatter = null;
+            this.buffer = null;
+        }
+        
+        protected boolean isDisposed() {
+            return buffer == null;
+        }
+        
+        protected void assertNotDisposed() {
+            if (isDisposed()) {
+                throw new IllegalStateException("Instance has been disposed and cannot be used anymore. Did you keep a reference to it after it is closed?");
             }
         }
     }
