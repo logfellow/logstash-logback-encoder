@@ -122,10 +122,6 @@ class LogstashBasicMarker implements Marker {
      */
     @Override
     public boolean contains(Marker other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Other cannot be null");
-        }
-
         if (this.equals(other)) {
             return true;
         }
@@ -146,10 +142,6 @@ class LogstashBasicMarker implements Marker {
      */
     @Override
     public boolean contains(String name) {
-        if (name == null) {
-            throw new IllegalArgumentException("Other cannot be null");
-        }
-
         if (this.name.equals(name)) {
             return true;
         }
