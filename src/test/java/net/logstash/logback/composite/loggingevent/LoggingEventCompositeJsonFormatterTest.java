@@ -22,6 +22,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import net.logstash.logback.argument.StructuredArguments;
+import net.logstash.logback.composite.CompositeJsonFormatter.JsonFormatter;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -52,7 +53,8 @@ public class LoggingEventCompositeJsonFormatterTest {
          * This should not throw an exception, since SerializationFeature.FAIL_ON_EMPTY_BEANS is disabled
          */
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            assertThatCode(() -> formatter.writeEventToOutputStream(event, bos)).doesNotThrowAnyException();
+            JsonFormatter jsonFormatter = formatter.createJsonFormatter(bos);
+            assertThatCode(() -> jsonFormatter.writeEvent(event)).doesNotThrowAnyException();
         }
     }
 

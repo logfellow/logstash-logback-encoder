@@ -15,9 +15,9 @@
  */
 package net.logstash.logback.composite;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.util.Objects;
 import java.util.ServiceConfigurationError;
 
@@ -34,6 +34,7 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonFactory.Feature;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -71,7 +72,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     /**
      * The providers that are used to populate the output JSON object.
      */
-    private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
+    private JsonProviders<Event> jsonProviders = new JsonProviders<>();
 
     private JsonEncoding encoding = JsonEncoding.UTF8;
 
@@ -118,6 +119,41 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         return started;
     }
 
+    /**
+     * Create a reusable {@link JsonFormatter} bound to the given {@link OutputStream}.
+     * 
+     * @param outputStream the output stream used by the {@link JsonFormatter}
+     * @return {@link JsonFormatter} writing JSON content in the output stream
+     * @throws IOException thrown when unable to write in the output stream or when Jackson fails to produce JSON content
+     */
+    public JsonFormatter createJsonFormatter(OutputStream outputStream) throws IOException {
+        if (!isStarted()) {
+            throw new IllegalStateException("Formatter is not started");
+        }
+        
+        JsonGenerator generator = createGenerator(outputStream);
+        return new JsonFormatter(generator);
+    }
+    
+    
+    public class JsonFormatter implements Closeable {
+        private final JsonGenerator generator;
+        
+        public JsonFormatter(JsonGenerator generator) {
+            this.generator = Objects.requireNonNull(generator);
+        }
+        
+        public void writeEvent(Event event) throws IOException {
+            writeEventToGenerator(generator, event);
+        }
+        
+        @Override
+        public void close() throws IOException {
+            this.generator.close();
+        }
+    }
+    
+    
     private JsonFactory createJsonFactory() {
         ObjectMapper objectMapper = new ObjectMapper()
                 /*
@@ -133,27 +169,23 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
             }
         }
 
-        return this.jsonFactoryDecorator.decorate(objectMapper.getFactory());
+        return decorateFactory(objectMapper.getFactory());
     }
 
-    public void writeEventToOutputStream(Event event, OutputStream outputStream) throws IOException {
-        try (JsonGenerator generator = createGenerator(outputStream)) {
-            writeEventToGenerator(generator, event);
-        }
-        /*
-         * Do not flush the outputStream.
-         *
-         * Allow something higher in the stack (e.g. the encoder/appender)
-         * to determine appropriate times to flush.
-         */
+    private JsonFactory decorateFactory(JsonFactory factory) {
+        return this.jsonFactoryDecorator.decorate(factory)
+                /*
+                 * Jackson buffer recycling works by maintaining a pool of buffers per thread. This
+                 * feature works best when one JsonGenerator is created per thread, typically in J2EE
+                 * environments.
+                 * 
+                 * Each JsonFormatter uses its own instance of JsonGenerator and is reused multiple times
+                 * possibly on different threads. The memory buffers allocated by the JsonGenerator do
+                 * not belong to a particular thread - hence the recycling feature should be disabled.
+                 */
+                .disable(Feature.USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING);
     }
-
-    public void writeEventToWriter(Event event, Writer writer) throws IOException {
-        try (JsonGenerator generator = createGenerator(writer)) {
-            writeEventToGenerator(generator, event);
-        }
-    }
-
+    
     protected void writeEventToGenerator(JsonGenerator generator, Event event) throws IOException {
         if (!isStarted()) {
             throw new IllegalStateException("Encoding attempted before starting.");
@@ -171,10 +203,6 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
 
     private JsonGenerator createGenerator(OutputStream outputStream) throws IOException {
         return decorateGenerator(jsonFactory.createGenerator(outputStream, encoding));
-    }
-    
-    private JsonGenerator createGenerator(Writer writer) throws IOException {
-        return decorateGenerator(jsonFactory.createGenerator(writer));
     }
 
     private JsonGenerator decorateGenerator(JsonGenerator generator) {
