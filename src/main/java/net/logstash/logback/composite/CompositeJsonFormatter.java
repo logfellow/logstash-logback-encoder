@@ -140,7 +140,7 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         private final JsonGenerator generator;
         
         public JsonFormatter(JsonGenerator generator) {
-            this.generator = generator;
+            this.generator = Objects.requireNonNull(generator);
         }
         
         public void writeEvent(Event event) throws IOException {
