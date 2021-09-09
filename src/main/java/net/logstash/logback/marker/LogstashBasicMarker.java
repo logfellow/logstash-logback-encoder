@@ -18,6 +18,7 @@ package net.logstash.logback.marker;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.slf4j.Marker;
@@ -39,10 +40,7 @@ class LogstashBasicMarker implements Marker {
     private volatile List<Marker> referenceList;
     
     LogstashBasicMarker(String name) {
-        if (name == null) {
-            throw new IllegalArgumentException("A marker name cannot be null");
-        }
-        this.name = name;
+        this.name = Objects.requireNonNull(name);
     }
 
     /**
@@ -58,9 +56,7 @@ class LogstashBasicMarker implements Marker {
      */
     @Override
     public void add(Marker reference) {
-        if (reference == null) {
-            throw new IllegalArgumentException("A null value cannot be added to a Marker as reference.");
-        }
+        Objects.requireNonNull(reference);
 
         // no point in adding the reference multiple times
         if (this.contains(reference)) {
