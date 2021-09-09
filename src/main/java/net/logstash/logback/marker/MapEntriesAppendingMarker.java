@@ -99,7 +99,13 @@ public class MapEntriesAppendingMarker extends LogstashMarker implements Structu
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof MapEntriesAppendingMarker && super.equals(obj))) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof MapEntriesAppendingMarker)) {
             return false;
         }
 

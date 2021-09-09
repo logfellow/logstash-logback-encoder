@@ -100,7 +100,13 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ObjectAppendingMarker && super.equals(obj))) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof ObjectAppendingMarker)) {
             return false;
         }
 

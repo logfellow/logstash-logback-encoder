@@ -168,7 +168,13 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof ObjectFieldsAppendingMarker && super.equals(obj))) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof ObjectFieldsAppendingMarker)) {
             return false;
         }
 

@@ -72,7 +72,13 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
 
     @Override
     public boolean equals(Object obj) {
-        if (!(obj instanceof RawJsonAppendingMarker && super.equals(obj))) {
+        if (this == obj) {
+            return true;
+        }
+        if (!super.equals(obj)) {
+            return false;
+        }
+        if (!(obj instanceof RawJsonAppendingMarker)) {
             return false;
         }
 
