@@ -243,9 +243,9 @@ public class PathBasedFieldMasker implements FieldMasker {
     static String unescapeJsonPointerToken(String token) {
         return token
                 // As per JSON Pointer string spec, ~1 is used to escape "/"
-                .replaceAll("~1", "/")
+                .replace("~1", "/")
                 // As per JSON Pointer string spec, ~0 is used to escape "~"
-                .replaceAll("~0", "~");
+                .replace("~0", "~");
     }
 
 }
