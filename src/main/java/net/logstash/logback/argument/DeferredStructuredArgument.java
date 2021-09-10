@@ -50,8 +50,15 @@ import org.slf4j.Logger;
  */
 public class DeferredStructuredArgument implements StructuredArgument {
 
+    /**
+     * Supplier for the deferred {@link StructuredArgument}
+     */
     private final Supplier<? extends StructuredArgument> structureArgumentSupplier;
 
+    /**
+     * Cached value of the structured argument returned by {@link #structureArgumentSupplier}.
+     * {@code null} until {@link #getSuppliedValue()} is first called.
+     */
     private volatile StructuredArgument suppliedValue;
 
     public DeferredStructuredArgument(Supplier<? extends StructuredArgument> structureArgumentSupplier) {
@@ -63,6 +70,12 @@ public class DeferredStructuredArgument implements StructuredArgument {
         getSuppliedValue().writeTo(generator);
     }
 
+    /**
+     * Get the deferred structure argument from the supplier or return it from the cache
+     * if already initialized.
+     * 
+     * @return the deferred structured argument
+     */
     private StructuredArgument getSuppliedValue() {
         if (suppliedValue == null) {
             synchronized (this) {

@@ -39,12 +39,20 @@ import org.slf4j.Marker;
  * the supplier will be invoked when the first appender encodes the marker.
  * That same supplied value will be used when the next appender encodes the marker.</p>
  */
+@SuppressWarnings("serial")
 public class DeferredLogstashMarker extends LogstashMarker {
 
     public static final String DEFERRED_MARKER_NAME = "DEFERRED";
 
-    private final Supplier<? extends LogstashMarker>  logstashMarkerSupplier;
+    /**
+     * Supplier for the deferred marker
+     */
+    private final Supplier<? extends LogstashMarker> logstashMarkerSupplier;
 
+    /**
+     * Cached value of the marker returned by {@link #logstashMarkerSupplier}.
+     * {@code null} until {@link #getSuppliedValue()} is first called.
+     */
     private volatile LogstashMarker suppliedValue;
 
     public DeferredLogstashMarker(Supplier<? extends LogstashMarker> logstashMarkerSupplier) {
@@ -57,6 +65,12 @@ public class DeferredLogstashMarker extends LogstashMarker {
         writeMarker(generator, getSuppliedValue());
     }
 
+    /**
+     * Get the deferred marker from the supplier or return it from the cache
+     * if already initialized.
+     * 
+     * @return the deferred marker
+     */
     private LogstashMarker getSuppliedValue() {
         if (suppliedValue == null) {
             synchronized (this) {
@@ -82,8 +96,7 @@ public class DeferredLogstashMarker extends LogstashMarker {
 
         if (marker.hasReferences()) {
             for (Iterator<Marker> i = marker.iterator(); i.hasNext();) {
-                Marker next = i.next();
-                writeMarker(generator, next);
+                writeMarker(generator, i.next());
             }
         }
     }

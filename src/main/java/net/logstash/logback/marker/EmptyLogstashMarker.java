@@ -36,6 +36,7 @@ import org.slf4j.Marker;
  *     }
  * </pre>
  */
+@SuppressWarnings("serial")
 public class EmptyLogstashMarker extends LogstashMarker implements StructuredArgument {
 
     public static final String EMPTY_MARKER_NAME = "EMPTY";
@@ -52,5 +53,15 @@ public class EmptyLogstashMarker extends LogstashMarker implements StructuredArg
     @Override
     protected String toStringSelf() {
         return "";
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof EmptyLogstashMarker && super.equals(obj);
+    }
+    
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }

@@ -76,26 +76,26 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
      * The object to write as the field's value.
      * Can be a {@link String}, {@link Number}, array, or some other object that can be processed by an {@link ObjectMapper}
      */
-    private final Object object;
+    private final Object fieldValue;
 
-    public ObjectAppendingMarker(String fieldName, Object object) {
+    public ObjectAppendingMarker(String fieldName, Object fieldValue) {
         super(MARKER_NAME, fieldName);
-        this.object = object;
+        this.fieldValue = fieldValue;
     }
 
-    public ObjectAppendingMarker(String fieldName, Object object, String messageFormatPattern) {
+    public ObjectAppendingMarker(String fieldName, Object fieldValue, String messageFormatPattern) {
         super(MARKER_NAME, fieldName, messageFormatPattern);
-        this.object = object;
+        this.fieldValue = fieldValue;
     }
 
     @Override
     protected void writeFieldValue(JsonGenerator generator) throws IOException {
-        generator.writeObject(object);
+        generator.writeObject(fieldValue);
     }
 
     @Override
     public Object getFieldValue() {
-        return StructuredArguments.toString(object);
+        return StructuredArguments.toString(fieldValue);
     }
 
     @Override
@@ -111,7 +111,7 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
         }
 
         ObjectAppendingMarker other = (ObjectAppendingMarker) obj;
-        return Objects.equals(this.object, other.object);
+        return Objects.equals(this.fieldValue, other.fieldValue);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
         final int prime = 31;
         int result = 1;
         result = prime * result + super.hashCode();
-        result = prime * result + (this.object == null ? 0 : this.object.hashCode());
+        result = prime * result + (this.fieldValue == null ? 0 : this.fieldValue.hashCode());
         return result;
     }
 }
