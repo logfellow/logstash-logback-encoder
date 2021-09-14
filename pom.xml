@@ -415,6 +415,29 @@
                     </execution>
                 </executions>
             </plugin>
+            
+			<!-- Install JaCoCo agent and produce reports at the end of the build.
+			-->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>jacoco-prepare-agent</id>
+						<phase>process-test-classes</phase> <!-- must be ready for the `test` phase, default is "initialize" -->
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>jacoco-report</id>
+						<phase>verify</phase> <!-- this is the default -->
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -537,6 +560,29 @@
                         <releaseProfiles>release</releaseProfiles>
                     </configuration>
                 </plugin>
+                
+				<!-- Java Code Coverage (JaCoCo)
+				 -->
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.8.7</version>
+					<configuration>
+						<!-- Only instrument "net.logstash.**" by default
+						 -->
+						<includes>
+							<include>net/logstash/**</include>
+						</includes>
+						
+						<!-- Produce XML report for Codecov, and HTML for local builds if user wants to
+                             have a look at it...	
+						 -->
+						<formats>
+							<format>XML</format>
+							<format>HTML</format>
+						</formats>
+					</configuration>
+				</plugin>
             </plugins>
         </pluginManagement>
     </build>
