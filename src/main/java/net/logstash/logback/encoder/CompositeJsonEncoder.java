@@ -24,7 +24,8 @@ import net.logstash.logback.composite.CompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
-import net.logstash.logback.util.ReusableJsonFormatterPool;
+import net.logstash.logback.util.ReusableByteBuffer;
+import net.logstash.logback.util.ReusableByteBufferPool;
 
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -37,7 +38,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private static final byte[] EMPTY_BYTES = new byte[0];
 
     /**
-     * The minimum size of the byte buffer used when encoding events.
+     * The minimum size of the byte buffer used when encoding events using {@link #encode(DeferredProcessingAware)}.
      *
      * <p>The buffer automatically grows above the {@code #minBufferSize} when needed to
      * accommodate with larger events. However, only the first {@code minBufferSize} bytes
@@ -47,12 +48,16 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
      */
     private int minBufferSize = 1024;
 
+    /**
+     * Pool of reusable byte buffers used when calling {@link #encode(DeferredProcessingAware)}
+     */
+    private ReusableByteBufferPool bufferPool;
+    
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
 
     private final CompositeJsonFormatter<Event> formatter;
-    private ReusableJsonFormatterPool<Event> formatterPool;
-
+    
     private String lineSeparator = System.lineSeparator();
 
     private byte[] lineSeparatorBytes;
@@ -72,10 +77,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             throw new IllegalStateException("Encoder is not started");
         }
         
-        try (ReusableJsonFormatterPool<Event>.ReusableJsonFormatter cachedFormatter = formatterPool.acquire()) {
-            encode(cachedFormatter, event);
-            cachedFormatter.getBuffer().writeTo(outputStream);
-        }
+        encode(outputStream, event);
     }
     
     @Override
@@ -84,21 +86,26 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             throw new IllegalStateException("Encoder is not started");
         }
         
-        try (ReusableJsonFormatterPool<Event>.ReusableJsonFormatter cachedFormatter = formatterPool.acquire()) {
-            encode(cachedFormatter, event);
-            return cachedFormatter.getBuffer().toByteArray();
+        ReusableByteBuffer buffer = bufferPool.acquire();
+        
+        try {
+            encode(buffer, event);
+            return buffer.toByteArray();
             
         } catch (IOException e) {
             addWarn("Error encountered while encoding log event. Event: " + event, e);
             return EMPTY_BYTES;
+            
+        } finally {
+            bufferPool.release(buffer);
         }
     }
     
-    private void encode(ReusableJsonFormatterPool<Event>.ReusableJsonFormatter cachedFormatter, Event event) throws IOException {
-        encode(prefix, event, cachedFormatter.getBuffer());
-        cachedFormatter.write(event);
-        encode(suffix, event, cachedFormatter.getBuffer());
-        cachedFormatter.getBuffer().write(lineSeparatorBytes);
+    private void encode(OutputStream outputStream, Event event) throws IOException {
+        encode(prefix, event, outputStream);
+        formatter.writeEvent(event, outputStream);
+        encode(suffix, event, outputStream);
+        outputStream.write(lineSeparatorBytes);
     }
     
     private void encode(Encoder<Event> encoder, Event event, OutputStream outputStream) throws IOException {
@@ -127,7 +134,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         startWrapped(prefix);
         startWrapped(suffix);
         
-        this.formatterPool = new ReusableJsonFormatterPool<>(formatter, minBufferSize);
+        this.bufferPool = ReusableByteBufferPool.create(minBufferSize);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -171,7 +178,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             stopWrapped(prefix);
             stopWrapped(suffix);
             
-            this.formatterPool = null;
+            bufferPool = null;
         }
     }
 

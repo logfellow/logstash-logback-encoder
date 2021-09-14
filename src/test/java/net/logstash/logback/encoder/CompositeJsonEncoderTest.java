@@ -22,11 +22,9 @@ import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -36,19 +34,19 @@ import java.nio.charset.StandardCharsets;
 import net.logstash.logback.TestJsonProvider;
 import net.logstash.logback.composite.CompositeJsonFormatter;
 
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
+import ch.qos.logback.core.BasicStatusManager;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
+import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.StatusManager;
-import ch.qos.logback.core.status.WarnStatus;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -56,27 +54,32 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class CompositeJsonEncoderTest {
     
-    @InjectMocks
     private final TestCompositeJsonEncoder encoder = new TestCompositeJsonEncoder();
     
     private CompositeJsonFormatter<ILoggingEvent> formatter;
     
-    @Mock(lenient = true)
-    private Context context;
+    private LoggerContext context = new LoggerContext();
     
-    @Mock
-    private StatusManager statusManager;
+    private StatusManager statusManager = new BasicStatusManager();
     
     @Mock
     private ILoggingEvent event;
     
     @BeforeEach
     public void setup() {
+        // Output statuses on the console for easy debugging. Must be initialized early to capture
+        // warnings emitted by setter/getter methods before the appender is started.
+        OnConsoleStatusListener consoleListener = new OnConsoleStatusListener();
+        consoleListener.start();
+        this.statusManager.add(consoleListener);
+        
+        this.context.setStatusManager(statusManager);
+        
         // suppress line separator to make test platform independent
         this.encoder.setLineSeparator("");
-        this.formatter = encoder.getFormatter();
+        this.encoder.setContext(context);
         
-        when(context.getStatusManager()).thenReturn(statusManager);
+        this.formatter = encoder.getFormatter();
     }
     
     
@@ -95,7 +98,7 @@ public class CompositeJsonEncoderTest {
         assertThat(encoder.isStarted()).isTrue();
         assertThat(formatter.isStarted()).isTrue();
         assertThat(prefix.isStarted()).isTrue();
-        verify(formatter).setContext(context);
+        assertThat(formatter.getContext()).isEqualTo(context);
         
         // providers are not started a second time
         encoder.start();
@@ -222,13 +225,13 @@ public class CompositeJsonEncoderTest {
      */
     @Test
     public void testIOException() throws IOException {
-    encoder.exceptionToThrow = new IOException();
+        encoder.exceptionToThrow = new IOException();
         encoder.start();
         
         encoder.encode(event);
         
-        verify(statusManager).add(new WarnStatus("Error encountered while encoding log event. "
-                + "Event: " + event, context, encoder.exceptionToThrow));
+        assertThat(statusManager.getCopyOfStatusList())
+            .anyMatch(s -> s.getMessage().startsWith("Error encountered while encoding log event."));
     }
 
     
@@ -246,8 +249,8 @@ public class CompositeJsonEncoderTest {
         
         assertThatCode(() -> encoder.encode(event, stream)).isInstanceOf(IOException.class);
         
-        verify(statusManager, never()).add(new WarnStatus("Error encountered while encoding log event. "
-                + "Event: " + event, context, exception));
+        assertThat(statusManager.getCopyOfStatusList())
+            .noneMatch(s -> s.getMessage().startsWith("Error encountered while encoding log event."));
     }
     
     
@@ -255,7 +258,7 @@ public class CompositeJsonEncoderTest {
     
     
     private static class TestCompositeJsonEncoder extends CompositeJsonEncoder<ILoggingEvent> {
-    private IOException exceptionToThrow;
+        private IOException exceptionToThrow;
     
         @Override
         protected CompositeJsonFormatter<ILoggingEvent> createFormatter() {

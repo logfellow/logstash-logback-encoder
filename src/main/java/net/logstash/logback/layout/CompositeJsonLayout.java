@@ -16,6 +16,7 @@
 package net.logstash.logback.layout;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Objects;
@@ -26,7 +27,8 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import net.logstash.logback.encoder.SeparatorParser;
-import net.logstash.logback.util.ReusableJsonFormatterPool;
+import net.logstash.logback.util.ReusableByteBuffer;
+import net.logstash.logback.util.ReusableByteBufferPool;
 
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
@@ -60,10 +62,13 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
      * unnecessary memory allocations and reduce pressure on the garbage collector.
      */
     private int minBufferSize = 1024;
-    
+
+    /**
+     * Pool of reusable byte buffers
+     */
+    private ReusableByteBufferPool bufferPool;
     
     private final CompositeJsonFormatter<Event> formatter;
-    private ReusableJsonFormatterPool<Event> formatterPool;
     
     public CompositeJsonLayout() {
         super();
@@ -78,21 +83,24 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             throw new IllegalStateException("Layout is not started");
         }
         
-        try (ReusableJsonFormatterPool<Event>.ReusableJsonFormatter cachedFormatter = formatterPool.acquire()) {
-            writeEvent(cachedFormatter, event);
-            return new String(cachedFormatter.getBuffer().toByteArray());
+        ReusableByteBuffer buffer = bufferPool.acquire();
+        try {
+            writeEvent(buffer, event);
+            return new String(buffer.toByteArray());
         
         } catch (IOException e) {
             addWarn("Error formatting logging event", e);
             return null;
             
+        } finally {
+            bufferPool.release(buffer);
         }
     }
 
-    private void writeEvent(ReusableJsonFormatterPool<Event>.ReusableJsonFormatter cachedFormatter, Event event) throws IOException {
-        try (Writer writer = new OutputStreamWriter(cachedFormatter.getBuffer())) {
+    private void writeEvent(OutputStream outputStream, Event event) throws IOException {
+        try (Writer writer = new OutputStreamWriter(outputStream)) {
             writeLayout(prefix, writer, event);
-            cachedFormatter.write(event);
+            formatter.writeEvent(event, outputStream);
             writeLayout(suffix, writer, event);
            
             if (lineSeparator != null) {
@@ -128,7 +136,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         startWrapped(prefix);
         startWrapped(suffix);
         
-        this.formatterPool = new ReusableJsonFormatterPool<>(formatter, minBufferSize);
+        this.bufferPool = ReusableByteBufferPool.create(minBufferSize);
     }
 
     private void startWrapped(Layout<Event> wrapped) {
@@ -162,7 +170,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         stopWrapped(prefix);
         stopWrapped(suffix);
         
-        this.formatterPool = null;
+        this.bufferPool = null;
     }
 
     private void stopWrapped(Layout<Event> wrapped) {

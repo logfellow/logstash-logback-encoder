@@ -16,16 +16,27 @@
 package net.logstash.logback.composite.loggingevent;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 import net.logstash.logback.argument.StructuredArguments;
-import net.logstash.logback.composite.CompositeJsonFormatter.JsonFormatter;
-import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
+import net.logstash.logback.composite.AbstractJsonProvider;
+import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.spi.ContextAware;
+import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -34,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class LoggingEventCompositeJsonFormatterTest {
     
-    private LoggingEventCompositeJsonFormatter formatter = new LoggingEventCompositeJsonFormatter(new LoggingEventCompositeJsonEncoder());
+    private LoggingEventCompositeJsonFormatter formatter = new LoggingEventCompositeJsonFormatter(mock(ContextAware.class));
     
     @Mock
     private ILoggingEvent event;
@@ -53,9 +64,73 @@ public class LoggingEventCompositeJsonFormatterTest {
          * This should not throw an exception, since SerializationFeature.FAIL_ON_EMPTY_BEANS is disabled
          */
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            JsonFormatter jsonFormatter = formatter.createJsonFormatter(bos);
-            assertThatCode(() -> jsonFormatter.writeEvent(event)).doesNotThrowAnyException();
+            assertThatCode(() -> formatter.writeEvent(event, bos)).doesNotThrowAnyException();
         }
     }
-
+    
+    
+    /*
+     * JsonFormatter reused by subsequent invocations
+     */
+    @Test
+    public void testReused() throws IOException {
+        JsonGeneratorDecorator decorator = spy(new NullJsonGeneratorDecorator());
+        formatter.setJsonGeneratorDecorator(decorator);
+        formatter.start();
+        
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            formatter.writeEvent(event, bos);
+            formatter.writeEvent(event, bos);
+            
+            // Only once instance should have been created
+            verify(decorator, times(1)).decorate(any(JsonGenerator.class));
+        }
+    }
+    
+    
+    /*
+     * JsonFormatter not reused after exception thrown by underlying OutputStream
+     */
+    @Test
+    public void testNotReusedAfterIOException() throws IOException {
+        JsonGeneratorDecorator decorator = spy(new NullJsonGeneratorDecorator());
+        formatter.setJsonGeneratorDecorator(decorator);
+        formatter.start();
+        
+        OutputStream bos = mock(OutputStream.class);
+        doThrow(new IOException())
+            .doCallRealMethod()
+            .when(bos).write(any(byte[].class), any(int.class), any(int.class));
+        
+        assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(IOException.class);
+        formatter.writeEvent(event, bos);
+        
+        // Two instances created because the first was discarded because of the exception
+        verify(decorator, times(2)).decorate(any(JsonGenerator.class));
+    }
+    
+    
+    /*
+     * JsonFormatter not reused after exception thrown while calling registered JsonProviders
+     */
+    @Test
+    public void testNotReusedAfterEncoderException() throws IOException {
+        JsonGeneratorDecorator decorator = spy(new NullJsonGeneratorDecorator());
+        formatter.setJsonGeneratorDecorator(decorator);
+        formatter.getProviders().addProvider(new AbstractJsonProvider<ILoggingEvent>() {
+            @Override
+            public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+                throw new IOException("Exception thrown by JsonProvider");
+            }
+        });
+        formatter.start();
+        
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(IOException.class);
+            assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(IOException.class);
+        
+            // Two instances created because the first was discarded because of the exception
+            verify(decorator, times(2)).decorate(any(JsonGenerator.class));
+        }
+    }
 }
