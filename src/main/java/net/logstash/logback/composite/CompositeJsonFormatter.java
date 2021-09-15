@@ -25,6 +25,8 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.NullJsonFactoryDecorator;
 import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
+import net.logstash.logback.util.ObjectPool;
+import net.logstash.logback.util.ProxyOutputStream;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -32,6 +34,7 @@ import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.LifeCycle;
+import ch.qos.logback.core.util.CloseUtil;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonFactory.Feature;
@@ -41,13 +44,23 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 
 /**
  * Formats logstash Events as JSON using {@link JsonProvider}s.
- * <p>
  *
- * The {@link CompositeJsonFormatter} starts the JSON object ('{'),
+ * <p>The {@link CompositeJsonFormatter} starts the JSON object ('{'),
  * then delegates writing the contents of the object to the {@link JsonProvider}s,
  * and then ends the JSON object ('}').
  *
+ * <p>Jackson {@link JsonGenerator} are initially created with a "disconnected" output stream so they can be
+ * reused multiple times with different target output stream. They are kept in an internal pool whose
+ * size is technically unbounded. It will however never hold more entries than the number of concurrent
+ * threads accessing it. Entries are kept in the pool using soft references so they can be garbage
+ * collected by the JVM when running low in memory.
+ * 
+ * <p>{@link JsonGenerator} instances are *not* reused after they threw an exception. This is to prevent
+ * reusing an instance whose internal state may be unpredictable.
+ * 
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
+ * 
+ * @author brenuart
  */
 public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAware>
         extends ContextAwareBase implements LifeCycle {
@@ -80,6 +93,9 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
 
     private volatile boolean started;
 
+    private ObjectPool<JsonFormatter> pool;
+     
+    
     public CompositeJsonFormatter(ContextAware declaredOrigin) {
         super(declaredOrigin);
     }
@@ -102,12 +118,15 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         jsonProviders.setContext(context);
         jsonProviders.setJsonFactory(jsonFactory);
         jsonProviders.start();
+        
+        pool = new ObjectPool<>(this::createJsonFormatter);
         started = true;
     }
 
     @Override
     public void stop() {
         if (isStarted()) {
+            pool.clear();
             jsonProviders.stop();
             jsonFactory = null;
             started = false;
@@ -119,40 +138,95 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
         return started;
     }
 
+    
     /**
-     * Create a reusable {@link JsonFormatter} bound to the given {@link OutputStream}.
+     * Write an event in the given output stream.
      * 
-     * @param outputStream the output stream used by the {@link JsonFormatter}
-     * @return {@link JsonFormatter} writing JSON content in the output stream
-     * @throws IOException thrown when unable to write in the output stream or when Jackson fails to produce JSON content
+     * @param event the event to write
+     * @param outputStream the output stream to write the event into
+     * @throws IOException thrown upon failure to write the event
      */
-    public JsonFormatter createJsonFormatter(OutputStream outputStream) throws IOException {
+    public void writeEvent(Event event, OutputStream outputStream) throws IOException {
+        Objects.requireNonNull(outputStream);
         if (!isStarted()) {
             throw new IllegalStateException("Formatter is not started");
         }
         
-        JsonGenerator generator = createGenerator(outputStream);
-        return new JsonFormatter(generator);
+        try (JsonFormatter formatter = this.pool.acquire()) {
+            formatter.writeEvent(outputStream, event);
+        }
     }
     
     
-    public class JsonFormatter implements Closeable {
-        private final JsonGenerator generator;
+    /**
+     * Create a reusable {@link JsonFormatter} bound to a {@link DisconnectedOutputStream}.
+     * 
+     * @return {@link JsonFormatter} writing JSON content in the output stream
+     */
+    private JsonFormatter createJsonFormatter() {
+        try {
+            DisconnectedOutputStream outputStream = new DisconnectedOutputStream();
+            JsonGenerator generator = createGenerator(outputStream);
+            return new JsonFormatter(outputStream, generator);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to initialize Jackson JSON layer", e);
+        }
         
-        public JsonFormatter(JsonGenerator generator) {
+    }
+    
+    private class JsonFormatter implements ObjectPool.Lifecycle, Closeable {
+        private final JsonGenerator generator;
+        private final DisconnectedOutputStream stream;
+        private boolean recyclable = true;
+        
+        JsonFormatter(DisconnectedOutputStream outputStream, JsonGenerator generator) {
+            this.stream = Objects.requireNonNull(outputStream);
             this.generator = Objects.requireNonNull(generator);
         }
         
-        public void writeEvent(Event event) throws IOException {
-            writeEventToGenerator(generator, event);
+        public void writeEvent(OutputStream outputStream, Event event) throws IOException {
+            try {
+                this.stream.connect(outputStream);
+                writeEventToGenerator(generator, event);
+                
+            } catch (IOException | RuntimeException e) {
+                this.recyclable = false;
+                throw e;
+                
+            } finally {
+                this.stream.disconnect();
+            }
+        }
+        
+        @Override
+        public boolean recycle() {
+            return this.recyclable;
+        }
+        
+        @Override
+        public void dispose() {
+            CloseUtil.closeQuietly(this.generator);
         }
         
         @Override
         public void close() throws IOException {
-            this.generator.close();
+            CompositeJsonFormatter.this.pool.release(this);
         }
     }
     
+    private static class DisconnectedOutputStream extends ProxyOutputStream {
+        DisconnectedOutputStream() {
+            super(null);
+        }
+        
+        public void connect(OutputStream out) {
+            this.delegate = out;
+        }
+        
+        public void disconnect() {
+            this.delegate = null;
+        }
+    }
     
     private JsonFactory createJsonFactory() {
         ObjectMapper objectMapper = new ObjectMapper()
@@ -187,9 +261,6 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     }
     
     protected void writeEventToGenerator(JsonGenerator generator, Event event) throws IOException {
-        if (!isStarted()) {
-            throw new IllegalStateException("Encoding attempted before starting.");
-        }
         generator.writeStartObject();
         jsonProviders.writeTo(generator, event);
         generator.writeEndObject();
