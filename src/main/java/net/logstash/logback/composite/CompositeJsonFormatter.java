@@ -159,11 +159,12 @@ public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAwa
     
     
     /**
-     * Create a reusable {@link JsonFormatter} bound to the given {@link OutputStream}.
+     * Create a reusable {@link JsonFormatter} bound to a {@link DisconnectedOutputStream}.
      * 
      * @param stream the output stream used by the {@link JsonFormatter}
      * @return {@link JsonFormatter} writing JSON content in the output stream
-     * @throws IOException thrown when unable to write in the output stream or when Jackson fails to produce JSON content
+     * @throws IOException thrown when unable to write in the output stream or when Jackson
+     *                     fails to produce JSON content
      */
     private JsonFormatter createJsonFormatter() {
         try {
