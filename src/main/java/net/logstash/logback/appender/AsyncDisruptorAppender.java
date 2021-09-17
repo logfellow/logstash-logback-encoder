@@ -278,7 +278,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Factory for creating the initial {@link LogEvent}s to populate
      * the {@link RingBuffer}.
      */
-    private static class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
+    protected static class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
 
         @Override
         public LogEvent<Event> newInstance() {
