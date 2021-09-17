@@ -272,6 +272,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          * The logback event.
          */
         public volatile Event event;
+        
+        /**
+         * Recycle the instance before it is reused by the RingBuffer.
+         */
+        public void recycle() {
+            this.event = null;
+        }
     }
 
     /**
@@ -358,7 +365,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 /*
                  * Clear the event so that it can be garbage collected.
                  */
-                event.event = null;
+                event.recycle();
                 
                 /*
                  * Notify the BatchEventProcessor that the sequence has progressed.
