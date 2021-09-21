@@ -37,7 +37,7 @@ public class TimeZoneUtils {
      * produce a TimeZone. The syntax of a custom time zone ID is:
      *
      * <blockquote><pre>
-     * <a name="CustomID"><i>CustomID:</i></a>
+     * <i>CustomID:</i>
      *         <code>GMT</code> <i>Sign</i> <i>Hours</i> <code>:</code> <i>Minutes</i>
      *         <code>GMT</code> <i>Sign</i> <i>Hours</i> <i>Minutes</i>
      *         <code>GMT</code> <i>Sign</i> <i>Hours</i>
