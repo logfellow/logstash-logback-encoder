@@ -1639,7 +1639,36 @@ You can change the timezone like this:
 </encoder>
 ```
 
-The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
+The value of the `timeZone` element can be any string accepted by java's `TimeZone.getTimeZone(String id)` method.
+
+It can be a valid time zone ID. For instance, the time zone ID for the U.S. Pacific Time zone is "America/Los_Angeles".
+
+If the time zone you want is not represented by one of the supported IDs, then a custom time zone ID can be specified to produce a TimeZone. The syntax of a custom time zone ID is:
+
+```
+   CustomID:
+      GMT Sign Hours : Minutes
+      GMT Sign Hours Minutes
+      GMT Sign Hours
+      
+   Sign: one of
+      + -
+   
+   Hours:
+      Digit
+         Digit Digit
+         
+      Minutes:
+         Digit Digit
+
+      Digit: one of
+         0 1 2 3 4 5 6 7 8 9
+```
+
+_Hours_ must be between 0 to 23 and _Minutes_ must be between 00 to 59. 
+For example, "GMT+10" and "GMT+0010" mean ten hours and ten minutes ahead of GMT, respectively.
+
+Use a blank string or `null` to use the default TimeZone of the system.
 
 
 ## Customizing LoggingEvent Message
