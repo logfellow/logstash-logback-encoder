@@ -28,27 +28,27 @@ public class TimeZoneUtilsTest {
 
     @Test
     public void standardTimeZones() {
-        assertThat(TimeZoneUtils.parse("GMT").getID()).isEqualTo("GMT");
-        assertThat(TimeZoneUtils.parse("Europe/Brussels").getID()).isEqualTo("Europe/Brussels");
+        assertThat(TimeZoneUtils.parseTimeZone("GMT").getID()).isEqualTo("GMT");
+        assertThat(TimeZoneUtils.parseTimeZone("Europe/Brussels").getID()).isEqualTo("Europe/Brussels");
     }
     
     
     @Test
     public void customTimeZones() {
-        assertThat(TimeZoneUtils.parse("GMT+00").getID()).isEqualTo("GMT+00:00");
-        assertThat(TimeZoneUtils.parse("GMT+00:00").getID()).isEqualTo("GMT+00:00");
+        assertThat(TimeZoneUtils.parseTimeZone("GMT+00").getID()).isEqualTo("GMT+00:00");
+        assertThat(TimeZoneUtils.parseTimeZone("GMT+00:00").getID()).isEqualTo("GMT+00:00");
 
-        assertThat(TimeZoneUtils.parse("GMT-00").getID()).isEqualTo("GMT-00:00");
-        assertThat(TimeZoneUtils.parse("GMT-00:00").getID()).isEqualTo("GMT-00:00");
+        assertThat(TimeZoneUtils.parseTimeZone("GMT-00").getID()).isEqualTo("GMT-00:00");
+        assertThat(TimeZoneUtils.parseTimeZone("GMT-00:00").getID()).isEqualTo("GMT-00:00");
 
-        assertThat(TimeZoneUtils.parse("GMT+01:12").getID()).isEqualTo("GMT+01:12");
+        assertThat(TimeZoneUtils.parseTimeZone("GMT+01:12").getID()).isEqualTo("GMT+01:12");
     }
     
     
     @Test
     public void invalidTimeZone() {
-        assertThatThrownBy(() -> TimeZoneUtils.parse("foo")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> TimeZoneUtils.parse("")).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> TimeZoneUtils.parse(null)).isInstanceOf(NullPointerException.class);
+        assertThatThrownBy(() -> TimeZoneUtils.parseTimeZone("foo")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TimeZoneUtils.parseTimeZone("")).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> TimeZoneUtils.parseTimeZone(null)).isInstanceOf(NullPointerException.class);
     }
 }

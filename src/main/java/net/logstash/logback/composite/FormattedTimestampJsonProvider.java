@@ -256,7 +256,7 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
         if (timeZoneId == null || timeZoneId.trim().isEmpty()) {
             this.timeZone = TimeZone.getDefault();
         } else {
-            this.timeZone = TimeZoneUtils.parse(timeZoneId);
+            this.timeZone = TimeZoneUtils.parseTimeZone(timeZoneId);
         }
         updateTimestampWriter();
     }

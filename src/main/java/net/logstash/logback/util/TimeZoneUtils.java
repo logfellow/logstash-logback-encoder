@@ -61,7 +61,7 @@ public class TimeZoneUtils {
      * @throws IllegalArgumentException thrown when the string is not a valid TimeZone textual
      *                                  representation.
      */
-    public static TimeZone parse(String str) {
+    public static TimeZone parseTimeZone(String str) {
         TimeZone tz = TimeZone.getTimeZone(Objects.requireNonNull(str));
         
         /*
