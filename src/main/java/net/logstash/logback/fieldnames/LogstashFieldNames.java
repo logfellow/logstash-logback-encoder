@@ -23,7 +23,6 @@ import net.logstash.logback.composite.loggingevent.RootStackTraceElementJsonProv
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
-import net.logstash.logback.composite.loggingevent.UuidProvider;
 
 /**
  * Names of standard fields that appear in the JSON output.
@@ -46,7 +45,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
     private String arguments;
-    private String uuid = UuidProvider.FIELD_UUID;
 
     public String getLogger() {
         return logger;
@@ -175,14 +173,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     }
     public void setArguments(String arguments) {
         this.arguments = arguments;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public String getRootStackTraceElement() {

@@ -2300,6 +2300,21 @@ The provider name is the xml element name to use when configuring.
         </ul>
       </td>
     </tr>
+    <tr>
+      <td><tt>uuid</tt></td>
+      <td><p>Outputs random UUID as field value. Handy when you want to provide unique identifier
+      for log lines
+      </p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>uuid</tt>)</li>
+          <li><tt>strategy</tt> - UUID generation strategy (<tt>random</tt>). Supported options: <ul><li><tt>random</tt> - for Type 4 UUID</li>
+          <li><tt>time</tt> - for Type 1 time based UUID</li>
+          </ul></li>
+          <li><tt>ethernet</tt> - Only for 'time' strategy. When defined - MAC address to use for location part of UUID. Set it to <tt>interface</tt> value to use real underlying network interface or to specific values like <tt>00:C0:F0:3D:5B:7C</tt></li>          
+        </ul>
+	      <p>Note: The <a href="https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator/"><tt>com.fasterxml.uuid:java-uuid-generator</tt></a> optional dependency must be added to applications that use the `uuid` provider.</p>
+      </td>
+    </tr>
   </tbody>
 </table>
 

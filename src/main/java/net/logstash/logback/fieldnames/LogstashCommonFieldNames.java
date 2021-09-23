@@ -17,6 +17,7 @@ package net.logstash.logback.fieldnames;
 
 import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import net.logstash.logback.composite.UuidJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 
 /**
@@ -41,6 +42,8 @@ public abstract class LogstashCommonFieldNames {
     private String timestamp = FormattedTimestampJsonProvider.FIELD_TIMESTAMP;
     private String version = LogstashVersionJsonProvider.FIELD_VERSION;
     private String message = MessageJsonProvider.FIELD_MESSAGE;
+    private String uuid = UuidJsonProvider.FIELD_UUID;
+
     private String context;
     
     public String getTimestamp() {
@@ -84,5 +87,14 @@ public abstract class LogstashCommonFieldNames {
     
     public void setContext(String context) {
         this.context = context;
+    }
+    
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }

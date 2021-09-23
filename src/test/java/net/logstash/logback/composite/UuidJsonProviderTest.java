@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
@@ -29,10 +29,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class UuidProviderTest {
+public class UuidJsonProviderTest {
     public static final String UUID = "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$";
 
-    private UuidProvider provider = new UuidProvider();
+    private UuidJsonProvider<ILoggingEvent> provider = new UuidJsonProvider<>();
 
     @Mock
     private JsonGenerator generator;
@@ -44,7 +44,7 @@ public class UuidProviderTest {
     public void testDefaultName() throws IOException {
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq(UuidProvider.FIELD_UUID), matches(UUID));
+        verify(generator).writeStringField(eq(UuidJsonProvider.FIELD_UUID), matches(UUID));
     }
 
     @Test
@@ -58,7 +58,7 @@ public class UuidProviderTest {
 
     @Test
     public void testStrategy() throws IOException {
-        provider.setStrategy(UuidProvider.STRATEGY_TIME);
+        provider.setStrategy(UuidJsonProvider.STRATEGY_TIME);
 
         provider.writeTo(generator, event);
 
@@ -67,7 +67,7 @@ public class UuidProviderTest {
 
     @Test
     public void testEthernet() throws IOException {
-        provider.setStrategy(UuidProvider.STRATEGY_TIME);
+        provider.setStrategy(UuidJsonProvider.STRATEGY_TIME);
         provider.setEthernet("00:C0:F0:3D:5B:7C");
 
         provider.writeTo(generator, event);

@@ -29,6 +29,7 @@ import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import net.logstash.logback.composite.UuidJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.ContextNameJsonProvider;
@@ -191,7 +192,7 @@ public class ConfigurationTest {
         ArgumentsJsonProvider argumentsJsonProvider = getInstance(providers, ArgumentsJsonProvider.class);
         Assertions.assertNotNull(argumentsJsonProvider);
 
-        UuidProvider uuidProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), UuidProvider.class);
+        UuidJsonProvider uuidProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), UuidJsonProvider.class);
         Assertions.assertNotNull(uuidProvider);
         Assertions.assertEquals("id", uuidProvider.getFieldName());
         Assertions.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
