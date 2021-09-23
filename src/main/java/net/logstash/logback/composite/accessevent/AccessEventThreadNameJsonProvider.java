@@ -13,14 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite.accessevent;
+
+import net.logstash.logback.composite.AbstractThreadNameJsonProvider;
+import net.logstash.logback.composite.JsonProvider;
+
+import ch.qos.logback.access.spi.IAccessEvent;
 
 /**
- * @deprecated Use {@link LoggingEventThreadNameJsonProvider} instead.
+ * {@link JsonProvider} producing a single JSON field with the {@link IAccessEvent#getThreadName()}.
+ * 
+ * @author brenuart
  */
-@Deprecated
-public class ThreadNameJsonProvider extends LoggingEventThreadNameJsonProvider {
+public class AccessEventThreadNameJsonProvider extends AbstractThreadNameJsonProvider<IAccessEvent> {
 
-    public static final String FIELD_THREAD_NAME = LoggingEventThreadNameJsonProvider.FIELD_THREAD_NAME;
-    
+    @Override
+    protected String getThreadName(IAccessEvent event) {
+        return event.getThreadName();
+    }
 }

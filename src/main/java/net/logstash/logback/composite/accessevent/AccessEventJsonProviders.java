@@ -87,5 +87,7 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<IAccessEvent> provider) {
         addProvider(provider);
     }
-
+    public void addThreadName(AccessEventThreadNameJsonProvider provider) {
+        addProvider(provider);
+    }
 }

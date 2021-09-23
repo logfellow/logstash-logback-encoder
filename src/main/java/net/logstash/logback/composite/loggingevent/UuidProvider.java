@@ -23,7 +23,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  * Outputs random UUID as field value.
  * Handy when you want to provide unique identifier for log lines.
  * 
- * @Deprecated use {@link UuidJsonProvider} instead.
+ * @deprecated use {@link UuidJsonProvider} instead.
  */
 @Deprecated
 public class UuidProvider extends UuidJsonProvider<ILoggingEvent> {

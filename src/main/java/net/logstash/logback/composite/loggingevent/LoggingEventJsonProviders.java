@@ -51,7 +51,7 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addLoggerName(LoggerNameJsonProvider provider) {
         addProvider(provider);
     }
-    public void addThreadName(ThreadNameJsonProvider provider) {
+    public void addThreadName(LoggingEventThreadNameJsonProvider provider) {
         addProvider(provider);
     }
     public void addLogLevel(LogLevelJsonProvider provider) {

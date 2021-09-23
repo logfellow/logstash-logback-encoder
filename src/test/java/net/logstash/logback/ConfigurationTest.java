@@ -40,13 +40,13 @@ import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventNestedJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventThreadNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
-import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
@@ -129,7 +129,7 @@ public class ConfigurationTest {
         Assertions.assertNotNull(loggerNameJsonProvider);
         Assertions.assertEquals("logger_name", loggerNameJsonProvider.getFieldName());
 
-        ThreadNameJsonProvider threadNameJsonProvider = getInstance(providers, ThreadNameJsonProvider.class);
+        LoggingEventThreadNameJsonProvider threadNameJsonProvider = getInstance(providers, LoggingEventThreadNameJsonProvider.class);
         Assertions.assertNotNull(threadNameJsonProvider);
         Assertions.assertEquals("thread_name", threadNameJsonProvider.getFieldName());
 

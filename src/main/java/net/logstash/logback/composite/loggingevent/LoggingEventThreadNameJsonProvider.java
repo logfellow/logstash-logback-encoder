@@ -15,12 +15,20 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-/**
- * @deprecated Use {@link LoggingEventThreadNameJsonProvider} instead.
- */
-@Deprecated
-public class ThreadNameJsonProvider extends LoggingEventThreadNameJsonProvider {
+import net.logstash.logback.composite.AbstractThreadNameJsonProvider;
+import net.logstash.logback.composite.JsonProvider;
 
-    public static final String FIELD_THREAD_NAME = LoggingEventThreadNameJsonProvider.FIELD_THREAD_NAME;
-    
+import ch.qos.logback.classic.spi.ILoggingEvent;
+
+/**
+ * {@link JsonProvider} producing a single JSON field with the {@link ILoggingEvent#getThreadName()}.
+ * 
+ * @author brenuart
+ */
+public class LoggingEventThreadNameJsonProvider extends AbstractThreadNameJsonProvider<ILoggingEvent> {
+
+    @Override
+    protected String getThreadName(ILoggingEvent event) {
+        return event.getThreadName();
+    }
 }

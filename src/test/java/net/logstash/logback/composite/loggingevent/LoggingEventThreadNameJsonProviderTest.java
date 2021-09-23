@@ -30,9 +30,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ThreadNameJsonProviderTest {
+public class LoggingEventThreadNameJsonProviderTest {
     
-    private ThreadNameJsonProvider provider = new ThreadNameJsonProvider();
+    private LoggingEventThreadNameJsonProvider provider = new LoggingEventThreadNameJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -47,7 +47,7 @@ public class ThreadNameJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(ThreadNameJsonProvider.FIELD_THREAD_NAME, "threadName");
+        verify(generator).writeStringField(LoggingEventThreadNameJsonProvider.FIELD_THREAD_NAME, "threadName");
     }
 
     @Test

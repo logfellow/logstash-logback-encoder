@@ -2274,6 +2274,14 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
+      <td><tt>threadName</tt></td>
+      <td><p>Name of the thread from which the event was logged</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>thread_name</tt>)</li>          
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>nestedField</tt></td>
       <td>
         <p>Nests a JSON object under the configured fieldName.</p>

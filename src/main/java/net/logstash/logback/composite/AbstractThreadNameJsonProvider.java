@@ -17,30 +17,28 @@ package net.logstash.logback.composite;
 
 import java.io.IOException;
 
-import net.logstash.logback.composite.AbstractFieldJsonProvider;
-import net.logstash.logback.composite.FieldNamesAware;
-import net.logstash.logback.composite.JsonWritingUtils;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
+import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.core.JsonGenerator;
 
-public class ThreadNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
+public abstract class AbstractThreadNameJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<LogstashCommonFieldNames> {
 
     public static final String FIELD_THREAD_NAME = "thread_name";
     
-    public ThreadNameJsonProvider() {
+    public AbstractThreadNameJsonProvider() {
         setFieldName(FIELD_THREAD_NAME);
     }
     
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        JsonWritingUtils.writeStringField(generator, getFieldName(), event.getThreadName());
+    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+        JsonWritingUtils.writeStringField(generator, getFieldName(), getThreadName(event));
     }
     
     @Override
-    public void setFieldNames(LogstashFieldNames fieldNames) {
+    public void setFieldNames(LogstashCommonFieldNames fieldNames) {
         setFieldName(fieldNames.getThread());
     }
 
+    protected abstract String getThreadName(Event event);
 }
