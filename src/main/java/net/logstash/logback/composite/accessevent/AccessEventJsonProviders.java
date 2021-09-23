@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.accessevent;
 
-import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
@@ -77,9 +76,6 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
         addProvider(provider);
     }
     public void addResponseHeaders(ResponseHeadersJsonProvider provider) {
-        addProvider(provider);
-    }
-    public void addContext(ContextJsonProvider<IAccessEvent> provider) {
         addProvider(provider);
     }
     public void addPattern(AccessEventPatternJsonProvider provider) {

@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
@@ -71,9 +70,6 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
         addProvider(provider);
     }
     public void addStackHash(StackHashJsonProvider provider) {
-        addProvider(provider);
-    }
-    public void addContext(ContextJsonProvider<ILoggingEvent> provider) {
         addProvider(provider);
     }
     public void addContextName(ContextNameJsonProvider provider) {

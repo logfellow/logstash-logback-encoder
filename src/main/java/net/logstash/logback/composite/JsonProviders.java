@@ -97,4 +97,8 @@ public class JsonProviders<Event extends DeferredProcessingAware> implements Jso
     public List<JsonProvider<Event>> getProviders() {
         return Collections.unmodifiableList(jsonProviders);
     }
+    
+    public void addContext(ContextJsonProvider<Event> provider) {
+        addProvider(provider);
+    }
 }
