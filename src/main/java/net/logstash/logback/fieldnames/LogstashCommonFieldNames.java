@@ -41,7 +41,8 @@ public abstract class LogstashCommonFieldNames {
     private String timestamp = FormattedTimestampJsonProvider.FIELD_TIMESTAMP;
     private String version = LogstashVersionJsonProvider.FIELD_VERSION;
     private String message = MessageJsonProvider.FIELD_MESSAGE;
-
+    private String context;
+    
     public String getTimestamp() {
         return timestamp;
     }
@@ -64,5 +65,24 @@ public abstract class LogstashCommonFieldNames {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+    
+    /**
+     * The name of the context object field.
+     * <p>
+     * If this returns {@code null}, then the context fields will be written inline at the root level of the JSON event
+     * output (e.g. as a sibling to all the other fields in this class).
+     * <p>
+     * If this returns non-null, then the context fields will be written inside an object with field name returned by
+     * this method.
+     * 
+     * @return The name of the context object field.
+     */
+    public String getContext() {
+        return context;
+    }
+    
+    public void setContext(String context) {
+        this.context = context;
     }
 }
