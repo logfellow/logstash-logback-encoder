@@ -15,9 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.composite.LogstashVersionJsonProvider;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -37,9 +35,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
 
     public void addTimestamp(LoggingEventFormattedTimestampJsonProvider provider) {
-        addProvider(provider);
-    }
-    public void addVersion(LogstashVersionJsonProvider<ILoggingEvent> provider) {
         addProvider(provider);
     }
     public void addMessage(MessageJsonProvider provider) {
@@ -76,9 +71,6 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
         addProvider(provider);
     }
     public void addMdc(MdcJsonProvider provider) {
-        addProvider(provider);
-    }
-    public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<ILoggingEvent> provider) {
         addProvider(provider);
     }
     public void addTags(TagsJsonProvider provider) {

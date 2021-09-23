@@ -101,12 +101,16 @@ public class JsonProviders<Event extends DeferredProcessingAware> implements Jso
     public void addContext(ContextJsonProvider<Event> provider) {
         addProvider(provider);
     }
-
+    public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<Event> provider) {
+        addProvider(provider);
+    }
     public void addSequence(SequenceJsonProvider<Event> provider) {
         addProvider(provider);
     }
-    
     public void addUuid(UuidJsonProvider<Event> provider) {
+        addProvider(provider);
+    }
+    public void addVersion(LogstashVersionJsonProvider<Event> provider) {
         addProvider(provider);
     }
 }

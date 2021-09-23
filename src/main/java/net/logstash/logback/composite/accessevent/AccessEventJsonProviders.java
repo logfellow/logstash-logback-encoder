@@ -15,9 +15,7 @@
  */
 package net.logstash.logback.composite.accessevent;
 
-import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.composite.LogstashVersionJsonProvider;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 
@@ -37,9 +35,6 @@ import ch.qos.logback.access.spi.IAccessEvent;
 public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
 
     public void addTimestamp(AccessEventFormattedTimestampJsonProvider provider) {
-        addProvider(provider);
-    }
-    public void addVersion(LogstashVersionJsonProvider<IAccessEvent> provider) {
         addProvider(provider);
     }
     public void addAccessMessage(AccessMessageJsonProvider provider) {
@@ -82,9 +77,6 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
         addProvider(provider);
     }
     public void addNestedField(AccessEventNestedJsonProvider provider) {
-        addProvider(provider);
-    }
-    public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<IAccessEvent> provider) {
         addProvider(provider);
     }
     public void addThreadName(AccessEventThreadNameJsonProvider provider) {
