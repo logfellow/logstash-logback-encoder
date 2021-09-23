@@ -2315,6 +2315,17 @@ The provider name is the xml element name to use when configuring.
 	      <p>Note: The <a href="https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator/"><tt>com.fasterxml.uuid:java-uuid-generator</tt></a> optional dependency must be added to applications that use the `uuid` provider.</p>
       </td>
     </tr>
+    <tr>
+      <td><tt>sequence</tt></td>
+      <td>
+        <p>
+          Outputs an incrementing sequence number for every log event.
+          Useful for tracking pottential message loss during transport (eg. UDP)
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li></ul>
+      </td>
+    </tr>
   </tbody>
 </table>
 

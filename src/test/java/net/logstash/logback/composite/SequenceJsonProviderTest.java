@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite;
 
 import static org.mockito.Mockito.verify;
 
@@ -29,7 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class SequenceJsonProviderTest {
 
-    private SequenceJsonProvider provider = new SequenceJsonProvider();
+    private SequenceJsonProvider<ILoggingEvent> provider = new SequenceJsonProvider<>();
 
     @Mock
     private JsonGenerator generator;

@@ -15,32 +15,17 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
-import java.util.concurrent.atomic.AtomicLong;
-
-import net.logstash.logback.composite.AbstractFieldJsonProvider;
-import net.logstash.logback.composite.JsonWritingUtils;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * Outputs an incrementing sequence number.
  * Useful for determining if log events get lost along the transport chain.
+ * 
+ * @deprecated use {@link net.logstash.logback.composite.SequenceJsonProvider} instead
  */
-public class SequenceJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
+@Deprecated
+public class SequenceJsonProvider extends net.logstash.logback.composite.SequenceJsonProvider<ILoggingEvent> {
 
-    public static final String FIELD_SEQUENCE = "sequence";
-
-    private final AtomicLong sequenceNumber = new AtomicLong(0L);
-
-    public SequenceJsonProvider() {
-        setFieldName(FIELD_SEQUENCE);
-    }
-
-    @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent iLoggingEvent) throws IOException {
-        JsonWritingUtils.writeNumberField(generator, getFieldName(), sequenceNumber.incrementAndGet());
-    }
+    public static final String FIELD_SEQUENCE = net.logstash.logback.composite.SequenceJsonProvider.FIELD_SEQUENCE;
 
 }

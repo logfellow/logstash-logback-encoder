@@ -29,6 +29,7 @@ import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import net.logstash.logback.composite.SequenceJsonProvider;
 import net.logstash.logback.composite.UuidJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
@@ -43,11 +44,9 @@ import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
-import net.logstash.logback.composite.loggingevent.SequenceJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
-import net.logstash.logback.composite.loggingevent.UuidProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
@@ -196,7 +195,7 @@ public class ConfigurationTest {
         Assertions.assertNotNull(uuidProvider);
         Assertions.assertEquals("id", uuidProvider.getFieldName());
         Assertions.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
-        Assertions.assertEquals(UuidProvider.STRATEGY_TIME, uuidProvider.getStrategy());
+        Assertions.assertEquals(UuidJsonProvider.STRATEGY_TIME, uuidProvider.getStrategy());
 
         SequenceJsonProvider sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
         Assertions.assertNotNull(sequenceJsonProvider);
