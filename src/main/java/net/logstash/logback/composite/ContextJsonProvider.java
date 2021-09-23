@@ -18,7 +18,6 @@ package net.logstash.logback.composite;
 import java.io.IOException;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -53,9 +52,7 @@ public class ContextJsonProvider<Event extends DeferredProcessingAware> extends 
 
     @Override
     public void setFieldNames(LogstashCommonFieldNames fieldNames) {
-        if (fieldNames instanceof LogstashFieldNames) {
-            setFieldName(((LogstashFieldNames) fieldNames).getContext());
-        }
+        setFieldName(fieldNames.getContext());
     }
 
 }

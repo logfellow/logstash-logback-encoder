@@ -45,7 +45,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String rootStackTraceElementMethod = RootStackTraceElementJsonProvider.FIELD_METHOD_NAME;
     private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
-    private String context;
     private String arguments;
     private String uuid = UuidProvider.FIELD_UUID;
 
@@ -161,22 +160,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     
     public void setMdc(String mdc) {
         this.mdc = mdc;
-    }
-    
-    /**
-     * The name of the context object field.
-     * <p>
-     * If this returns null, then the context fields will be written inline at the root level of the JSON event output (e.g. as a sibling to all the other fields in this class).
-     * <p>
-     * If this returns non-null, then the context fields will be written inside an object with field name returned by this method
-     * @return The name of the context object field.
-     */
-    public String getContext() {
-        return context;
-    }
-    
-    public void setContext(String context) {
-        this.context = context;
     }
     
     /**
