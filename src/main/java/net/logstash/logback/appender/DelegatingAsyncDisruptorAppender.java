@@ -53,7 +53,7 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
     /**
      * The delegate appenders.
      */
-    private final AppenderAttachableImpl<Event> appenders = new AppenderAttachableImpl<Event>();
+    private final AppenderAttachableImpl<Event> appenders = new AppenderAttachableImpl<>();
     
     private class DelegatingEventHandler implements EventHandler<LogEvent<Event>> {
         /**
@@ -118,9 +118,9 @@ public abstract class DelegatingAsyncDisruptorAppender<Event extends DeferredPro
         }
     }
     
-    public DelegatingAsyncDisruptorAppender() {
-        super();
-        setEventHandler(new DelegatingEventHandler());
+    @Override
+    protected EventHandler<LogEvent<Event>> createEventHandler() {
+        return new DelegatingEventHandler();
     }
     
     @Override

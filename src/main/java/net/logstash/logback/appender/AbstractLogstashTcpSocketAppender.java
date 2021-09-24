@@ -919,10 +919,14 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     public AbstractLogstashTcpSocketAppender() {
         super();
-        setEventHandler(new TcpSendingEventHandler());
         setThreadNameFormat(DEFAULT_THREAD_NAME_FORMAT);
     }
 
+    @Override
+    protected EventHandler<LogEvent<Event>> createEventHandler() {
+        return new TcpSendingEventHandler();
+    }
+    
     @Override
     public boolean isStarted() {
         CountDownLatch latch = this.shutdownLatch;
