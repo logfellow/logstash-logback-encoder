@@ -29,32 +29,8 @@ public class TimeZoneUtils {
      * Parse a string into the corresponding {@link TimeZone} using the format described by
      * {@link TimeZone#getTimeZone(String)}.
      * 
-     * <p>The string can be a valid time zone ID. For instance, the time zone ID for the
-     * U.S. Pacific Time zone is "America/Los_Angeles".
-     * 
-     * <p>If the time zone you want is not represented by one of the
-     * supported IDs, then a custom time zone ID can be specified to
-     * produce a TimeZone. The syntax of a custom time zone ID is:
-     *
-     * <blockquote><pre>
-     * <i>CustomID:</i>
-     *         <code>GMT</code> <i>Sign</i> <i>Hours</i> <code>:</code> <i>Minutes</i>
-     *         <code>GMT</code> <i>Sign</i> <i>Hours</i> <i>Minutes</i>
-     *         <code>GMT</code> <i>Sign</i> <i>Hours</i>
-     * <i>Sign:</i> one of
-     *         <code>+ -</code>
-     * <i>Hours:</i>
-     *         <i>Digit</i>
-     *         <i>Digit</i> <i>Digit</i>
-     * <i>Minutes:</i>
-     *         <i>Digit</i> <i>Digit</i>
-     * <i>Digit:</i> one of
-     *         <code>0 1 2 3 4 5 6 7 8 9</code>
-     * </pre></blockquote>
-     *
-     * <i>Hours</i> must be between 0 to 23 and <i>Minutes</i> must be
-     * between 00 to 59.  For example, "GMT+10" and "GMT+0010" mean ten
-     * hours and ten minutes ahead of GMT, respectively.
+     * <p>The value of the {@code timeZone} can be any string accepted by java's {@link TimeZone#getTimeZone(String)}
+     * method. For example "America/Los_Angeles" or "GMT+10".
      * 
      * @param str the string to parse into a valid {@link TimeZone}.
      * @return the {@link TimeZone} corresponding to the input string

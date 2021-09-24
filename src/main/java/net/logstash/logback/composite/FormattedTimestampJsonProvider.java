@@ -52,8 +52,16 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
      */
     public static final String UNIX_TIMESTAMP_AS_STRING = "[UNIX_TIMESTAMP_AS_STRING]";
 
+    /**
+     * The default {@link #pattern} value.
+     */
     private static final String DEFAULT_PATTERN = "[ISO_OFFSET_DATE_TIME]";
 
+    /**
+     * Keyword used by {@link #setTimeZone(String)} to denote the system default time zone.
+     */
+    public static final String DEFAULT_TIMEZONE_KEYWORD = "[DEFAULT]";
+    
     /**
      * The pattern in which to format the timestamp.
      *
@@ -219,44 +227,19 @@ public abstract class FormattedTimestampJsonProvider<Event extends DeferredProce
      * Set the timezone for which to write the timestamp.
      * Only applicable if the pattern is not {@value #UNIX_TIMESTAMP_AS_NUMBER} or {@value #UNIX_TIMESTAMP_AS_STRING}.
      * 
-     * <p>The TimeZone can be expressed into any format supported by {@link TimeZone#getTimeZone(String)}.
-     * It can be a valid time zone ID. For instance, the time zone ID for the
-     * U.S. Pacific Time zone is "America/Los_Angeles".
+     * <p>The value of the {@code timeZone} can be any string accepted by java's {@link TimeZone#getTimeZone(String)} method.
+     * For example "America/Los_Angeles" or "GMT+10".
      * 
-     * <p>If the time zone you want is not represented by one of the
-     * supported IDs, then a custom time zone ID can be specified to
-     * produce a TimeZone. The syntax of a custom time zone ID is:
-     *
-     * <blockquote><pre>
-     * <i>CustomID:</i>
-     *         <code>GMT</code> <i>Sign</i> <i>Hours</i> <code>:</code> <i>Minutes</i>
-     *         <code>GMT</code> <i>Sign</i> <i>Hours</i> <i>Minutes</i>
-     *         <code>GMT</code> <i>Sign</i> <i>Hours</i>
-     * <i>Sign:</i> one of
-     *         <code>+ -</code>
-     * <i>Hours:</i>
-     *         <i>Digit</i>
-     *         <i>Digit</i> <i>Digit</i>
-     * <i>Minutes:</i>
-     *         <i>Digit</i> <i>Digit</i>
-     * <i>Digit:</i> one of
-     *         <code>0 1 2 3 4 5 6 7 8 9</code>
-     * </pre></blockquote>
-     *
-     * <i>Hours</i> must be between 0 to 23 and <i>Minutes</i> must be
-     * between 00 to 59.  For example, "GMT+10" and "GMT+0010" mean ten
-     * hours and ten minutes ahead of GMT, respectively.
+     * <p>Use a blank string, {@code null} or the value {@value #DEFAULT_TIMEZONE_KEYWORD} to use the default TimeZone of the system.
      * 
-     * <p>Use a blank string or {@code null} to use the default TimeZone of the system.
-     * 
-     * @param timeZoneId the textual representation of the desired time zone
+     * @param timeZone the textual representation of the desired time zone
      * @throws IllegalArgumentException if the input string is not a valid TimeZone representation
      */
-    public void setTimeZone(String timeZoneId) {
-        if (timeZoneId == null || timeZoneId.trim().isEmpty()) {
+    public void setTimeZone(String timeZone) {
+        if (timeZone == null || timeZone.trim().isEmpty() || DEFAULT_TIMEZONE_KEYWORD.equalsIgnoreCase(timeZone)) {
             this.timeZone = TimeZone.getDefault();
         } else {
-            this.timeZone = TimeZoneUtils.parseTimeZone(timeZoneId);
+            this.timeZone = TimeZoneUtils.parseTimeZone(timeZone);
         }
         updateTimestampWriter();
     }
