@@ -37,9 +37,19 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addTimestamp(AccessEventFormattedTimestampJsonProvider provider) {
         addProvider(provider);
     }
+    
+    /**
+     * @deprecated Use {@link #addMessage(AccessMessageJsonProvider)} instead.
+     * @param provider the provider to add
+     */
+    @Deprecated
     public void addAccessMessage(AccessMessageJsonProvider provider) {
         addProvider(provider);
     }
+    public void addMessage(AccessMessageJsonProvider provider) {
+        addProvider(provider);
+    }
+    
     public void addMethod(MethodJsonProvider provider) {
         addProvider(provider);
     }
