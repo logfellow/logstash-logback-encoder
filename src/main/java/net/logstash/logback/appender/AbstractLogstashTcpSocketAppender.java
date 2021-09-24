@@ -570,8 +570,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * Encoding threw an exception. Warn and drop event before it becomes a "poison".
                      */
-                    addWarn(peerId + "Encoder failed to encode event: " + e.getMessage() + ". Dropping event.", e);
-                    fireEventSendFailure(logEvent.event, e);
+                    addWarn(peerId + "Encoder failed to encode event: " + e.getMessage() + ". Dropping event.", e.getCause());
+                    fireEventSendFailure(logEvent.event, e.getCause());
                     break;
                     
                 } catch (Exception e) {
