@@ -43,4 +43,10 @@ public class UuidProvider extends UuidJsonProvider<ILoggingEvent> {
      * or a MAC address string.
      */
     public static final String STRATEGY_TIME = UuidJsonProvider.STRATEGY_TIME;
+    
+    @Override
+    public void start() {
+        addWarn(this.getClass().getName() + " is deprecated, use " + UuidJsonProvider.class.getName() + " instead.");
+        super.start();
+    }
 }

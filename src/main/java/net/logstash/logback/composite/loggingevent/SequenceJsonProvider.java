@@ -28,4 +28,9 @@ public class SequenceJsonProvider extends net.logstash.logback.composite.Sequenc
 
     public static final String FIELD_SEQUENCE = net.logstash.logback.composite.SequenceJsonProvider.FIELD_SEQUENCE;
 
+    @Override
+    public void start() {
+        addWarn(this.getClass().getName() + " is deprecated, use " + net.logstash.logback.composite.SequenceJsonProvider.class.getName() + " instead.");
+        super.start();
+    }
 }

@@ -23,4 +23,9 @@ public class ThreadNameJsonProvider extends LoggingEventThreadNameJsonProvider {
 
     public static final String FIELD_THREAD_NAME = LoggingEventThreadNameJsonProvider.FIELD_THREAD_NAME;
     
+    @Override
+    public void start() {
+        addWarn(this.getClass().getName() + " is deprecated, use " + LoggingEventThreadNameJsonProvider.class.getName() + " instead.");
+        super.start();
+    }
 }
