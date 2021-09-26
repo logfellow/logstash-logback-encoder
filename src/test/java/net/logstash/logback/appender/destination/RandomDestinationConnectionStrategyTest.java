@@ -16,17 +16,12 @@
 package net.logstash.logback.appender.destination;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import java.util.Random;
-
 import ch.qos.logback.core.util.Duration;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,18 +29,10 @@ public class RandomDestinationConnectionStrategyTest {
     
     private RandomDestinationConnectionStrategy strategy = spy(new RandomDestinationConnectionStrategy());
     
-    @Mock
-    private Random random;
-    
-    @BeforeEach
-    public void setup() {
-        doReturn(random).when(strategy).getRandom();
-    }
-
     @Test
     public void testNoConnectionTtl_success() {
         
-        when(random.nextInt(3))
+        when(strategy.nextInt(3))
             .thenReturn(0)
             .thenReturn(1);
         
@@ -61,7 +48,7 @@ public class RandomDestinationConnectionStrategyTest {
     @Test
     public void testNoConnectionTtl_failed() {
         
-        when(random.nextInt(3))
+        when(strategy.nextInt(3))
             .thenReturn(0)
             .thenReturn(2)
             .thenReturn(1);
@@ -85,7 +72,7 @@ public class RandomDestinationConnectionStrategyTest {
     @Test
     public void testConnectionTtl_success() {
         
-        when(random.nextInt(3))
+        when(strategy.nextInt(3))
             .thenReturn(0)
             .thenReturn(1);
 
@@ -103,7 +90,7 @@ public class RandomDestinationConnectionStrategyTest {
     @Test
     public void testConnectionTtl_failed() {
         
-        when(random.nextInt(3))
+        when(strategy.nextInt(3))
             .thenReturn(0)
             .thenReturn(2)
             .thenReturn(1);

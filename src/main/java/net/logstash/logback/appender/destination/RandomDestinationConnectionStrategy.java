@@ -15,7 +15,7 @@
  */
 package net.logstash.logback.appender.destination;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * This strategy attempts connections to the destination in a random order.
@@ -26,18 +26,13 @@ import java.util.Random;
  */
 public class RandomDestinationConnectionStrategy extends DestinationConnectionStrategyWithTtl {
 
-    private final ThreadLocal<Random> threadLocalRandom = new ThreadLocal<Random>() {
-        protected Random initialValue() {
-            return new Random();
-        }
-    };
-
     @Override
     public int selectNextDestinationIndex(int previousDestinationIndex, int numDestinations) {
-        return getRandom().nextInt(numDestinations);
+        return nextInt(numDestinations);
     }
 
-    public Random getRandom() {
-        return threadLocalRandom.get();
+    /* Note: Currently made visible only to support some test cases */
+    public int nextInt(int bound) {
+        return ThreadLocalRandom.current().nextInt(bound);
     }
 }
