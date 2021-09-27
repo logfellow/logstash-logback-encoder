@@ -20,6 +20,7 @@ import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.LoggingEventJsonPatternParser;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonFactory;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
@@ -27,8 +28,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public class LoggingEventPatternJsonProvider extends AbstractPatternJsonProvider<ILoggingEvent> {
     
     @Override
-    protected AbstractJsonPatternParser<ILoggingEvent> createParser() {
-        return new LoggingEventJsonPatternParser(this, this.jsonFactory);
+    protected AbstractJsonPatternParser<ILoggingEvent> createParser(JsonFactory jsonFactory) {
+        return new LoggingEventJsonPatternParser(this, jsonFactory);
     }
 
 }
