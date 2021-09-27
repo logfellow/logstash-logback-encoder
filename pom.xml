@@ -624,6 +624,31 @@
                 <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
             </properties>
         </profile>
+        
+		<!--
+			Profile used by the Eclipse Maven plugin (m2eclipse).
+	   
+			Activation:
+				Profile is activated if the property "m2e.version" is found.
+				The Eclipse plugin automatically exports this property which in turn causes the profile
+				to be automatically activated under Eclipse.
+		 -->
+		<profile>
+			<id>m2e</id>
+			<activation>
+				<property>
+					<name>m2e.version</name>
+				</property>
+			</activation>
+
+			<build>
+				<!--
+					Tell eclipse to use another directory for its generated classes than the one
+					used by the command line Maven.
+				 -->
+				<directory>target-eclipse</directory>
+			</build>
+		</profile>
     </profiles>
 
     <distributionManagement>
