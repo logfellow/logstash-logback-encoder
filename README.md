@@ -1639,7 +1639,9 @@ You can change the timezone like this:
 </encoder>
 ```
 
-The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
+The value of the `timeZone` element can be any string accepted by java's `TimeZone.getTimeZone(String id)` method.
+For example `America/Los_Angeles`, `GMT+10` or `UTC`.
+Use the special value `[DEFAULT]` to use the default TimeZone of the system.
 
 
 ## Customizing LoggingEvent Message
