@@ -18,7 +18,7 @@ package net.logstash.logback.encoder;
 import java.util.List;
 
 import net.logstash.logback.LogstashFormatter;
-import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
@@ -28,7 +28,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
     
     @Override
-    protected CompositeJsonFormatter<ILoggingEvent> createFormatter() {
+    protected AbstractCompositeJsonFormatter<ILoggingEvent> createFormatter() {
         return new LogstashFormatter(this);
     }
     

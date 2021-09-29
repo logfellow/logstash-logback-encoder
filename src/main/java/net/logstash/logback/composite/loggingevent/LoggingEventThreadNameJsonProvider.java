@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite;
+package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.core.spi.ContextAware;
-import ch.qos.logback.core.spi.DeferredProcessingAware;
+import net.logstash.logback.composite.AbstractThreadNameJsonProvider;
+import net.logstash.logback.composite.JsonProvider;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
 
 /**
- * @deprecated use {@link AbstractCompositeJsonFormatter} instead.
+ * {@link JsonProvider} producing a single JSON field with the {@link ILoggingEvent#getThreadName()}.
+ * 
+ * @author brenuart
  */
-@Deprecated
-public abstract class CompositeJsonFormatter<Event extends DeferredProcessingAware> extends AbstractCompositeJsonFormatter<Event> {
+public class LoggingEventThreadNameJsonProvider extends AbstractThreadNameJsonProvider<ILoggingEvent> {
 
-    public CompositeJsonFormatter(ContextAware declaredOrigin) {
-        super(declaredOrigin);
+    @Override
+    protected String getThreadName(ILoggingEvent event) {
+        return event.getThreadName();
     }
-
 }

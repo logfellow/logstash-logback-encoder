@@ -21,7 +21,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Objects;
 
-import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
@@ -68,14 +68,14 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
      */
     private ReusableByteBufferPool bufferPool;
     
-    private final CompositeJsonFormatter<Event> formatter;
+    private final AbstractCompositeJsonFormatter<Event> formatter;
     
     public CompositeJsonLayout() {
         super();
         this.formatter = Objects.requireNonNull(createFormatter());
     }
 
-    protected abstract CompositeJsonFormatter<Event> createFormatter();
+    protected abstract AbstractCompositeJsonFormatter<Event> createFormatter();
 
     @Override
     public String doLayout(Event event) {
@@ -215,7 +215,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         formatter.setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
     }
 
-    protected CompositeJsonFormatter<Event> getFormatter() {
+    protected AbstractCompositeJsonFormatter<Event> getFormatter() {
         return formatter;
     }
 

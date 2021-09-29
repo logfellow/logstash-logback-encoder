@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-
-import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -30,49 +29,49 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ThreadNameJsonProviderTest {
-    
-    private ThreadNameJsonProvider provider = new ThreadNameJsonProvider();
-    
+public class UuidJsonProviderTest {
+    public static final String UUID = "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$";
+
+    private UuidJsonProvider<ILoggingEvent> provider = new UuidJsonProvider<>();
+
     @Mock
     private JsonGenerator generator;
-    
+
     @Mock
     private ILoggingEvent event;
-    
+
     @Test
     public void testDefaultName() throws IOException {
-        
-        when(event.getThreadName()).thenReturn("threadName");
-        
         provider.writeTo(generator, event);
-        
-        verify(generator).writeStringField(ThreadNameJsonProvider.FIELD_THREAD_NAME, "threadName");
+
+        verify(generator).writeStringField(eq(UuidJsonProvider.FIELD_UUID), matches(UUID));
     }
 
     @Test
     public void testFieldName() throws IOException {
         provider.setFieldName("newFieldName");
-        
-        when(event.getThreadName()).thenReturn("threadName");
-        
+
         provider.writeTo(generator, event);
-        
-        verify(generator).writeStringField("newFieldName", "threadName");
+
+        verify(generator).writeStringField(eq("newFieldName"), matches(UUID));
     }
 
     @Test
-    public void testFieldNames() throws IOException {
-        LogstashFieldNames fieldNames = new LogstashFieldNames();
-        fieldNames.setThread("newFieldName");
-        
-        provider.setFieldNames(fieldNames);
-        
-        when(event.getThreadName()).thenReturn("threadName");
-        
+    public void testStrategy() throws IOException {
+        provider.setStrategy(UuidJsonProvider.STRATEGY_TIME);
+
         provider.writeTo(generator, event);
-        
-        verify(generator).writeStringField("newFieldName", "threadName");
+
+        verify(generator).writeStringField(eq("uuid"), matches(UUID));
     }
 
+    @Test
+    public void testEthernet() throws IOException {
+        provider.setStrategy(UuidJsonProvider.STRATEGY_TIME);
+        provider.setEthernet("00:C0:F0:3D:5B:7C");
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeStringField(eq("uuid"), matches(UUID));
+    }
 }

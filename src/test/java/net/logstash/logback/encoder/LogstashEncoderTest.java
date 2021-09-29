@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
@@ -623,7 +623,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getTimeStamp()).thenReturn(timestamp);
         
-        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_NUMBER);
+        encoder.setTimestampPattern(AbstractFormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_NUMBER);
         encoder.start();
         byte[] encoded = encoder.encode(event);
         
@@ -639,7 +639,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getTimeStamp()).thenReturn(timestamp);
         
-        encoder.setTimestampPattern(FormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_STRING);
+        encoder.setTimestampPattern(AbstractFormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_STRING);
         encoder.start();
         byte[] encoded = encoder.encode(event);
         

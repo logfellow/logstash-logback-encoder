@@ -41,7 +41,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 public class JsonProviders<Event extends DeferredProcessingAware> implements JsonFactoryAware {
     
-    private final List<JsonProvider<Event>> jsonProviders = new ArrayList<JsonProvider<Event>>();
+    private final List<JsonProvider<Event>> jsonProviders = new ArrayList<>();
 
     public void start() {
         for (JsonProvider<Event> jsonProvider : jsonProviders) {
@@ -99,6 +99,18 @@ public class JsonProviders<Event extends DeferredProcessingAware> implements Jso
     }
     
     public void addContext(ContextJsonProvider<Event> provider) {
+        addProvider(provider);
+    }
+    public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<Event> provider) {
+        addProvider(provider);
+    }
+    public void addSequence(SequenceJsonProvider<Event> provider) {
+        addProvider(provider);
+    }
+    public void addUuid(UuidJsonProvider<Event> provider) {
+        addProvider(provider);
+    }
+    public void addVersion(LogstashVersionJsonProvider<Event> provider) {
         addProvider(provider);
     }
 }

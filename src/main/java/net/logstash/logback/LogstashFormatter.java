@@ -32,12 +32,12 @@ import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonFormatter;
 import net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
+import net.logstash.logback.composite.loggingevent.LoggingEventThreadNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
-import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
@@ -71,7 +71,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     private final LogstashVersionJsonProvider<ILoggingEvent> versionProvider = new LogstashVersionJsonProvider<>();
     private final MessageJsonProvider messageProvider = new MessageJsonProvider();
     private final LoggerNameJsonProvider loggerNameProvider = new LoggerNameJsonProvider();
-    private final ThreadNameJsonProvider threadNameProvider = new ThreadNameJsonProvider();
+    private final LoggingEventThreadNameJsonProvider threadNameProvider = new LoggingEventThreadNameJsonProvider();
     private final LogLevelJsonProvider logLevelProvider = new LogLevelJsonProvider();
     private final LogLevelValueJsonProvider logLevelValueProvider = new LogLevelValueJsonProvider();
 

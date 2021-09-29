@@ -22,8 +22,6 @@ import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
 import net.logstash.logback.composite.loggingevent.RootStackTraceElementJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
-import net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider;
-import net.logstash.logback.composite.loggingevent.UuidProvider;
 
 /**
  * Names of standard fields that appear in the JSON output.
@@ -31,7 +29,6 @@ import net.logstash.logback.composite.loggingevent.UuidProvider;
 public class LogstashFieldNames extends LogstashCommonFieldNames {
     
     private String logger = LoggerNameJsonProvider.FIELD_LOGGER_NAME;
-    private String thread = ThreadNameJsonProvider.FIELD_THREAD_NAME;
     private String level = LogLevelJsonProvider.FIELD_LEVEL;
     private String levelValue = LogLevelValueJsonProvider.FIELD_LEVEL_VALUE;
     private String caller;
@@ -46,7 +43,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
     private String arguments;
-    private String uuid = UuidProvider.FIELD_UUID;
 
     public String getLogger() {
         return logger;
@@ -54,14 +50,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     
     public void setLogger(String logger) {
         this.logger = logger;
-    }
-    
-    public String getThread() {
-        return thread;
-    }
-    
-    public void setThread(String thread) {
-        this.thread = thread;
     }
     
     public String getLevel() {
@@ -175,14 +163,6 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     }
     public void setArguments(String arguments) {
         this.arguments = arguments;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public String getRootStackTraceElement() {
