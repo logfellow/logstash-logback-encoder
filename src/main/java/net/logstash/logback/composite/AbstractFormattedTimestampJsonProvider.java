@@ -23,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
+import net.logstash.logback.util.TimeZoneUtils;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -31,8 +32,8 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * Writes the timestamp field as either:
  * <ul>
  *      <li>A string value formatted by a {@link DateTimeFormatter} pattern</li>
- *      <li>A string value representing the number of milliseconds since unix epoch  (designated by specifying the pattern value as {@value #UNIX_TIMESTAMP_AS_STRING})</li>
- *      <li>A number value of the milliseconds since unix epoch  (designated by specifying the pattern value as {@value #UNIX_TIMESTAMP_AS_NUMBER})</li>
+ *      <li>A string value representing the number of milliseconds since unix epoch (designated by specifying the pattern value as {@value #UNIX_TIMESTAMP_AS_STRING})</li>
+ *      <li>A number value of the milliseconds since unix epoch (designated by specifying the pattern value as {@value #UNIX_TIMESTAMP_AS_NUMBER})</li>
  * </ul>
  */
 public abstract class AbstractFormattedTimestampJsonProvider<Event extends DeferredProcessingAware, FieldNames extends LogstashCommonFieldNames> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<FieldNames> {
@@ -51,9 +52,16 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
      */
     public static final String UNIX_TIMESTAMP_AS_STRING = "[UNIX_TIMESTAMP_AS_STRING]";
 
+    /**
+     * The default {@link #pattern} value.
+     */
     private static final String DEFAULT_PATTERN = "[ISO_OFFSET_DATE_TIME]";
-    private static final TimeZone DEFAULT_TIMEZONE = TimeZone.getDefault();
 
+    /**
+     * Keyword used by {@link #setTimeZone(String)} to denote the system default time zone.
+     */
+    public static final String DEFAULT_TIMEZONE_KEYWORD = "[DEFAULT]";
+    
     /**
      * The pattern in which to format the timestamp.
      *
@@ -72,7 +80,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
      * The timezone for which to write the timestamp.
      * Only applicable if the pattern is not {@value #UNIX_TIMESTAMP_AS_NUMBER} or {@value #UNIX_TIMESTAMP_AS_STRING}
      */
-    private TimeZone timeZone = DEFAULT_TIMEZONE;
+    private TimeZone timeZone = TimeZone.getDefault();
 
     /**
      * Writes the timestamp to the JsonGenerator.
@@ -204,11 +212,34 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
         this.pattern = pattern;
         updateTimestampWriter();
     }
+    
+    /**
+     * Get the time zone used to write the timestamp.
+     * 
+     * @return the time zone used to write the timestamp
+     */
     public String getTimeZone() {
         return timeZone.getID();
     }
-    public void setTimeZone(String timeZoneId) {
-        this.timeZone = TimeZone.getTimeZone(timeZoneId);
+    
+    /**
+     * Set the timezone for which to write the timestamp.
+     * Only applicable if the pattern is not {@value #UNIX_TIMESTAMP_AS_NUMBER} or {@value #UNIX_TIMESTAMP_AS_STRING}.
+     * 
+     * <p>The value of the {@code timeZone} can be any string accepted by java's {@link TimeZone#getTimeZone(String)} method.
+     * For example "America/Los_Angeles" or "GMT+10".
+     * 
+     * <p>Use a blank string, {@code null} or the value {@value #DEFAULT_TIMEZONE_KEYWORD} to use the default TimeZone of the system.
+     * 
+     * @param timeZone the textual representation of the desired time zone
+     * @throws IllegalArgumentException if the input string is not a valid TimeZone representation
+     */
+    public void setTimeZone(String timeZone) {
+        if (timeZone == null || timeZone.trim().isEmpty() || DEFAULT_TIMEZONE_KEYWORD.equalsIgnoreCase(timeZone)) {
+            this.timeZone = TimeZone.getDefault();
+        } else {
+            this.timeZone = TimeZoneUtils.parseTimeZone(timeZone);
+        }
         updateTimestampWriter();
     }
 }
