@@ -15,12 +15,12 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
-public class LoggingEventFormattedTimestampJsonProvider extends FormattedTimestampJsonProvider<ILoggingEvent, LogstashFieldNames> {
+public class LoggingEventFormattedTimestampJsonProvider extends AbstractFormattedTimestampJsonProvider<ILoggingEvent, LogstashFieldNames> {
     
     @Override
     protected long getTimestampAsMillis(ILoggingEvent event) {

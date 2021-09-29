@@ -15,8 +15,8 @@
  */
 package net.logstash.logback.fieldnames;
 
+import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.AbstractThreadNameJsonProvider;
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
 import net.logstash.logback.composite.UuidJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
@@ -40,7 +40,7 @@ public abstract class LogstashCommonFieldNames {
      */
     public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
 
-    private String timestamp = FormattedTimestampJsonProvider.FIELD_TIMESTAMP;
+    private String timestamp = AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP;
     private String version = LogstashVersionJsonProvider.FIELD_VERSION;
     private String message = MessageJsonProvider.FIELD_MESSAGE;
     private String thread = AbstractThreadNameJsonProvider.FIELD_THREAD_NAME;
