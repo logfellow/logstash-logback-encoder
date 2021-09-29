@@ -1979,8 +1979,8 @@ The provider name is the xml element name to use when configuring.
 
 ### Providers for LoggingEvents
 
-The table below lists the available providers for _LoggingEvents_, and their configuration properties (defaults in parentheses).
-The provider name is the xml element name to use when configuring.
+The [common providers mentioned above](#providers-common-to-loggingevents-and-accessevents), and the providers listed in the table below, are available for _LoggingEvents_.
+The provider name is the xml element name to use when configuring. Each provider's configuration properties are shown, with default configuration values in parenthesis.
 
 <table>
   <tbody style="vertical-align: top;">
@@ -2154,8 +2154,8 @@ The provider name is the xml element name to use when configuring.
 
 ### Providers for AccessEvents  
 
-The table below lists the available providers for _AccessEvents_, and their configuration properties (defaults in parentheses).
-The provider name is the xml element name to use when configuring.
+The [common providers mentioned above](#providers-common-to-loggingevents-and-accessevents), and the providers listed in the table below, are available for _AccessEvents_.
+The provider name is the xml element name to use when configuring. Each provider's configuration properties are shown, with default configuration values in parenthesis.
 
 <table>
   <tbody style="vertical-align: top;">
