@@ -26,8 +26,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 @Deprecated
 public class SequenceJsonProvider extends net.logstash.logback.composite.SequenceJsonProvider<ILoggingEvent> {
 
-    public static final String FIELD_SEQUENCE = net.logstash.logback.composite.SequenceJsonProvider.FIELD_SEQUENCE;
-
     @Override
     public void start() {
         addWarn(this.getClass().getName() + " is deprecated, use " + net.logstash.logback.composite.SequenceJsonProvider.class.getName() + " instead.");

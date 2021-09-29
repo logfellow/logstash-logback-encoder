@@ -27,23 +27,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
  */
 @Deprecated
 public class UuidProvider extends UuidJsonProvider<ILoggingEvent> {
-
-    public static final String FIELD_UUID = UuidJsonProvider.FIELD_UUID;
-
-    /**
-     * Type 4 UUID.
-     */
-    public static final String STRATEGY_RANDOM = UuidJsonProvider.STRATEGY_RANDOM;
-
-    /**
-     * Type 1 time based UUID.
-     *
-     * When the time strategy is used, then
-     * {@link #ethernet} can be set to either 'interface' (to automatically pick a MAC address from a network interface)
-     * or a MAC address string.
-     */
-    public static final String STRATEGY_TIME = UuidJsonProvider.STRATEGY_TIME;
-    
+  
     @Override
     public void start() {
         addWarn(this.getClass().getName() + " is deprecated, use " + UuidJsonProvider.class.getName() + " instead.");
