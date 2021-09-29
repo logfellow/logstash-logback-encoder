@@ -29,7 +29,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -47,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.function.UnaryOperator;
 
 import javax.net.SocketFactory;
 
@@ -314,16 +314,17 @@ public class LogstashTcpSocketAppenderTest {
     public void testRandomDestinationAndReconnectToSecondaryOnOpen() throws Exception {
         appender.addDestination("localhost:10000");
         appender.addDestination("localhost:10001");
-        RandomDestinationConnectionStrategy strategy = spy(new RandomDestinationConnectionStrategy());
-        //doReturn(random).when(strategy).getRandom();
-        appender.setConnectionStrategy(strategy);
+        
+        @SuppressWarnings("unchecked")
+        UnaryOperator<Integer> randomGenerator = mock(UnaryOperator.class);
+        appender.setConnectionStrategy(new RandomDestinationConnectionStrategy(randomGenerator));
 
         // Make it fail to connect to second destination
         doThrow(SocketTimeoutException.class)
             .when(socket).connect(host("localhost", 10001), anyInt());
 
         // The first index is second destination.
-        when(strategy.nextInt(appender.getDestinations().size())).thenReturn(1).thenReturn(0);
+        when(randomGenerator.apply(appender.getDestinations().size())).thenReturn(1).thenReturn(0);
 
         // Start the appender and verify it is actually started.
         // It should try to connect to the second destination, fail then retry on first destination.

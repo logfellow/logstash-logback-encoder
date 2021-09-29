@@ -15,24 +15,36 @@
  */
 package net.logstash.logback.appender.destination;
 
+import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.UnaryOperator;
 
 /**
  * This strategy attempts connections to the destination in a random order.
  * If a connection fails, the next random destination is attempted.
  *
- * The connectionTTL can be set to gracefully close connections after a specific duration.
+ * <p>The connectionTTL can be set to gracefully close connections after a specific duration.
  * This will force the the appender to reattempt to connect to the next random destination.
  */
 public class RandomDestinationConnectionStrategy extends DestinationConnectionStrategyWithTtl {
 
+    /**
+     * Random number generator. Function argument is the maximum value allowed for the generated
+     * random int number.
+     */
+    private final UnaryOperator<Integer> randomSupplier;
+    
+    
+    public RandomDestinationConnectionStrategy() {
+        this(bound -> ThreadLocalRandom.current().nextInt(bound));
+    }
+    
+    public RandomDestinationConnectionStrategy(UnaryOperator<Integer> randomSupplier) {
+        this.randomSupplier = Objects.requireNonNull(randomSupplier);
+    }
+    
     @Override
     public int selectNextDestinationIndex(int previousDestinationIndex, int numDestinations) {
-        return nextInt(numDestinations);
-    }
-
-    /* Note: Currently made visible only to support some test cases */
-    public int nextInt(int bound) {
-        return ThreadLocalRandom.current().nextInt(bound);
+        return randomSupplier.apply(numDestinations);
     }
 }
