@@ -42,9 +42,10 @@ public class ReusableByteBufferPool extends ObjectPool<ReusableByteBuffer> {
      * 
      * @param buffer the buffer to return to the pool.
      */
-    protected void releaseInstance(ReusableByteBuffer buffer) {
+    @Override
+    protected boolean recycleInstance(ReusableByteBuffer buffer) {
         buffer.reset();
-        super.release(buffer);
+        return true;
     }
     
     
