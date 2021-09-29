@@ -15,7 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -23,9 +23,9 @@ import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
 
 /**
- * A {@link CompositeJsonFormatter} for {@link ILoggingEvent}s.
+ * A {@link AbstractCompositeJsonFormatter} for {@link ILoggingEvent}s.
  */
-public class LoggingEventCompositeJsonFormatter extends CompositeJsonFormatter<ILoggingEvent> {
+public class LoggingEventCompositeJsonFormatter extends AbstractCompositeJsonFormatter<ILoggingEvent> {
 
     public LoggingEventCompositeJsonFormatter(ContextAware declaredOrigin) {
         super(declaredOrigin);

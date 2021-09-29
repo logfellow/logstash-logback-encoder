@@ -20,8 +20,8 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.AbstractJsonProvider;
-import net.logstash.logback.composite.CompositeJsonFormatter;
 
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
@@ -40,8 +40,8 @@ public class CompositeJsonLayoutTest {
      */
     static class TesterCompositeJsonLayout extends CompositeJsonLayout<DeferredProcessingAware> {
         @Override
-        protected CompositeJsonFormatter<DeferredProcessingAware> createFormatter() {
-            CompositeJsonFormatter<DeferredProcessingAware> formatter = new CompositeJsonFormatter<DeferredProcessingAware>(this) { };
+        protected AbstractCompositeJsonFormatter<DeferredProcessingAware> createFormatter() {
+            AbstractCompositeJsonFormatter<DeferredProcessingAware> formatter = new AbstractCompositeJsonFormatter<DeferredProcessingAware>(this) { };
             formatter.getProviders().addProvider(new AbstractJsonProvider<DeferredProcessingAware>() {
                 @Override
                 public void writeTo(JsonGenerator generator, DeferredProcessingAware event) throws IOException {

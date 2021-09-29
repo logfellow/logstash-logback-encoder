@@ -20,7 +20,7 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Objects;
 
-import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
@@ -56,7 +56,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
 
-    private final CompositeJsonFormatter<Event> formatter;
+    private final AbstractCompositeJsonFormatter<Event> formatter;
     
     private String lineSeparator = System.lineSeparator();
 
@@ -69,7 +69,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         this.formatter = Objects.requireNonNull(createFormatter());
     }
 
-    protected abstract CompositeJsonFormatter<Event> createFormatter();
+    protected abstract AbstractCompositeJsonFormatter<Event> createFormatter();
 
     @Override
     public void encode(Event event, OutputStream outputStream) throws IOException {
@@ -286,7 +286,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         this.minBufferSize = minBufferSize;
     }
 
-    protected CompositeJsonFormatter<Event> getFormatter() {
+    protected AbstractCompositeJsonFormatter<Event> getFormatter() {
         return formatter;
     }
 
