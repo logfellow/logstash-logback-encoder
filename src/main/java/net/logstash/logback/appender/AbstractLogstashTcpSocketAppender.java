@@ -574,7 +574,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     /*
                      * Encoding threw an exception. Warn and drop event before it becomes a "poison".
                      */
-                    addWarn(peerId + "Encoder failed to encode event: " + e.getMessage() + ". Dropping event.", e.getCause());
+                    addWarn(peerId + "Encoder failed to encode event. Dropping event.", e.getCause());
                     fireEventSendFailure(logEvent.event, e.getCause());
                     break;
                     
@@ -583,7 +583,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Any other exception is thrown by the socket stream (or bug in the code).
                      * Re-open the socket and get a fresh new stream.
                      */
-                    addWarn(peerId + "Unable to send event: " + e.getMessage() + ". Reconnecting.", e);
+                    addWarn(peerId + "Unable to send event. Reconnecting.", e);
                     reopenSocket();
                 }
             }

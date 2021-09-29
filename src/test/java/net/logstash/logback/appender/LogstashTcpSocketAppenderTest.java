@@ -657,7 +657,7 @@ public class LogstashTcpSocketAppenderTest {
         // A warn status is emitted
         assertThat(statusManager.getCopyOfStatusList()).anySatisfy(status -> {
             assertThat(status.getLevel()).isEqualTo(Status.WARN);
-            assertThat(status.getMessage()).contains("Encoder failed to encode event:");
+            assertThat(status.getMessage()).contains("Encoder failed to encode event. Dropping event.");
         });
     }
     
@@ -700,7 +700,7 @@ public class LogstashTcpSocketAppenderTest {
         // A warn status is emitted
         assertThat(statusManager.getCopyOfStatusList()).anySatisfy(status -> {
             assertThat(status.getLevel()).isEqualTo(Status.WARN);
-            assertThat(status.getMessage()).contains("Encoder failed to encode event:");
+            assertThat(status.getMessage()).contains("Encoder failed to encode event. Dropping event.");
         });
     }
     
