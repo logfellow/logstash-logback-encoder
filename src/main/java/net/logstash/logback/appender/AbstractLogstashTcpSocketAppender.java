@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -499,7 +500,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     long elapsedSendTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSendStart);
                     if (elapsedSendTimeInMillis > writeTimeout.getMilliseconds()) {
                         lastDetectedStartNanoTime = lastSendStart;
-                        addWarn(peerId + "Detected write timeout after " + elapsedSendTimeInMillis + "ms.  Write timeout=" + getWriteTimeout() + ".  Closing socket to force reconnect");
+                        addWarn(peerId + "Detected write timeout after " + elapsedSendTimeInMillis + "ms (writeTimeout=" + getWriteTimeout() + "). Closing socket to force reconnect.");
                         closeSocket();
                     }
                 }
@@ -529,31 +530,34 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
 
                 /*
+                 * If socket == null here, it means that a write timed out,
+                 * and the socket was closed by the WriteTimeoutRunnable.
+                 * 
+                 * Note: a warning status has already been emitted by WriteTimeoutRunnable,
+                 *       no need to repeat here.
+                 */
+                if (socket == null) {
+                    reopenSocket();
+                    continue;
+                }
+                
+                /*
                  * If readerFuture.isDone(), then the destination has shut down its output (our input),
                  * and the destination is probably no longer listening to its input (our output).
                  * This will be the case for Amazon's Elastic Load Balancers (ELB)
                  * when an instance behind the ELB becomes unhealthy while we're connected to it.
-                 *
-                 * If socket == null here, it means that a write timed out,
-                 * and the socket was closed by the WriteTimeoutRunnable.
-                 *
-                 * Therefore, attempt reconnection.
                  */
                 Future<?> readerFuture = this.readerFuture;  // volatile read
-                if (readerFuture.isDone() || socket == null) {
-                    addInfo(peerId + "destination terminated the connection. Reconnecting.");
+                if (readerFuture.isDone()) {
+                    String msg = "destination terminated the connection";
+                    try {
+                        readerFuture.get();
+                    } catch (ExecutionException e) {
+                        msg += " (cause: " + e.getCause().getMessage() + ")";
+                    }
+
+                    addInfo(peerId + msg + ". Reconnecting.");
                     reopenSocket();
-                    
-// TODO readerFuture refers to the "old" future and a new one has been started by reopenSocket...
-// Why wait for the old to complete? Is it to reuse its thread and avoid creating/wasting a new one?
-// In this case better to readerFuture.get() before reopenSocket()...
-//
-//                    try {
-//                        readerFuture.get();
-//                        sendFailureException = NOT_CONNECTED_EXCEPTION;
-//                    } catch (Exception e) {
-//                        sendFailureException = e;
-//                    }
                     continue;
                 }
                 
@@ -579,7 +583,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      * Any other exception is thrown by the socket stream (or bug in the code).
                      * Re-open the socket and get a fresh new stream.
                      */
-                    addWarn(peerId + "unable to send event: " + e.getMessage() + " Reconnecting.", e);
+                    addWarn(peerId + "Unable to send event: " + e.getMessage() + ". Reconnecting.", e);
                     reopenSocket();
                 }
             }
