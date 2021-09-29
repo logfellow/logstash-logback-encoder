@@ -15,8 +15,10 @@
  */
 package net.logstash.logback.fieldnames;
 
-import net.logstash.logback.composite.FormattedTimestampJsonProvider;
+import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
+import net.logstash.logback.composite.AbstractThreadNameJsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
+import net.logstash.logback.composite.UuidJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 
 /**
@@ -38,10 +40,14 @@ public abstract class LogstashCommonFieldNames {
      */
     public static final String IGNORE_FIELD_INDICATOR = "[ignore]";
 
-    private String timestamp = FormattedTimestampJsonProvider.FIELD_TIMESTAMP;
+    private String timestamp = AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP;
     private String version = LogstashVersionJsonProvider.FIELD_VERSION;
     private String message = MessageJsonProvider.FIELD_MESSAGE;
+    private String thread = AbstractThreadNameJsonProvider.FIELD_THREAD_NAME;
+    private String uuid = UuidJsonProvider.FIELD_UUID;
 
+    private String context;
+    
     public String getTimestamp() {
         return timestamp;
     }
@@ -64,5 +70,40 @@ public abstract class LogstashCommonFieldNames {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+    
+    /**
+     * The name of the context object field.
+     * <p>
+     * If this returns {@code null}, then the context fields will be written inline at the root level of the JSON event
+     * output (e.g. as a sibling to all the other fields in this class).
+     * <p>
+     * If this returns non-null, then the context fields will be written inside an object with field name returned by
+     * this method.
+     * 
+     * @return The name of the context object field.
+     */
+    public String getContext() {
+        return context;
+    }
+    
+    public void setContext(String context) {
+        this.context = context;
+    }
+    
+    public String getThread() {
+        return thread;
+    }
+    
+    public void setThread(String thread) {
+        this.thread = thread;
+    }
+    
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 }

@@ -15,10 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import net.logstash.logback.composite.ContextJsonProvider;
-import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.composite.LogstashVersionJsonProvider;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -40,9 +37,6 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addTimestamp(LoggingEventFormattedTimestampJsonProvider provider) {
         addProvider(provider);
     }
-    public void addVersion(LogstashVersionJsonProvider<ILoggingEvent> provider) {
-        addProvider(provider);
-    }
     public void addMessage(MessageJsonProvider provider) {
         addProvider(provider);
     }
@@ -52,7 +46,7 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addLoggerName(LoggerNameJsonProvider provider) {
         addProvider(provider);
     }
-    public void addThreadName(ThreadNameJsonProvider provider) {
+    public void addThreadName(LoggingEventThreadNameJsonProvider provider) {
         addProvider(provider);
     }
     public void addLogLevel(LogLevelJsonProvider provider) {
@@ -73,16 +67,10 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addStackHash(StackHashJsonProvider provider) {
         addProvider(provider);
     }
-    public void addContext(ContextJsonProvider<ILoggingEvent> provider) {
-        addProvider(provider);
-    }
     public void addContextName(ContextNameJsonProvider provider) {
         addProvider(provider);
     }
     public void addMdc(MdcJsonProvider provider) {
-        addProvider(provider);
-    }
-    public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<ILoggingEvent> provider) {
         addProvider(provider);
     }
     public void addTags(TagsJsonProvider provider) {
@@ -100,17 +88,10 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addNestedField(LoggingEventNestedJsonProvider provider) {
         addProvider(provider);
     }
-    public void addUuid(UuidProvider provider) {
-        addProvider(provider);
-    }
     public void addThrowableClassName(ThrowableClassNameJsonProvider provider) {
         addProvider(provider);
     }
     public void addThrowableRootCauseClassName(ThrowableRootCauseClassNameJsonProvider provider) {
         addProvider(provider);
     }
-    public void addSequence(SequenceJsonProvider provider) {
-        addProvider(provider);
-    }
-
 }

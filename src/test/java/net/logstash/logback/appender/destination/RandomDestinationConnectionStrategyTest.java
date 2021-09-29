@@ -16,11 +16,9 @@
 package net.logstash.logback.appender.destination;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
-import java.util.Random;
+import java.util.function.UnaryOperator;
 
 import ch.qos.logback.core.util.Duration;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,20 +30,21 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class RandomDestinationConnectionStrategyTest {
     
-    private RandomDestinationConnectionStrategy strategy = spy(new RandomDestinationConnectionStrategy());
-    
     @Mock
-    private Random random;
+    private UnaryOperator<Integer> randomGenerator;
+
+    private RandomDestinationConnectionStrategy strategy;
+    
     
     @BeforeEach
     public void setup() {
-        doReturn(random).when(strategy).getRandom();
+        this.strategy = new RandomDestinationConnectionStrategy(randomGenerator);
     }
-
+    
     @Test
     public void testNoConnectionTtl_success() {
         
-        when(random.nextInt(3))
+        when(randomGenerator.apply(3))
             .thenReturn(0)
             .thenReturn(1);
         
@@ -61,7 +60,7 @@ public class RandomDestinationConnectionStrategyTest {
     @Test
     public void testNoConnectionTtl_failed() {
         
-        when(random.nextInt(3))
+        when(randomGenerator.apply(3))
             .thenReturn(0)
             .thenReturn(2)
             .thenReturn(1);
@@ -85,7 +84,7 @@ public class RandomDestinationConnectionStrategyTest {
     @Test
     public void testConnectionTtl_success() {
         
-        when(random.nextInt(3))
+        when(randomGenerator.apply(3))
             .thenReturn(0)
             .thenReturn(1);
 
@@ -103,7 +102,7 @@ public class RandomDestinationConnectionStrategyTest {
     @Test
     public void testConnectionTtl_failed() {
         
-        when(random.nextInt(3))
+        when(randomGenerator.apply(3))
             .thenReturn(0)
             .thenReturn(2)
             .thenReturn(1);

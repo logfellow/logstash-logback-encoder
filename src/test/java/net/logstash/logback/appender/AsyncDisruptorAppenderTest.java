@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -43,6 +44,7 @@ import net.logstash.logback.appender.listener.AppenderListener;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.BasicStatusManager;
+import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
 import com.lmax.disruptor.EventHandler;
@@ -50,18 +52,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class AsyncDisruptorAppenderTest {
 
-    @InjectMocks
-    private AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() { };
-    
-    @Mock
-    private EventHandler<LogEvent<ILoggingEvent>> eventHandler;
+    private TestAsyncAppender appender = new TestAsyncAppender();
     
     private StatusManager statusManager = new BasicStatusManager();
     
@@ -79,11 +76,17 @@ public class AsyncDisruptorAppenderTest {
     
     @BeforeEach
     public void setup() {
-        LoggerContext ctx = new LoggerContext();
-        ctx.setStatusManager(statusManager);
-        ctx.start();
+        // Output statuses on the console for easy debugging. Must be initialized early to capture
+        // warnings emitted by setter/getter methods before the appender is started.
+        OnConsoleStatusListener consoleListener = new OnConsoleStatusListener();
+        consoleListener.start();
+        statusManager.add(consoleListener);
         
-        appender.setContext(ctx);
+        LoggerContext context = new LoggerContext();
+        context.setStatusManager(statusManager);
+        context.start();
+        
+        appender.setContext(context);
         appender.addListener(listener);
     }
     
@@ -218,13 +221,15 @@ public class AsyncDisruptorAppenderTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testEventHandlerThrowsException() throws Exception {
-        appender.start();
-        
         /*
          *  Make the EventHandler throw an exception when called
          */
         final Throwable throwable = new RuntimeException("message");
+        EventHandler<LogEvent<ILoggingEvent>> eventHandler = mock(EventHandler.class);
         doThrow(throwable).when(eventHandler).onEvent(any(LogEvent.class), anyLong(), anyBoolean());
+        appender.setEventHandler(eventHandler);
+
+        appender.start();
         
         /*
          *  Append event
@@ -512,6 +517,20 @@ public class AsyncDisruptorAppenderTest {
         }
         public List<LogEvent<ILoggingEvent>> getLogEventHolders() {
             return logEventHolders;
+        }
+    }
+    
+    
+    private static class TestAsyncAppender extends AsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> {
+        private EventHandler<LogEvent<ILoggingEvent>> eventHandler = new TestEventHandler();
+        
+        public void setEventHandler(EventHandler<LogEvent<ILoggingEvent>> eventHandler) {
+            this.eventHandler = eventHandler;
+        }
+        
+        @Override
+        protected EventHandler<LogEvent<ILoggingEvent>> createEventHandler() {
+            return this.eventHandler;
         }
     }
     

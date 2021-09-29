@@ -15,8 +15,6 @@
  */
 package net.logstash.logback;
 
-import java.util.Collections;
-
 import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
@@ -46,9 +44,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A {@link AccessEventCompositeJsonFormatter} that contains a common
@@ -85,7 +81,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     private final RequestHeadersJsonProvider requestHeadersProvider = new RequestHeadersJsonProvider();
     private final ResponseHeadersJsonProvider responseHeadersProvider = new ResponseHeadersJsonProvider();
     private JsonProvider<IAccessEvent> messageProvider;
-    private ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<IAccessEvent>();
+    private ContextJsonProvider<IAccessEvent> contextProvider = new ContextJsonProvider<>();
     private GlobalCustomFieldsJsonProvider<IAccessEvent> globalCustomFieldsProvider;
 
     private String messagePattern;
@@ -118,15 +114,22 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
 
     private void updateMessageProvider() {
         getProviders().removeProvider(this.messageProvider);
-        if (messagePattern != null) {
-            try {
-                AccessEventPatternJsonProvider messagePatternProvider = new AccessEventPatternJsonProvider();
-                messagePatternProvider.setPattern(new ObjectMapper()
-                        .writeValueAsString(Collections.singletonMap(this.fieldNames.getMessage(), messagePattern)));
-                this.messageProvider = messagePatternProvider;
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException("Unable to configure messagePattern: " + messagePattern, e);
-            }
+        if (this.messagePattern != null) {
+            // Build JSON object of the form:
+            //
+            //    { "fieldName": "messagePattern" }
+            //
+            String accessEventPattern = new StringBuilder("{\"")
+                    .append(this.fieldNames.getMessage())
+                    .append("\": \"")
+                    .append(escapeJson(this.messagePattern))
+                    .append("\"}")
+                    .toString();
+            
+            AccessEventPatternJsonProvider messagePatternProvider = new AccessEventPatternJsonProvider();
+            messagePatternProvider.setPattern(accessEventPattern);
+            this.messageProvider = messagePatternProvider;
+
         } else {
             AccessMessageJsonProvider accessMessageJsonProvider = new AccessMessageJsonProvider();
             accessMessageJsonProvider.setTimeZone(this.timestampProvider.getTimeZone());
@@ -290,5 +293,9 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
         } else {
             super.setProviders(jsonProviders);
         }
+    }
+    
+    private static String escapeJson(String str) {
+        return str.replace("\"", "\\\"");
     }
 }

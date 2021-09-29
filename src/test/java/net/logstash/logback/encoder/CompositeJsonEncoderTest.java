@@ -32,7 +32,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 import net.logstash.logback.TestJsonProvider;
-import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -56,7 +56,7 @@ public class CompositeJsonEncoderTest {
     
     private final TestCompositeJsonEncoder encoder = new TestCompositeJsonEncoder();
     
-    private CompositeJsonFormatter<ILoggingEvent> formatter;
+    private AbstractCompositeJsonFormatter<ILoggingEvent> formatter;
     
     private LoggerContext context = new LoggerContext();
     
@@ -261,8 +261,8 @@ public class CompositeJsonEncoderTest {
         private IOException exceptionToThrow;
     
         @Override
-        protected CompositeJsonFormatter<ILoggingEvent> createFormatter() {
-            CompositeJsonFormatter<ILoggingEvent> formatter = spy(new CompositeJsonFormatter<ILoggingEvent>(this) {
+        protected AbstractCompositeJsonFormatter<ILoggingEvent> createFormatter() {
+            AbstractCompositeJsonFormatter<ILoggingEvent> formatter = spy(new AbstractCompositeJsonFormatter<ILoggingEvent>(this) {
                 @Override
                 protected void writeEventToGenerator(JsonGenerator generator, ILoggingEvent event) throws IOException {
                     if (exceptionToThrow != null) {

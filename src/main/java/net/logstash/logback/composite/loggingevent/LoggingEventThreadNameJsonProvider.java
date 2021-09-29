@@ -15,21 +15,20 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import net.logstash.logback.composite.AbstractPatternJsonProvider;
-import net.logstash.logback.pattern.AbstractJsonPatternParser;
-import net.logstash.logback.pattern.LoggingEventJsonPatternParser;
+import net.logstash.logback.composite.AbstractThreadNameJsonProvider;
+import net.logstash.logback.composite.JsonProvider;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonFactory;
 
 /**
- * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
+ * {@link JsonProvider} producing a single JSON field with the {@link ILoggingEvent#getThreadName()}.
+ * 
+ * @author brenuart
  */
-public class LoggingEventPatternJsonProvider extends AbstractPatternJsonProvider<ILoggingEvent> {
-    
-    @Override
-    protected AbstractJsonPatternParser<ILoggingEvent> createParser(JsonFactory jsonFactory) {
-        return new LoggingEventJsonPatternParser(this, jsonFactory);
-    }
+public class LoggingEventThreadNameJsonProvider extends AbstractThreadNameJsonProvider<ILoggingEvent> {
 
+    @Override
+    protected String getThreadName(ILoggingEvent event) {
+        return event.getThreadName();
+    }
 }

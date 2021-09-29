@@ -13,22 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import java.io.IOException;
+import java.util.concurrent.atomic.AtomicLong;
+
+import ch.qos.logback.core.spi.DeferredProcessingAware;
+import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
  * Outputs an incrementing sequence number.
  * Useful for determining if log events get lost along the transport chain.
- * 
- * @deprecated use {@link net.logstash.logback.composite.SequenceJsonProvider} instead
  */
-@Deprecated
-public class SequenceJsonProvider extends net.logstash.logback.composite.SequenceJsonProvider<ILoggingEvent> {
+public class SequenceJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> {
+
+    public static final String FIELD_SEQUENCE = "sequence";
+
+    private final AtomicLong sequenceNumber = new AtomicLong(0L);
+
+    public SequenceJsonProvider() {
+        setFieldName(FIELD_SEQUENCE);
+    }
 
     @Override
-    public void start() {
-        addWarn(this.getClass().getName() + " is deprecated, use " + net.logstash.logback.composite.SequenceJsonProvider.class.getName() + " instead.");
-        super.start();
+    public void writeTo(JsonGenerator generator, Event iLoggingEvent) throws IOException {
+        JsonWritingUtils.writeNumberField(generator, getFieldName(), sequenceNumber.incrementAndGet());
     }
+
 }

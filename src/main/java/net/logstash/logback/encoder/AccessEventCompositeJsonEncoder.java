@@ -15,7 +15,7 @@
  */
 package net.logstash.logback.encoder;
 
-import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter;
 import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
@@ -27,7 +27,7 @@ public class AccessEventCompositeJsonEncoder extends CompositeJsonEncoder<IAcces
     
     
     @Override
-    protected CompositeJsonFormatter<IAccessEvent> createFormatter() {
+    protected AbstractCompositeJsonFormatter<IAccessEvent> createFormatter() {
         return new AccessEventCompositeJsonFormatter(this);
     }
     

@@ -229,7 +229,9 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         protected JsonNode transform(final String value) throws IOException {
-            return jsonFactory.getCodec().readTree(jsonFactory.createParser(value));
+            try (JsonParser jsonParser = jsonFactory.createParser(value)) {
+                return jsonParser.readValueAsTree();
+            }
         }
     }
 
@@ -240,10 +242,10 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         protected Object transform(final String value) throws IOException {
-            try {
-                final String trimmedValue = value.trim();
-                final JsonParser parser = jsonFactory.createParser(trimmedValue);
-                final TreeNode tree = jsonFactory.getCodec().readTree(parser);
+            final String trimmedValue = value.trim();
+            
+            try (JsonParser parser = jsonFactory.createParser(trimmedValue)) {
+                final TreeNode tree = parser.readValueAsTree();
                 if (parser.getCurrentLocation().getCharOffset() < trimmedValue.length()) {
                     /*
                      * If the full trimmed string was not read, then the full trimmed string contains a json value plus other text.
@@ -468,7 +470,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     }
 
     protected LayoutValueGetter<Event> makeLayoutValueGetter(final String data) {
-        return new LayoutValueGetter<Event>(buildLayout(data));
+        return new LayoutValueGetter<>(buildLayout(data));
     }
 
     private NodeWriter<Event> parseValue(JsonNode node) {
@@ -516,6 +518,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         return new ChildrenWriter(children);
     }
 
+    
     public NodeWriter<Event> parse(String pattern) {
 
         if (pattern == null) {
@@ -523,11 +526,11 @@ public abstract class AbstractJsonPatternParser<Event> {
             return null;
         }
 
-        JsonNode node;
-        try {
-            node = jsonFactory.createParser(pattern).readValueAsTree();
+        final JsonNode node;
+        try (JsonParser jsonParser = jsonFactory.createParser(pattern)) {
+            node = jsonParser.readValueAsTree();
         } catch (IOException e) {
-            contextAware.addError("Failed to parse pattern [" + pattern + "]", e);
+            contextAware.addError("Failed to parse pattern '" + pattern + "'", e);
             return null;
         }
 
@@ -554,14 +557,14 @@ public abstract class AbstractJsonPatternParser<Event> {
         if (value == null) {
             return true;
         }
-        if (value instanceof String && ((String) value).isEmpty()) {
-            return true;
+        if (value instanceof String) {
+            return ((String) value).isEmpty();
         }
-        if (value instanceof Collection && ((Collection<?>) value).isEmpty()) {
-            return true;
+        if (value instanceof Collection) {
+            return ((Collection<?>) value).isEmpty();
         }
-        if (value instanceof Map && ((Map<?, ?>) value).isEmpty()) {
-            return true;
+        if (value instanceof Map) {
+            return ((Map<?, ?>) value).isEmpty();
         }
         
         if (value instanceof JsonNode) {
@@ -569,11 +572,11 @@ public abstract class AbstractJsonPatternParser<Event> {
             if (node.getNodeType() == JsonNodeType.NULL) {
                 return true;
             }
-            if (node.isTextual() && node.textValue().isEmpty()) {
-                return true;
+            if (node.isTextual()) {
+                return node.textValue().isEmpty();
             }
-            if (node.isContainerNode() && node.size() == 0) {
-                return true;
+            if (node.isContainerNode()) {
+                return node.size() == 0;
             }
         }
         return false;

@@ -16,7 +16,7 @@
 package net.logstash.logback.layout;
 
 import net.logstash.logback.LogstashAccessFormatter;
-import net.logstash.logback.composite.CompositeJsonFormatter;
+import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.accessevent.HeaderFilter;
 import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
@@ -28,7 +28,7 @@ import ch.qos.logback.core.joran.spi.DefaultClass;
 public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
 
     @Override
-    protected CompositeJsonFormatter<IAccessEvent> createFormatter() {
+    protected AbstractCompositeJsonFormatter<IAccessEvent> createFormatter() {
         return new LogstashAccessFormatter(this);
     }
 

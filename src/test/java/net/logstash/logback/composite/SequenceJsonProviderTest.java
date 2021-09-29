@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite;
 
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
@@ -29,10 +27,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class UuidProviderTest {
-    public static final String UUID = "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$";
+public class SequenceJsonProviderTest {
 
-    private UuidProvider provider = new UuidProvider();
+    private SequenceJsonProvider<ILoggingEvent> provider = new SequenceJsonProvider<>();
 
     @Mock
     private JsonGenerator generator;
@@ -44,7 +41,8 @@ public class UuidProviderTest {
     public void testDefaultName() throws IOException {
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq(UuidProvider.FIELD_UUID), matches(UUID));
+        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
+
     }
 
     @Test
@@ -53,25 +51,6 @@ public class UuidProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq("newFieldName"), matches(UUID));
-    }
-
-    @Test
-    public void testStrategy() throws IOException {
-        provider.setStrategy(UuidProvider.STRATEGY_TIME);
-
-        provider.writeTo(generator, event);
-
-        verify(generator).writeStringField(eq("uuid"), matches(UUID));
-    }
-
-    @Test
-    public void testEthernet() throws IOException {
-        provider.setStrategy(UuidProvider.STRATEGY_TIME);
-        provider.setEthernet("00:C0:F0:3D:5B:7C");
-
-        provider.writeTo(generator, event);
-
-        verify(generator).writeStringField(eq("uuid"), matches(UUID));
+        verify(generator).writeNumberField("newFieldName", 1L);
     }
 }

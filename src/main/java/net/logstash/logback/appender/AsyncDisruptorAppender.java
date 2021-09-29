@@ -75,9 +75,9 @@ import com.lmax.disruptor.dsl.ProducerType;
  * A single handler thread will be used to handle the actual handling of the event.
  * <p>
  *
- * Subclasses are required to set the {@link #eventHandler} to define
- * the logic that executes in the handler thread.
- * For example, {@link DelegatingAsyncDisruptorAppender} for will delegate
+ * Subclasses must implement {@link #createEventHandler()} to provide a {@link EventHandler} to
+ * define the logic that executes in the handler thread.
+ * For example, {@link DelegatingAsyncDisruptorAppender} will delegate
  * appending of the event to another appender in the handler thread.
  * <p>
  *
@@ -211,11 +211,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private EventTranslatorOneArg<LogEvent<Event>, Event> eventTranslator = new LogEventTranslator<>();
 
     /**
-     * Used by the handler thread to process the event.
-     */
-    private EventHandler<LogEvent<Event>> eventHandler;
-
-    /**
      * Defines what happens when there is an exception during
      * {@link RingBuffer} processing.
      */
@@ -277,13 +272,20 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          * The logback event.
          */
         public volatile Event event;
+        
+        /**
+         * Recycle the instance before it is reused by the RingBuffer.
+         */
+        public void recycle() {
+            this.event = null;
+        }
     }
 
     /**
      * Factory for creating the initial {@link LogEvent}s to populate
      * the {@link RingBuffer}.
      */
-    private static class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
+    protected static class LogEventFactory<Event> implements EventFactory<LogEvent<Event>> {
 
         @Override
         public LogEvent<Event> newInstance() {
@@ -363,7 +365,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 /*
                  * Clear the event so that it can be garbage collected.
                  */
-                event.event = null;
+                event.recycle();
                 
                 /*
                  * Notify the BatchEventProcessor that the sequence has progressed.
@@ -396,11 +398,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     @Override
     public void start() {
-        if (this.eventHandler == null) {
-            addError("No eventHandler was configured for appender " + getName());
-            return;
-        }
-        
         if (addDefaultStatusListener && getStatusManager() != null && getStatusManager().getCopyOfStatusListenerList().isEmpty()) {
             LevelFilteringStatusListener statusListener = new LevelFilteringStatusListener();
             statusListener.setLevelValue(Status.WARN);
@@ -423,7 +420,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
          */
         this.disruptor.setDefaultExceptionHandler(this.exceptionHandler);
 
-        this.disruptor.handleEventsWith(new EventClearingEventHandler<>(this.eventHandler));
+        this.disruptor.handleEventsWith(new EventClearingEventHandler<>(createEventHandler()));
 
         this.disruptor.start();
         super.start();
@@ -461,13 +458,21 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
         }
         
         this.disruptor.halt();
-        
-        
+
         if (!isRingBufferEmpty()) {
             addWarn("Some queued events have not been logged due to requested shutdown");
         }
         fireAppenderStopped();
     }
+
+    
+    /**
+     * Create the {@link EventHandler} to process events as they become available from the RingBuffer.
+     * This method is invoked when the appender is started by {@link #start()} and a new {@link Disruptor} is initialized.
+     * 
+     * @return a {@link EventHandler} instance.
+     */
+    protected abstract EventHandler<LogEvent<Event>> createEventHandler();
 
     
     /**
@@ -779,13 +784,6 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
     public void setDroppedWarnFrequency(int droppedWarnFrequency) {
         this.droppedWarnFrequency = droppedWarnFrequency;
-    }
-
-    protected EventHandler<LogEvent<Event>> getEventHandler() {
-        return eventHandler;
-    }
-    protected void setEventHandler(EventHandler<LogEvent<Event>> eventHandler) {
-        this.eventHandler = Objects.requireNonNull(eventHandler);
     }
 
     public boolean isDaemon() {

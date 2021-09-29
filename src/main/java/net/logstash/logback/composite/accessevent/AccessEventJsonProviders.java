@@ -15,10 +15,7 @@
  */
 package net.logstash.logback.composite.accessevent;
 
-import net.logstash.logback.composite.ContextJsonProvider;
-import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.composite.LogstashVersionJsonProvider;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 
@@ -40,12 +37,19 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addTimestamp(AccessEventFormattedTimestampJsonProvider provider) {
         addProvider(provider);
     }
-    public void addVersion(LogstashVersionJsonProvider<IAccessEvent> provider) {
-        addProvider(provider);
-    }
+    
+    /**
+     * @deprecated Use {@link #addMessage(AccessMessageJsonProvider)} instead.
+     * @param provider the provider to add
+     */
+    @Deprecated
     public void addAccessMessage(AccessMessageJsonProvider provider) {
         addProvider(provider);
     }
+    public void addMessage(AccessMessageJsonProvider provider) {
+        addProvider(provider);
+    }
+    
     public void addMethod(MethodJsonProvider provider) {
         addProvider(provider);
     }
@@ -79,17 +83,13 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addResponseHeaders(ResponseHeadersJsonProvider provider) {
         addProvider(provider);
     }
-    public void addContext(ContextJsonProvider<IAccessEvent> provider) {
-        addProvider(provider);
-    }
     public void addPattern(AccessEventPatternJsonProvider provider) {
         addProvider(provider);
     }
     public void addNestedField(AccessEventNestedJsonProvider provider) {
         addProvider(provider);
     }
-    public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<IAccessEvent> provider) {
+    public void addThreadName(AccessEventThreadNameJsonProvider provider) {
         addProvider(provider);
     }
-
 }

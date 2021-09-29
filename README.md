@@ -62,6 +62,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
 * [Composite Encoder/Layout](#composite-encoderlayout)
+  * [Providers common to LoggingEvents and AccessEvents](#providers-common-to-loggingevents-and-accessevents)
   * [Providers for LoggingEvents](#providers-for-loggingevents)
   * [Providers for AccessEvents](#providers-for-accessevents)
   * [Nested JSON Provider](#nested-json-provider)
@@ -1639,7 +1640,9 @@ You can change the timezone like this:
 </encoder>
 ```
 
-The value of the `timeZone` element can be any string accepted by java's  `TimeZone.getTimeZone(String id)` method.
+The value of the `timeZone` element can be any string accepted by java's `TimeZone.getTimeZone(String id)` method.
+For example `America/Los_Angeles`, `GMT+10` or `UTC`.
+Use the special value `[DEFAULT]` to use the default TimeZone of the system.
 
 
 ## Customizing LoggingEvent Message
@@ -1869,21 +1872,74 @@ These encoders/layouts make use of an internal buffer to hold the JSON output du
 The size of this buffer is set to `1024` bytes by default. A different size can be configured by setting the `minBufferSize` property to the desired value.
 The buffer automatically grows above the `minBufferSize` when needed to accommodate with larger events. However, only the first `minBufferSize` bytes will be reused by subsequent invocations. It is therefore strongly advised to set the minimum size at least equal to the average size of the encoded events to reduce unnecessary memory allocations and reduce pressure on the garbage collector.
 
+### Providers common to LoggingEvents and AccessEvents
 
-#### Providers for LoggingEvents
-
-The table below lists the available providers for LoggingEvents, and their configuration properties (defaults in parentheses).
+The table below lists the providers available to both _LoggingEvents_ and _AccessEvents_.
 The provider name is the xml element name to use when configuring.
 
 <table>
-  <tbody>
+  <tbody style="vertical-align: top;">
     <tr>
       <th>Provider</th>
       <th>Description/Properties</th>
     </tr>
     <tr>
+      <td valign="top"><tt>context</tt></td>
+      <td><p>Outputs entries from logback's context.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top"><tt>nestedField</tt></td>
+      <td>
+        <p>Nests a JSON object under the configured fieldName.</p>
+        <p>The nested object is populated by other providers added to this provider.</p>
+        <p>See <a href="#provider_nested">Nested JSON provider</a>.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name</li>
+          <li><tt>providers</tt> - The providers that should populate the nested object.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>pattern</tt></td>
+      <td>
+        <p>Outputs fields from a configured JSON Object string,
+           while substituting patterns supported by logback's <tt>PatternLayout</tt>.
+        </p>
+        <p>
+           See <a href="#provider_pattern">Pattern JSON Provider</a>
+        </p>
+        <ul>
+          <li><tt>pattern</tt> - JSON object string (no default)</li>          
+          <li><tt>omitEmptyFields</tt> - whether to omit fields with empty values (<tt>false</tt>)</li>          
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>sequence</tt></td>
+      <td>
+        <p>
+          Outputs an incrementing sequence number for every log event.
+          Useful for tracking pottential message loss during transport (eg. UDP).
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li></ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>threadName</tt></td>
+      <td><p>Name of the thread from which the event was logged.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>thread_name</tt>)</li>          
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>timestamp</tt></td>
-      <td><p>Event timestamp</p>
+      <td><p>Event timestamp.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
           <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
@@ -1892,8 +1948,24 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
+      <td><tt>uuid</tt></td>
+      <td>
+        Outputs random UUID as field value. Handy when you want to provide unique identifier
+        for log lines.
+      
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>uuid</tt>)</li>
+          <li><tt>strategy</tt> - UUID generation strategy (<tt>random</tt>). Supported options: <ul><li><tt>random</tt> - for Type 4 UUID</li>
+          <li><tt>time</tt> - for Type 1 time based UUID</li>
+          </ul></li>
+          <li><tt>ethernet</tt> - Only for 'time' strategy. When defined - MAC address to use for location part of UUID. Set it to <tt>interface</tt> value to use real underlying network interface or to specific values like <tt>00:C0:F0:3D:5B:7C</tt></li>          
+        </ul>
+	      <p>Note: The <a href="https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator/"><tt>com.fasterxml.uuid:java-uuid-generator</tt></a> optional dependency must be added to applications that use the `uuid` provider.</p>
+      </td>
+    </tr>
+    <tr>
       <td><tt>version</tt></td>
-      <td><p>Logstash JSON format version</p>
+      <td><p>Logstash JSON format version.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
           <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
@@ -1901,61 +1973,40 @@ The provider name is the xml element name to use when configuring.
         </ul>
       </td>
     </tr>
+  </tbody>
+</table>
+
+
+### Providers for LoggingEvents
+
+The [common providers mentioned above](#providers-common-to-loggingevents-and-accessevents), and the providers listed in the table below, are available for _LoggingEvents_.
+The provider name is the xml element name to use when configuring. Each provider's configuration properties are shown, with default configuration values in parenthesis.
+
+<table>
+  <tbody style="vertical-align: top;">
     <tr>
-      <td><tt>message</tt></td>
-      <td><p>Formatted log event message</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
-          <li><tt>messageSplitRegex</tt> - If null or empty, write the message text as is (the default behavior).
-              Otherwise, split the message text using the specified regex and write it as an array.
-              See the <a href="#customizing-message">Customizing Message</a> section for details.</li>
-        </ul>
-      </td>
+      <th>Provider</th>
+      <th>Description/Properties</th>
     </tr>
     <tr>
-      <td><tt>rawMessage</tt></td>
-      <td><p>Raw log event message, as opposed to formatted log where parameters are resolved</p>
+      <td><tt>arguments</tt></td>
+      <td>
+        <p>Outputs fields from the event arguments array.</p>
+        <p>See <a href="#loggingevent_custom_event">Event-specific Custom Fields</a>.</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>raw_message</tt>)</li>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+          <li><tt>includeNonStructuredArguments</tt> - Include arguments that are not an instance
+          of <a href="/src/main/java/net/logstash/logback/argument/StructuredArgument.java"><tt>StructuredArgument</tt></a>. 
+          Object field name will be <tt>nonStructuredArgumentsFieldPrefix</tt> prepend to the argument index.
+          (default=false)
+          </li>
+          <li><tt>nonStructuredArgumentsFieldPrefix</tt> - Object field name prefix (default=arg)</li>
         </ul>
       </td>
-    </tr>
-    <tr>
-      <td><tt>loggerName</tt></td>
-      <td><p>Name of the logger that logged the message</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>logger_name</tt>)</li>          
-          <li><tt>shortenedLoggerNameLength</tt> - Length to which the name will be attempted to be abbreviated (no abbreviation)</li>          
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>threadName</tt></td>
-      <td><p>Name of the thread from which the event was logged</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>thread_name</tt>)</li>          
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>logLevel</tt></td>
-      <td><p>Logger level text (INFO, WARN, etc)</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>level</tt>)</li>          
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>logLevelValue</tt></td>
-      <td><p>Logger level numerical value </p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>level_value</tt>)</li>
-        </ul>
-      </td>
-    </tr>
+    </tr> 
     <tr>
       <td><tt>callerData</tt></td>
-      <td><p>Outputs data about from where the logger was called (class/method/file/line)
+      <td><p>Outputs data about from where the logger was called (class/method/file/line).</p>
         <ul>
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
           <li><tt>classFieldName</tt> - Field name for class name (<tt>caller_class_name</tt>)</li>
@@ -1966,11 +2017,77 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
-      <td><tt>stackTrace</tt></td>
-      <td><p>Stacktrace of any throwable logged with the event.  Stackframes are separated by newline chars.</p>
+      <td><tt>contextName</tt></td>
+      <td><p>Outputs the name of logback's context.</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
-          <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
+          <li><tt>fieldName</tt> - Output field name (<tt>context</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>loggerName</tt></td>
+      <td><p>Name of the logger that logged the message.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>logger_name</tt>)</li>          
+          <li><tt>shortenedLoggerNameLength</tt> - Length to which the name will be attempted to be abbreviated (no abbreviation)</li>          
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>logLevel</tt></td>
+      <td><p>Logger level text (INFO, WARN, etc).</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>level</tt>)</li>          
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>logLevelValue</tt></td>
+      <td><p>Logger level numerical value.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>level_value</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>logstashMarkers</tt></td>
+      <td><p>Used to output Logstash Markers as specified in <em>Event-specific Custom Fields</em>.</p>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>mdc</tt></td>
+      <td>
+        <p>Outputs entries from the Mapped Diagnostic Context (MDC).
+           Will include all entries by default.
+           When key names are specified for inclusion, then all other fields will be excluded.
+           When key names are specified for exclusion, then all other fields will be included.
+           It is a configuration error to specify both included and excluded key names.
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+          <li><tt>includeMdcKeyName</tt> - Name of keys to include (all)</li>
+          <li><tt>excludeMdcKeyName</tt> - Name of keys to exclude (none)</li>
+          <li><tt>mdcKeyFieldName</tt> - Strings in the form <tt>mdcKeyName=fieldName</tt>
+              that specify an alternate field name to output for specific MDC key (none)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>message</tt></td>
+      <td><p>Formatted log event message.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
+          <li><tt>messageSplitRegex</tt> - If null or empty, write the message text as is (the default behavior).
+              Otherwise, split the message text using the specified regex and write it as an array.
+              See the <a href="#customizing-message">Customizing Message</a> section for details.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>rawMessage</tt></td>
+      <td><p>Raw log event message, as opposed to formatted log where parameters are resolved.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>raw_message</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -1996,11 +2113,28 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
+      <td><tt>stackTrace</tt></td>
+      <td><p>Stacktrace of any throwable logged with the event. Stackframes are separated by newline chars.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
+          <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>tags</tt></td>
+      <td><p>Outputs logback markers as a comma separated list.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>tags</tt>)</li>          
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>throwableClassName</tt></td>
       <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the thrown Throwable.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>throwable_class</tt>)</li>
-          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used.  When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
+          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used. When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
         </ul>
       </td>
     </tr>
@@ -2009,231 +2143,29 @@ The provider name is the xml element name to use when configuring.
       <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the root cause of the thrown Throwable.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>throwable_root_cause_class</tt>)</li>
-          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used.  When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
+          <li><tt>useSimpleClassName</tt> - When true, the throwable's simple class name will be used. When false, the fully qualified class name will be used. (<tt>true</tt>)</li>
         </ul>
       </td>
-    </tr>
-    <tr>
-      <td><tt>context</tt></td>
-      <td><p>Outputs entries from logback's context</p>
-        <ul>
-          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>contextName</tt></td>
-      <td><p>Outputs the name of logback's context</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>context</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>mdc</tt></td>
-      <td>
-        <p>Outputs entries from the Mapped Diagnostic Context (MDC).
-           Will include all entries by default.
-           When key names are specified for inclusion, then all other fields will be excluded.
-           When key names are specified for exclusion, then all other fields will be included.
-           It is a configuration error to specify both included and excluded key names.
-        </p>
-        <ul>
-          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
-          <li><tt>includeMdcKeyName</tt> - Name of keys to include (all)</li>
-          <li><tt>excludeMdcKeyName</tt> - Name of keys to exclude (none)</li>
-          <li><tt>mdcKeyFieldName</tt> - Strings in the form <tt>mdcKeyName=fieldName</tt>
-              that specify an alternate field name to output for specific MDC key (none)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>tags</tt></td>
-      <td><p>Outputs logback markers as a comma separated list</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>tags</tt>)</li>          
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>logstashMarkers</tt></td>
-      <td><p>Used to output Logstash Markers as specified in <em>Event-specific Custom Fields</em></p>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>nestedField</tt></td>
-      <td>
-        <p>Nests a JSON object under the configured fieldName.</p>
-        <p>The nested object is populated by other providers added to this provider.</p>
-        <p>See <a href="#provider_nested">Nested JSON provider</a></p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name</li>
-          <li><tt>providers</tt> - The providers that should populate the nested object.</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>pattern</tt></td>
-      <td>
-        <p>Outputs fields from a configured JSON Object string,
-           while substituting patterns supported by logback's <tt>PatternLayout</tt>.
-        </p>
-        <p>
-           See <a href="#provider_pattern">Pattern JSON Provider</a>
-        </p>
-        <ul>
-          <li><tt>pattern</tt> - JSON object string (no default)</li>          
-          <li><tt>omitEmptyFields</tt> - whether to omit fields with empty values (<tt>false</tt>)</li>          
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>arguments</tt></td>
-      <td>
-        <p>Outputs fields from the event arguments array.
-        </p>
-        <p>
-            See <a href="#loggingevent_custom_event">Event-specific Custom Fields</a>
-        </p>
-        <ul>
-          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
-          <li><tt>includeNonStructuredArguments</tt> - Include arguments that are not an instance
-          of <a href="/src/main/java/net/logstash/logback/argument/StructuredArgument.java"><tt>StructuredArgument</tt></a>.
-          (default=false)
-          Object field name will be <tt>nonStructuredArgumentsFieldPrefix</tt> prepend to the argument index</li>
-          <li><tt>nonStructuredArgumentsFieldPrefix</tt> - Object field name prefix (default=arg)</li>
-        </ul>
-      </td>
-    </tr>   
-    <tr>
-      <td><tt>uuid</tt></td>
-      <td><p>Outputs random UUID as field value. Handy when you want to provide unique identifier
-      for log lines
-      </p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>uuid</tt>)</li>
-          <li><tt>strategy</tt> - UUID generation strategy (<tt>random</tt>). Supported options: <ul><li><tt>random</tt> - for Type 4 UUID</li>
-          <li><tt>time</tt> - for Type 1 time based UUID</li>
-          </ul></li>
-          <li><tt>ethernet</tt> - Only for 'time' strategy. When defined - MAC address to use for location part of UUID. Set it to <tt>interface</tt> value to use real underlying network interface or to specific values like <tt>00:C0:F0:3D:5B:7C</tt></li>          
-        </ul>
-	      <p>Note: The <a href="https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator/"><tt>com.fasterxml.uuid:java-uuid-generator</tt></a> optional dependency must be added to applications that use the `uuid` provider.</p>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>sequence</tt></td>
-      <td>
-        <p>
-          Outputs an incrementing sequence number for every log event.
-          Useful for tracking pottential message loss during transport (eg. UDP)
-        </p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li></ul>
-      </td>
-    </tr>
+    </tr>  
   </tbody>
 </table>
 
 
 
-#### Providers for AccessEvents  
+### Providers for AccessEvents  
 
-The table below lists the available providers for AccessEvents, and their configuration properties (defaults in parentheses).
-The provider name is the xml element name to use when configuring.
+The [common providers mentioned above](#providers-common-to-loggingevents-and-accessevents), and the providers listed in the table below, are available for _AccessEvents_.
+The provider name is the xml element name to use when configuring. Each provider's configuration properties are shown, with default configuration values in parenthesis.
 
 <table>
-  <tbody>
+  <tbody style="vertical-align: top;">
     <tr>
       <th>Provider</th>
       <th>Description/Properties</th>
     </tr>
     <tr>
-      <td><tt>timestamp</tt></td>
-      <td><p>Event timestamp</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
-          <li><tt>timeZone</tt> - Timezone (local timezone)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>version</tt></td>
-      <td><p>Logstash JSON format version</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
-          <li><tt>version</tt> - Output value (<tt>1</tt>)</li>
-          <li><tt>writeAsInteger</tt> - Write the version as a integer value (<tt>false</tt> = write as a string value)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>message</tt></td>
-      <td><p>Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>method</tt></td>
-      <td><p>HTTP method</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>method</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>protocol</tt></td>
-      <td><p>HTTP protocol</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>protocol</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>statusCode</tt></td>
-      <td><p>HTTP status code</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>status_code</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>requestedUrl</tt></td>
-      <td><p>Requested URL</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>requested_url</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>requestedUri</tt></td>
-      <td><p>Requested URI</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>requested_uri</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>remoteHost</tt></td>
-      <td><p>Remote Host</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>remote_host</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>remoteUser</tt></td>
-      <td><p>Remote User</p>
-        <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>remote_user</tt>)</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
       <td><tt>contentLength</tt></td>
-      <td><p>Content length</p>
+      <td><p>Content length.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>content_length</tt>)</li>
         </ul>
@@ -2241,15 +2173,73 @@ The provider name is the xml element name to use when configuring.
     </tr>
     <tr>
       <td><tt>elapsedTime</tt></td>
-      <td><p>Elapsed time in milliseconds</p>
+      <td><p>Elapsed time in milliseconds.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>elapsed_time</tt>)</li>
         </ul>
       </td>
     </tr>
     <tr>
+      <td><tt>message</tt></td>
+      <td><p>Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
+          <li><tt>pattern</tt> - Output format of the timestamp (<tt>[ISO_OFFSET_DATE_TIME]</tt>). See <a href="#customizing-timestamp">above</a> for possible values.</li>
+          <li><tt>timeZone</tt> - Timezone (local timezone)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>method</tt></td>
+      <td><p>HTTP method.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>method</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>protocol</tt></td>
+      <td><p>HTTP protocol.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>protocol</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>remoteHost</tt></td>
+      <td><p>Remote Host.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_host</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>remoteUser</tt></td>
+      <td><p>Remote User.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>remote_user</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>requestedUri</tt></td>
+      <td><p>Requested URI.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_uri</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><tt>requestedUrl</tt></td>
+      <td><p>Requested URL.</p>
+        <ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>requested_url</tt>)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
       <td><tt>requestHeaders</tt></td>
-      <td><p>Include the request headers</p>
+      <td><p>Include the request headers.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
@@ -2261,7 +2251,7 @@ The provider name is the xml element name to use when configuring.
     </tr>
     <tr>
       <td><tt>responseHeaders</tt></td>
-      <td><p>Include the response headers</p>
+      <td><p>Include the response headers.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
           <li><tt>lowerCaseHeaderNames</tt> - Write header names in lower case (<tt>false</tt>)</li>
@@ -2272,29 +2262,10 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
-      <td><tt>nestedField</tt></td>
-      <td>
-        <p>Nests a JSON object under the configured fieldName.</p>
-        <p>The nested object is populated by other providers added to this provider.</p>
-        <p>See <a href="#provider_nested">Nested JSON provider</a></p>
+      <td><tt>statusCode</tt></td>
+      <td><p>HTTP status code.</p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name</li>
-          <li><tt>providers</tt> - The providers that should populate the nested object.</li>
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <td><tt>pattern</tt></td>
-      <td>
-        <p>Outputs fields from a configured JSON Object string,
-           while substituting patterns supported by logback access's <tt>PatternLayout</tt>.
-        </p>
-        <p>
-           See <a href="#provider_pattern">Pattern JSON Provider</a>
-        </p>
-        <ul>
-          <li><tt>pattern</tt> - JSON object string (no default)</li>          
-          <li><tt>omitEmptyFields</tt> - whether to omit fields with empty values (<tt>false</tt>)</li>          
+          <li><tt>fieldName</tt> - Output field name (<tt>status_code</tt>)</li>
         </ul>
       </td>
     </tr>

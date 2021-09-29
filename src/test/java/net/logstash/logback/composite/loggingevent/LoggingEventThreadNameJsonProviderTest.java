@@ -16,8 +16,11 @@
 package net.logstash.logback.composite.loggingevent;
 
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+
+import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -27,30 +30,49 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class SequenceJsonProviderTest {
-
-    private SequenceJsonProvider provider = new SequenceJsonProvider();
-
+public class LoggingEventThreadNameJsonProviderTest {
+    
+    private LoggingEventThreadNameJsonProvider provider = new LoggingEventThreadNameJsonProvider();
+    
     @Mock
     private JsonGenerator generator;
-
+    
     @Mock
     private ILoggingEvent event;
-
+    
     @Test
     public void testDefaultName() throws IOException {
+        
+        when(event.getThreadName()).thenReturn("threadName");
+        
         provider.writeTo(generator, event);
-
-        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
-
+        
+        verify(generator).writeStringField(LoggingEventThreadNameJsonProvider.FIELD_THREAD_NAME, "threadName");
     }
 
     @Test
     public void testFieldName() throws IOException {
         provider.setFieldName("newFieldName");
-
+        
+        when(event.getThreadName()).thenReturn("threadName");
+        
         provider.writeTo(generator, event);
-
-        verify(generator).writeNumberField("newFieldName", 1L);
+        
+        verify(generator).writeStringField("newFieldName", "threadName");
     }
+
+    @Test
+    public void testFieldNames() throws IOException {
+        LogstashFieldNames fieldNames = new LogstashFieldNames();
+        fieldNames.setThread("newFieldName");
+        
+        provider.setFieldNames(fieldNames);
+        
+        when(event.getThreadName()).thenReturn("threadName");
+        
+        provider.writeTo(generator, event);
+        
+        verify(generator).writeStringField("newFieldName", "threadName");
+    }
+
 }
