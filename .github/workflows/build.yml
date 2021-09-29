@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ '8', '11', '16' ]
+        java: [ '8', '11', '17' ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
