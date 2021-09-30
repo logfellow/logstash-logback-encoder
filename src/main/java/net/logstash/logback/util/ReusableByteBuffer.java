@@ -158,10 +158,12 @@ public class ReusableByteBuffer extends OutputStream {
      */
     public void reset() {
         // Clear allocated buffers but keep the first one
-        byte[] initialBuffer = this.buffers.get(0);
-        this.buffers.clear();
-        this.buffers.add(initialBuffer);
-
+        if (buffers.size() > 1) {
+            byte[] initialBuffer = this.buffers.get(0);
+            this.buffers.clear();
+            this.buffers.add(initialBuffer);
+        }
+        
         this.closed = false;
         this.tailWriteIndex = 0;
         this.alreadyBufferedSize = 0;
