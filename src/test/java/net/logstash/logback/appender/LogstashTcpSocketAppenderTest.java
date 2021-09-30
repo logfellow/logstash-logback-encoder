@@ -28,7 +28,9 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -54,11 +56,13 @@ import net.logstash.logback.appender.destination.RandomDestinationConnectionStra
 import net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy;
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
+import net.logstash.logback.encoder.StreamingEncoder;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.BasicStatusManager;
 import ch.qos.logback.core.encoder.Encoder;
+import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
@@ -619,6 +623,108 @@ public class LogstashTcpSocketAppenderTest {
 
         // 2) retry on secondary after failed attempt to send event
         inOrder.verify(socket).connect(host("localhost", 10001), anyInt());
+    }
+
+    
+    /**
+     * Assert that nothing is written in the socket output stream when a *non* {@link StreamingEncoder}
+     * throws an exception.
+     */
+    @Test
+    public void testEncoderThrowsException() throws Exception {
+        // Use a ByteArrayOutputStream to capture actual output
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        when(socket.getOutputStream())
+            .thenReturn(bos);
+    
+        // Encoder throws an exception
+        when(encoder.encode(event1)).thenThrow(new RuntimeException("Exception thrown by the Encoder"));
+        
+        // Configure and start appender
+        appender.addDestination("localhost:10000");
+        appender.start();
+        
+        
+        // This event will cause the encoder to throw an exception
+        appender.append(event1);
+        
+        // Event dropped
+        verify(listener, async()).eventSendFailure(eq(appender), eq(event1), any());
+        
+        // Nothing written in the socket output stream
+        assertThat(bos.size()).isZero();
+        
+        // A warn status is emitted
+        assertThat(statusManager.getCopyOfStatusList()).anySatisfy(status -> {
+            assertThat(status.getLevel()).isEqualTo(Status.WARN);
+            assertThat(status.getMessage()).contains("Encoder failed to encode event. Dropping event.");
+        });
+    }
+    
+    
+    /**
+     * Assert that nothing is written in the socket output stream when a {@link StreamingEncoder} throws
+     * an exception after having written a few bytes.
+     * 
+     * Also assert that the StreamingEncoder interface is used instead of the legacy Encoder.
+     */
+    @Test
+    public void testStreamingEncoderThrowsException() throws Exception {
+        // Use a ByteArrayOutputStream to capture actual output
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        when(socket.getOutputStream())
+            .thenReturn(bos);
+    
+        // StreamingEncoder throwing an exception
+        BadStreamingEncoder badEncoder = spy(new BadStreamingEncoder());
+        appender.setEncoder(badEncoder);
+        
+        // Configure and start appender
+        appender.addDestination("localhost:10000");
+        appender.start();
+        
+        
+        // This event will cause the encoder to throw an exception
+        appender.append(event1);
+        
+        // Event dropped
+        verify(listener, async()).eventSendFailure(eq(appender), eq(event1), any());
+        
+        // Streaming interface used instead of standard Encoder
+        verify(badEncoder, times(1)).encode(eq(event1), any(OutputStream.class));
+        verify(badEncoder, never()).encode(any());
+        
+        // Nothing written in the socket output stream
+        assertThat(bos.size()).isZero();
+        
+        // A warn status is emitted
+        assertThat(statusManager.getCopyOfStatusList()).anySatisfy(status -> {
+            assertThat(status.getLevel()).isEqualTo(Status.WARN);
+            assertThat(status.getMessage()).contains("Encoder failed to encode event. Dropping event.");
+        });
+    }
+    
+    private static class BadStreamingEncoder extends EncoderBase<ILoggingEvent> implements StreamingEncoder<ILoggingEvent> {
+        @Override
+        public byte[] headerBytes() {
+            return null;
+        }
+
+        @Override
+        public byte[] encode(ILoggingEvent event) {
+            return null;
+        }
+
+        @Override
+        public byte[] footerBytes() {
+            return null;
+        }
+
+        @Override
+        public void encode(ILoggingEvent event, OutputStream outputStream) throws IOException {
+            outputStream.write("First few bytes".getBytes());
+            throw new IOException("Exception thrown after some bytes are written");
+        }
     }
 
     

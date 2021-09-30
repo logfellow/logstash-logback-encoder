@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
@@ -290,12 +291,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         private static final int MAX_REPEAT_CONNECTION_ERROR_LOG = 5;
 
         /**
-         * Number of times we try to write an event before it is discarded.
-         * Between each attempt, the socket will be reconnected.
-         */
-        private static final int MAX_REPEAT_WRITE_ATTEMPTS = 5;
-
-        /**
          * The destination socket to which to send events.
          */
         private volatile Socket socket;
@@ -505,7 +500,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     long elapsedSendTimeInMillis = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSendStart);
                     if (elapsedSendTimeInMillis > writeTimeout.getMilliseconds()) {
                         lastDetectedStartNanoTime = lastSendStart;
-                        addWarn(peerId + "Detected write timeout after " + elapsedSendTimeInMillis + "ms.  Write timeout=" + getWriteTimeout() + ".  Closing socket to force reconnect");
+                        addWarn(peerId + "Detected write timeout after " + elapsedSendTimeInMillis + "ms (writeTimeout=" + getWriteTimeout() + "). Closing socket to force reconnect.");
                         closeSocket();
                     }
                 }
@@ -516,8 +511,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         @Override
         public void onEvent(LogEvent<Event> logEvent, long sequence, boolean endOfBatch) throws Exception {
 
-            Exception sendFailureException = null;
-            for (int i = 0; i < MAX_REPEAT_WRITE_ATTEMPTS; i++) {
+            while (true) {
                 /*
                  * Save local references to the outputStream and socket
                  * in case the WriteTimeoutRunnable closes the socket.
@@ -531,56 +525,71 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                      *
                      * This will occur if shutdown occurred during reopen()
                      */
-                    sendFailureException = SHUTDOWN_IN_PROGRESS_EXCEPTION;
+                    fireEventSendFailure(logEvent.event, SHUTDOWN_IN_PROGRESS_EXCEPTION);
                     break;
                 }
 
-                Future<?> readerFuture = this.readerFuture;  // volatile read
-                if (readerFuture.isDone() || socket == null) {
-                    /*
-                     * If readerFuture.isDone(), then the destination has shut down its output (our input),
-                     * and the destination is probably no longer listening to its input (our output).
-                     * This will be the case for Amazon's Elastic Load Balancers (ELB)
-                     * when an instance behind the ELB becomes unhealthy while we're connected to it.
-                     *
-                     * If socket == null here, it means that a write timed out,
-                     * and the socket was closed by the WriteTimeoutRunnable.
-                     *
-                     * Therefore, attempt reconnection.
-                     */
-                    addInfo(peerId + "destination terminated the connection. Reconnecting.");
+                /*
+                 * If socket == null here, it means that a write timed out,
+                 * and the socket was closed by the WriteTimeoutRunnable.
+                 * 
+                 * Note: a warning status has already been emitted by WriteTimeoutRunnable,
+                 *       no need to repeat here.
+                 */
+                if (socket == null) {
                     reopenSocket();
-                    try {
-                        readerFuture.get();
-                        sendFailureException = NOT_CONNECTED_EXCEPTION;
-                    } catch (Exception e) {
-                        sendFailureException = e;
-                    }
                     continue;
                 }
+                
+                /*
+                 * If readerFuture.isDone(), then the destination has shut down its output (our input),
+                 * and the destination is probably no longer listening to its input (our output).
+                 * This will be the case for Amazon's Elastic Load Balancers (ELB)
+                 * when an instance behind the ELB becomes unhealthy while we're connected to it.
+                 */
+                Future<?> readerFuture = this.readerFuture;  // volatile read
+                if (readerFuture.isDone()) {
+                    String msg = "destination terminated the connection";
+                    try {
+                        readerFuture.get();
+                    } catch (ExecutionException e) {
+                        msg += " (cause: " + e.getCause().getMessage() + ")";
+                    }
+
+                    addInfo(peerId + msg + ". Reconnecting.");
+                    reopenSocket();
+                    continue;
+                }
+                
+                /*
+                 * Write the event in the output stream.
+                 * Drop event if encoder throws an exception.
+                 * Reconnect if an exception is thrown by the connection stream itself.
+                 */
                 try {
                     writeEvent(socket, outputStream, logEvent, endOfBatch);
                     return;
-                } catch (Exception e) {
-                    sendFailureException = e;
-                    addWarn(peerId + "unable to send event: " + e.getMessage() + " Reconnecting.", e);
+                    
+                } catch (EncoderException e) {
                     /*
-                     * Need to re-open the socket in case of IOExceptions.
-                     *
-                     * Reopening the socket probably won't help other exceptions
-                     * (like NullPointerExceptions),
-                     * but we're doing so anyway, just in case.
+                     * Encoding threw an exception. Warn and drop event before it becomes a "poison".
                      */
+                    addWarn(peerId + "Encoder failed to encode event. Dropping event.", e.getCause());
+                    fireEventSendFailure(logEvent.event, e.getCause());
+                    break;
+                    
+                } catch (Exception e) {
+                    /*
+                     * Any other exception is thrown by the socket stream (or bug in the code).
+                     * Re-open the socket and get a fresh new stream.
+                     */
+                    addWarn(peerId + "Unable to send event. Reconnecting.", e);
                     reopenSocket();
                 }
             }
-
-            if (logEvent.event != null) {
-                fireEventSendFailure(logEvent.event, sendFailureException);
-            }
         }
 
-        private void writeEvent(Socket socket, OutputStream outputStream, LogEvent<Event> logEvent, boolean endOfBatch) throws IOException {
+        private void writeEvent(Socket socket, OutputStream outputStream, LogEvent<Event> logEvent, boolean endOfBatch) throws IOException, EncoderException {
 
             long startWallTime = System.currentTimeMillis();
             long startNanoTime = System.nanoTime();
@@ -624,20 +633,29 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
         
         @SuppressWarnings("unchecked")
-        private void encode(Event event, OutputStream outputStream) throws IOException {
+        private void encode(Event event, OutputStream outputStream) throws IOException, EncoderException {
             if (encoder instanceof StreamingEncoder) {
                 /*
-                 * Generate content in a temporary buffer to avoid writing "partial" content in the output
+                 * Use a temporary buffer to avoid writing "partial" content in the output
                  * stream if the Encoder throws an exception.
                  */
                 try {
-                    ((StreamingEncoder<Event>) encoder).encode(event, buffer);
+                    try {
+                        ((StreamingEncoder<Event>) encoder).encode(event, buffer);
+                    } catch (Exception e) {
+                        throw new EncoderException(e);
+                    }
                     buffer.writeTo(outputStream);
                 } finally {
                     buffer.reset();
                 }
             } else {
-                byte[] data = encoder.encode(event);
+                byte[] data;
+                try {
+                    data = encoder.encode(event);
+                } catch (Exception e) {
+                    throw new EncoderException(e);
+                }
                 if (data != null) {
                     outputStream.write(data);
                 }
@@ -890,6 +908,17 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
             }
         }
     }
+    
+    
+    /**
+     * Wrap exceptions thrown by {@link Encoder}
+     */
+    @SuppressWarnings("serial")
+    private static class EncoderException extends Exception {
+        EncoderException(Throwable cause) {
+            super(cause);
+        }
+    }
 
     /**
      * An extension of logback's {@link ConfigurableSSLSocketFactory}
@@ -1048,11 +1077,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     protected void fireEventSent(Socket socket, Event event, long durationInNanos) {
-        safelyFireEvent(l -> l.eventSent(this, socket, event, durationInNanos));
+        if (event != null) {
+            safelyFireEvent(l -> l.eventSent(this, socket, event, durationInNanos));
+        }
     }
 
     protected void fireEventSendFailure(Event event, Throwable reason) {
-        safelyFireEvent(l -> l.eventSendFailure(this, event, reason));
+        if (event != null) {
+            safelyFireEvent(l -> l.eventSendFailure(this, event, reason));
+        }
     }
 
     protected void fireConnectionOpened(Socket socket) {
