@@ -41,8 +41,8 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 public class JsonProviders<Event extends DeferredProcessingAware> implements JsonFactoryAware {
     
-    private final List<JsonProvider<Event>> jsonProviders = new ArrayList<>();
-
+    private final ArrayList<JsonProvider<Event>> jsonProviders = new ArrayList<>();
+    
     public void start() {
         for (JsonProvider<Event> jsonProvider : jsonProviders) {
             jsonProvider.start();

@@ -25,22 +25,22 @@ import org.junit.jupiter.api.Test;
  * @author brenuart
  *
  */
-public class ReusableByteBufferPoolTest {
+public class ThreadLocalReusableByteBufferTest {
 
     /*
-     * Assert ReusableByteBuffer are properly recycled when returned to the pool
+     * Assert ReusableByteBuffer are properly recycled when released
      */
     @Test
     public void testBufferRecycled() throws IOException {
-        ReusableByteBufferPool pool = ReusableByteBufferPool.create(1024);
+        ThreadLocalReusableByteBuffer pool = new ThreadLocalReusableByteBuffer(1024);
 
-        // Acquire a buffer from the pool and write some content to it
+        // Acquire a buffer and write some content to it
         ReusableByteBuffer buffer = pool.acquire();
         buffer.write("hello".getBytes());
         assertThat(buffer.size()).isNotZero();
 
         // Release the buffer
-        pool.release(buffer);
+        pool.release();
 
         // Ask again for a buffer - the previous should be returned and have a size()==0
         ReusableByteBuffer secondBuffer = pool.acquire();

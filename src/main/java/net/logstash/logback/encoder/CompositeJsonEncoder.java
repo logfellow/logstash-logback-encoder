@@ -25,7 +25,7 @@ import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.util.ReusableByteBuffer;
-import net.logstash.logback.util.ReusableByteBufferPool;
+import net.logstash.logback.util.ThreadLocalReusableByteBuffer;
 
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
@@ -49,9 +49,9 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
     private int minBufferSize = 1024;
 
     /**
-     * Pool of reusable byte buffers used when calling {@link #encode(DeferredProcessingAware)}
+     * Per-thread {@link ReusableByteBuffer} instance used when calling {@link #encode(DeferredProcessingAware)}
      */
-    private ReusableByteBufferPool bufferPool;
+    private ThreadLocalReusableByteBuffer threadLocalBuffer;
     
     private Encoder<Event> prefix;
     private Encoder<Event> suffix;
@@ -86,7 +86,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             throw new IllegalStateException("Encoder is not started");
         }
         
-        ReusableByteBuffer buffer = bufferPool.acquire();
+        ReusableByteBuffer buffer = threadLocalBuffer.acquire();
         
         try {
             encode(buffer, event);
@@ -97,7 +97,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             return EMPTY_BYTES;
             
         } finally {
-            bufferPool.release(buffer);
+            threadLocalBuffer.release();
         }
     }
     
@@ -134,7 +134,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         startWrapped(prefix);
         startWrapped(suffix);
         
-        this.bufferPool = ReusableByteBufferPool.create(minBufferSize);
+        this.threadLocalBuffer = new ThreadLocalReusableByteBuffer(minBufferSize);
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -178,7 +178,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
             stopWrapped(prefix);
             stopWrapped(suffix);
             
-            bufferPool = null;
+            threadLocalBuffer = null;
         }
     }
 

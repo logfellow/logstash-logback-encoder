@@ -28,7 +28,7 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.util.ReusableByteBuffer;
-import net.logstash.logback.util.ReusableByteBufferPool;
+import net.logstash.logback.util.ThreadLocalReusableByteBuffer;
 
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
@@ -64,9 +64,9 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     private int minBufferSize = 1024;
 
     /**
-     * Pool of reusable byte buffers
+     * Per-thread {@link ReusableByteBuffer}
      */
-    private ReusableByteBufferPool bufferPool;
+    private ThreadLocalReusableByteBuffer threadLocalBuffer;
     
     private final AbstractCompositeJsonFormatter<Event> formatter;
     
@@ -83,7 +83,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             throw new IllegalStateException("Layout is not started");
         }
         
-        ReusableByteBuffer buffer = bufferPool.acquire();
+        ReusableByteBuffer buffer = threadLocalBuffer.acquire();
         try {
             writeEvent(buffer, event);
             return new String(buffer.toByteArray());
@@ -93,7 +93,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
             return null;
             
         } finally {
-            bufferPool.release(buffer);
+            threadLocalBuffer.release();
         }
     }
 
@@ -136,7 +136,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         startWrapped(prefix);
         startWrapped(suffix);
         
-        this.bufferPool = ReusableByteBufferPool.create(minBufferSize);
+        this.threadLocalBuffer = new ThreadLocalReusableByteBuffer(minBufferSize);
     }
 
     private void startWrapped(Layout<Event> wrapped) {
@@ -170,7 +170,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         stopWrapped(prefix);
         stopWrapped(suffix);
         
-        this.bufferPool = null;
+        this.threadLocalBuffer = null;
     }
 
     private void stopWrapped(Layout<Event> wrapped) {

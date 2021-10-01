@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
  *
  */
 @SuppressWarnings("resource")
-public class ReusableBufferTests {
+public class ReusableBufferTest {
 
     private final byte[] helloBytes = "0123456789".getBytes(StandardCharsets.UTF_8);
 
