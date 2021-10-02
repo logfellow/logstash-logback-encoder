@@ -49,7 +49,7 @@ public class ProxyOutputStream extends OutputStream {
     @Override
     public void write(final int b) throws IOException {
         try {
-            delegate.write(b);
+            assertStreamConnected().write(b);
         } catch (final IOException e) {
             handleIOException(e);
         }
@@ -64,7 +64,7 @@ public class ProxyOutputStream extends OutputStream {
     @Override
     public void write(final byte[] b) throws IOException {
         try {
-            delegate.write(b);
+            assertStreamConnected().write(b);
         } catch (final IOException e) {
             handleIOException(e);
         }
@@ -81,7 +81,7 @@ public class ProxyOutputStream extends OutputStream {
     @Override
     public void write(final byte[] b, final int off, final int len) throws IOException {
         try {
-            delegate.write(b, off, len);
+            assertStreamConnected().write(b, off, len);
         } catch (final IOException e) {
             handleIOException(e);
         }
@@ -95,7 +95,7 @@ public class ProxyOutputStream extends OutputStream {
     @Override
     public void flush() throws IOException {
         try {
-            delegate.flush();
+            assertStreamConnected().flush();
         } catch (final IOException e) {
             handleIOException(e);
         }
@@ -109,7 +109,7 @@ public class ProxyOutputStream extends OutputStream {
     @Override
     public void close() throws IOException {
         try {
-            delegate.close();
+            assertStreamConnected().close();
         } catch (final IOException e) {
             handleIOException(e);
         }
@@ -126,5 +126,18 @@ public class ProxyOutputStream extends OutputStream {
      */
     protected void handleIOException(final IOException e) throws IOException {
         throw e;
+    }
+    
+    /**
+     * Get the underlying OutputStream and assert it is connected.
+     * 
+     * @return the underlying OutputStream
+     * @throws IOException thrown when the stream is not connected
+     */
+    protected OutputStream assertStreamConnected() throws IOException {
+        if (this.delegate == null) {
+            throw new IOException("Stream is not connected");
+        }
+        return this.delegate;
     }
 }
