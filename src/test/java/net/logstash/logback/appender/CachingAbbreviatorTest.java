@@ -15,6 +15,7 @@
  */
 package net.logstash.logback.appender;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -22,7 +23,6 @@ import static org.mockito.Mockito.when;
 import net.logstash.logback.CachingAbbreviator;
 
 import ch.qos.logback.classic.pattern.Abbreviator;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -40,14 +40,14 @@ public class CachingAbbreviatorTest {
         
         CachingAbbreviator abbreviator = new CachingAbbreviator(delegate);
         
-        Assertions.assertEquals("abbreviation", abbreviator.abbreviate("full"));
-        Assertions.assertEquals("abbreviation", abbreviator.abbreviate("full"));
+        assertThat(abbreviator.abbreviate("full")).isEqualTo("abbreviation");
+        assertThat(abbreviator.abbreviate("full")).isEqualTo("abbreviation");
         
         verify(delegate, times(1)).abbreviate("full");
         
         abbreviator.clear();
         
-        Assertions.assertEquals("abbreviation", abbreviator.abbreviate("full"));
+        assertThat(abbreviator.abbreviate("full")).isEqualTo("abbreviation");
         
         verify(delegate, times(2)).abbreviate("full");
     }

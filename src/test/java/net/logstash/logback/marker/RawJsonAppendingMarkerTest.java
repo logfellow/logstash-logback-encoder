@@ -43,7 +43,7 @@ public class RawJsonAppendingMarkerTest {
         generator.writeEndObject();
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo("{\"rawJson\":{\"myField\":\"value\"}}");
+        assertThat(writer).hasToString("{\"rawJson\":{\"myField\":\"value\"}}");
     }
     
     @Test
@@ -61,11 +61,11 @@ public class RawJsonAppendingMarkerTest {
     public void testHashCode() {
         String rawJson = "{\"myField\":\"value\"}";
         
-        assertThat(Markers.appendRaw("rawJson", rawJson).hashCode()).isEqualTo(Markers.appendRaw("rawJson", rawJson).hashCode());
+        assertThat(Markers.appendRaw("rawJson", rawJson)).hasSameHashCodeAs(Markers.appendRaw("rawJson", rawJson));
         
-        assertThat(Markers.appendRaw("rawJson", rawJson).hashCode()).isNotEqualTo(Markers.appendRaw("rawJson", "").hashCode());
+        assertThat(Markers.appendRaw("rawJson", rawJson)).doesNotHaveSameHashCodeAs(Markers.appendRaw("rawJson", ""));
         
-        assertThat(Markers.appendRaw("rawJson", rawJson).hashCode()).isNotEqualTo(Markers.appendRaw("myDifferentObject", rawJson)).hashCode();
+        assertThat(Markers.appendRaw("rawJson", rawJson)).doesNotHaveSameHashCodeAs(Markers.appendRaw("myDifferentObject", rawJson));
     }
     
 }

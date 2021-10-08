@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 public class FailureSummaryLoggingAppenderListenerTest {
 
     @Mock
-    private Appender appender;
+    private Appender<ILoggingEvent> appender;
 
     @Mock
     private Socket socket;

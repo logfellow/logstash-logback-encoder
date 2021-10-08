@@ -46,7 +46,7 @@ public class MapEntriesAppendingMarkerTest {
         generator.writeEndObject();
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo("{\"myField\":\"value\"}");
+        assertThat(writer).hasToString("{\"myField\":\"value\"}");
     }
     
     @Test
@@ -64,11 +64,11 @@ public class MapEntriesAppendingMarkerTest {
     public void testHashCode() {
         Map<String, String> map = new HashMap<String, String>();
         
-        assertThat(Markers.appendEntries(map).hashCode()).isEqualTo(Markers.appendEntries(map).hashCode());
+        assertThat(Markers.appendEntries(map)).hasSameHashCodeAs(Markers.appendEntries(map));
         
         Map<String, String> map2 = new HashMap<String, String>();
         map2.put("foo", "bar");
-        assertThat(Markers.appendEntries(map).hashCode()).isNotEqualTo(Markers.appendEntries(map2).hashCode());
+        assertThat(Markers.appendEntries(map)).doesNotHaveSameHashCodeAs(Markers.appendEntries(map2));
     }
     
 }

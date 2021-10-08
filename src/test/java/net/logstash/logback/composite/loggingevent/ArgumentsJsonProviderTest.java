@@ -55,6 +55,7 @@ public class ArgumentsJsonProviderTest {
     private static class Foo {
         private String k6 = "v6";
         
+        @SuppressWarnings("unused")
         public String getK6() {
             return k6;
         }
@@ -89,7 +90,7 @@ public class ArgumentsJsonProviderTest {
         
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo(
+        assertThat(writer).hasToString(
                 "{"
                         + "\"k0\":\"v0\","
                         + "\"k1\":\"v1\","
@@ -112,7 +113,7 @@ public class ArgumentsJsonProviderTest {
         
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo(
+        assertThat(writer).hasToString(
                 "{"
                     + "\"args\":{"
                         + "\"k0\":\"v0\","
@@ -138,7 +139,7 @@ public class ArgumentsJsonProviderTest {
         
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo(
+        assertThat(writer).hasToString(
                 "{"
                         + "\"k0\":\"v0\","
                         + "\"k1\":\"v1\","
@@ -163,7 +164,7 @@ public class ArgumentsJsonProviderTest {
         
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo(
+        assertThat(writer).hasToString(
                 "{"
                         + "\"k0\":\"v0\","
                         + "\"k1\":\"v1\","

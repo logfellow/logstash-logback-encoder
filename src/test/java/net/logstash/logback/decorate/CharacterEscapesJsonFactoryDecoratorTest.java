@@ -43,7 +43,7 @@ public class CharacterEscapesJsonFactoryDecoratorTest {
         generator.writeEndObject();
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo("{\"message\":\"M!===message_Мо?===сообщение\"}");
+        assertThat(writer).hasToString("{\"message\":\"M!===message_Мо?===сообщение\"}");
     }
 
     @Test
@@ -64,7 +64,7 @@ public class CharacterEscapesJsonFactoryDecoratorTest {
         generator.writeEndObject();
         generator.flush();
 
-        assertThat(writer.toString()).isEqualTo("{\"message\":\"..===.y.\"}");
+        assertThat(writer).hasToString("{\"message\":\"..===.y.\"}");
     }
 
     @Test
@@ -81,7 +81,7 @@ public class CharacterEscapesJsonFactoryDecoratorTest {
         generator.writeEndObject();
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo("{\"message\":\"foo\nbar\"}");
+        assertThat(writer).hasToString("{\"message\":\"foo\nbar\"}");
     }
 
 }

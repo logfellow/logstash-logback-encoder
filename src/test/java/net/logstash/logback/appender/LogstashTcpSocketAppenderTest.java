@@ -68,7 +68,6 @@ import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -507,7 +506,7 @@ public class LogstashTcpSocketAppenderTest {
 
         // Wait for a bit more than 2 keep alive messages then make sure we got the expected content
         Thread.sleep(250);
-        Assertions.assertArrayEquals(expectedKeepAlivesBytes, bos.toByteArray());
+        assertThat(bos.toByteArray()).containsExactly(expectedKeepAlivesBytes);
     }
 
     

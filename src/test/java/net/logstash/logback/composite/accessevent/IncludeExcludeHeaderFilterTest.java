@@ -15,9 +15,9 @@
  */
 package net.logstash.logback.composite.accessevent;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class IncludeExcludeHeaderFilterTest {
@@ -26,27 +26,27 @@ public class IncludeExcludeHeaderFilterTest {
     
     @Test
     public void testEmpty() {
-        Assertions.assertTrue(filter.includeHeader("HeaderA", "1"));
-        Assertions.assertTrue(filter.includeHeader("Headera", "2"));
-        Assertions.assertTrue(filter.includeHeader("HeaderB", "3"));
-        Assertions.assertTrue(filter.includeHeader("Headerb", "4"));
+        assertThat(filter.includeHeader("HeaderA", "1")).isTrue();
+        assertThat(filter.includeHeader("Headera", "2")).isTrue();
+        assertThat(filter.includeHeader("HeaderB", "3")).isTrue();
+        assertThat(filter.includeHeader("Headerb", "4")).isTrue();
     }
     @Test
     public void testIncludeOnly() {
         filter.addInclude("headera");
-        Assertions.assertTrue(filter.includeHeader("HeaderA", "1"));
-        Assertions.assertTrue(filter.includeHeader("Headera", "2"));
-        Assertions.assertFalse(filter.includeHeader("HeaderB", "3"));
-        Assertions.assertFalse(filter.includeHeader("Headerb", "3"));
+        assertThat(filter.includeHeader("HeaderA", "1")).isTrue();
+        assertThat(filter.includeHeader("Headera", "2")).isTrue();
+        assertThat(filter.includeHeader("HeaderB", "3")).isFalse();
+        assertThat(filter.includeHeader("Headerb", "3")).isFalse();
     }
 
     @Test
     public void testExcludeOnly() {
         filter.addExclude("headera");
-        Assertions.assertFalse(filter.includeHeader("HeaderA", "1"));
-        Assertions.assertFalse(filter.includeHeader("Headera", "2"));
-        Assertions.assertTrue(filter.includeHeader("HeaderB", "3"));
-        Assertions.assertTrue(filter.includeHeader("Headerb", "4"));
+        assertThat(filter.includeHeader("HeaderA", "1")).isFalse();
+        assertThat(filter.includeHeader("Headera", "2")).isFalse();
+        assertThat(filter.includeHeader("HeaderB", "3")).isTrue();
+        assertThat(filter.includeHeader("Headerb", "4")).isTrue();
     }
 
     @Test

@@ -90,7 +90,6 @@ public class CallerDataJsonProviderTest {
         provider.writeTo(generator, event);
         
         verifyNoMoreInteractions(generator);
-        
     }
 
     @Test

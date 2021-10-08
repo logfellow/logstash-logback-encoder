@@ -15,6 +15,10 @@
  */
 package net.logstash.logback;
 
+import static org.assertj.core.api.Assertions.as;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.entry;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -60,7 +64,7 @@ import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
-import org.junit.jupiter.api.Assertions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -82,7 +86,8 @@ public class ConfigurationTest {
     public void testLogstashEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assertions.assertEquals(19, providers.size());
+
+        assertThat(providers).hasSize(19);
 
         verifyCommonProviders(providers);
 
@@ -93,11 +98,12 @@ public class ConfigurationTest {
     public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
-        Assertions.assertEquals(23, providers.size());
+
+        assertThat(providers).hasSize(23);
 
         verifyCommonProviders(providers);
 
-        Assertions.assertNotNull(getInstance(providers, TestJsonProvider.class));
+        assertThat(getInstance(providers, TestJsonProvider.class)).isNotNull();
 
         verifyOutput(encoder);
     }
@@ -107,99 +113,104 @@ public class ConfigurationTest {
         LoggingEventAsyncDisruptorAppender appender = getAppender("asyncAppender");
         Field listenersField = AsyncDisruptorAppender.class.getDeclaredField("listeners");
         listenersField.setAccessible(true);
+        @SuppressWarnings("unchecked")
         List<AppenderListener<ILoggingEvent>> listeners = (List<AppenderListener<ILoggingEvent>>) listenersField.get(appender);
-        Assertions.assertEquals(1, listeners.size());
+        assertThat(listeners).hasSize(1);
     }
 
 
+    @SuppressWarnings("unchecked")
     private void verifyCommonProviders(List<JsonProvider<ILoggingEvent>> providers) {
         LoggingEventFormattedTimestampJsonProvider timestampJsonProvider = getInstance(providers, LoggingEventFormattedTimestampJsonProvider.class);
-        Assertions.assertNotNull(timestampJsonProvider);
-        Assertions.assertEquals("@timestamp", timestampJsonProvider.getFieldName());
+        assertThat(timestampJsonProvider).isNotNull();
+        assertThat(timestampJsonProvider.getFieldName()).isEqualTo("@timestamp");
 
         LogstashVersionJsonProvider<ILoggingEvent> versionJsonProvider = getInstance(providers, LogstashVersionJsonProvider.class);
-        Assertions.assertNotNull(versionJsonProvider);
-        Assertions.assertEquals("@version", versionJsonProvider.getFieldName());
+        assertThat(versionJsonProvider).isNotNull();
+        assertThat(versionJsonProvider.getFieldName()).isEqualTo("@version");
 
         MessageJsonProvider messageJsonProvider = getInstance(providers, MessageJsonProvider.class);
-        Assertions.assertNotNull(messageJsonProvider);
-        Assertions.assertEquals("customMessage", messageJsonProvider.getFieldName());
+        assertThat(messageJsonProvider).isNotNull();
+        assertThat(messageJsonProvider.getFieldName()).isEqualTo("customMessage");
 
         LoggerNameJsonProvider loggerNameJsonProvider = getInstance(providers, LoggerNameJsonProvider.class);
-        Assertions.assertNotNull(loggerNameJsonProvider);
-        Assertions.assertEquals("logger_name", loggerNameJsonProvider.getFieldName());
+        assertThat(loggerNameJsonProvider).isNotNull();
+        assertThat(loggerNameJsonProvider.getFieldName()).isEqualTo("logger_name");
 
         LoggingEventThreadNameJsonProvider threadNameJsonProvider = getInstance(providers, LoggingEventThreadNameJsonProvider.class);
-        Assertions.assertNotNull(threadNameJsonProvider);
-        Assertions.assertEquals("thread_name", threadNameJsonProvider.getFieldName());
+        assertThat(threadNameJsonProvider).isNotNull();
+        assertThat(threadNameJsonProvider.getFieldName()).isEqualTo("thread_name");
 
         LogLevelJsonProvider logLevelJsonProvider = getInstance(providers, LogLevelJsonProvider.class);
-        Assertions.assertNotNull(logLevelJsonProvider);
-        Assertions.assertEquals("level", logLevelJsonProvider.getFieldName());
+        assertThat(logLevelJsonProvider).isNotNull();
+        assertThat(logLevelJsonProvider.getFieldName()).isEqualTo("level");
 
         LogLevelValueJsonProvider levelValueJsonProvider = getInstance(providers, LogLevelValueJsonProvider.class);
-        Assertions.assertNotNull(levelValueJsonProvider);
-        Assertions.assertEquals("level_value", levelValueJsonProvider.getFieldName());
+        assertThat(levelValueJsonProvider).isNotNull();
+        assertThat(levelValueJsonProvider.getFieldName()).isEqualTo("level_value");
 
         CallerDataJsonProvider callerDataJsonProvider = getInstance(providers, CallerDataJsonProvider.class);
-        Assertions.assertNotNull(callerDataJsonProvider);
-        Assertions.assertEquals("caller", callerDataJsonProvider.getFieldName());
-        Assertions.assertEquals("class", callerDataJsonProvider.getClassFieldName());
-        Assertions.assertEquals("method", callerDataJsonProvider.getMethodFieldName());
-        Assertions.assertEquals("file", callerDataJsonProvider.getFileFieldName());
-        Assertions.assertEquals("line", callerDataJsonProvider.getLineFieldName());
+        assertThat(callerDataJsonProvider).isNotNull();
+        assertThat(callerDataJsonProvider.getClassFieldName()).isEqualTo("class");
+        assertThat(callerDataJsonProvider.getMethodFieldName()).isEqualTo("method");
+        assertThat(callerDataJsonProvider.getFileFieldName()).isEqualTo("file");
+        assertThat(callerDataJsonProvider.getLineFieldName()).isEqualTo("line");
 
         StackTraceJsonProvider stackTraceJsonProvider = getInstance(providers, StackTraceJsonProvider.class);
-        Assertions.assertNotNull(stackTraceJsonProvider);
+        assertThat(stackTraceJsonProvider).isNotNull();
+        
         ShortenedThrowableConverter throwableConverter = (ShortenedThrowableConverter) stackTraceJsonProvider.getThrowableConverter();
-        Assertions.assertEquals(20, throwableConverter.getMaxDepthPerThrowable());
-        Assertions.assertEquals(1000, throwableConverter.getMaxLength());
-        Assertions.assertEquals(30, throwableConverter.getShortenedClassNameLength());
-        Assertions.assertTrue(throwableConverter.isRootCauseFirst());
-        Assertions.assertEquals(2, throwableConverter.getExcludes().size());
-        Assertions.assertEquals("excluded1", throwableConverter.getExcludes().get(0));
-        Assertions.assertEquals("excluded2", throwableConverter.getExcludes().get(1));
-        Assertions.assertEquals(true, throwableConverter.isInlineHash());
+        assertThat(throwableConverter).isNotNull();
+        assertThat(throwableConverter.getMaxDepthPerThrowable()).isEqualTo(20);
+        assertThat(throwableConverter.getMaxLength()).isEqualByComparingTo(1000);
+        assertThat(throwableConverter.getShortenedClassNameLength()).isEqualByComparingTo(30);
+        assertThat(throwableConverter.isRootCauseFirst()).isTrue();
+        assertThat(throwableConverter.getExcludes()).hasSize(2);
+        assertThat(throwableConverter.getExcludes()).element(0).isEqualTo("excluded1");
+        assertThat(throwableConverter.getExcludes()).element(1).isEqualTo("excluded2");
+        
+        assertThat(throwableConverter.isInlineHash()).isTrue();
 
-        Assertions.assertNotNull(getInstance(providers, ContextJsonProvider.class));
-        Assertions.assertNotNull(getInstance(providers, ContextNameJsonProvider.class));
+        assertThat(getInstance(providers, ContextJsonProvider.class)).isNotNull();
+        assertThat(getInstance(providers, ContextNameJsonProvider.class)).isNotNull();
 
         MdcJsonProvider mdcJsonProvider = getInstance(providers, MdcJsonProvider.class);
-        Assertions.assertNotNull(mdcJsonProvider);
-        Assertions.assertEquals("included", mdcJsonProvider.getIncludeMdcKeyNames().get(0));
-        Assertions.assertEquals("renamedKey", mdcJsonProvider.getMdcKeyFieldNames().get("key"));
+        assertThat(mdcJsonProvider).isNotNull();
+        assertThat(mdcJsonProvider.getIncludeMdcKeyNames()).containsExactly("included");
+        assertThat(mdcJsonProvider.getMdcKeyFieldNames()).containsOnly(entry("key", "renamedKey"));
+        
 
         GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsJsonProvider = getInstance(providers, GlobalCustomFieldsJsonProvider.class);
-        Assertions.assertNotNull(globalCustomFieldsJsonProvider);
-        Assertions.assertEquals("{\"customName\":\"customValue\"}", globalCustomFieldsJsonProvider.getCustomFields());
+        assertThat(globalCustomFieldsJsonProvider).isNotNull();
+        assertThat(globalCustomFieldsJsonProvider.getCustomFields()).isEqualTo("{\"customName\":\"customValue\"}");
 
-        Assertions.assertNotNull(getInstance(providers, TagsJsonProvider.class));
-        Assertions.assertNotNull(getInstance(providers, LogstashMarkersJsonProvider.class));
+        assertThat(getInstance(providers, TagsJsonProvider.class)).isNotNull();
+        assertThat(getInstance(providers, LogstashMarkersJsonProvider.class)).isNotNull();
 
         LoggingEventPatternJsonProvider patternProvider = getInstance(providers, LoggingEventPatternJsonProvider.class);
-        Assertions.assertEquals("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}", patternProvider.getPattern());
-        Assertions.assertNotNull(patternProvider);
+        assertThat(patternProvider).isNotNull();
+        assertThat(patternProvider.getPattern()).isEqualTo("{\"patternName\":\"patternValue\",\"relativeTime\":\"#asLong{%relative}\"}");
         
         LoggingEventNestedJsonProvider nestedJsonProvider = getInstance(providers, LoggingEventNestedJsonProvider.class);
-        Assertions.assertNotNull(nestedJsonProvider);
-        Assertions.assertEquals("nested", nestedJsonProvider.getFieldName());
+        assertThat(nestedJsonProvider).isNotNull();
+        assertThat(nestedJsonProvider.getFieldName()).isEqualTo("nested");
         
         RawMessageJsonProvider rawMessageJsonProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), RawMessageJsonProvider.class);
-        Assertions.assertNotNull(rawMessageJsonProvider);
-        Assertions.assertEquals("customRawMessage", rawMessageJsonProvider.getFieldName());
+        assertThat(rawMessageJsonProvider).isNotNull();
+        assertThat(rawMessageJsonProvider.getFieldName()).isEqualTo("customRawMessage");
 
         ArgumentsJsonProvider argumentsJsonProvider = getInstance(providers, ArgumentsJsonProvider.class);
-        Assertions.assertNotNull(argumentsJsonProvider);
+        assertThat(argumentsJsonProvider).isNotNull();
 
-        UuidJsonProvider uuidProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), UuidJsonProvider.class);
-        Assertions.assertNotNull(uuidProvider);
-        Assertions.assertEquals("id", uuidProvider.getFieldName());
-        Assertions.assertEquals("00:C0:F0:3D:5B:7C", uuidProvider.getEthernet());
-        Assertions.assertEquals(UuidJsonProvider.STRATEGY_TIME, uuidProvider.getStrategy());
+        UuidJsonProvider<ILoggingEvent> uuidProvider = getInstance(nestedJsonProvider.getProviders().getProviders(), UuidJsonProvider.class);
+        assertThat(uuidProvider).isNotNull();
+        assertThat(uuidProvider.getFieldName()).isEqualTo("id");
+        assertThat(uuidProvider.getEthernet()).isEqualTo("00:C0:F0:3D:5B:7C");
+        assertThat(uuidProvider.getStrategy()).isEqualTo(UuidJsonProvider.STRATEGY_TIME);
 
-        SequenceJsonProvider sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
-        Assertions.assertNotNull(sequenceJsonProvider);
-        Assertions.assertEquals("sequenceNumberField", sequenceJsonProvider.getFieldName());
+        SequenceJsonProvider<ILoggingEvent> sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
+        assertThat(sequenceJsonProvider).isNotNull();
+        assertThat(sequenceJsonProvider.getFieldName()).isEqualTo("sequenceNumberField");
     }
 
     private <T extends JsonProvider<ILoggingEvent>> T getInstance(List<JsonProvider<ILoggingEvent>> providers, Class<T> clazz) {
@@ -225,31 +236,36 @@ public class ConfigurationTest {
         
 
         Map<String, Object> output = parseJson(new String(encoded, StandardCharsets.UTF_8));
-        Assertions.assertNotNull(output.get("@timestamp"));
-        Assertions.assertEquals("1", output.get("@version"));
-        Assertions.assertEquals("message arg k1=v1 k2=[v2] v3", output.get("customMessage"));
-        Map<String, Object> nested = (Map<String, Object>) output.get("nested");
-        Assertions.assertEquals("message {} {} {} {}", nested.get("customRawMessage"));
-        Assertions.assertEquals("n.l.l.ConfigurationTest", output.get("logger_name"));
-        Assertions.assertEquals("testContext", output.get("context"));
-        Assertions.assertNotNull(output.get("thread_name"));
-        Assertions.assertEquals("INFO", output.get("level"));
-        Assertions.assertEquals(20000, output.get("level_value"));
-        Assertions.assertNotNull(output.get("caller"));
-        Assertions.assertTrue(((String) output.get("stack_trace")).contains("n.l.logback.ConfigurationTest.verifyOutput"));
-        Assertions.assertEquals("customValue", output.get("customName"));
-        Assertions.assertEquals("patternValue", output.get("patternName"));
-        Assertions.assertEquals("markerFieldValue", output.get("markerFieldName"));
-        Assertions.assertTrue(output.get("relativeTime") instanceof Number);
-        Assertions.assertEquals("arg", output.get("prefix0"));
-        Assertions.assertEquals("v1", output.get("k1"));
-        Assertions.assertEquals("v2", output.get("k2"));
-        Assertions.assertEquals("v3", output.get("k3"));
+        
+        assertThat(output)
+            .containsEntry("@version", "1")
+            .containsEntry("customMessage", "message arg k1=v1 k2=[v2] v3")
+            .containsEntry("logger_name", "n.l.l.ConfigurationTest")
+            .containsEntry("context", "testContext")
+            .containsKey("thread_name")
+            .containsEntry("level", "INFO")
+            .containsEntry("level_value", 20000)
+            .containsKey("caller")
+            .containsEntry("customName", "customValue")
+            .containsEntry("patternName", "patternValue")
+            .containsEntry("markerFieldName", "markerFieldValue")
+            .containsEntry("prefix0", "arg")
+            .containsEntry("k1", "v1")
+            .containsEntry("k2", "v2")
+            .containsEntry("k3", "v3");
+
+        assertThat(output).extracting("relativeTime").isNotNull().isInstanceOf(Number.class);
+        assertThat(output).extracting("@timestamp").isNotNull().isInstanceOf(String.class);
+        assertThat(output).extracting("nested", as(InstanceOfAssertFactories.MAP))
+            .containsEntry("customRawMessage", "message {} {} {} {}");
+        
+        assertThat(output).extracting("stack_trace", as(InstanceOfAssertFactories.STRING))
+            .contains("n.l.logback.ConfigurationTest.verifyOutput");
+        
 
         Number sequence = (Number) output.get("sequenceNumberField");
-        Assertions.assertNotNull(sequence);
-        Assertions.assertNotEquals("", sequence);
-        Assertions.assertTrue(0L < sequence.longValue());
+        assertThat(sequence).isNotNull();
+        assertThat(sequence.longValue()).isPositive();
     }
 
     @SuppressWarnings("unchecked")
