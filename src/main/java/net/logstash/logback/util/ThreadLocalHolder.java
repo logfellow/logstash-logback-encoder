@@ -38,6 +38,9 @@ import java.util.function.Supplier;
  * All allocated values are automatically disposed when {@link ThreadLocalHolder#close()}
  * is called.
  * 
+ * <p>Note: This class is for internal use only and subject to backward incompatible change
+ * at any time.
+ * 
  * @param <T> type of instances returned by this {@link ThreadLocalHolder}.
  *
  * @author brenuart

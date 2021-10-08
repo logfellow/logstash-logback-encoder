@@ -50,10 +50,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * and then ends the JSON object ('}').
  *
  * <p>Jackson {@link JsonGenerator} are initially created with a "disconnected" output stream so they can be
- * reused multiple times with different target output stream. They are kept in an internal pool whose
- * size is technically unbounded. It will however never hold more entries than the number of concurrent
- * threads accessing it. Entries are kept in the pool using soft references so they can be garbage
- * collected by the JVM when running low in memory.
+ * reused multiple times with different target output stream.
  * 
  * <p>{@link JsonGenerator} instances are *not* reused after they threw an exception. This is to prevent
  * reusing an instance whose internal state may be unpredictable.

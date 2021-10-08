@@ -19,6 +19,9 @@ package net.logstash.logback.util;
 /**
  * A pool of {@link ReusableByteBuffer}.
  * 
+ * <p>Note: This class is for internal use only and subject to backward incompatible change
+ * at any time.
+ * 
  * @author brenuart
  */
 public class ThreadLocalReusableByteBuffer extends ThreadLocalHolder<ReusableByteBuffer> {
