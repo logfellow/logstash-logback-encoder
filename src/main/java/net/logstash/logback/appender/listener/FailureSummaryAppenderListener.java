@@ -199,11 +199,9 @@ public abstract class FailureSummaryAppenderListener<Event extends DeferredProce
 
     private void recordSuccess(AtomicReference<State> stateRef, CallbackType callbackType) {
         State currentState = stateRef.get();
-        if (!currentState.isSucceeding()) {
-            if (stateRef.compareAndSet(currentState, SUCCEEDING_STATE)) {
-                FailingState oldFailingState = (FailingState) currentState;
-                handleFailureSummary(oldFailingState, callbackType);
-            }
+        if (!currentState.isSucceeding() && stateRef.compareAndSet(currentState, SUCCEEDING_STATE)) {
+            FailingState oldFailingState = (FailingState) currentState;
+            handleFailureSummary(oldFailingState, callbackType);
         }
     }
     private void recordFailure(AtomicReference<State> stateRef, Throwable reason) {
@@ -211,7 +209,6 @@ public abstract class FailureSummaryAppenderListener<Event extends DeferredProce
         if (currentState.isSucceeding()) {
             if (!stateRef.compareAndSet(currentState, new FailingState(reason))) {
                 recordFailure(stateRef, reason);
-                return;
             }
         } else {
             ((FailingState) currentState).record(reason);
