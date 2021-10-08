@@ -59,7 +59,7 @@ public class ObjectFieldsAppendingMarkerTest {
         generator.writeEndObject();
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo("{\"myField\":\"value\"}");
+        assertThat(writer).hasToString("{\"myField\":\"value\"}");
     }
     
     @Test
@@ -74,7 +74,7 @@ public class ObjectFieldsAppendingMarkerTest {
         generator.writeEndObject();
         generator.flush();
         
-        assertThat(writer.toString()).isEqualTo("{}");
+        assertThat(writer).hasToString("{}");
     }
     
     @Test
@@ -90,9 +90,9 @@ public class ObjectFieldsAppendingMarkerTest {
     public void testHashCode() {
         MyClass myObject = new MyClass("value");
         
-        assertThat(Markers.appendFields(myObject).hashCode()).isEqualTo(Markers.appendFields(myObject).hashCode());
+        assertThat(Markers.appendFields(myObject)).hasSameHashCodeAs(Markers.appendFields(myObject));
         
-        assertThat(Markers.appendFields(myObject).hashCode()).isNotEqualTo(Markers.appendFields(new MyClass("value1")).hashCode());
+        assertThat(Markers.appendFields(myObject)).doesNotHaveSameHashCodeAs(Markers.appendFields(new MyClass("value1")));
     }
     
 }

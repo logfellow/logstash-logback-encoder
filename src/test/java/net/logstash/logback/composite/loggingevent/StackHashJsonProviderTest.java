@@ -15,6 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -25,7 +26,6 @@ import java.util.regex.Pattern;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import com.fasterxml.jackson.core.JsonGenerator;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -58,7 +58,8 @@ public class StackHashJsonProviderTest {
         // THEN
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
         verify(generator).writeStringField(eq(StackHashJsonProvider.FIELD_NAME), hashCaptor.capture());
-        Assertions.assertTrue(HEX_PATTERN.matcher(hashCaptor.getValue()).matches(), "Did not produce an hexadecimal integer: " + hashCaptor.getValue());
+        
+        assertThat(hashCaptor.getValue()).matches(HEX_PATTERN);
     }
 
     @Test
@@ -72,6 +73,7 @@ public class StackHashJsonProviderTest {
         // THEN
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
         verify(generator).writeStringField(eq("newFieldName"), hashCaptor.capture());
-        Assertions.assertTrue(HEX_PATTERN.matcher(hashCaptor.getValue()).matches(), "Did not produce an hexadecimal integer: " + hashCaptor.getValue());
+        
+        assertThat(hashCaptor.getValue()).matches(HEX_PATTERN);
     }
 }

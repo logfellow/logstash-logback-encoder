@@ -430,7 +430,7 @@ public class MaskingJsonGeneratorDecoratorTest {
 
         maskingGenerator.flush();
 
-        assertThat(maskedWriter.toString()).isEqualTo(masked);
+        assertThat(maskedWriter).hasToString(masked);
     }
 
 }

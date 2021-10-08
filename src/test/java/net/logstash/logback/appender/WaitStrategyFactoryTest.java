@@ -268,6 +268,7 @@ public class WaitStrategyFactoryTest {
         });
     }
     
+    @SuppressWarnings("unchecked")
     private <T> T getFieldValue(Object object, Class<?> clazz, String fieldName) {
         try {
             Field field = clazz.getDeclaredField(fieldName);
@@ -277,5 +278,4 @@ public class WaitStrategyFactoryTest {
             throw new RuntimeException(e);
         }
     }
-
 }

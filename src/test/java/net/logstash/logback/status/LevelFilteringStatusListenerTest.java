@@ -16,7 +16,7 @@
 package net.logstash.logback.status;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -115,13 +115,9 @@ public class LevelFilteringStatusListenerTest {
         statusListener.setLevel("INFO");
         assertThat(statusListener.getLevelValue()).isEqualTo(Status.INFO);
 
-        try {
-            statusListener.setLevel("bogus");
-            fail();
-        } catch (IllegalArgumentException e) {
-            // success
-        }
+        assertThatThrownBy(() -> statusListener.setLevel("bogus")).isInstanceOf(IllegalArgumentException.class);
     }
+    
     @Test
     public void setLevelValue() {
         LevelFilteringStatusListener statusListener = new LevelFilteringStatusListener();
@@ -137,17 +133,7 @@ public class LevelFilteringStatusListenerTest {
         statusListener.setLevelValue(Status.INFO);
         assertThat(statusListener.getLevelValue()).isEqualTo(Status.INFO);
 
-        try {
-            statusListener.setLevelValue(400);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // success
-        }
-        try {
-            statusListener.setLevelValue(-1);
-            fail();
-        } catch (IllegalArgumentException e) {
-            // success
-        }
+        assertThatThrownBy(() -> statusListener.setLevelValue(400)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> statusListener.setLevelValue(-1)).isInstanceOf(IllegalArgumentException.class);
     }
 }

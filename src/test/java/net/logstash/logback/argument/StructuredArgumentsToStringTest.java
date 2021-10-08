@@ -16,11 +16,11 @@
 package net.logstash.logback.argument;
 
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -28,8 +28,9 @@ import org.slf4j.helpers.MessageFormatter;
 
 public class StructuredArgumentsToStringTest {
 
-    private static  class BuguyToString {
+    private static class BuguyToString {
         @Override
+        @SuppressWarnings("serial")
         public String toString() {
             throw new NullPointerException("npe") {
                 @Override
@@ -53,8 +54,9 @@ public class StructuredArgumentsToStringTest {
     @ParameterizedTest
     @MethodSource("data")
     public void testToString(String expected, Object arg) throws Exception {
-        Assertions.assertEquals(expected, StructuredArguments.toString(arg));
-        Assertions.assertEquals(MessageFormatter.format("{}", arg).getMessage(), StructuredArguments.toString(arg));
+        assertThat(StructuredArguments.toString(arg))
+            .isEqualTo(expected)
+            .isEqualTo(MessageFormatter.format("{}", arg).getMessage());
     }
 
 }

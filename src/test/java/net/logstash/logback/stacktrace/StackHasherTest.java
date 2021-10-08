@@ -15,9 +15,11 @@
  */
 package net.logstash.logback.stacktrace;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+
 import java.util.Deque;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class StackHasherTest {
@@ -74,31 +76,13 @@ public class StackHasherTest {
                 throw new RuntimeException("wrapper", e);
             }
         }
-
-        public static void generateSuppressed() {
-            oneSuppressed();
-        }
-
-        private static void oneSuppressed() {
-            twoSuppressed();
-        }
-
-        private static void twoSuppressed() {
-            try {
-                threeSingle();
-            } catch (RuntimeException e) {
-                RuntimeException newException = new RuntimeException();
-                newException.addSuppressed(e);
-                throw newException;
-            }
-        }
     }
 
     @Test
     public void one_hash_should_be_generated() {
         try {
             StackTraceElementGenerator.generateSingle();
-            Assertions.fail();
+            fail("Exception must have been thrown");
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher hasher = new StackHasher();
@@ -107,7 +91,7 @@ public class StackHasherTest {
             Deque<String> hashes = hasher.hexHashes(e);
 
             // THEN
-            Assertions.assertEquals(1, hashes.size());
+            assertThat(hashes).hasSize(1);
         }
     }
 
@@ -115,7 +99,7 @@ public class StackHasherTest {
     public void two_hashes_should_be_generated() {
         try {
             StackTraceElementGenerator.generateCausedBy();
-            Assertions.fail();
+            fail("Exception must have been thrown");
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher hasher = new StackHasher();
@@ -124,7 +108,7 @@ public class StackHasherTest {
             Deque<String> hashes = hasher.hexHashes(e);
 
             // THEN
-            Assertions.assertEquals(2, hashes.size());
+            assertThat(hashes).hasSize(2);
         }
     }
     private static class OnlyFromStackTraceElementGeneratorFilter extends StackElementFilter {
@@ -143,7 +127,7 @@ public class StackHasherTest {
     public void expected_hash_should_be_generated() {
         try {
             StackTraceElementGenerator.generateSingle();
-            Assertions.fail();
+            fail("Exception must have been thrown");
         } catch (RuntimeException e) {
             // GIVEN
             StackHasher hasher = new StackHasher(new OnlyFromStackTraceElementGeneratorFilter());
@@ -152,8 +136,9 @@ public class StackHasherTest {
             Deque<String> hashes = hasher.hexHashes(e);
 
             // THEN
-            Assertions.assertEquals(1, hashes.size());
-            Assertions.assertEquals("48abcbb0", hashes.getFirst());
+            assertThat(hashes)
+                .hasSize(1)
+                .first().isEqualTo("ae4a4ab2");
         }
     }
 }

@@ -15,9 +15,8 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -80,7 +79,7 @@ public class MessageJsonProviderTest {
 
     @Test
     public void testMessageSplitDisabledByDefault() throws Exception {
-        assertNull(provider.getMessageSplitRegex());
+        assertThat(provider.getMessageSplitRegex()).isNull();
 
         mockEventMessage("###");
         provider.writeTo(generator, event);
@@ -91,7 +90,7 @@ public class MessageJsonProviderTest {
     @Test
     public void testMessageSplitDisabledForNullRegex() throws Exception {
         provider.setMessageSplitRegex(null);
-        assertNull(provider.getMessageSplitRegex());
+        assertThat(provider.getMessageSplitRegex()).isNull();
 
         mockEventMessage("###");
         provider.writeTo(generator, event);
@@ -102,7 +101,7 @@ public class MessageJsonProviderTest {
     @Test
     public void testMessageSplitDisabledForEmptyRegex() throws Exception {
         provider.setMessageSplitRegex("");
-        assertNull(provider.getMessageSplitRegex());
+        assertThat(provider.getMessageSplitRegex()).isNull();
 
         mockEventMessage("###");
         provider.writeTo(generator, event);
@@ -113,7 +112,7 @@ public class MessageJsonProviderTest {
     @Test
     public void testMessageSplitWithSystemSeparator() throws IOException {
         provider.setMessageSplitRegex("SYSTEM");
-        assertEquals(System.lineSeparator(), provider.getMessageSplitRegex());
+        assertThat(provider.getMessageSplitRegex()).isEqualTo(System.lineSeparator());
 
         mockEventMessage(System.lineSeparator());
         provider.writeTo(generator, event);
@@ -124,7 +123,7 @@ public class MessageJsonProviderTest {
     @Test
     public void testMessageSplitWithUnixSeparator() throws IOException {
         provider.setMessageSplitRegex("UNIX");
-        assertEquals("\n", provider.getMessageSplitRegex());
+        assertThat(provider.getMessageSplitRegex()).isEqualTo("\n");
 
         mockEventMessage("\n");
         provider.writeTo(generator, event);
@@ -135,7 +134,7 @@ public class MessageJsonProviderTest {
     @Test
     public void testMessageSplitWithWindowsSeparator() throws IOException {
         provider.setMessageSplitRegex("WINDOWS");
-        assertEquals("\r\n", provider.getMessageSplitRegex());
+        assertThat(provider.getMessageSplitRegex()).isEqualTo("\r\n");
 
         mockEventMessage("\r\n");
         provider.writeTo(generator, event);
@@ -146,7 +145,7 @@ public class MessageJsonProviderTest {
     @Test
     public void testMessageSplitWithCustomRegex() throws IOException {
         provider.setMessageSplitRegex("#+");
-        assertEquals("#+", provider.getMessageSplitRegex());
+        assertThat(provider.getMessageSplitRegex()).isEqualTo("#+");
 
         mockEventMessage("###");
         provider.writeTo(generator, event);

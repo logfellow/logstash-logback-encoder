@@ -18,11 +18,7 @@ package net.logstash.logback.encoder;
 import static net.logstash.logback.marker.Markers.append;
 import static net.logstash.logback.marker.Markers.appendEntries;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -303,7 +299,7 @@ public class LogstashEncoderTest {
         when(event.getMDCPropertyMap()).thenReturn(null);
         
         encoder.start();
-        encoder.encode(event);
+        assertThatCode(() -> encoder.encode(event)).doesNotThrowAnyException();
     }
     
     @Test
@@ -500,7 +496,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
         
-        assertThat(MAPPER.convertValue(argArray, JsonNode.class).equals(node.get("json_message"))).isEqualTo(true);
+        assertThat(MAPPER.convertValue(argArray, JsonNode.class)).isEqualTo(node.get("json_message"));
     }
     
     @Test
@@ -515,8 +511,8 @@ public class LogstashEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
         
         assertThat(node.get("appname").textValue()).isEqualTo("damnGodWebservice");
-        assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
-        assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        assertThat(node.get("roles")).isEqualTo((parse("[\"customerorder\", \"auth\"]")));
+        assertThat(node.get("buildinfo")).isEqualTo(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}"));
     }
     
     @Test
@@ -604,8 +600,8 @@ public class LogstashEncoderTest {
         assertThat(node.get("appendedName").textValue()).isEqualTo("appendedValue");
         assertThat(node.get("myMdcKey")).isNull();
         assertThat(node.get("logger").textValue()).isEqualTo(LogstashEncoderTest.class.getName());
-        assertTrue(node.get("roles").equals(parse("[\"customerorder\", \"auth\"]")));
-        assertTrue(node.get("buildinfo").equals(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}")));
+        assertThat(node.get("roles")).isEqualTo(parse("[\"customerorder\", \"auth\"]"));
+        assertThat(node.get("buildinfo")).isEqualTo(parse("{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}"));
     }
     
     @Test
@@ -653,7 +649,7 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getFormattedMessage()).thenReturn(buildMultiLineMessage("###"));
         encoder.setMessageSplitRegex("#+");
-        assertEquals("#+", encoder.getMessageSplitRegex());
+        assertThat(encoder.getMessageSplitRegex()).isEqualTo("#+");
 
         encoder.start();
         JsonNode node = MAPPER.readTree(encoder.encode(event));
@@ -667,39 +663,39 @@ public class LogstashEncoderTest {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getFormattedMessage()).thenReturn(buildMultiLineMessage(System.lineSeparator()));
         encoder.setMessageSplitRegex(null);
-        assertNull(encoder.getMessageSplitRegex());
+        assertThat(encoder.getMessageSplitRegex()).isNull();
 
         encoder.start();
         JsonNode node = MAPPER.readTree(encoder.encode(event));
         encoder.stop();
 
-        assertTrue(node.path("message").isTextual());
-        assertEquals(node.path("message").textValue(), buildMultiLineMessage(System.lineSeparator()));
+        assertThat(node.path("message").isTextual()).isTrue();
+        assertThat(node.path("message").textValue()).isEqualTo(buildMultiLineMessage(System.lineSeparator()));
     }
 
     @Test
     public void testMessageSplitDisabledByDefault() throws Exception {
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getFormattedMessage()).thenReturn(buildMultiLineMessage(System.lineSeparator()));
-        assertNull(encoder.getMessageSplitRegex());
+        assertThat(encoder.getMessageSplitRegex()).isNull();
 
         encoder.start();
         JsonNode node = MAPPER.readTree(encoder.encode(event));
         encoder.stop();
 
-        assertTrue(node.path("message").isTextual());
-        assertEquals(node.path("message").textValue(), buildMultiLineMessage(System.lineSeparator()));
+        assertThat(node.path("message").isTextual()).isTrue();
+        assertThat(node.path("message").textValue()).isEqualTo(buildMultiLineMessage(System.lineSeparator()));
     }
 
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
-        assertNotNull(jsonNode);
-        assertTrue(jsonNode.isArray());
+        assertThat(jsonNode).isNotNull();
+        assertThat(jsonNode.isArray()).isTrue();
 
         String[] values = new String[jsonNode.size()];
         for (int i = 0; i < values.length; i++) {
             values[i] = jsonNode.get(i).asText();
         }
-        assertArrayEquals(expected, values);
+        assertThat(values).containsExactly(expected);
     }
     
     private ILoggingEvent mockBasicILoggingEvent(Level level) {

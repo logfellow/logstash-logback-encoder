@@ -53,6 +53,7 @@ public class DeferredLogstashMarkerTest {
     @Test
     public void testWriteTo() throws IOException {
 
+        @SuppressWarnings("unchecked")
         Supplier<MyClass> supplier = mock(Supplier.class);
 
         when(supplier.get()).thenReturn(new MyClass("value"));
@@ -71,7 +72,7 @@ public class DeferredLogstashMarkerTest {
 
         verify(supplier).get();
 
-        assertThat(writer.toString()).isEqualTo("{\"myObject\":{\"myField\":\"value\"}}");
+        assertThat(writer).hasToString("{\"myObject\":{\"myField\":\"value\"}}");
 
         // execute again, to ensure that supplier is not invoked again
         generator.writeStartObject();
@@ -81,7 +82,7 @@ public class DeferredLogstashMarkerTest {
 
         verify(supplier).get();
 
-        assertThat(writer.toString()).isEqualTo("{\"myObject\":{\"myField\":\"value\"}} {\"myObject\":{\"myField\":\"value\"}}");
+        assertThat(writer).hasToString("{\"myObject\":{\"myField\":\"value\"}} {\"myObject\":{\"myField\":\"value\"}}");
 
     }
 
@@ -91,9 +92,9 @@ public class DeferredLogstashMarkerTest {
 
         LogstashMarker marker = Markers.defer(() -> Markers.append("myObject", myObject));
 
-        assertThat(marker).isEqualTo(marker);
-
-        assertThat(marker).isNotEqualTo(Markers.defer(() -> Markers.append("myObject", myObject)));
+        assertThat(marker)
+            .isEqualTo(marker)
+            .isNotEqualTo(Markers.defer(() -> Markers.append("myObject", myObject)));
 
     }
 
@@ -101,6 +102,7 @@ public class DeferredLogstashMarkerTest {
     public void testHashCode() {
         MyClass myObject = new MyClass("value");
 
-        assertThat(Markers.defer(() -> Markers.append("myObject", myObject)).hashCode()).isNotEqualTo(Markers.defer(() -> Markers.append("myObject", myObject)).hashCode());
+        assertThat(Markers.defer(() -> Markers.append("myObject", myObject)))
+            .doesNotHaveSameHashCodeAs(Markers.defer(() -> Markers.append("myObject", myObject)));
     }
 }
