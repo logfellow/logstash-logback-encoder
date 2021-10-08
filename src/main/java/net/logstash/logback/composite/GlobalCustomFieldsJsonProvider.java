@@ -22,6 +22,7 @@ import java.util.Map.Entry;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 
 public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> implements JsonFactoryAware {
@@ -65,9 +66,8 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     
     private void initializeCustomFields() {
         if (this.customFields != null && jsonFactory != null) {
-            try {
-                this.customFieldsNode = this.jsonFactory
-                    .createParser(customFields).readValueAsTree();
+            try (JsonParser parser = this.jsonFactory.createParser(customFields)) {
+                this.customFieldsNode = parser.readValueAsTree();
             } catch (IOException e) {
                 addError("Failed to parse custom fields [" + customFields + "]", e);
             }
