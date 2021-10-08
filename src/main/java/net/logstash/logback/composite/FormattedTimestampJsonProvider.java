@@ -22,6 +22,7 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 /**
  * @deprecated use {@link AbstractFormattedTimestampJsonProvider} instead
  */
+@Deprecated
 public abstract class FormattedTimestampJsonProvider<Event extends DeferredProcessingAware, FieldNames extends LogstashCommonFieldNames> extends AbstractFormattedTimestampJsonProvider<Event, FieldNames> {
 
 }
