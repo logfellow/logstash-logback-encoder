@@ -30,7 +30,7 @@ public class CachingAbbreviator implements Abbreviator {
     
     private final Abbreviator delegate;
     
-    private final ConcurrentMap<String, String> cache = new ConcurrentHashMap<String, String>();
+    private final ConcurrentMap<String, String> cache = new ConcurrentHashMap<>();
     
     public CachingAbbreviator(Abbreviator delegate) {
         super();

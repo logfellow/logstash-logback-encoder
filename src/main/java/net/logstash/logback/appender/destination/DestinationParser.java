@@ -32,6 +32,10 @@ public class DestinationParser {
     private static final int HOSTNAME_GROUP = 1;
     private static final int PORT_GROUP = 3;
 
+    private DestinationParser() {
+        // utility class
+    }
+    
     /**
      * Constructs {@link InetSocketAddress}es by parsing the given {@link String} value.
      * <p>
@@ -54,7 +58,7 @@ public class DestinationParser {
          */
         String[] destinationStrings = (destinations == null ? "" : destinations.trim()).split("\\s*,\\s*");
 
-        List<InetSocketAddress> destinationList = new ArrayList<InetSocketAddress>(destinationStrings.length);
+        List<InetSocketAddress> destinationList = new ArrayList<>(destinationStrings.length);
 
         for (String entry: destinationStrings) {
 

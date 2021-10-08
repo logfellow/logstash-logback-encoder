@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  */
 public class CompositeJsonGeneratorDecorator implements JsonGeneratorDecorator {
     
-    private final List<JsonGeneratorDecorator> decorators = new ArrayList<JsonGeneratorDecorator>();
+    private final List<JsonGeneratorDecorator> decorators = new ArrayList<>();
     
     @Override
     public JsonGenerator decorate(JsonGenerator generator) {

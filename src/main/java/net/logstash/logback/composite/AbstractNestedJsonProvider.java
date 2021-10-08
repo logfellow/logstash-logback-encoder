@@ -36,7 +36,7 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     /**
      * The providers that are used to populate the output nested JSON object.
      */
-    private JsonProviders<Event> jsonProviders = new JsonProviders<Event>();
+    private JsonProviders<Event> jsonProviders = new JsonProviders<>();
     
     public AbstractNestedJsonProvider() {
         setFieldName(FIELD_NESTED);
@@ -56,8 +56,7 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     }
     
     @Override
-    public void writeTo(JsonGenerator generator, Event event)
-            throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) throws IOException {
         generator.writeFieldName(getFieldName());
         generator.writeStartObject();
         jsonProviders.writeTo(generator, event);

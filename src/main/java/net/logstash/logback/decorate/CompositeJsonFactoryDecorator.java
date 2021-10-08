@@ -25,7 +25,7 @@ import com.fasterxml.jackson.core.JsonFactory;
  */
 public class CompositeJsonFactoryDecorator implements JsonFactoryDecorator {
     
-    private final List<JsonFactoryDecorator> decorators = new ArrayList<JsonFactoryDecorator>();
+    private final List<JsonFactoryDecorator> decorators = new ArrayList<>();
 
     @Override
     public JsonFactory decorate(JsonFactory factory) {
