@@ -16,7 +16,6 @@
 package net.logstash.logback.composite;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -86,7 +85,7 @@ public abstract class AbstractPatternJsonProviderTest<Event extends DeferredProc
         provider.start();
 
         // should actually invoke parser with the pattern requested
-        verify(parser).parse(eq(pattern));
+        verify(parser).parse(pattern);
         
         provider.writeTo(generator, event);
         
