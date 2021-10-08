@@ -99,7 +99,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         @Override
-        public ValueGetter<?, Event> createValueGetter(String data) {
+        public ValueGetter<Long, Event> createValueGetter(String data) {
             return new AsLongValueTransformer<>(makeLayoutValueGetter(data));
         }
     }
@@ -111,7 +111,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         @Override
-        public ValueGetter<?, Event> createValueGetter(String data) {
+        public ValueGetter<Double, Event> createValueGetter(String data) {
             return new AsDoubleValueTransformer<>(makeLayoutValueGetter(data));
         }
     }
@@ -123,7 +123,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         @Override
-        public ValueGetter<?, Event> createValueGetter(String data) {
+        public ValueGetter<JsonNode, Event> createValueGetter(String data) {
             return new AsJsonValueTransformer(makeLayoutValueGetter(data));
         }
     }
@@ -135,7 +135,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         @Override
-        public ValueGetter<?, Event> createValueGetter(String data) {
+        public ValueGetter<Object, Event> createValueGetter(String data) {
             return new TryJsonValueTransformer(makeLayoutValueGetter(data));
         }
     }

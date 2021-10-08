@@ -39,8 +39,8 @@ public class AccessEventJsonPatternParser extends AbstractJsonPatternParser<IAcc
         }
 
         @Override
-        public ValueGetter<?, IAccessEvent> createValueGetter(String data) {
-            return new NullNaValueTransformer<IAccessEvent>(makeLayoutValueGetter(data));
+        public ValueGetter<String, IAccessEvent> createValueGetter(String data) {
+            return new NullNaValueTransformer<>(makeLayoutValueGetter(data));
         }
         
     }
