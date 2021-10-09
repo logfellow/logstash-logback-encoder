@@ -30,14 +30,16 @@ public interface AppenderListener<Event extends DeferredProcessingAware> {
      *
      * @param appender the appender that was started
      */
-    void appenderStarted(Appender<Event> appender);
+    default void appenderStarted(Appender<Event> appender) {
+    }
 
     /**
      * Called when the given appender is stopped.
      *
      * @param appender the appender that was stopped
      */
-    void appenderStopped(Appender<Event> appender);
+    default void appenderStopped(Appender<Event> appender) {
+    }
 
     /**
      * Called when the given event was successfully appended by the given appender.
@@ -49,7 +51,8 @@ public interface AppenderListener<Event extends DeferredProcessingAware> {
      * @param event the event that was appended
      * @param durationInNanos the time (in nanoseconds) it took to append the event
      */
-    void eventAppended(Appender<Event> appender, Event event, long durationInNanos);
+    default void eventAppended(Appender<Event> appender, Event event, long durationInNanos) {
+    }
 
     /**
      * Called when the given event was failed to be appended by the given appender.
@@ -58,6 +61,7 @@ public interface AppenderListener<Event extends DeferredProcessingAware> {
      * @param event the event that was appended
      * @param reason what caused the failure
      */
-    void eventAppendFailed(Appender<Event> appender, Event event, Throwable reason);
+    default void eventAppendFailed(Appender<Event> appender, Event event, Throwable reason) {
+    }
 
 }

@@ -37,7 +37,8 @@ public interface TcpAppenderListener<Event extends DeferredProcessingAware> exte
      * @param event the event that was sent
      * @param durationInNanos the time (in nanoseconds) it took to send the event
      */
-    void eventSent(Appender<Event> appender, Socket socket, Event event, long durationInNanos);
+    default void eventSent(Appender<Event> appender, Socket socket, Event event, long durationInNanos) {
+    }
 
     /**
      * Called when the given appender fails to send the given event over a TCP connection.
@@ -46,7 +47,8 @@ public interface TcpAppenderListener<Event extends DeferredProcessingAware> exte
      * @param event the event that failed to send
      * @param reason what caused the failure
      */
-    void eventSendFailure(Appender<Event> appender, Event event, Throwable reason);
+    default void eventSendFailure(Appender<Event> appender, Event event, Throwable reason) {
+    }
 
     /**
      * Called after the given appender successfully opens the given socket
@@ -54,7 +56,8 @@ public interface TcpAppenderListener<Event extends DeferredProcessingAware> exte
      * @param appender the appender that opened the socket
      * @param socket the socket that was opened
      */
-    void connectionOpened(Appender<Event> appender, Socket socket);
+    default void connectionOpened(Appender<Event> appender, Socket socket) {
+    }
 
     /**
      * Called after the given appender fails to open a socket
@@ -63,7 +66,8 @@ public interface TcpAppenderListener<Event extends DeferredProcessingAware> exte
      * @param address the address to which the appender attempted to connect
      * @param reason what caused the failure
      */
-    void connectionFailed(Appender<Event> appender, InetSocketAddress address, Throwable reason);
+    default void connectionFailed(Appender<Event> appender, InetSocketAddress address, Throwable reason) {
+    }
 
     /**
      * Called after the given appender closes the given socket
@@ -72,6 +76,7 @@ public interface TcpAppenderListener<Event extends DeferredProcessingAware> exte
      * @param appender the appender that closed the socket
      * @param socket the socket that was closed
      */
-    void connectionClosed(Appender<Event> appender, Socket socket);
+    default void connectionClosed(Appender<Event> appender, Socket socket) {
+    }
 
 }
