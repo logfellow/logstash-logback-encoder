@@ -640,6 +640,19 @@
 				<directory>target-eclipse</directory>
 			</build>
 		</profile>
+        
+        <!-- 
+            "Fast" profile that can be used during local development to disable most of the "heavy"
+            steps not strictly required to produce a final jar.
+         -->
+        <profile>
+            <id>fast</id>
+            <properties>
+                <maven.javadoc.skip>true</maven.javadoc.skip>
+                <license.skip>true</license.skip>
+                <checkstyle.skip>true</checkstyle.skip>
+            </properties>
+        </profile>
     </profiles>
 
     <distributionManagement>
