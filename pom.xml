@@ -269,18 +269,7 @@
                     <dependency>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>extra-enforcer-rules</artifactId>
-                        <version>1.3</version>
-                    </dependency>
-                    
-                    <!-- Explicitly set version as a workaround for issue 
-                         https://github.com/mojohaus/extra-enforcer-rules/issues/131.
-                         Can be removed once extra-enforcer-rules is upgraded to a 
-                         version higher than 1.3.
-                     -->
-                    <dependency>
-                        <groupId>org.apache.maven.shared</groupId>
-                        <artifactId>maven-dependency-tree</artifactId>
-                        <version>2.2</version>
+                        <version>1.4</version>
                     </dependency>
                 </dependencies>
             </plugin>
