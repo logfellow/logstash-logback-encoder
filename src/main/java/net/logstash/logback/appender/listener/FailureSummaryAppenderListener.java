@@ -118,7 +118,7 @@ public abstract class FailureSummaryAppenderListener<Event extends DeferredProce
         private FailingState(Throwable firstThrowable) {
             this.firstThrowable = firstThrowable;
             this.firstFailureTime = System.currentTimeMillis();
-            record(firstThrowable);
+            recordThrowable(firstThrowable);
         }
 
         @Override
@@ -146,20 +146,10 @@ public abstract class FailureSummaryAppenderListener<Event extends DeferredProce
             return consecutiveFailures.get();
         }
 
-        private void record(Throwable throwable) {
+        private void recordThrowable(Throwable throwable) {
             consecutiveFailures.incrementAndGet();
             mostRecentThrowable = throwable;
         }
-    }
-
-    @Override
-    public void appenderStarted(Appender<Event> appender) {
-        // no-op
-    }
-
-    @Override
-    public void appenderStopped(Appender<Event> appender) {
-        // no-op
     }
 
     @Override
@@ -192,11 +182,6 @@ public abstract class FailureSummaryAppenderListener<Event extends DeferredProce
         recordFailure(this.connectState, reason);
     }
 
-    @Override
-    public void connectionClosed(Appender<Event> appender, Socket socket) {
-        // no-op
-    }
-
     private void recordSuccess(AtomicReference<State> stateRef, CallbackType callbackType) {
         State currentState = stateRef.get();
         if (!currentState.isSucceeding() && stateRef.compareAndSet(currentState, SUCCEEDING_STATE)) {
@@ -211,7 +196,7 @@ public abstract class FailureSummaryAppenderListener<Event extends DeferredProce
                 recordFailure(stateRef, reason);
             }
         } else {
-            ((FailingState) currentState).record(reason);
+            ((FailingState) currentState).recordThrowable(reason);
         }
     }
 

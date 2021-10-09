@@ -831,8 +831,7 @@ To register it:
   </appender>
 ```
 
-To create your own listener, create a new class that extends one of the `*ListenerImpl` classes or directly implements the `*Listener` interface.
-Then register your listener class to an appender using the `listener` xml element like this:
+You may also create your own listener by implementing the `*Listener` interface and register it to an appender using the `listener` xml element like this:
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">

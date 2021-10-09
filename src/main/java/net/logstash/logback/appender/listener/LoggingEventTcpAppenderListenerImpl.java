@@ -23,7 +23,10 @@ import ch.qos.logback.core.Appender;
 
 /**
  * Implementation of {@link TcpAppenderListener} for {@link ILoggingEvent}s that does nothing.
+ * 
+ * @deprecated Replaced by default methods in interface.
  */
+@Deprecated
 public class LoggingEventTcpAppenderListenerImpl extends LoggingEventAppenderListenerImpl implements TcpAppenderListener<ILoggingEvent> {
 
     @Override
