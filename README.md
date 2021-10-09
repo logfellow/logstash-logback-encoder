@@ -825,7 +825,9 @@ To register it:
 
 ```xml
   <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-      <listener class="net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener"/>
+      <listener class="net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener">
+          <loggerName>net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener</loggerName>
+      </listener>
   </appender>
 ```
 
