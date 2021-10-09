@@ -18,6 +18,7 @@ package net.logstash.logback.appender;
 /**
  * Indicates that an action cannot be performed because a shutdown is in progress
  */
+@SuppressWarnings("serial")
 public class ShutdownInProgressException extends Exception {
 
 }

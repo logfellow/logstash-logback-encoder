@@ -18,6 +18,7 @@ package net.logstash.logback.appender;
 /**
  * Indicates that a ring buffer is full, and therefore cannot enqueue new items.
  */
+@SuppressWarnings("serial")
 public class RingBufferFullException extends Exception {
 
 }

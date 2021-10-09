@@ -18,6 +18,7 @@ package net.logstash.logback.appender;
 /**
  * Indicates that an event cannot be sent because an outbound connection is not established.
  */
+@SuppressWarnings("serial")
 public class NotConnectedException extends Exception {
 
 }
