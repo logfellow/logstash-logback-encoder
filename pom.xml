@@ -253,7 +253,7 @@
                                     <version>[1.8,)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>[3.0.4,)</version>
+                                    <version>[3.5.0,)</version>
                                 </requireMavenVersion>
                                 
                                 <!-- Verify that there are no classes in dependencies having bytecode versions
