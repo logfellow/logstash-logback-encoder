@@ -243,6 +243,7 @@
                 <version>${maven-enforcer-plugin.version}</version>
                 <executions>
                     <execution>
+                        <phase>validate</phase>
                         <goals>
                             <goal>enforce</goal>
                         </goals>
@@ -287,7 +288,7 @@
                 <executions>
                     <execution>
                         <id>ensure-java-1.8-compatible</id>
-                        <phase>test</phase>
+                        <phase>validate</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
@@ -299,10 +300,10 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <executions>
                     <execution>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
-                        <phase>package</phase>
                     </execution>
                 </executions>
             </plugin>
@@ -398,6 +399,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <executions>
                     <execution>
+                        <phase>process-sources</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
