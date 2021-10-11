@@ -138,7 +138,9 @@ public class ThreadLocalHolder<T> {
     
       
     /**
-     * Clear the object pool and dispose instances it may contain
+     * Close the holder and dispose all values.
+     * Threads are still able to {@link #acquire()} values after the holder is closed, but they will be disposed
+     * immediately when {@link #release()} instead of recycled.
      */
     public void close() {
         /*
