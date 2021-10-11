@@ -67,28 +67,33 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
 
     public void setPattern(final String pattern) {
         this.pattern = pattern;
-        parse();
     }
     
     @Override
     public void setJsonFactory(JsonFactory jsonFactory) {
         this.jsonFactory = Objects.requireNonNull(jsonFactory);
-        parse();
     }
 
+    @Override
+    public void start() {
+        if (jsonFactory == null) {
+            throw new IllegalStateException("JsonFactory has not been set");
+        }
+        initializeNodeWriter();
+        
+        super.start();
+    }
+    
+    
     /**
      * Parses the pattern into a {@link NodeWriter}.
-     * We do this when the properties are set instead of on {@link #start()},
-     * because {@link #start()} is called by logstash's xml parser
-     * before the Formatter has had an opportunity to set the jsonFactory.
      */
-    private void parse() {
-        if (pattern != null && jsonFactory != null) {
-            AbstractJsonPatternParser<Event> parser = createParser(this.jsonFactory);
-            parser.setOmitEmptyFields(omitEmptyFields);
-            nodeWriter = parser.parse(pattern);
-        }
+    private void initializeNodeWriter() {
+        AbstractJsonPatternParser<Event> parser = createParser(this.jsonFactory);
+        parser.setOmitEmptyFields(omitEmptyFields);
+        this.nodeWriter = parser.parse(pattern);
     }
+    
 
     /**
      * When {@code true}, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})

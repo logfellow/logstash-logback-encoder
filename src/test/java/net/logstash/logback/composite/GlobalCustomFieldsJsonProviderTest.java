@@ -16,56 +16,95 @@
 package net.logstash.logback.composite;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 import java.io.StringWriter;
 
+import net.logstash.logback.test.AbstractLogbackTest;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.status.Status;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.NumericNode;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
-public class GlobalCustomFieldsJsonProviderTest {
+public class GlobalCustomFieldsJsonProviderTest extends AbstractLogbackTest {
     
+    @InjectMocks
     private GlobalCustomFieldsJsonProvider<ILoggingEvent> provider = new GlobalCustomFieldsJsonProvider<ILoggingEvent>();
     
     @Mock
     private ILoggingEvent event;
     
-    private JsonFactory factory = new MappingJsonFactory();
-    
     private StringWriter writer = new StringWriter();
-    
     private JsonGenerator generator;
     
+    
     @BeforeEach
-    public void setup() throws IOException {
-        provider.setCustomFields("{\"name\":\"value\"}");
+    public void setup() throws Exception {
+        super.setup();
+              
+        JsonFactory factory = new MappingJsonFactory();
         provider.setJsonFactory(factory);
-        provider.start();
-        
         generator = factory.createGenerator(writer);
+    }
+    
+    @AfterEach
+    public void tearDown() {
+        provider.stop();
+        super.tearDown();
     }
     
     
     @Test
     public void test() throws IOException {
+        provider.setCustomFields("{\"name\":\"value\"}");
+        provider.start();
         
         generator.writeStartObject();
-        
         provider.writeTo(generator, event);
-        
         generator.writeEndObject();
-        
         generator.flush();
-        assertThat(writer.toString()).isEqualTo("{\"name\":\"value\"}");
         
+        assertThat(writer).hasToString("{\"name\":\"value\"}");
     }
 
+    @Test
+    public void invalidCustomFields_notAnObject() {
+        provider.setCustomFields("\"aNonObjectValue\"");
+        provider.start();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .hasSize(1)
+            .allMatch(s -> s.getLevel() == Status.ERROR && s.getOrigin() == provider);
+        assertThat(provider.isStarted())
+            .isTrue();
+    }
+    
+    @Test
+    public void invalidCustomFields_trailingChars() {
+        provider.setCustomFields("{} trailingChars");
+        provider.start();
+        
+        assertThat(statusManager.getCopyOfStatusList())
+            .hasSize(1)
+            .allMatch(s -> s.getLevel() == Status.ERROR && s.getOrigin() == provider);
+        assertThat(provider.isStarted())
+            .isTrue();
+    }
+    
+    @Test
+    @SuppressWarnings("deprecation")
+    public void customFieldsNodeIsNotAnObject() {
+        NumericNode node = JsonNodeFactory.instance.numberNode(0);
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> provider.setCustomFieldsNode(node));
+    }
 }

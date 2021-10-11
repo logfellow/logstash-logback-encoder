@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.logstash.logback.composite.JsonReadingUtils;
+
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -34,6 +36,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Parser that takes a JSON pattern, resolves all the conversion specifiers and returns an instance
@@ -229,9 +232,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         protected JsonNode transform(final String value) throws IOException {
-            try (JsonParser jsonParser = jsonFactory.createParser(value)) {
-                return jsonParser.readValueAsTree();
-            }
+            return JsonReadingUtils.readFully(jsonFactory, value);
         }
     }
 
@@ -522,25 +523,20 @@ public abstract class AbstractJsonPatternParser<Event> {
     public NodeWriter<Event> parse(String pattern) {
 
         if (pattern == null) {
-            contextAware.addError("No pattern specified");
+            contextAware.addError("No [pattern] specified");
             return null;
         }
 
-        final JsonNode node;
+        final ObjectNode node;
         try (JsonParser jsonParser = jsonFactory.createParser(pattern)) {
-            node = jsonParser.readValueAsTree();
+            node = JsonReadingUtils.readFullyAsObjectNode(jsonFactory, pattern);
         } catch (IOException e) {
-            contextAware.addError("Failed to parse pattern '" + pattern + "'", e);
+            contextAware.addError("Failed to parse [pattern] '" + pattern + "'", e);
             return null;
         }
 
         if (node == null) {
             contextAware.addError("Empty JSON pattern");
-            return null;
-        }
-
-        if (!node.isObject()) {
-            contextAware.addError("Invalid pattern JSON - must be an object");
             return null;
         }
 

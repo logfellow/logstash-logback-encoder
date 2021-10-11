@@ -18,12 +18,13 @@ package net.logstash.logback.composite;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> implements JsonFactoryAware {
     
@@ -36,8 +37,12 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     /**
      * When non-null, the fields in this JsonNode will be embedded in the logstash json.
      */
-    private JsonNode customFieldsNode;
+    private ObjectNode customFieldsNode;
     
+    /**
+     * The factory used to convert the JSON string into a valid {@link ObjectNode} when custom
+     * fields are set as text instead of a pre-parsed Jackson ObjectNode.
+     */
     private JsonFactory jsonFactory;
 
     @Override
@@ -58,6 +63,12 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
         }
     }
     
+    /**
+     * Start the provider.
+     * 
+     * <p>The provider is started even when it fails to parse the {@link #customFields} JSON string.
+     * An ERROR status is emitted instead and no exception is thrown.
+     */
     @Override
     public void start() {
         initializeCustomFields();
@@ -65,39 +76,77 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     }
     
     private void initializeCustomFields() {
-        if (this.customFields != null && jsonFactory != null) {
-            try (JsonParser parser = this.jsonFactory.createParser(customFields)) {
-                this.customFieldsNode = parser.readValueAsTree();
-            } catch (IOException e) {
-                addError("Failed to parse custom fields [" + customFields + "]", e);
-            }
+        if (customFieldsNode != null || customFields == null) {
+            return;
+        }
+        if (jsonFactory == null) {
+            throw new IllegalStateException("JsonFactory has not been set");
+        }
+        
+        try {
+            this.customFieldsNode = JsonReadingUtils.readFullyAsObjectNode(this.jsonFactory, this.customFields);
+        } catch (IOException e) {
+            addError("[customFields] is not a valid JSON", e);
         }
     }
 
+    /**
+     * Set the custom fields as a JSON string.
+     * The string will be parsed when the provider is {@link #start()}.
+     * 
+     * @param customFields the custom fields as JSON string.
+     */
     public void setCustomFields(String customFields) {
-        this.customFields = customFields;
         if (isStarted()) {
-            initializeCustomFields();
+            throw new IllegalStateException("Configuration cannot be changed while the provider is started");
         }
+        
+        this.customFields = customFields;
+        this.customFieldsNode = null;
     }
     
     public String getCustomFields() {
         return customFields;
     }
     
-    public JsonNode getCustomFieldsNode() {
+    public ObjectNode getCustomFieldsNode() {
         return this.customFieldsNode;
     }
-    
+
+    /**
+     * Set the custom JSON fields.
+     * Must be a valid JsonNode that maps to a JSON object structure, i.e. an {@link ObjectNode}.
+     * 
+     * @param customFields a {@link JsonNode} whose properties must be added as custom fields.
+     * @deprecated use {@link #setCustomFieldsNode(ObjectNode)} instead.
+     * @throws IllegalArgumentException if the argument is not a {@link ObjectNode}.
+     */
+    @Deprecated
     public void setCustomFieldsNode(JsonNode customFields) {
-        this.customFieldsNode = customFields;
-        if (this.customFieldsNode != null && customFields == null) {
-            this.customFields = this.customFieldsNode.toString();
+        if (customFields != null && !(customFields instanceof ObjectNode)) {
+            throw new IllegalArgumentException("Must be an ObjectNode");
         }
+        setCustomFieldsNode((ObjectNode) customFields);
     }
+    
+    
+    /**
+     * Use the fields of the given {@link ObjectNode} (may be empty).
+     * 
+     * @param customFields the JSON object whose fields as added as custom fields
+     */
+    public void setCustomFieldsNode(ObjectNode customFields) {
+        if (isStarted()) {
+            throw new IllegalStateException("Configuration cannot be changed while the provider is started");
+        }
+        
+        this.customFieldsNode = customFields;
+        this.customFields = null;
+    }
+    
     
     @Override
     public void setJsonFactory(JsonFactory jsonFactory) {
-        this.jsonFactory = jsonFactory;
+        this.jsonFactory = Objects.requireNonNull(jsonFactory);
     }
 }

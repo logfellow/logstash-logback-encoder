@@ -218,7 +218,8 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key6\": \"#asJson{[1, \\\"2\\\"]}\",\n"
                 + "    \"key7\": \"#asJson{{\\\"field\\\":\\\"value\\\"}}\",\n"
                 + "    \"key8\": \"#asJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\",\n"
-                + "    \"key9\": \"#asJson{one two three}\"\n"
+                + "    \"key9\": \"#asJson{one two three}\",\n"
+                + "    \"key10\": \"#asJson{1 suffix}\"\n"
                 + "}";
 
         String expected = ""
@@ -231,7 +232,8 @@ public abstract class AbstractJsonPatternParserTest<Event> {
                 + "    \"key6\": [1, \"2\"],\n"
                 + "    \"key7\": {\"field\":\"value\"},\n"
                 + "    \"key8\": {\"field\":\"value\", \"num\":123},\n"
-                + "    \"key9\": null\n"
+                + "    \"key9\": null,\n"
+                + "    \"key10\": null\n"
                 + "}";
 
         verifyFields(pattern, expected);
