@@ -25,6 +25,9 @@ import java.io.OutputStream;
  * to the proxied stream and doesn't change which methods are being called (unlike
  * JDK {@link FilterOutputStream}).
  * 
+ * <p>Note: This class is for internal use only and subject to backward incompatible change
+ * at any time.
+ * 
  * @author brenuart
  */
 public class ProxyOutputStream extends OutputStream {

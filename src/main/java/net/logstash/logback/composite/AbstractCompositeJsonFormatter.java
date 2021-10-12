@@ -25,8 +25,8 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.NullJsonFactoryDecorator;
 import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
-import net.logstash.logback.util.ObjectPool;
 import net.logstash.logback.util.ProxyOutputStream;
+import net.logstash.logback.util.ThreadLocalHolder;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -50,10 +50,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
  * and then ends the JSON object ('}').
  *
  * <p>Jackson {@link JsonGenerator} are initially created with a "disconnected" output stream so they can be
- * reused multiple times with different target output stream. They are kept in an internal pool whose
- * size is technically unbounded. It will however never hold more entries than the number of concurrent
- * threads accessing it. Entries are kept in the pool using soft references so they can be garbage
- * collected by the JVM when running low in memory.
+ * reused multiple times with different target output stream.
  * 
  * <p>{@link JsonGenerator} instances are *not* reused after they threw an exception. This is to prevent
  * reusing an instance whose internal state may be unpredictable.
@@ -93,7 +90,7 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
 
     private volatile boolean started;
 
-    private ObjectPool<JsonFormatter> pool;
+    private ThreadLocalHolder<JsonFormatter> threadLocalJsonFormatter;
      
     
     public AbstractCompositeJsonFormatter(ContextAware declaredOrigin) {
@@ -119,14 +116,14 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
         jsonProviders.setJsonFactory(jsonFactory);
         jsonProviders.start();
         
-        pool = new ObjectPool<>(this::createJsonFormatter);
+        threadLocalJsonFormatter = new ThreadLocalHolder<>(this::createJsonFormatter);
         started = true;
     }
 
     @Override
     public void stop() {
         if (isStarted()) {
-            pool.clear();
+            threadLocalJsonFormatter.close();
             jsonProviders.stop();
             jsonFactory = null;
             started = false;
@@ -152,7 +149,7 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
             throw new IllegalStateException("Formatter is not started");
         }
         
-        try (JsonFormatter formatter = this.pool.acquire()) {
+        try (JsonFormatter formatter = this.threadLocalJsonFormatter.acquire()) {
             formatter.writeEvent(outputStream, event);
         }
     }
@@ -174,7 +171,7 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
         
     }
     
-    private class JsonFormatter implements ObjectPool.Lifecycle, Closeable {
+    private class JsonFormatter implements ThreadLocalHolder.Lifecycle, Closeable {
         private final JsonGenerator generator;
         private final DisconnectedOutputStream stream;
         private boolean recyclable = true;
@@ -206,11 +203,18 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
         @Override
         public void dispose() {
             CloseUtil.closeQuietly(this.generator);
+            
+            // Note:
+            //   The stream is disconnected at this point.
+            //   Closing the JsonGenerator may throw additional exception if it is flagged as not recyclable,
+            //   meaning it already threw a exception earlier during the writeEvent() method. The generator
+            //   is disposed here and won't be reused anymore - we can safely ignore these new exceptions
+            //   here.
         }
         
         @Override
         public void close() throws IOException {
-            AbstractCompositeJsonFormatter.this.pool.release(this);
+            AbstractCompositeJsonFormatter.this.threadLocalJsonFormatter.release();
         }
     }
     

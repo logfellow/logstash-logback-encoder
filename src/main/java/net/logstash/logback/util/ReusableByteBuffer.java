@@ -38,8 +38,10 @@ import java.util.Objects;
  *
  * <p>This class is *not* thread-safe!
  * 
+ * <p>Note: This class is for internal use only and subject to backward incompatible change
+ * at any time.
+ * 
  * @author brenuart
- *
  */
 public class ReusableByteBuffer extends OutputStream {
 
