@@ -26,6 +26,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.logstash.logback.composite.JsonReadingUtils;
+import net.logstash.logback.util.StringUtils;
 
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.ContextAware;
@@ -168,7 +169,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public T getValue(final Event event) {
             final String value = generator.getValue(event);
-            if (value == null || value.isEmpty()) {
+            if (StringUtils.isEmpty(value)) {
                 return null;
             }
             try {
@@ -192,7 +193,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public T getValue(final Event event) {
             final String value = generator.getValue(event);
-            if (value == null || value.isEmpty()) {
+            if (StringUtils.isEmpty(value)) {
                 return null;
             }
             try {
@@ -243,7 +244,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         protected Object transform(final String value) throws IOException {
-            final String trimmedValue = value.trim();
+            final String trimmedValue = StringUtils.trimToEmpty(value);
             
             try (JsonParser parser = jsonFactory.createParser(trimmedValue)) {
                 final TreeNode tree = parser.readValueAsTree();
@@ -521,9 +522,7 @@ public abstract class AbstractJsonPatternParser<Event> {
 
     
     public NodeWriter<Event> parse(String pattern) {
-
-        if (pattern == null) {
-            contextAware.addError("No [pattern] specified");
+        if (StringUtils.isEmpty(pattern)) {
             return null;
         }
 
@@ -531,12 +530,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         try (JsonParser jsonParser = jsonFactory.createParser(pattern)) {
             node = JsonReadingUtils.readFullyAsObjectNode(jsonFactory, pattern);
         } catch (IOException e) {
-            contextAware.addError("Failed to parse [pattern] '" + pattern + "'", e);
-            return null;
-        }
-
-        if (node == null) {
-            contextAware.addError("Empty JSON pattern");
+            contextAware.addError("[pattern] is not a valid JSON object", e);
             return null;
         }
 
