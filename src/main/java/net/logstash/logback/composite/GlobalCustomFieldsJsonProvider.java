@@ -86,7 +86,7 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
         try {
             this.customFieldsNode = JsonReadingUtils.readFullyAsObjectNode(this.jsonFactory, this.customFields);
         } catch (IOException e) {
-            addError("[customFields] is not a valid JSON", e);
+            addError("[customFields] is not a valid JSON object", e);
         }
     }
 
