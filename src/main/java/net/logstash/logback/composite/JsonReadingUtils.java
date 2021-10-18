@@ -53,7 +53,7 @@ public class JsonReadingUtils {
         }
         
         final String trimmedJson = json.trim();
-        try (JsonParser parser = jsonFactory.createParser(json)) {
+        try (JsonParser parser = jsonFactory.createParser(trimmedJson)) {
             final JsonNode tree = parser.readValueAsTree();
             
             if (readFully && parser.getCurrentLocation().getCharOffset() < trimmedJson.length()) {
