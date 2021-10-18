@@ -24,8 +24,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
- * @author brenuart
+ * Utilities for reading/parsing JSON string.
  *
+ * <p>Note: This class is for internal use only and subject to backward incompatible change
+ * at any time.
+ *
+ * @author brenuart
  */
 public class JsonReadingUtils {
 

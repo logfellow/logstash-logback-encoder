@@ -23,6 +23,9 @@ import static ch.qos.logback.core.CoreConstants.EMPTY_STRING;
  * 
  * <p>Largely inspired by Apache Commons Lang3.
  * 
+ * <p>Note: This class is for internal use only and subject to backward incompatible change
+ * at any time.
+ *
  * @author brenuart
  */
 public class StringUtils {

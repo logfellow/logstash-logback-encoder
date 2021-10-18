@@ -23,6 +23,12 @@ import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
 
+/**
+ * Utilities for writing JSON
+ *
+ * <p>Note: This class is for internal use only and subject to backward incompatible change
+ * at any time.
+ */
 public class JsonWritingUtils {
 
     /**
