@@ -30,6 +30,7 @@ import net.logstash.logback.util.ThreadLocalHolder;
 
 import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.ContextAwareBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
@@ -39,6 +40,7 @@ import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonFactory.Feature;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.io.SerializedString;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -300,7 +302,14 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
                 * Don't let the json generator close the underlying outputStream and let the
                 * encoder managed it.
                 */
-               .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
+               .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+
+               /*
+                * JsonGenerator are reused to serialize multiple log events.
+                * Change the default roo tvalue separator to an empty string.
+                */
+               .setRootValueSeparator(new SerializedString(CoreConstants.EMPTY_STRING));
+
     }
     
     public JsonFactory getJsonFactory() {
