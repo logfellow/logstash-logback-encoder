@@ -306,7 +306,7 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
 
                /*
                 * JsonGenerator are reused to serialize multiple log events.
-                * Change the default roo tvalue separator to an empty string.
+                * Change the default root value separator to an empty string.
                 */
                .setRootValueSeparator(new SerializedString(CoreConstants.EMPTY_STRING));
 
