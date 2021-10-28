@@ -1951,9 +1951,10 @@ The provider name is the xml element name to use when configuring.
     <tr>
       <td><tt>uuid</tt></td>
       <td>
-        Outputs random UUID as field value. Handy when you want to provide unique identifier
-        for log lines.
-      
+        <p>
+          Outputs random UUID as field value. Handy when you want to provide unique identifier
+          for log lines.
+        </p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>uuid</tt>)</li>
           <li><tt>strategy</tt> - UUID generation strategy (<tt>random</tt>). Supported options: <ul><li><tt>random</tt> - for Type 4 UUID</li>
