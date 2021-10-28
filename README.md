@@ -31,9 +31,9 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Write Timeouts](#write-timeouts)
     * [SSL](#ssl)
   * [Async Appenders](#async-appenders)
-  	* [RingBuffer Full](#ringbuffer-full)
-  	* [Graceful Shutdown](#graceful-shutdown)
-  	* [Wait Strategy](#wait-strategy)
+      * [RingBuffer Full](#ringbuffer-full)
+      * [Graceful Shutdown](#graceful-shutdown)
+      * [Wait Strategy](#wait-strategy)
   * [Appender Listeners](#appender-listeners)
   * [Encoders / Layouts](#encoders--layouts)
 * [LoggingEvent Fields](#loggingevent-fields)
@@ -72,7 +72,7 @@ The structure of the output, and the data it contains, is fully configurable.
   * [Custom JSON Provider](#custom-json-provider)
 * [Status Listeners](#status-listeners)
 * [Joran/XML Configuration](#joran-xml-configuration)
-	* [Duration Property](#duration-property)
+    * [Duration Property](#duration-property)
 
 
 ## Including it in your project
@@ -122,28 +122,28 @@ You can do so using maven's [dependencyManagement](https://maven.apache.org/guid
 For example, to ensure that maven doesn't pick different versions of logback-core, logback-classic, and logback-access, add this to your project's pom.xml
 
 ```xml
-    <properties>
-        <logback.version>1.2.4</logback.version>
-    </properties>
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-core</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-access</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+<properties>
+    <logback.version>1.2.4</logback.version>
+</properties>
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-access</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
 ```
 
 ## Java Version Requirements
@@ -201,15 +201,16 @@ in your `logback.xml`, like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-  <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
-    <host>MyAwesomeSyslogServer</host>
-    <!-- port is optional (default value shown) -->
-    <port>514</port>
-    <!-- layout is required -->
-    <layout class="net.logstash.logback.layout.LogstashLayout"/>
-  </appender>
-  <root level="all">
-    <appender-ref ref="stash" />
+    <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
+        <host>MyAwesomeSyslogServer</host>
+        <!-- port is optional (default value shown) -->
+        <port>514</port>
+        <!-- layout is required -->
+        <layout class="net.logstash.logback.layout.LogstashLayout"/>
+    </appender>
+    
+    <root level="all">
+        <appender-ref ref="stash" />
   </root>
 </configuration>
 ```
@@ -217,14 +218,14 @@ You can further customize the JSON output by customizing the layout as described
 
 For example, to configure [global custom fields](#global-custom-fields), you can specify
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
+<appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
     <host>MyAwesomeSyslogServer</host>
     <!-- port is optional (default value shown) -->
     <port>514</port>
     <layout class="net.logstash.logback.layout.LogstashLayout">
-      <customFields>{"appname":"myWebservice"}</customFields>
+        <customFields>{"appname":"myWebservice"}</customFields>
     </layout>
-  </appender>
+</appender>
 ```
 
 To output JSON for AccessEvents over UDP, use a `LogstashAccessUdpSocketAppender`
@@ -234,17 +235,17 @@ in your `logback-access.xml`, like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessUdpSocketAppender">
-    <host>MyAwesomeSyslogServer</host>
-    <!-- port is optional (default value shown) -->
-    <port>514</port>
+    <appender name="stash" class="net.logstash.logback.appender.LogstashAccessUdpSocketAppender">
+        <host>MyAwesomeSyslogServer</host>
+        <!-- port is optional (default value shown) -->
+        <port>514</port>
 
-    <layout class="net.logstash.logback.layout.LogstashAccessLayout">
-      <customFields>{"appname":"myWebservice"}</customFields>
-    </layout>
-  </appender>
+        <layout class="net.logstash.logback.layout.LogstashAccessLayout">
+            <customFields>{"appname":"myWebservice"}</customFields>
+        </layout>
+    </appender>
 
-  <appender-ref ref="stash" />
+    <appender-ref ref="stash" />
 </configuration>
 ```
 
@@ -252,9 +253,9 @@ in your `logback-access.xml`, like this:
 To receive syslog/UDP input in logstash, configure a [`syslog`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-syslog.html) or [`udp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-udp.html) input with the [`json`](https://www.elastic.co/guide/en/logstash/current/plugins-codecs-json.html) codec in logstash's configuration like this:
 ```
 input {
-  syslog {
-    codec => "json"
-  }
+    syslog {
+        codec => "json"
+    }
 }
 ```
 
@@ -268,16 +269,16 @@ in your `logback.xml`, like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      <destination>127.0.0.1:4560</destination>
+    <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>127.0.0.1:4560</destination>
 
-      <!-- encoder is required -->
-      <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-  </appender>
+        <!-- encoder is required -->
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    </appender>
 
-  <root level="DEBUG">
-      <appender-ref ref="stash" />
-  </root>
+    <root level="DEBUG">
+        <appender-ref ref="stash" />
+    </root>
 </configuration>
 ```
 
@@ -289,14 +290,14 @@ in your `logback-access.xml`, like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-      <destination>127.0.0.1:4560</destination>
+    <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+        <destination>127.0.0.1:4560</destination>
 
-      <!-- encoder is required -->
-      <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
-  </appender>
+        <!-- encoder is required -->
+        <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+    </appender>
 
-  <appender-ref ref="stash" />
+    <appender-ref ref="stash" />
 </configuration>
 ```
 
@@ -324,7 +325,7 @@ To receive TCP input in logstash, configure a [`tcp`](https://www.elastic.co/gui
 input {
     tcp {
         port => 4560
-        codec => json_lines
+            codec => json_lines
     }
 }
 ```
@@ -338,10 +339,10 @@ If events occur infrequently, and the connection breaks consistently due to a se
 then you can enable keep alive functionality by configuring a `keepAliveDuration` like this:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      ...
-      <keepAliveDuration>5 minutes</keepAliveDuration>
-  </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    ...
+    <keepAliveDuration>5 minutes</keepAliveDuration>
+</appender>
 ```
 
 This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
@@ -364,27 +365,27 @@ The keep alive message is encoded in `UTF-8` by default. This can be changed by 
 The TCP appenders can be configured to try to connect to one of several destinations like this:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      <destination>destination1.domain.com:4560</destination>
-      <destination>destination2.domain.com:4560</destination>
-      <destination>destination3.domain.com:4560</destination>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>destination1.domain.com:4560</destination>
+    <destination>destination2.domain.com:4560</destination>
+    <destination>destination3.domain.com:4560</destination>
 
-      ...
-  </appender>
+    ...
+</appender>
 ```
 
 or this:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      <destination>
-          destination1.domain.com:4560,
-          destination2.domain.com:4560,
-          destination3.domain.com:4560
-      </destination>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>
+        destination1.domain.com:4560,
+        destination2.domain.com:4560,
+        destination3.domain.com:4560
+    </destination>
 
-      ...
-  </appender>
+    ...
+</appender>
 ```
 
 The appender uses a `connectionStrategy` to determine:
@@ -409,7 +410,7 @@ The available connection strategies are as follows:
       <th>Description</th>
     </tr>
     <tr>
-      <td><tt>preferPrimary</tt></td>
+      <td valign="top"><tt>preferPrimary</tt></td>
       <td>(default)
 The first destination is considered the <em>primary</em> destination.
 Each additional destination is considered a <em>secondary</em> destination.
@@ -453,7 +454,7 @@ Example:
       </td>
     </tr>
     <tr>
-      <td><tt>roundRobin</tt></td>
+      <td valign="top"><tt>roundRobin</tt></td>
       <td>
 This strategy attempts connections to the destination in round robin order.
 If a connection fails, the next destination is attempted.
@@ -477,7 +478,7 @@ Example:
       </td>
     </tr>
     <tr>
-      <td><tt>random</tt></td>
+      <td valign="top"><tt>random</tt></td>
       <td>
 This strategy attempts connections to the destination in a random order.
 If a connection fails, the next random destination is attempted.
@@ -507,13 +508,13 @@ You can also use your own custom connection strategy by implementing the `Destin
 and configuring the appender to use it like this:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      <destination>destination1.domain.com:4560</destination>
-      <destination>destination2.domain.com:4560</destination>
-      <destination>destination3.domain.com:4560</destination>
-      <connectionStrategy class="your.package.YourDestinationConnectionStrategy">
-      </connectionStrategy>
-  </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    <destination>destination1.domain.com:4560</destination>
+    <destination>destination2.domain.com:4560</destination>
+    <destination>destination3.domain.com:4560</destination>
+    <connectionStrategy class="your.package.YourDestinationConnectionStrategy">
+    </connectionStrategy>
+</appender>
 ```
 
 
@@ -525,10 +526,10 @@ The time between connection attempts to each destination is tracked separately.
 This amount of time to delay can be changed by setting the `reconnectionDelay` field.
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      ...
-      <reconnectionDelay>1 second</reconnectionDelay>
-  </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    ...
+    <reconnectionDelay>1 second</reconnectionDelay>
+</appender>
 ```
 
 This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
@@ -540,10 +541,10 @@ By default, a connection timeout of 5 seconds is used when connecting to a remot
 You can adjust this by setting the appender's `connectionTimeout` configuration property to the desired value.
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      ...
-      <connectionTimeout>5 seconds</connectionTimeout>
-  </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    ...
+    <connectionTimeout>5 seconds</connectionTimeout>
+</appender>
 ```
 
 A value of `0` means "don't use a timeout and wait indefinitely" which often really means "use OS defaults".
@@ -557,10 +558,10 @@ By default, a buffer size of 8192 is used to buffer socket output stream writes.
 You can adjust this by setting the appender's `writeBufferSize`.
  
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      ...
-      <writeBufferSize>16384</writeBufferSize>
-  </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    ...
+    <writeBufferSize>16384</writeBufferSize>
+</appender>
 ```
 
 Buffering can be disabled by setting the `writeBufferSize` to `0`.
@@ -580,10 +581,10 @@ When the [write buffer](#write-buffer-size) is enabled, any buffered data will b
 By default there is no write timeout. To enable a write timeout, do the following:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      ...
-      <writeTimeout>1 minute</writeTimeout>
-  </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    ...
+    <writeTimeout>1 minute</writeTimeout>
+</appender>
 ```
 
 Note that since the blocking java socket output stream used to send events does not have a concept of a write timeout, write timeouts are detected using a task scheduled periodically with the same frequency as the write timeout.
@@ -607,28 +608,28 @@ SSL for the `Logstash*TcpSocketAppender`s are configured the same way as logback
 For example, to enable SSL using the JVM's default keystore/truststore, do the following:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
-      ...
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    ...
 
-      <!-- Enable SSL using the JVM's default keystore/truststore -->
-      <ssl/>
-  </appender>
+    <!-- Enable SSL using the JVM's default keystore/truststore -->
+    <ssl/>
+</appender>
 ```
 
 To use a different truststore, do the following:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-      ...
+<appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+    ...
 
-      <!-- Enable SSL and use a different truststore -->
-      <ssl>
-          <trustStore>
-              <location>classpath:server.truststore</location>
-              <password>${server.truststore.password}</password>
-          </trustStore>
-      </ssl>
-  </appender>
+    <!-- Enable SSL and use a different truststore -->
+    <ssl>
+        <trustStore>
+            <location>classpath:server.truststore</location>
+            <password>${server.truststore.password}</password>
+        </trustStore>
+    </ssl>
+</appender>
 ```
 
 All the customizations that [logback](http://logback.qos.ch/manual/usingSSL.html) offers
@@ -648,11 +649,11 @@ These async appenders can delegate to any other underlying logback appender.
 For example:
 
 ```xml
-  <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
+<appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
     <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
-       ...
+        ...
     </appender>
-  </appender>
+</appender>
 ```
 
 #### RingBuffer Full
@@ -699,12 +700,12 @@ a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/l
 The wait strategy can be configured on the async appender using the `waitStrategyType` parameter, like this:
 
 ```xml
-  <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
+<appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
     <waitStrategyType>sleeping</waitStrategyType>
     <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
-       ...
+        ...
     </appender>
-  </appender>
+</appender>
 ```
 
 The supported wait strategies are as follows:
@@ -824,23 +825,23 @@ The message includes summary details of the failures that occurred (such as the 
 To register it:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-      <listener class="net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener">
-          <loggerName>net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener</loggerName>
-      </listener>
-  </appender>
+<appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+    <listener class="net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener">
+        <loggerName>net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener</loggerName>
+    </listener>
+</appender>
 ```
 
 You may also create your own listener by implementing the `*Listener` interface and register it to an appender using the `listener` xml element like this:
 
 ```xml
-  <appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
-      ...
+<appender name="stash" class="net.logstash.logback.appender.LogstashAccessTcpSocketAppender">
+    ...
 
-      <listener class="your.package.YourListenerClass">
-          <yourListenerProperty>propertyValue</yourListenerProperty>
-      </listener>
-  </appender>
+    <listener class="your.package.YourListenerClass">
+        <yourListenerProperty>propertyValue</yourListenerProperty>
+    </listener>
+</appender>
 ```
 
 Multiple listeners can be registered by supplying multiple `listener` xml elements.
@@ -856,20 +857,21 @@ with the `RollingFileAppender` in your `logback.xml` like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-  <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>info</level>
-    </filter>
-    <file>/some/path/to/your/file.log</file>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
-      <maxHistory>30</maxHistory>
-    </rollingPolicy>
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-  </appender>
-  <root level="all">
-    <appender-ref ref="stash" />
-  </root>
+    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>info</level>
+        </filter>
+        <file>/some/path/to/your/file.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>/some/path/to/your/file.log.%d{yyyy-MM-dd}</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+    </appender>
+    
+    <root level="all">
+        <appender-ref ref="stash" />
+    </root>
 </configuration>
 ```
 
@@ -878,12 +880,12 @@ To log AccessEvents to a file, configure your `logback-access.xml` like this:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-  <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>/some/path/to/your/file.log</file>
-    <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
-  </appender>
+    <appender name="stash" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>/some/path/to/your/file.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder" />
+    </appender>
 
-  <appender-ref ref="stash" />
+    <appender-ref ref="stash" />
 </configuration>
 ```
 
@@ -895,10 +897,10 @@ To receive file input in logstash, configure a [`file`](https://www.elastic.co/g
 
 ```
 input {
-  file {
-    path => "/some/path/to/your/file.log"
-    codec => "json"
-  }
+    file {
+        path => "/some/path/to/your/file.log"
+        codec => "json"
+    }
 }
 ```
 
@@ -948,8 +950,8 @@ You can also configure specific entries in the MDC to be included or excluded as
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <includeMdcKeyName>key1ToInclude</includeMdcKeyName>
-  <includeMdcKeyName>key2ToInclude</includeMdcKeyName>
+    <includeMdcKeyName>key1ToInclude</includeMdcKeyName>
+    <includeMdcKeyName>key2ToInclude</includeMdcKeyName>
 </encoder>
 ```
 
@@ -957,8 +959,8 @@ or
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <excludeMdcKeyName>key1ToExclude</excludeMdcKeyName>
-  <excludeMdcKeyName>key2ToExclude</excludeMdcKeyName>
+    <excludeMdcKeyName>key1ToExclude</excludeMdcKeyName>
+    <excludeMdcKeyName>key2ToExclude</excludeMdcKeyName>
 </encoder>
 ```
 
@@ -972,7 +974,7 @@ specify`<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <mdcKeyFieldName>key1=alternateFieldNameForKey1</mdcKeyFieldName>
+    <mdcKeyFieldName>key1=alternateFieldNameForKey1</mdcKeyFieldName>
 </encoder>
 ```
 
@@ -994,7 +996,7 @@ This can be costly to calculate and should be switched off for busy production e
 To switch it on, add the `includeCallerData` property to the configuration.
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <includeCallerData>true</includeCallerData>
+    <includeCallerData>true</includeCallerData>
 </encoder>
 ```
 If the encoder is included inside an asynchronous appender, such as
@@ -1023,7 +1025,7 @@ Add custom fields that will appear in every LoggingEvent like this :
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+    <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
 </encoder>
 ```
 
@@ -1031,7 +1033,7 @@ or in an AccessEvent like this :
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
-  <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
+    <customFields>{"appname":"myWebservice","roles":["customerorder","auth"],"buildinfo":{"version":"Version 0.1.0-SNAPSHOT","lastcommit":"75473700d5befa953c45f630c6d9105413c16fe1"}}</customFields>
 </encoder>
 ```
 
@@ -1258,10 +1260,10 @@ Request and response headers are not logged by default, but can be enabled by sp
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
-  <fieldNames>
-    <requestHeaders>request_headers</requestHeaders>
-    <responseHeaders>response_headers</responseHeaders>
-  </fieldNames>
+    <fieldNames>
+        <requestHeaders>request_headers</requestHeaders>
+        <responseHeaders>response_headers</responseHeaders>
+    </fieldNames>
 </encoder>
 ```
 
@@ -1272,11 +1274,11 @@ set `lowerCaseFieldNames` to true, like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
-  <fieldNames>
-    <requestHeaders>request_headers</requestHeaders>
-    <responseHeaders>response_headers</responseHeaders>
-  </fieldNames>
-  <lowerCaseHeaderNames>true</lowerCaseHeaderNames>
+    <fieldNames>
+        <requestHeaders>request_headers</requestHeaders>
+        <responseHeaders>response_headers</responseHeaders>
+    </fieldNames>
+    <lowerCaseHeaderNames>true</lowerCaseHeaderNames>
 </encoder>
 ```
 
@@ -1288,12 +1290,12 @@ The `IncludeExcludeHeaderFilter` can be configured like this:
  
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
-  <fieldNames>
-    <requestHeaders>request_headers</requestHeaders>
-  </fieldNames>
-  <requestHeaderFilter>
-    <include>Content-Type</include>
-  </requestHeaderFilter>
+    <fieldNames>
+        <requestHeaders>request_headers</requestHeaders>
+    </fieldNames>
+    <requestHeaderFilter>
+        <include>Content-Type</include>
+    </requestHeaderFilter>
 </encoder>
 ```
 
@@ -1301,7 +1303,7 @@ Custom filters implementing [`HeaderFilter`](/src/main/java/net/logstash/logback
 can be used by specifying the filter class like this:
 
 ```xml
-  <requestHeaderFilter class="your.package.YourFilterClass"/>
+<requestHeaderFilter class="your.package.YourFilterClass"/>
 ```
 
 ## Customizing Jackson
@@ -1334,7 +1336,7 @@ To use one these formats, specify the `<jsonFactoryDecorator>` like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
+    <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
 </encoder>
 ```
 Other data formats can be used by implementing a custom
@@ -1351,10 +1353,10 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
-  <jsonGeneratorDecorator class="net.logstash.logback.decorate.smile.SmileFeatureJsonGeneratorDecorator">
-    <disable>WRITE_HEADER</disable>
-  </jsonGeneratorDecorator>
+    <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
+    <jsonGeneratorDecorator class="net.logstash.logback.decorate.smile.SmileFeatureJsonGeneratorDecorator">
+        <disable>WRITE_HEADER</disable>
+    </jsonGeneratorDecorator>
 </encoder>
 ``` 
 
@@ -1372,20 +1374,20 @@ Or customize object mapping like this:
 ```java
 public class ISO8601DateDecorator implements JsonFactoryDecorator  {
 
-	@Override
-	public JsonFactory decorate(JsonFactory factory) {
-		ObjectMapper codec = (ObjectMapper) factory.getCodec();
-		codec.setDateFormat(new ISO8601DateFormat());
-		return factory;
-	}
+    @Override
+    public JsonFactory decorate(JsonFactory factory) {
+        ObjectMapper codec = (ObjectMapper) factory.getCodec();
+        codec.setDateFormat(new ISO8601DateFormat());
+        return factory;
+    }
 }
 ```
 and then specify the decorators in the logback.xml file like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
-  <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
+    <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
+    <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
 </encoder>
 ```
 
@@ -1395,12 +1397,12 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonFactoryDecorator class="net.logstash.logback.decorate.FeatureJsonFactoryDecorator">
-    <disable>USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING</disable>
-  </jsonFactoryDecorator>
-  <jsonGeneratorDecorator class="net.logstash.logback.decorate.FeatureJsonGeneratorDecorator">
-    <enable>WRITE_NUMBERS_AS_STRINGS</enable>
-  </jsonGeneratorDecorator>
+    <jsonFactoryDecorator class="net.logstash.logback.decorate.FeatureJsonFactoryDecorator">
+        <disable>USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING</disable>
+    </jsonFactoryDecorator>
+    <jsonGeneratorDecorator class="net.logstash.logback.decorate.FeatureJsonGeneratorDecorator">
+        <enable>WRITE_NUMBERS_AS_STRINGS</enable>
+    </jsonGeneratorDecorator>
 </encoder>
 ``` 
 
@@ -1431,12 +1433,12 @@ For example, if you want to use something other than `\n` as the escape sequence
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonFactoryDecorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator">
-    <escape>
-      <targetCharacterCode>10</targetCharacterCode>
-      <escapeSequence>\u2028</escapeSequence>
-    </escape>
-  </jsonFactoryDecorator>
+    <jsonFactoryDecorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator">
+        <escape>
+            <targetCharacterCode>10</targetCharacterCode>
+            <escapeSequence>\u2028</escapeSequence>
+        </escape>
+    </jsonFactoryDecorator>
 </encoder>
 ```
 
@@ -1457,43 +1459,45 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
-
-    <!--
-      The default mask string can optionally be specified by <defaultMask>.
-      When the default mask string is not specified, **** is used.
-    -->
-    <defaultMask>****</defaultMask>
-
-    <!-- Field paths to mask added via <path> will use the default mask string -->
-    <path>singleFieldName</path>
-    <path>/absolute/path/to/mask</path>
-    <path>partial/path/to/mask</path>
-    <path>partial/path/with/*/wildcard</path>
-    <path>tilde~0slash~1escapedPath</path>
-
-    <!-- Multiple field paths can be specified as a comma separated string in the <paths> element. -->
-    <paths>path1,path2,path3</paths>
-
-    <!-- Field paths to mask added via <pathMask> can use a non-default mask string -->
-    <pathMask>
-      <path>some/path</path>
-      <path>some/other/path</path>
-      <mask>[masked]</mask>
-    </pathMask>
-    <pathMask>
-      <paths>anotherFieldName,anotherFieldName2</paths>
-      <mask>**anotherCustomMask**</mask>
-    </pathMask>
-
-    <!-- Field paths to mask can be supplied dynamically with an implementation of MaskingJsonGeneratorDecorator.PathMaskSupplier -->
-    <pathMaskSupplier class="your.custom.PathMaskSupplierA"/>
-
-    <!-- Custom implementations of net.logstash.logback.mask.FieldMasker
-         can be used for more advanced masking behavior-->
-    <fieldMasker class="your.custom.FieldMaskerA"/>
-    <fieldMasker class="your.custom.FieldMaskerB"/>
-  </jsonGeneratorDecorator>
+    <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+    
+        <!-- The default mask string can optionally be specified by <defaultMask>.
+             When the default mask string is not specified, **** is used.
+        -->
+        <defaultMask>****</defaultMask>
+        
+        <!-- Field paths to mask added via <path> will use the default mask string -->
+        <path>singleFieldName</path>
+        <path>/absolute/path/to/mask</path>
+        <path>partial/path/to/mask</path>
+        <path>partial/path/with/*/wildcard</path>
+        <path>tilde~0slash~1escapedPath</path>
+        
+        <!-- Multiple field paths can be specified as a comma separated string in the <paths> element. -->
+        <paths>path1,path2,path3</paths>
+        
+        <!-- Field paths to mask added via <pathMask> can use a non-default mask string -->
+        <pathMask>
+            <path>some/path</path>
+            <path>some/other/path</path>
+            <mask>[masked]</mask>
+        </pathMask>
+        <pathMask>
+            <paths>anotherFieldName,anotherFieldName2</paths>
+            <mask>**anotherCustomMask**</mask>
+        </pathMask>
+        
+        <!-- Field paths to mask can be supplied dynamically with an implementation
+             of MaskingJsonGeneratorDecorator.PathMaskSupplier
+        -->
+        <pathMaskSupplier class="your.custom.PathMaskSupplierA"/>
+        
+        <!-- Custom implementations of net.logstash.logback.mask.FieldMasker
+             can be used for more advanced masking behavior
+        -->
+        <fieldMasker class="your.custom.FieldMaskerA"/>
+        <fieldMasker class="your.custom.FieldMaskerB"/>
+    </jsonGeneratorDecorator>
 </encoder>
 ```
 
@@ -1517,37 +1521,40 @@ If you want to match the full string field value, then use the beginning of line
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
-
-    <!--
-      The default mask string can optionally be specified by <defaultMask>.
-      When the default mask string is not specified, **** is used.
-    -->
-    <defaultMask>****</defaultMask>
-
-    <!-- Values to mask added via <value> will use the default mask string -->
-    <value>^foo$</value>
-    <value>bar</value>
-
-    <!-- Multiple values can be specified as a comma separated string in the <values> element. -->
-    <values>^baz$,^blah$</values>
-
-    <!-- Values to mask added via <valueMask> can use a non-default mask string
-         The mask string here can reference regex capturing groups if needed -->
-    <valueMask>
-      <value>^(foo)-.*$</value>
-      <value>^(bar)-.*$</value>
-      <mask>$1****</mask>
-    </valueMask>
-
-    <!-- Values to mask can be supplied dynamically with an implementation of MaskingJsonGeneratorDecorator.ValueMaskSupplier -->
-    <valueMaskSupplier class="your.custom.ValueMaskSupplierA"/>
-
-    <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
-         can be used for more advanced masking behavior-->
-    <valueMasker class="your.custom.ValueMaskerA"/>
-    <valueMasker class="your.custom.ValueMaskerB"/>
-  </jsonGeneratorDecorator>
+    <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+    
+        <!-- The default mask string can optionally be specified by <defaultMask>.
+             When the default mask string is not specified, **** is used.
+        -->
+        <defaultMask>****</defaultMask>
+        
+        <!-- Values to mask added via <value> will use the default mask string -->
+        <value>^foo$</value>
+        <value>bar</value>
+        
+        <!-- Multiple values can be specified as a comma separated string in the <values> element. -->
+        <values>^baz$,^blah$</values>
+        
+        <!-- Values to mask added via <valueMask> can use a non-default mask string
+             The mask string here can reference regex capturing groups if needed 
+        -->
+        <valueMask>
+            <value>^(foo)-.*$</value>
+            <value>^(bar)-.*$</value>
+            <mask>$1****</mask>
+        </valueMask>
+        
+        <!-- Values to mask can be supplied dynamically with an implementation of
+             MaskingJsonGeneratorDecorator.ValueMaskSupplier
+        -->
+        <valueMaskSupplier class="your.custom.ValueMaskSupplierA"/>
+        
+        <!-- Custom implementations of net.logstash.logback.mask.ValueMasker
+             can be used for more advanced masking behavior
+        -->
+        <valueMasker class="your.custom.ValueMaskerA"/>
+        <valueMasker class="your.custom.ValueMaskerB"/>
+    </jsonGeneratorDecorator>
 </encoder>
 ```
 
@@ -1563,12 +1570,12 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <fieldNames>
-    <timestamp>time</timestamp>
-    <message>msg</message>
-    <stackTrace>stacktrace</stackTrace>
-    ...
-  </fieldNames>
+    <fieldNames>
+        <timestamp>time</timestamp>
+        <message>msg</message>
+        <stackTrace>stacktrace</stackTrace>
+        ...
+    </fieldNames>
 </encoder>
 ```
 Prevent a field from being output by setting the field name to `[ignore]`.
@@ -1578,7 +1585,7 @@ for all the field names that can be customized.  Each java field name in that cl
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
+    <fieldNames class="net.logstash.logback.fieldnames.ShortenedFieldNames"/>
 </encoder>
 ```
 
@@ -1598,7 +1605,7 @@ The value can be changed like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <version>2</version>
+    <version>2</version>
 </encoder>
 ```
 
@@ -1606,7 +1613,7 @@ The value can be written as a number (instead of a string) like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <writeVersionAsInteger>true</writeVersionAsInteger>
+    <writeVersionAsInteger>true</writeVersionAsInteger>
 </encoder>
 ```
 
@@ -1621,7 +1628,7 @@ You can change the pattern like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
+    <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS</timestampPattern>
 </encoder>
 ```
 
@@ -1637,7 +1644,7 @@ You can change the timezone like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <timeZone>UTC</timeZone>
+    <timeZone>UTC</timeZone>
 </encoder>
 ```
 
@@ -1666,17 +1673,17 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <messageSplitRegex>SYSTEM</messageSplitRegex>
+    <messageSplitRegex>SYSTEM</messageSplitRegex>
 </encoder>
 ```
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <messageSplitRegex>\r?\n</messageSplitRegex>
+    <messageSplitRegex>\r?\n</messageSplitRegex>
 </encoder>
 ```
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <messageSplitRegex>#+</messageSplitRegex>
+    <messageSplitRegex>#+</messageSplitRegex>
 </encoder>
 ```
 
@@ -1692,7 +1699,7 @@ To customize the message pattern, specify the `messagePattern` like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashAccessEncoder">
-  <messagePattern>%clientHost [%date] "%requestURL" %statusCode %bytesSent</messagePattern>
+    <messagePattern>%clientHost [%date] "%requestURL" %statusCode %bytesSent</messagePattern>
 </encoder>
 ```
 
@@ -1705,7 +1712,7 @@ Examples of how it is shortened can be found [here](http://logback.qos.ch/manual
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+    <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
 </encoder>
 ```
 
@@ -1737,16 +1744,16 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-  <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-    <maxDepthPerThrowable>30</maxDepthPerThrowable>
-    <maxLength>2048</maxLength>
-    <shortenedClassNameLength>20</shortenedClassNameLength>
-    <exclude>sun\.reflect\..*\.invoke.*</exclude>
-    <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
-    <evaluator class="myorg.MyCustomEvaluator"/>
-    <rootCauseFirst>true</rootCauseFirst>
-    <inlineHash>true</inlineHash>
-  </throwableConverter>
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxDepthPerThrowable>30</maxDepthPerThrowable>
+        <maxLength>2048</maxLength>
+        <shortenedClassNameLength>20</shortenedClassNameLength>
+        <exclude>sun\.reflect\..*\.invoke.*</exclude>
+        <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+        <evaluator class="myorg.MyCustomEvaluator"/>
+        <rootCauseFirst>true</rootCauseFirst>
+        <inlineHash>true</inlineHash>
+    </throwableConverter>
 </encoder>
 ```
 
@@ -1769,20 +1776,20 @@ For example, to add standard syslog headers for syslog over UDP, configure the f
 
 ```xml
 <configuration>
-  <conversionRule conversionWord="syslogStart" converterClass="ch.qos.logback.classic.pattern.SyslogStartConverter"/>
+    <conversionRule conversionWord="syslogStart" converterClass="ch.qos.logback.classic.pattern.SyslogStartConverter"/>
 
-  <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
-    <host>MyAwesomeSyslogServer</host>
-    <!-- port is optional (default value shown) -->
-    <port>514</port>
-    <layout>
-      <prefix class="ch.qos.logback.classic.PatternLayout">
-        <pattern>%syslogStart{USER}</pattern>
-      </prefix>
-    </layout>
-  </appender>
+    <appender name="stash" class="net.logstash.logback.appender.LogstashUdpSocketAppender">
+        <host>MyAwesomeSyslogServer</host>
+        <!-- port is optional (default value shown) -->
+        <port>514</port>
+        <layout>
+            <prefix class="ch.qos.logback.classic.PatternLayout">
+                <pattern>%syslogStart{USER}</pattern>
+            </prefix>
+        </layout>
+    </appender>
 
-  ...
+    ...
 </configuration>
 ```
 
@@ -1790,17 +1797,17 @@ When using the `LogstashEncoder`, `LogstashAccessEncoder` or a composite encoder
 
 ```xml
 <configuration>
-  ...
-  <appender ...>
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-      ...
-      <prefix class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
-        <layout class="ch.qos.logback.classic.PatternLayout">
-          <pattern>@cee:</pattern>
-        </layout>
-      </prefix>    
-    </encoder>
-  </appender>
+    ...
+    <appender ...>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            ...
+            <prefix class="ch.qos.logback.core.encoder.LayoutWrappingEncoder">
+                <layout class="ch.qos.logback.classic.PatternLayout">
+                    <pattern>@cee:</pattern>
+                </layout>
+            </prefix>    
+        </encoder>
+    </appender>
 </configuration>
 ```
 
@@ -1818,13 +1825,13 @@ For example:
 
 ```xml
 <configuration>
-  ...
-  <appender ...>
-    <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-      ...
-      <lineSeparator>UNIX</lineSeparator>
-    </encoder>
-  </appender>
+    ...
+    <appender ...>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            ...
+            <lineSeparator>UNIX</lineSeparator>
+        </encoder>
+    </appender>
 </configuration>
 ```
 
@@ -1838,29 +1845,29 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <providers>
-    <mdc/>
-    <pattern>
-      <pattern>
-        {
-          "timestamp": "%date{ISO8601}",
-          "myCustomField": "fieldValue",
-          "relative": "#asLong{%relative}"
-        }
-      </pattern>
-    </pattern>
-    <stackTrace>
-      <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-        <maxDepthPerThrowable>30</maxDepthPerThrowable>
-        <maxLength>2048</maxLength>
-        <shortenedClassNameLength>20</shortenedClassNameLength>
-        <exclude>^sun\.reflect\..*\.invoke</exclude>
-        <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
-        <evaluator class="myorg.MyCustomEvaluator"/>
-        <rootCauseFirst>true</rootCauseFirst>
-      </throwableConverter>
-    </stackTrace>
-  </providers>
+    <providers>
+        <mdc/>
+        <pattern>
+            <pattern>
+                {
+                  "timestamp": "%date{ISO8601}",
+                  "myCustomField": "fieldValue",
+                  "relative": "#asLong{%relative}"
+                }
+            </pattern>
+        </pattern>
+        <stackTrace>
+            <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                <maxDepthPerThrowable>30</maxDepthPerThrowable>
+                <maxLength>2048</maxLength>
+                <shortenedClassNameLength>20</shortenedClassNameLength>
+                <exclude>^sun\.reflect\..*\.invoke</exclude>
+                <exclude>^net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
+                <evaluator class="myorg.MyCustomEvaluator"/>
+                <rootCauseFirst>true</rootCauseFirst>
+            </throwableConverter>
+        </stackTrace>
+    </providers>
 </encoder>
 ```
 
@@ -1879,7 +1886,7 @@ The table below lists the providers available to both _LoggingEvents_ and _Acces
 The provider name is the xml element name to use when configuring.
 
 <table>
-  <tbody style="vertical-align: top;">
+  <tbody>
     <tr>
       <th>Provider</th>
       <th>Description/Properties</th>
@@ -1905,7 +1912,7 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
-      <td><tt>pattern</tt></td>
+      <td valign="top"><tt>pattern</tt></td>
       <td>
         <p>Outputs fields from a configured JSON Object string,
            while substituting patterns supported by logback's <tt>PatternLayout</tt>.
@@ -1920,7 +1927,7 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
-      <td><tt>sequence</tt></td>
+      <td valign="top"><tt>sequence</tt></td>
       <td>
         <p>
           Outputs an incrementing sequence number for every log event.
@@ -1931,7 +1938,7 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
-      <td><tt>threadName</tt></td>
+      <td valign="top"><tt>threadName</tt></td>
       <td><p>Name of the thread from which the event was logged.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>thread_name</tt>)</li>          
@@ -1939,7 +1946,7 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
-      <td><tt>timestamp</tt></td>
+      <td valign="top"><tt>timestamp</tt></td>
       <td><p>Event timestamp.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
@@ -1949,7 +1956,7 @@ The provider name is the xml element name to use when configuring.
       </td>
     </tr>
     <tr>
-      <td><tt>uuid</tt></td>
+      <td valign="top"><tt>uuid</tt></td>
       <td>
         <p>
           Outputs random UUID as field value. Handy when you want to provide unique identifier
@@ -1962,11 +1969,11 @@ The provider name is the xml element name to use when configuring.
           </ul></li>
           <li><tt>ethernet</tt> - Only for 'time' strategy. When defined - MAC address to use for location part of UUID. Set it to <tt>interface</tt> value to use real underlying network interface or to specific values like <tt>00:C0:F0:3D:5B:7C</tt></li>          
         </ul>
-	      <p>Note: The <a href="https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator/"><tt>com.fasterxml.uuid:java-uuid-generator</tt></a> optional dependency must be added to applications that use the `uuid` provider.</p>
+          <p>Note: The <a href="https://mvnrepository.com/artifact/com.fasterxml.uuid/java-uuid-generator/"><tt>com.fasterxml.uuid:java-uuid-generator</tt></a> optional dependency must be added to applications that use the `uuid` provider.</p>
       </td>
     </tr>
     <tr>
-      <td><tt>version</tt></td>
+      <td valign="top"><tt>version</tt></td>
       <td><p>Logstash JSON format version.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@version</tt>)</li>
@@ -1985,13 +1992,13 @@ The [common providers mentioned above](#providers-common-to-loggingevents-and-ac
 The provider name is the xml element name to use when configuring. Each provider's configuration properties are shown, with default configuration values in parenthesis.
 
 <table>
-  <tbody style="vertical-align: top;">
+  <tbody>
     <tr>
       <th>Provider</th>
       <th>Description/Properties</th>
     </tr>
     <tr>
-      <td><tt>arguments</tt></td>
+      <td valign="top"><tt>arguments</tt></td>
       <td>
         <p>Outputs fields from the event arguments array.</p>
         <p>See <a href="#loggingevent_custom_event">Event-specific Custom Fields</a>.</p>
@@ -2007,7 +2014,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr> 
     <tr>
-      <td><tt>callerData</tt></td>
+      <td valign="top"><tt>callerData</tt></td>
       <td><p>Outputs data about from where the logger was called (class/method/file/line).</p>
         <ul>
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
@@ -2019,7 +2026,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>contextName</tt></td>
+      <td valign="top"><tt>contextName</tt></td>
       <td><p>Outputs the name of logback's context.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>context</tt>)</li>
@@ -2027,7 +2034,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>loggerName</tt></td>
+      <td valign="top"><tt>loggerName</tt></td>
       <td><p>Name of the logger that logged the message.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>logger_name</tt>)</li>          
@@ -2036,7 +2043,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>logLevel</tt></td>
+      <td valign="top"><tt>logLevel</tt></td>
       <td><p>Logger level text (INFO, WARN, etc).</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>level</tt>)</li>          
@@ -2044,7 +2051,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>logLevelValue</tt></td>
+      <td valign="top"><tt>logLevelValue</tt></td>
       <td><p>Logger level numerical value.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>level_value</tt>)</li>
@@ -2052,12 +2059,12 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>logstashMarkers</tt></td>
+      <td valign="top"><tt>logstashMarkers</tt></td>
       <td><p>Used to output Logstash Markers as specified in <em>Event-specific Custom Fields</em>.</p>
       </td>
     </tr>
     <tr>
-      <td><tt>mdc</tt></td>
+      <td valign="top"><tt>mdc</tt></td>
       <td>
         <p>Outputs entries from the Mapped Diagnostic Context (MDC).
            Will include all entries by default.
@@ -2075,7 +2082,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>message</tt></td>
+      <td valign="top"><tt>message</tt></td>
       <td><p>Formatted log event message.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
@@ -2086,7 +2093,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>rawMessage</tt></td>
+      <td valign="top"><tt>rawMessage</tt></td>
       <td><p>Raw log event message, as opposed to formatted log where parameters are resolved.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>raw_message</tt>)</li>
@@ -2094,7 +2101,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>rootStackTraceElement</tt></td>
+      <td valign="top"><tt>rootStackTraceElement</tt></td>
       <td><p>(Only if a throwable was logged) Outputs a JSON Object containing the class and method name from which the outer-most exception was thrown.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>root_stack_trace_element</tt>)</li>
@@ -2104,7 +2111,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>stackHash</tt></td>
+      <td valign="top"><tt>stackHash</tt></td>
       <td><p>(Only if a throwable was logged) Computes and outputs a hexadecimal hash of the throwable stack.</p>
         <p>This helps identifying several occurrences of the same error (<a href="stack-hash.md">more info</a>).</p>
         <ul>
@@ -2115,7 +2122,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>stackTrace</tt></td>
+      <td valign="top"><tt>stackTrace</tt></td>
       <td><p>Stacktrace of any throwable logged with the event. Stackframes are separated by newline chars.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
@@ -2124,7 +2131,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>tags</tt></td>
+      <td valign="top"><tt>tags</tt></td>
       <td><p>Outputs logback markers as a comma separated list.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>tags</tt>)</li>          
@@ -2132,7 +2139,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>throwableClassName</tt></td>
+      <td valign="top"><tt>throwableClassName</tt></td>
       <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the thrown Throwable.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>throwable_class</tt>)</li>
@@ -2141,7 +2148,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>throwableRootCauseClassName</tt></td>
+      <td valign="top"><tt>throwableRootCauseClassName</tt></td>
       <td><p>(Only if a throwable was logged) Outputs a field that contains the class name of the root cause of the thrown Throwable.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>throwable_root_cause_class</tt>)</li>
@@ -2160,13 +2167,13 @@ The [common providers mentioned above](#providers-common-to-loggingevents-and-ac
 The provider name is the xml element name to use when configuring. Each provider's configuration properties are shown, with default configuration values in parenthesis.
 
 <table>
-  <tbody style="vertical-align: top;">
+  <tbody>
     <tr>
       <th>Provider</th>
       <th>Description/Properties</th>
     </tr>
     <tr>
-      <td><tt>contentLength</tt></td>
+      <td valign="top"><tt>contentLength</tt></td>
       <td><p>Content length.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>content_length</tt>)</li>
@@ -2174,7 +2181,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>elapsedTime</tt></td>
+      <td valign="top"><tt>elapsedTime</tt></td>
       <td><p>Elapsed time in milliseconds.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>elapsed_time</tt>)</li>
@@ -2182,7 +2189,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>message</tt></td>
+      <td valign="top"><tt>message</tt></td>
       <td><p>Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
@@ -2192,7 +2199,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>method</tt></td>
+      <td valign="top"><tt>method</tt></td>
       <td><p>HTTP method.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>method</tt>)</li>
@@ -2200,7 +2207,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>protocol</tt></td>
+      <td valign="top"><tt>protocol</tt></td>
       <td><p>HTTP protocol.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>protocol</tt>)</li>
@@ -2208,7 +2215,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>remoteHost</tt></td>
+      <td valign="top"><tt>remoteHost</tt></td>
       <td><p>Remote Host.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>remote_host</tt>)</li>
@@ -2216,7 +2223,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>remoteUser</tt></td>
+      <td valign="top"><tt>remoteUser</tt></td>
       <td><p>Remote User.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>remote_user</tt>)</li>
@@ -2224,7 +2231,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>requestedUri</tt></td>
+      <td valign="top"><tt>requestedUri</tt></td>
       <td><p>Requested URI.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>requested_uri</tt>)</li>
@@ -2232,7 +2239,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>requestedUrl</tt></td>
+      <td valign="top"><tt>requestedUrl</tt></td>
       <td><p>Requested URL.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>requested_url</tt>)</li>
@@ -2240,7 +2247,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>requestHeaders</tt></td>
+      <td valign="top"><tt>requestHeaders</tt></td>
       <td><p>Include the request headers.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
@@ -2252,7 +2259,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>responseHeaders</tt></td>
+      <td valign="top"><tt>responseHeaders</tt></td>
       <td><p>Include the response headers.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (no default, must be provided)</li>
@@ -2264,7 +2271,7 @@ The provider name is the xml element name to use when configuring. Each provider
       </td>
     </tr>
     <tr>
-      <td><tt>statusCode</tt></td>
+      <td valign="top"><tt>statusCode</tt></td>
       <td><p>HTTP status code.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>status_code</tt>)</li>
@@ -2283,26 +2290,26 @@ For example...
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <providers>
-    <timestamp/>
-    <nestedField>
-      <fieldName>fields</fieldName>
-      <providers>
-        <logLevel/>
-      </providers>
-    </nestedField>
-  </providers>
+    <providers>
+        <timestamp/>
+        <nestedField>
+            <fieldName>fields</fieldName>
+            <providers>
+                <logLevel/>
+            </providers>
+        </nestedField>
+    </providers>
 </encoder>
 ```
 
 ...will produce something like...
 
-```
+```json
 {
-  "@timestamp":"...",
-  "fields":{
-    "level": "DEBUG"
-  }
+    "@timestamp": "...",
+    "fields": {
+        "level": "DEBUG"
+    }
 }
 ```
 
@@ -2322,30 +2329,30 @@ This example...
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <providers>
-    <!-- provides the timestamp -->
-    <timestamp/>
+    <providers>
+        <!-- provides the timestamp -->
+        <timestamp/>
 
-    <!-- provides the version -->
-    <version/>
+        <!-- provides the version -->
+        <version/>
 
-    <!-- provides the fields in the configured pattern -->
-    <pattern>
-      <!-- the pattern that defines what to include -->
-      <pattern>
-        { "level": "%level" }
-      </pattern>
-    </pattern>
-  </providers>
+        <!-- provides the fields in the configured pattern -->
+        <pattern>
+            <!-- the pattern that defines what to include -->
+            <pattern>
+                { "level": "%level" }
+            </pattern>
+        </pattern>
+    </providers>
 </encoder>
 ```
 ... will produce something like...
 
 ```
 {
-  "@timestamp":"...",
-  "@version": "1",
-  "level": "DEBUG"
+    "@timestamp": "...",
+    "@version": "1",
+    "level": "DEBUG"
 }
 ```
 
@@ -2372,12 +2379,12 @@ So this example...
 
 ```xml
 <pattern>
-  {
-    "line_str": "%line",
-    "line_long": "#asLong{%line}",
-    "has_message": "#asJson{%mdc{hasMessage}}",
-    "json_message": "#asJson{%message}"
-  }
+    {
+        "line_str": "%line",
+        "line_long": "#asLong{%line}",
+        "has_message": "#asJson{%mdc{hasMessage}}",
+        "json_message": "#asJson{%message}"
+    }
 </pattern>
 ```
 
@@ -2390,12 +2397,12 @@ LOGGER.info("{\"type\":\"example\",\"msg\":\"example of json message with type\"
 
 ...will produce something like...
 
-```
+```json
 {
-  "line_str":"97",
-  "line_long":97,
-  "has_message":true,
-  "json_message":{"type":"example","msg":"example of json message with type"}
+    "line_str": "97",
+    "line_long": 97,
+    "has_message": true,
+    "json_message": {"type":"example","msg":"example of json message with type"}
 }
 ```
 
@@ -2416,31 +2423,31 @@ To omit fields with empty values, configure `omitEmptyFields` to `true` (default
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <providers>
-    <pattern>
-      <omitEmptyFields>true</omitEmptyFields>
-      <pattern>
-        {
-          "logger": "%logger",
-          "level": "%level",
-          "thread": "%thread",
-          "message": "%message",
-          "traceId": "%mdc{traceId}"
-        }
-      </pattern>
-    </pattern>
-  </providers>
+    <providers>
+        <pattern>
+            <omitEmptyFields>true</omitEmptyFields>
+            <pattern>
+                {
+                    "logger": "%logger",
+                    "level": "%level",
+                    "thread": "%thread",
+                    "message": "%message",
+                    "traceId": "%mdc{traceId}"
+                }
+            </pattern>
+        </pattern>
+    </providers>
 </encoder>
 ```
 
 If the MDC did not contain a `traceId` entry, then a JSON log event from the above pattern would not contain the `traceId` field...
 
-```
+```json
 {
-  "logger": "com.example...",
-  "level": "DEBUG",
-  "thread": "exec-1",
-  "message": "Hello World!"
+    "logger": "com.example...",
+    "level": "DEBUG",
+    "thread": "exec-1",
+    "message": "Hello World!"
 }
 ```
 
@@ -2453,22 +2460,22 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <providers>
-    <timestamp/>
-    <pattern>
-      <pattern>
-        {
-        "custom_constant": "123",
-        "tags": ["one", "two"],
-        "logger": "%logger",
-        "level": "%level",
-        "thread": "%thread",
-        "message": "%message",
-...
-        }
-      </pattern>
-    </pattern>
-  </providers>
+    <providers>
+        <timestamp/>
+        <pattern>
+            <pattern>
+                {
+                    "custom_constant": "123",
+                    "tags": ["one", "two"],
+                    "logger": "%logger",
+                    "level": "%level",
+                    "thread": "%thread",
+                    "message": "%message",
+                    ...
+                }
+            </pattern>
+        </pattern>
+    </providers>
 </encoder>
 ```
 
@@ -2482,24 +2489,24 @@ For example:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.AccessEventCompositeJsonEncoder">
-  <providers>
-    <pattern>
-      <pattern>
-        {
-        "custom_constant": "123",
-        "tags": ["one", "two"],
-        "remote_ip": "%a",
-        "status_code": "%s",
-        "elapsed_time": "%D",
-        "user_agent": "%i{User-Agent}",
-        "accept": "%i{Accept}",
-        "referer": "%i{Referer}",
-        "session": "%requestCookie{JSESSIONID}",
-...
-        }
-      </pattern>
-    </pattern>
-  </providers>
+    <providers>
+        <pattern>
+            <pattern>
+                {
+                    "custom_constant": "123",
+                    "tags": ["one", "two"],
+                    "remote_ip": "%a",
+                    "status_code": "%s",
+                    "elapsed_time": "%D",
+                    "user_agent": "%i{User-Agent}",
+                    "accept": "%i{Accept}",
+                    "referer": "%i{Referer}",
+                    "session": "%requestCookie{JSESSIONID}",
+                    ...
+                }
+            </pattern>
+        </pattern>
+    </providers>
 </encoder>
 ```
 
@@ -2514,19 +2521,19 @@ So the following pattern...
 
 ```xml
 <pattern>
-  {
-    "default_cookie": "%requestCookie{MISSING}",
-    "filtered_cookie": "#nullNA{%requestCookie{MISSING}}"
-  }
+    {
+        "default_cookie": "%requestCookie{MISSING}",
+        "filtered_cookie": "#nullNA{%requestCookie{MISSING}}"
+    }
 </pattern>
 ```
 
 ...will produce...
 
-```
+```json
 {
-  "default_cookie": "-",
-  "filtered_cookie": null
+    "default_cookie": "-",
+    "filtered_cookie": null
 }
 ```
 
@@ -2538,13 +2545,13 @@ Then, add the provider to a `LoggingEventCompositeJsonEncoder` like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
-  <providers>
-    ...
-    <provider class="your.provider.YourJsonProvider">
-        <!-- Any properties exposed by your provider can be set here -->
-    </provider>
-    ...
-  </providers>
+    <providers>
+        ...
+        <provider class="your.provider.YourJsonProvider">
+            <!-- Any properties exposed by your provider can be set here -->
+        </provider>
+        ...
+    </providers>
 </encoder>
 ```
 
@@ -2561,6 +2568,7 @@ or a `LogstashEncoder` like this:
 ```
 
 You can do something similar for `AccessEventCompositeJsonEncoder` and `LogstashAccessEncoder` as well, if your `JsonProvider` handles `IAccessEvent`s.
+
 
 ## Status Listeners
 
