@@ -21,7 +21,6 @@ import ch.qos.logback.access.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import ch.qos.logback.core.spi.LifeCycle;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
@@ -29,7 +28,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
-public interface JsonProvider<Event extends DeferredProcessingAware> extends LifeCycle, ContextAware {
+public interface JsonProvider<Event extends DeferredProcessingAware> extends ContextAware {
 
     /**
      * Writes information about the event, to the given generator.
@@ -53,4 +52,19 @@ public interface JsonProvider<Event extends DeferredProcessingAware> extends Lif
      */
     void prepareForDeferredProcessing(Event event);
 
+    /**
+     * Start the provider after all configuration properties are set.
+     */
+    void start();
+
+    /**
+     * Stop the provider
+     */
+    void stop();
+
+    /**
+     * Report whether the provider is started or not.
+     * @return {@code true} if the provider is started, {@code false} otherwise.
+     */
+    boolean isStarted();
 }

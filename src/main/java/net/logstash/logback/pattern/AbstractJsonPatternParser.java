@@ -25,6 +25,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.logstash.logback.composite.JsonReadingUtils;
+import net.logstash.logback.util.StringUtils;
+
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -34,6 +37,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Parser that takes a JSON pattern, resolves all the conversion specifiers and returns an instance
@@ -165,7 +169,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public T getValue(final Event event) {
             final String value = generator.getValue(event);
-            if (value == null || value.isEmpty()) {
+            if (StringUtils.isEmpty(value)) {
                 return null;
             }
             try {
@@ -189,7 +193,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public T getValue(final Event event) {
             final String value = generator.getValue(event);
-            if (value == null || value.isEmpty()) {
+            if (StringUtils.isEmpty(value)) {
                 return null;
             }
             try {
@@ -229,9 +233,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         protected JsonNode transform(final String value) throws IOException {
-            try (JsonParser jsonParser = jsonFactory.createParser(value)) {
-                return jsonParser.readValueAsTree();
-            }
+            return JsonReadingUtils.readFully(jsonFactory, value);
         }
     }
 
@@ -242,7 +244,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         protected Object transform(final String value) throws IOException {
-            final String trimmedValue = value.trim();
+            final String trimmedValue = StringUtils.trimToEmpty(value);
             
             try (JsonParser parser = jsonFactory.createParser(trimmedValue)) {
                 final TreeNode tree = parser.readValueAsTree();
@@ -520,27 +522,15 @@ public abstract class AbstractJsonPatternParser<Event> {
 
     
     public NodeWriter<Event> parse(String pattern) {
-
-        if (pattern == null) {
-            contextAware.addError("No pattern specified");
+        if (StringUtils.isEmpty(pattern)) {
             return null;
         }
 
-        final JsonNode node;
+        final ObjectNode node;
         try (JsonParser jsonParser = jsonFactory.createParser(pattern)) {
-            node = jsonParser.readValueAsTree();
+            node = JsonReadingUtils.readFullyAsObjectNode(jsonFactory, pattern);
         } catch (IOException e) {
-            contextAware.addError("Failed to parse pattern '" + pattern + "'", e);
-            return null;
-        }
-
-        if (node == null) {
-            contextAware.addError("Empty JSON pattern");
-            return null;
-        }
-
-        if (!node.isObject()) {
-            contextAware.addError("Invalid pattern JSON - must be an object");
+            contextAware.addError("[pattern] is not a valid JSON object", e);
             return null;
         }
 
