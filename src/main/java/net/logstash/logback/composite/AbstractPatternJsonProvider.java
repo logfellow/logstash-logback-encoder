@@ -96,8 +96,7 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
     
 
     /**
-     * When {@code true}, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
-     * will be omitted from JSON output.
+     * When {@code true}, fields whose values are considered empty will be omitted from JSON output.
      * 
      * @return {@code true} if empty fields are omitted from JSON output, {@code false} otherwise.
      */
@@ -106,8 +105,7 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
     }
 
     /**
-     * When {@code true}, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
-     * will be omitted from JSON output.
+     * When {@code true}, fields whose values are considered empty will be omitted from JSON output.
      * 
      * @param omitEmptyFields whether empty fields are omitted or not
      */
