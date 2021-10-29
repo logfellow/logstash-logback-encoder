@@ -36,22 +36,21 @@ public class JsonReadingUtils {
     private JsonReadingUtils() {
         // utility class - prevent instantiation
     }
-    
+   
     
     /**
-     * Read a JSON string into the equivalent {@link JsonNode}.
+     * Fully read the supplied JSON string into the equivalent {@link JsonNode}.
      * 
-     * <p>May be instructed to throw a {@link JsonParseException} if the string is not fully read
-     * after a first valid JsonNode is found. This may happen for input like <em>10 foobar</em> that
-     * would otherwise return a NumericNode with value {@code 10} leaving <em>foobar</em> unread.
+     * Throws a {@link JsonParseException} if the string is not fully read after a first valid JsonNode is found.
+     * This may happen for input like <em>10 foobar</em> that would otherwise return a NumericNode with value
+     * {@code 10} leaving <em>foobar</em> unread.
      * 
      * @param jsonFactory the {@link JsonFactory} from which to obtain a {@link JsonParser} to read the JSON string.
      * @param json the JSON string to read
-     * @param readFully whether to throw a {@link JsonParseException} when the input is not fully read.
      * @return the {@link JsonNode} corresponding to the input string or {@code null} if the string is null or empty.
      * @throws IOException if there is either an underlying I/O problem or decoding issue
      */
-    public static JsonNode read(JsonFactory jsonFactory, String json, boolean readFully) throws IOException {
+    public static JsonNode readFully(JsonFactory jsonFactory, String json) throws IOException {
         if (json == null) {
             return null;
         }
@@ -60,7 +59,7 @@ public class JsonReadingUtils {
         try (JsonParser parser = jsonFactory.createParser(trimmedJson)) {
             final JsonNode tree = parser.readValueAsTree();
             
-            if (readFully && parser.getCurrentLocation().getCharOffset() < trimmedJson.length()) {
+            if (parser.getCurrentLocation().getCharOffset() < trimmedJson.length()) {
                 /*
                  * If the full trimmed string was not read, then the full trimmed string contains a json value plus other text.
                  * For example, trimmedValue = '10 foobar', or 'true foobar', or '{"foo","bar"} baz'.
@@ -71,45 +70,6 @@ public class JsonReadingUtils {
             
             return tree;
         }
-    }
-    
-    
-    /**
-     * Fully read the supplied JSON string into the equivalent {@link JsonNode} throwing a {@link JsonParseException}
-     * if some trailing characters remain after a first valid JsonNode is found.
-     * 
-     * @param jsonFactory the {@link JsonFactory} from which to obtain a {@link JsonParser} to read the JSON string.
-     * @param json the JSON string to read
-     * @return the {@link JsonNode} corresponding to the input string or {@code null} if the string is null or empty.
-     * @throws IOException if there is either an underlying I/O problem or decoding issue
-     * 
-     * @see JsonReadingUtils#readAsObjectNode(JsonFactory, String, boolean)
-     */
-    public static JsonNode readFully(JsonFactory jsonFactory, String json) throws IOException {
-        return read(jsonFactory, json, true);
-    }
-    
-    
-    /**
-     * Read a JSON string into an {@link ObjectNode}, throwing a {@link JsonParseException} if the supplied string is not
-     * a valid JSON object representation.
-     * 
-     * @param jsonFactory the {@link JsonFactory} from which to obtain a {@link JsonParser} to read the JSON string.
-     * @param json the JSON string to read
-     * @param readFully whether to throw a {@link JsonParseException} when the input is not fully read.
-     * @return the {@link JsonNode} corresponding to the input string or {@code null} if the string is null or empty.
-     * @throws IOException if there is either an underlying I/O problem or decoding issue
-     * 
-     * @see JsonReadingUtils#readAsObjectNode(JsonFactory, String, boolean)
-     */
-    public static ObjectNode readAsObjectNode(JsonFactory jsonFactory, String json, boolean readFully) throws IOException {
-        final JsonNode node = read(jsonFactory, json, readFully);
-        
-        if (node != null && !(node instanceof ObjectNode)) {
-            throw new JsonParseException(null, "expected a JSON object representation");
-        }
-        
-        return (ObjectNode) node;
     }
 
     
@@ -122,9 +82,14 @@ public class JsonReadingUtils {
      * @return the {@link JsonNode} corresponding to the input string or {@code null} if the string is null or empty.
      * @throws IOException if there is either an underlying I/O problem or decoding issue
      * 
-     * @see JsonReadingUtils#readAsObjectNode(JsonFactory, String, boolean)
+     * @see JsonReadingUtils#readFully(JsonFactory, String)
      */
     public static ObjectNode readFullyAsObjectNode(JsonFactory jsonFactory, String json) throws IOException {
-        return readAsObjectNode(jsonFactory, json, true);
-    }
+        final JsonNode node = readFully(jsonFactory, json);
+        
+        if (node != null && !(node instanceof ObjectNode)) {
+            throw new JsonParseException(null, "expected a JSON object representation");
+        }
+        
+        return (ObjectNode) node;    }
 }
