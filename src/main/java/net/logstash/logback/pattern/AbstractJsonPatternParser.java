@@ -262,7 +262,7 @@ public abstract class AbstractJsonPatternParser<Event> {
          * StringBuilder whose length after use exceeds the maxRecylableSize will be
          * discarded instead of recycled.
          */
-        private static final int MAX_RECYCLABLE_SIZE = 2048;
+        private static final int MAX_RECYCLABLE_SIZE = 1024;
         
         
         LayoutValueGetter(final PatternLayoutAdapter<Event> layout) {
