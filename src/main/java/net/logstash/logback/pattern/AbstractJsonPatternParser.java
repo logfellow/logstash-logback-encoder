@@ -256,13 +256,13 @@ public abstract class AbstractJsonPatternParser<Event> {
         /**
          * ThreadLocal reusable StringBuilder instances
          */
-        private static final ThreadLocal<StringBuilder> stringBuilders = ThreadLocal.withInitial(StringBuilder::new);
+        private static final ThreadLocal<StringBuilder> STRING_BUILDERS = ThreadLocal.withInitial(StringBuilder::new);
         
         /**
          * StringBuilder whose length after use exceeds the maxRecylableSize will be
          * discarded instead of recycled.
          */
-        private static final int maxRecyclableSize = 2048;
+        private static final int MAX_RECYCLABLE_SIZE = 2048;
         
         
         LayoutValueGetter(final PatternLayoutAdapter<Event> layout) {
@@ -271,16 +271,16 @@ public abstract class AbstractJsonPatternParser<Event> {
 
         @Override
         public String getValue(final Event event) {
-            StringBuilder strBuilder = stringBuilders.get();
+            StringBuilder strBuilder = STRING_BUILDERS.get();
             try {
                 layout.writeTo(strBuilder, event);
                 return strBuilder.toString();
                 
             } finally {
-                if (strBuilder.length() <= maxRecyclableSize) {
+                if (strBuilder.length() <= MAX_RECYCLABLE_SIZE) {
                     strBuilder.setLength(0);
                 } else {
-                    stringBuilders.remove();
+                    STRING_BUILDERS.remove();
                 }
             }
         }
