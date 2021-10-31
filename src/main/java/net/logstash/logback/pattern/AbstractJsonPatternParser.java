@@ -469,25 +469,12 @@ public abstract class AbstractJsonPatternParser<Event> {
     }
     
     
-    private static class DelegatingNodeWriter<Event> implements NodeWriter<Event> {
-        private final NodeWriter<Event> delegate;
-        
-        DelegatingNodeWriter(NodeWriter<Event> delegate) {
-            this.delegate = Objects.requireNonNull(delegate);
-        }
-        
-        @Override
-        public void write(JsonGenerator generator, Event event) throws IOException {
-            this.delegate.write(generator, event);
-        }
-    }
-    
-    
-    private static class OmitEmptyFieldWriter<Event> extends DelegatingNodeWriter<Event> {
+    private static class OmitEmptyFieldWriter<Event> implements NodeWriter<Event> {
         private static final ThreadLocal<ReusableFilteringGenerator> filteringGenerators = ThreadLocal.withInitial(ReusableFilteringGenerator::new);
-        
+        private final NodeWriter<Event> delegate;
+
         OmitEmptyFieldWriter(NodeWriter<Event> delegate) {
-            super(delegate);
+            this.delegate = Objects.requireNonNull(delegate);
         }
         
         @Override
@@ -495,7 +482,7 @@ public abstract class AbstractJsonPatternParser<Event> {
             ReusableFilteringGenerator filteringGenerator = filteringGenerators.get();
             try {
                 filteringGenerator.connect(generator);
-                super.write(filteringGenerator, event);
+                delegate.write(filteringGenerator, event);
                 
             } catch (RuntimeException | IOException e) {
                 filteringGenerators.remove();
