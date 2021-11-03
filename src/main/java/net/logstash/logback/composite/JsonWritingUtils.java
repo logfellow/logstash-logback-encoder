@@ -16,12 +16,19 @@
 package net.logstash.logback.composite;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 
 /**
  * Utilities for writing JSON
@@ -171,4 +178,102 @@ public class JsonWritingUtils {
         return fieldName != null && !fieldName.equals(LogstashCommonFieldNames.IGNORE_FIELD_INDICATOR);
     }
 
+    /**
+     * Helper method to try to call appropriate write method for given
+     * untyped Object. At this point, no structural conversions should be done,
+     * only simple basic types are to be coerced as necessary.
+     *
+     * @param generator the {@link JsonGenerator} to produce JSON content
+     * @param value Value to write
+     *
+     * @throws IOException if there is either an underlying I/O problem or encoding
+     *    issue at format layer
+     */
+    public static void writeSimpleObject(JsonGenerator generator, Object value) throws IOException {
+        if (value == null) {
+            generator.writeNull();
+            return;
+        }
+        if (value instanceof String) {
+            generator.writeString((String) value);
+            return;
+        }
+        if (value instanceof Number) {
+            Number n = (Number) value;
+            if (n instanceof Integer) {
+                generator.writeNumber(n.intValue());
+                return;
+            }
+            if (n instanceof Long) {
+                generator.writeNumber(n.longValue());
+                return;
+            }
+            if (n instanceof Double) {
+                generator.writeNumber(n.doubleValue());
+                return;
+            }
+            if (n instanceof Float) {
+                generator.writeNumber(n.floatValue());
+                return;
+            }
+            if (n instanceof Short) {
+                generator.writeNumber(n.shortValue());
+                return;
+            }
+            if (n instanceof Byte) {
+                generator.writeNumber(n.byteValue());
+                return;
+            }
+            if (n instanceof BigInteger) {
+                generator.writeNumber((BigInteger) n);
+                return;
+            }
+            if (n instanceof BigDecimal) {
+                generator.writeNumber((BigDecimal) n);
+                return;
+            }
+            if (n instanceof AtomicInteger) {
+                generator.writeNumber(((AtomicInteger) n).get());
+                return;
+            }
+            if (n instanceof AtomicLong) {
+                generator.writeNumber(((AtomicLong) n).get());
+                return;
+            }
+        }
+        if (value instanceof byte[]) {
+            generator.writeBinary((byte[]) value);
+            return;
+        }
+        if (value instanceof Boolean) {
+            generator.writeBoolean((Boolean) value);
+            return;
+        }
+        if (value instanceof AtomicBoolean) {
+            generator.writeBoolean(((AtomicBoolean) value).get());
+            return;
+        }
+        if (value instanceof JsonNode) {
+            JsonNode node = (JsonNode) value;
+            
+            if (node instanceof NullNode) {
+                generator.writeNull();
+            } else {
+                /*
+                 * Ask the JsonNode to serialize itself using the supplied JsonGenerator
+                 * but without SerializerProvider (last parameter set to 'null').
+                 * 
+                 * This works except for:
+                 * - NullNode: the case is already handled above
+                 * - POJONode: this type of node is definitely not a "simple type" and requires
+                 *             the help of an ObjectCodec to be serialized. Attempts to serialize
+                 *             a POJONode with this method will throw a NullPointerException.
+                 * 
+                 */
+                node.serialize(generator, null);
+            }
+            return;
+        }
+        throw new IllegalArgumentException("Can only serialize simple wrapper types (type passed " + value.getClass().getName() + ")");
+    }
 }

@@ -35,17 +35,4 @@ public interface NodeWriter<Event> {
      * @throws IOException if an I/O error occurs
      */
     void write(JsonGenerator generator, Event event) throws IOException;
-
-    /**
-     * Returns true if this node should be written.
-     * If this returns {@code false}, then {@link #write(JsonGenerator, Object)} should not be called.
-     *
-     * This is used to potentially omit fields containing this node
-     * (e.g. for omitting empty values)
-     * 
-     * @param generator the generator to which to write the node
-     * @param event the event from which to get data to write
-     * @return {@code true} if this node should be written.
-     */
-    boolean shouldWrite(JsonGenerator generator, Event event);
 }

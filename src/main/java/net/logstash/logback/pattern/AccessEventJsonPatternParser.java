@@ -29,37 +29,25 @@ public class AccessEventJsonPatternParser extends AbstractJsonPatternParser<IAcc
     public AccessEventJsonPatternParser(final ContextAware contextAware, final JsonFactory jsonFactory) {
         super(contextAware, jsonFactory);
         
-        addOperation(new NullNaValueOperation());
+        addOperation("nullNA", new NullNaValueOperation());
     }
     
-    protected class NullNaValueOperation extends AbstractJsonPatternParser<IAccessEvent>.Operation {
-
+    protected class NullNaValueOperation extends AbstractJsonPatternParser<IAccessEvent>.Operation<String> {
         public NullNaValueOperation() {
-            super("nullNA", true);
+            super(true);
         }
 
         @Override
         public ValueGetter<String, IAccessEvent> createValueGetter(String data) {
-            return new NullNaValueTransformer<>(makeLayoutValueGetter(data));
+            return makeLayoutValueGetter(data).andThen(this::convert);
         }
         
-    }
-
-    protected static class NullNaValueTransformer<Event> implements ValueGetter<String, Event> {
-
-        private final ValueGetter<String, Event> generator;
-
-        NullNaValueTransformer(final ValueGetter<String, Event> generator) {
-            this.generator = generator;
-        }
-
-        @Override
-        public String getValue(final Event event) {
-            final String value = generator.getValue(event);
+        private String convert(final String value) {
             return "-".equals(value) ? null : value;
         }
     }
 
+    
     @Override
     protected PatternLayoutBase<IAccessEvent> createLayout() {
         return new PatternLayout();
