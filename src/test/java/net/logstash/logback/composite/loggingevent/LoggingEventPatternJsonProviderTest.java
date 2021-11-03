@@ -16,8 +16,8 @@
 package net.logstash.logback.composite.loggingevent;
 
 import net.logstash.logback.composite.AbstractPatternJsonProvider;
+import net.logstash.logback.composite.AbstractPatternJsonProviderTest;
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
-import net.logstash.logback.pattern.LoggingEventJsonPatternParser;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonFactory;
@@ -25,11 +25,16 @@ import com.fasterxml.jackson.core.JsonFactory;
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public class LoggingEventPatternJsonProvider extends AbstractPatternJsonProvider<ILoggingEvent> {
+public class LoggingEventPatternJsonProviderTest extends AbstractPatternJsonProviderTest<ILoggingEvent> {
     
     @Override
-    protected AbstractJsonPatternParser<ILoggingEvent> createParser(JsonFactory jsonFactory) {
-        return new LoggingEventJsonPatternParser(this, jsonFactory);
+    protected AbstractPatternJsonProvider<ILoggingEvent> createProvider() {
+        return new LoggingEventPatternJsonProvider() {
+            @Override
+            protected AbstractJsonPatternParser<ILoggingEvent> createParser(JsonFactory jsonFactory) {
+                // The base class needs to hook into the parser for some assertions
+                return decorateParser(super.createParser(jsonFactory));
+            }
+        };
     }
-
 }

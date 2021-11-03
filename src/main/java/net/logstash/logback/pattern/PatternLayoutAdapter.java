@@ -15,35 +15,19 @@
  */
 package net.logstash.logback.pattern;
 
-import java.util.Objects;
-
-import net.logstash.logback.util.DelegatingContext;
-import net.logstash.logback.util.DelegatingStatusManager;
-import net.logstash.logback.util.NoopStatusManager;
-
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.pattern.Converter;
 import ch.qos.logback.core.pattern.LiteralConverter;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.pattern.PostCompileProcessor;
-import ch.qos.logback.core.status.Status;
-import ch.qos.logback.core.status.StatusManager;
 
 /**
  * Adapter around a {@link PatternLayoutBase} to allow writing the pattern into a supplied {@link StringBuilder}
  * instead of returning a String.
  * 
- * The adapter also throws an {@link IllegalArgumentException} when started when the configured pattern is not a
- * valid pattern layout instead of simply emitting an ERROR status.
- * 
  * @author brenuart
  */
 public class PatternLayoutAdapter<E> {
-    /**
-     * The wrapped pattern layout instance
-     */
-    private final PatternLayoutBase<E> layout;
-    
     /**
      * The "head" converter of the pattern.
      * Initialized when the pattern is started.
@@ -51,65 +35,10 @@ public class PatternLayoutAdapter<E> {
      */
     private Converter<E> head;
 
-    /**
-     * The Logback context given to the adapted {@link PatternLayoutBase} instrumented to throw an
-     * exception when an ERROR status is logged.
-     */
-    private ErrorCaptureContext errorThrowingContext;
-    
-    
     public PatternLayoutAdapter(PatternLayoutBase<E> layout) {
-        this.layout = Objects.requireNonNull(layout);
-        
-        if (layout.getContext() != null) {
-            setContext(layout.getContext());
-        }
+        layout.setPostCompileProcessor(new HeadConverterCapture());
+        layout.start();
     }
-    
-    /**
-     * Set the {@link Context}
-     * 
-     * @param context the context
-     */
-    public void setContext(Context context) {
-        this.errorThrowingContext = new ErrorCaptureContext(Objects.requireNonNull(context));
-        this.layout.setContext(this.errorThrowingContext);
-    }
-    
-    /**
-     * Set the layout pattern
-     * 
-     * @param pattern the layout pattern
-     */
-    public void setPattern(String pattern) {
-        this.layout.setPattern(pattern);
-    }
-    
-    
-    /**
-     * Start the underlying PatternLayoutBase and throw an {@link IllegalArgumentException} if the
-     * configured pattern is not a valid PatternLayout.
-     * 
-     * @throws IllegalArgumentException thrown when the configured pattern is not a valid PatternLayout
-     */
-    public void start() throws IllegalArgumentException {
-        if (layout.isStarted()) {
-            throw new IllegalStateException("Layout is already started");
-        }
-        if (errorThrowingContext == null) {
-            throw new IllegalStateException("Context has not been set");
-        }
-        
-        try {
-            errorThrowingContext.setThrowException(true);
-
-            layout.setPostCompileProcessor(new HeadConverterCapture());
-            layout.start();
-        } finally {
-            errorThrowingContext.setThrowException(false);
-        }
-    }
-    
     
     /**
      * Apply the PatternLayout to the <em>event</em> and write result into the supplied {@link StringBuilder}.
@@ -172,54 +101,6 @@ public class PatternLayoutAdapter<E> {
         @Override
         public void process(Context context, Converter<E> head) {
             PatternLayoutAdapter.this.head = head;
-        }
-    }
-    
-    
-    /**
-     * A {@link DelegatingContext} throwing an {@link IllegalArgumentException} exception when an
-     * ERROR status is emitted.
-     */
-    private static class ErrorCaptureContext extends DelegatingContext {
-        private ExceptionThrowingStatusManager exceptionThrowingStatusManager;
-        
-        ErrorCaptureContext(Context delegate) {
-            super(delegate);
-        }
-        
-        public void setThrowException(boolean throwException) {
-            if (throwException) {
-                StatusManager sm = super.getStatusManager();
-                if (sm == null) {
-                    sm = NoopStatusManager.INSTANCE;
-                }
-                this.exceptionThrowingStatusManager = new ExceptionThrowingStatusManager(sm);
-            } else {
-                this.exceptionThrowingStatusManager = null;
-            }
-        }
-        
-        @Override
-        public StatusManager getStatusManager() {
-            if (exceptionThrowingStatusManager != null) {
-                return exceptionThrowingStatusManager;
-            } else {
-                return super.getStatusManager();
-            }
-        }
-    }
-
-    private static class ExceptionThrowingStatusManager extends DelegatingStatusManager {
-        ExceptionThrowingStatusManager(StatusManager delegate) {
-            super(delegate);
-        }
-        
-        @Override
-        public void add(Status status) {
-            super.add(status);
-            if (status.getLevel() == Status.ERROR) {
-                throw new IllegalArgumentException(status.getMessage(), status.getThrowable());
-            }
         }
     }
 }

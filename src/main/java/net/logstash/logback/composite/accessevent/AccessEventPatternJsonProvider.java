@@ -29,7 +29,7 @@ public class AccessEventPatternJsonProvider extends AbstractPatternJsonProvider<
 
     @Override
     protected AbstractJsonPatternParser<IAccessEvent> createParser(JsonFactory jsonFactory) {
-        return new AccessEventJsonPatternParser(getContext(), jsonFactory);
+        return new AccessEventJsonPatternParser(this, jsonFactory);
     }
 
 }

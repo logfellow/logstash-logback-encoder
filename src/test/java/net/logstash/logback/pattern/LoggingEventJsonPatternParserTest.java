@@ -17,13 +17,12 @@ package net.logstash.logback.pattern;
 
 import static org.mockito.BDDMockito.given;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Context;
-import com.fasterxml.jackson.core.JsonFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -50,56 +49,56 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
     }
 
     @Override
-    protected AbstractJsonPatternParser<ILoggingEvent> createParser(Context context, JsonFactory jsonFactory) {
-        return new LoggingEventJsonPatternParser(context, jsonFactory);
+    protected AbstractJsonPatternParser<ILoggingEvent> createParser() {
+        return new LoggingEventJsonPatternParser(contextAware, jsonFactory);
     }
 
     @Test
-    public void shouldRunPatternLayoutConversions() throws Exception {
+    public void shouldRunPatternLayoutConversions() throws IOException {
 
-        String pattern = toJson(
-                  "{                      "
-                + "    'level': '%level'  "
-                + "}                      ");
+        String pattern = ""
+                + "{\n"
+                + "    \"level\": \"%level\"\n"
+                + "}";
 
-        String expected = toJson(
-                  "{                      "
-                + "    'level': 'DEBUG'   "
-                + "}                      ");
+        String expected = ""
+                + "{\n"
+                + "    \"level\": \"DEBUG\"\n"
+                + "}";
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldAllowIndividualMdcItemsToBeIncludedUsingConverter() throws Exception {
+    public void shouldAllowIndividualMdcItemsToBeIncludedUsingConverter() throws IOException {
 
-        String pattern = toJson(
-                  "{                             "
-                + "    'mdc.key1': '%mdc{key1}'  "
-                + "}                             ");
+        String pattern = ""
+                + "{\n"
+                + "    \"mdc.key1\": \"%mdc{key1}\"\n"
+                + "}";
 
-        String expected = toJson(
-                  "{                             "
-                + "    'mdc.key1': 'value1'      "
-                + "}                             ");
+        String expected = ""
+                + "{\n"
+                + "    \"mdc.key1\": \"value1\"\n"
+                + "}";
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldOmitNullMdcValue() throws Exception {
+    public void shouldOmitNullMdcValue() throws IOException {
         parser.setOmitEmptyFields(true);
 
-        String pattern = toJson(
-                  "{                              "
-                + "    'mdc.key1': '%mdc{key1}',  "
-                + "    'mdc.key3': '%mdc{key3}'   "
-                + "}                              ");
+        String pattern = ""
+                + "{\n"
+                + "    \"mdc.key1\": \"%mdc{key1}\",\n"
+                + "    \"mdc.key3\": \"%mdc{key3}\"\n"
+                + "}";
 
-        String expected = toJson(
-                  "{                              "
-                + "    'mdc.key1': 'value1'       "
-                + "}                              ");
+        String expected = ""
+                + "{\n"
+                + "    \"mdc.key1\": \"value1\"\n"
+                + "}";
 
         verifyFields(pattern, expected);
     }
