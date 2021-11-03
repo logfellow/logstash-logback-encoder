@@ -17,8 +17,8 @@ package net.logstash.logback.pattern;
 
 import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Context;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
-import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonFactory;
 
 /**
@@ -26,8 +26,8 @@ import com.fasterxml.jackson.core.JsonFactory;
  */
 public class LoggingEventJsonPatternParser extends AbstractJsonPatternParser<ILoggingEvent> {
 
-    public LoggingEventJsonPatternParser(final ContextAware contextAware, final JsonFactory jsonFactory) {
-        super(contextAware, jsonFactory);
+    public LoggingEventJsonPatternParser(final Context context, final JsonFactory jsonFactory) {
+        super(context, jsonFactory);
     }
 
     @Override

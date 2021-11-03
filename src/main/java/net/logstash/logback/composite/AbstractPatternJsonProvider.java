@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.Objects;
 
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
+import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternException;
 import net.logstash.logback.pattern.NodeWriter;
 
 import ch.qos.logback.access.spi.IAccessEvent;
@@ -79,7 +80,13 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
         if (jsonFactory == null) {
             throw new IllegalStateException("JsonFactory has not been set");
         }
-        initializeNodeWriter();
+        
+        try {
+            this.nodeWriter = initializeNodeWriter();
+        } catch (JsonPatternException e) {
+            this.nodeWriter = null;
+            addError("Invalid [pattern]: " + e.getMessage(), e);
+        }
         
         super.start();
     }
@@ -87,11 +94,14 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
     
     /**
      * Parses the pattern into a {@link NodeWriter}.
+     * 
+     * @return a {@link NodeWriter}
+     * @throws JsonPatternException thrown in case of invalid pattern
      */
-    private void initializeNodeWriter() {
+    private NodeWriter<Event> initializeNodeWriter() throws JsonPatternException {
         AbstractJsonPatternParser<Event> parser = createParser(this.jsonFactory);
         parser.setOmitEmptyFields(omitEmptyFields);
-        this.nodeWriter = parser.parse(pattern);
+        return parser.parse(pattern);
     }
     
 

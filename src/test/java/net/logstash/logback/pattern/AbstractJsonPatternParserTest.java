@@ -16,68 +16,58 @@
 package net.logstash.logback.pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.BDDMockito.given;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
 
+import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternException;
+import net.logstash.logback.test.AbstractLogbackTest;
+
 import ch.qos.logback.core.Context;
-import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 @ExtendWith(MockitoExtension.class)
-public abstract class AbstractJsonPatternParserTest<Event> {
+public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogbackTest {
 
-    @Mock(lenient = true)
-    protected ContextAware contextAware;
-
-    protected JsonFactory jsonFactory;
-
-    private JsonGenerator jsonGenerator;
-
-    private StringWriter buffer = new StringWriter();
+    private JsonFactory jsonFactory = new MappingJsonFactory();
 
     private Event event;
 
     protected AbstractJsonPatternParser<Event> parser;
 
-    @Mock
-    private Context context;
 
     @BeforeEach
-    public void setUp() throws Exception {
-
-        event = createEvent();
-
-        given(contextAware.getContext()).willReturn(context);
-
-        jsonFactory = new MappingJsonFactory();
-        jsonGenerator = jsonFactory.createGenerator(buffer);
-
-        parser = createParser();
+    public void setup() throws Exception {
+        super.setup();
+        
+        this.event = createEvent();
+        this.parser = createParser(context, jsonFactory);
     }
 
     protected abstract Event createEvent();
 
-    protected abstract AbstractJsonPatternParser<Event> createParser();
+    protected abstract AbstractJsonPatternParser<Event> createParser(Context context, JsonFactory jsonFactory);
 
     private Map<String, Object> parseJson(final String text) throws IOException {
-        return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() { });
+        try (JsonParser jsonParser = jsonFactory.createParser(text)) {
+            return jsonParser.readValueAs(new TypeReference<Map<String, Object>>() { });
+        }
     }
 
-    protected void verifyFields(String patternJson, String expectedJson) throws IOException {
+    protected void verifyFields(String patternJson, String expectedJson) throws Exception {
 
         Map<String, Object> actualResult = parseJson(process(patternJson));
         Map<String, Object> expectedResult = parseJson(expectedJson);
@@ -85,329 +75,327 @@ public abstract class AbstractJsonPatternParserTest<Event> {
         assertThat(actualResult).isEqualTo(expectedResult);
     }
 
-    private String process(final String patternJson) throws IOException {
+    private String process(final String patternJson) throws JsonPatternException, IOException {
         NodeWriter<Event> root = parser.parse(patternJson);
         assertThat(root).isNotNull();
         
-        jsonGenerator.writeStartObject();
-        root.write(jsonGenerator, event);
-        jsonGenerator.writeEndObject();
-        jsonGenerator.flush();
-
+        StringWriter buffer = new StringWriter();
+        
+        try (JsonGenerator jsonGenerator = jsonFactory.createGenerator(buffer)) {
+            jsonGenerator.writeStartObject();
+            root.write(jsonGenerator, event);
+            jsonGenerator.writeEndObject();
+            jsonGenerator.flush();
+        }
+        
         return buffer.toString();
     }
 
     @Test
-    public void shouldKeepPrimitiveConstantValues() throws IOException {
+    public void shouldKeepPrimitiveConstantValues() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"const\": null,\n"
-                + "    \"string\": \"value\",\n"
-                + "    \"integer\": 1024,\n"
-                + "    \"double\": 0.1,\n"
-                + "    \"bool\": false\n"
-                + "}";
+        String pattern = toJson(
+                  "{                        "
+                + "    'const'  : null,     "
+                + "    'string' : 'value',  "
+                + "    'integer': 1024,     "
+                + "    'double' : 0.1,      "
+                + "    'bool'   : false     "
+                + "}                        ");
 
-        String expected = ""
-                + "{\n"
-                + "    \"const\": null,\n"
-                + "    \"string\": \"value\",\n"
-                + "    \"integer\": 1024,\n"
-                + "    \"double\": 0.1,\n"
-                + "    \"bool\": false\n"
-                + "}";
-
-        verifyFields(pattern, expected);
-    }
-
-    @Test
-    public void shouldAllowUsingArraysAsValues() throws IOException {
-
-        String pattern = ""
-                + "{\n"
-                + "    \"list\": [\n"
-                + "        \"value\",\n"
-                + "        100,\n"
-                + "        0.33,\n"
-                + "        true\n"
-                + "    ]\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "    \"list\": [\n"
-                + "        \"value\",\n"
-                + "        100,\n"
-                + "        0.33,\n"
-                + "        true\n"
-                + "    ]\n"
-                + "}";
+        String expected = toJson(
+                  "{                        "
+                + "    'const'  : null,     "
+                + "    'string' : 'value',  "
+                + "    'integer': 1024,     "
+                + "    'double' : 0.1,      "
+                + "    'bool'   : false     "
+                + "}                        ");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldAllowUsingObjectsAsValues() throws IOException {
+    public void shouldAllowUsingArraysAsValues() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"map\": {\n"
-                + "        \"string\": \"value\",\n"
-                + "        \"int\": 100,\n"
-                + "        \"double\": 0.33,\n"
-                + "        \"bool\": true\n"
-                + "    }\n"
-                + "}";
+        String pattern = toJson(
+                  "{                    "
+                + "    'list': [        "
+                + "        'value',     "
+                + "        100,         "
+                + "        0.33,        "
+                + "        true         "
+                + "    ]                "
+                + "}                    ");
 
-        String expected = ""
-                + "{\n"
-                + "    \"map\": {\n"
-                + "        \"string\": \"value\",\n"
-                + "        \"int\": 100,\n"
-                + "        \"double\": 0.33,\n"
-                + "        \"bool\": true\n"
-                + "    }\n"
-                + "}";
-
-        verifyFields(pattern, expected);
-    }
-
-    @Test
-    public void asLongShouldTransformTextValueToLong() throws IOException {
-
-        String pattern = ""
-                + "{\n"
-                + "    \"key\": \"#asLong{555}\"\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "    \"key\": 555\n"
-                + "}";
+        String expected = toJson(
+                  "{                    "
+                + "    'list': [        "
+                + "        'value',     "
+                + "        100,         "
+                + "        0.33,        "
+                + "        true         "
+                + "    ]                "
+                + "}                    ");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void asDoubleShouldTransformTextValueToDouble() throws IOException {
+    public void shouldAllowUsingObjectsAsValues() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"key\": \"#asDouble{0.5}\"\n"
-                + "}";
+        String pattern = toJson(
+                  "{                              "
+                + "    'map': {                   "
+                + "        'string': 'value',     "
+                + "        'int'   : 100,         "
+                + "        'double': 0.33,        "
+                + "        'bool'  : true         "
+                + "    }                          "
+                + "}                              ");
 
-        String expected = ""
-                + "{\n"
-                + "    \"key\": 0.5\n"
-                + "}";
-
-        verifyFields(pattern, expected);
-    }
-
-    @Test
-    public void asJsonShouldTransformTextValueToJson() throws IOException {
-
-        String pattern = ""
-                + "{\n"
-                + "    \"key1\": \"#asJson{true}\",\n"
-                + "    \"key2\": \"#asJson{123}\",\n"
-                + "    \"key3\": \"#asJson{123.4}\",\n"
-                + "    \"key4\": \"#asJson{\\\"123\\\"}\",\n"
-                + "    \"key5\": \"#asJson{[1, 2]}\",\n"
-                + "    \"key6\": \"#asJson{[1, \\\"2\\\"]}\",\n"
-                + "    \"key7\": \"#asJson{{\\\"field\\\":\\\"value\\\"}}\",\n"
-                + "    \"key8\": \"#asJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\",\n"
-                + "    \"key9\": \"#asJson{one two three}\",\n"
-                + "    \"key10\": \"#asJson{1 suffix}\"\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "    \"key1\": true,\n"
-                + "    \"key2\": 123,\n"
-                + "    \"key3\": 123.4,\n"
-                + "    \"key4\": \"123\",\n"
-                + "    \"key5\": [1, 2],\n"
-                + "    \"key6\": [1, \"2\"],\n"
-                + "    \"key7\": {\"field\":\"value\"},\n"
-                + "    \"key8\": {\"field\":\"value\", \"num\":123},\n"
-                + "    \"key9\": null,\n"
-                + "    \"key10\": null\n"
-                + "}";
+        String expected = toJson(
+                  "{                              "
+                + "    'map': {                   "
+                + "        'string': 'value',     "
+                + "        'int'   : 100,         "
+                + "        'double': 0.33,        "
+                + "        'bool'  : true         "
+                + "    }                          "
+                + "}                              ");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void tryJsonShouldTransformTextValueToJson() throws IOException {
+    public void asLongShouldTransformTextValueToLong() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"key1\": \"#tryJson{true}\",\n"
-                + "    \"key2\": \"#tryJson{123}\",\n"
-                + "    \"key3\": \"#tryJson{123.4}\",\n"
-                + "    \"key4\": \"#tryJson{\\\"123\\\"}\",\n"
-                + "    \"key5\": \"#tryJson{[1, 2]}\",\n"
-                + "    \"key6\": \"#tryJson{[1, \\\"2\\\"]}\",\n"
-                + "    \"key7\": \"#tryJson{{\\\"field\\\":\\\"value\\\"}}\",\n"
-                + "    \"key8\": \"#tryJson{{\\\"field\\\":\\\"value\\\",\\\"num\\\":123}}\",\n"
-                + "    \"key9\": \"#tryJson{{\\\"field\\\":\\\"value\\\"} extra}\",\n"
-                + "    \"key10\": \"#tryJson{one two three}\",\n"
-                + "    \"key11\": \"#tryJson{ false }\",\n"
-                + "    \"key12\": \"#tryJson{ false true}\",\n"
-                + "    \"key13\": \"#tryJson{123 foo}\",\n"
-                + "    \"key14\": \"#tryJson{ 123 }\"\n"
-                + "}";
+        String pattern = toJson(
+                "{ 'key': '#asLong{555}' }");
 
-        String expected = ""
-                + "{\n"
-                + "    \"key1\": true,\n"
-                + "    \"key2\": 123,\n"
-                + "    \"key3\": 123.4,\n"
-                + "    \"key4\": \"123\",\n"
-                + "    \"key5\": [1, 2],\n"
-                + "    \"key6\": [1, \"2\"],\n"
-                + "    \"key7\": {\"field\":\"value\"},\n"
-                + "    \"key8\": {\"field\":\"value\", \"num\":123},\n"
-                + "    \"key9\": \"{\\\"field\\\":\\\"value\\\"} extra\",\n"
-                + "    \"key10\": \"one two three\",\n"
-                + "    \"key11\": false,\n"
-                + "    \"key12\": \" false true\",\n"
-                + "    \"key13\": \"123 foo\",\n"
-                + "    \"key14\": 123\n"
-                + "}";
+        String expected = toJson(
+                "{ 'key': 555 }");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldSendNonTransformableValuesAsNulls() throws IOException {
+    public void asDoubleShouldTransformTextValueToDouble() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"key1\": \"#asLong{abc}\",\n"
-                + "    \"key2\": \"test\",\n"
-                + "    \"key3\": \"#asDouble{abc}\",\n"
-                + "    \"key4\": \"#asJson{[1, 2}\"\n"
-                + "}";
+        String pattern = toJson(
+                "{ 'key': '#asDouble{0.5}' }");
 
-        String expected = ""
-                + "{\n"
-                + "    \"key1\": null,\n"
-                + "    \"key2\": \"test\",\n"
-                + "    \"key3\": null,\n"
-                + "    \"key4\": null\n"
-                + "}";
+        String expected = toJson(
+                "{ 'key': 0.5 }");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldKeepUnrecognisedOrInvalidOperationsAsStringLiterals() throws IOException {
+    public void asJsonShouldTransformTextValueToJson() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"key1\": \"#asDouble{0\",\n"
-                + "    \"key2\": \"#asDouble\",\n"
-                + "    \"key3\": \"#something\",\n"
-                + "    \"key4\": \"#asJson{[1, 2]\"\n"
-                + "}";
+        String pattern = toJson(
+                  "{                                                                 "
+                + "    'key1' : '#asJson{true}',                                     "
+                + "    'key2' : '#asJson{123}',                                      "
+                + "    'key3' : '#asJson{123.4}',                                    "
+                + "    'key4' : '#asJson{\\'123\\'}',                                "
+                + "    'key5' : '#asJson{[1, 2]}',                                   "
+                + "    'key6' : '#asJson{[1, \\'2\\']}',                             "
+                + "    'key7' : '#asJson{{\\'field\\':\\'value\\'}}',                "
+                + "    'key8' : '#asJson{{\\'field\\':\\'value\\',\\'num\\':123}}',  "
+                + "    'key9' : '#asJson{one two three}',                            "
+                + "    'key10': '#asJson{1 suffix}'                                  "
+                + "}                                                                 ");
 
-        String expected = ""
-                + "{\n"
-                + "    \"key1\": \"#asDouble{0\",\n"
-                + "    \"key2\": \"#asDouble\",\n"
-                + "    \"key3\": \"#something\",\n"
-                + "    \"key4\": \"#asJson{[1, 2]\"\n"
-                + "}";
+        String expected = toJson(
+                  "{                                                                 "
+                + "    'key1' : true,                                                "
+                + "    'key2' : 123,                                                 "
+                + "    'key3' : 123.4,                                               "
+                + "    'key4' : '123',                                               "
+                + "    'key5' : [1, 2],                                              "
+                + "    'key6' : [1, '2'],                                            "
+                + "    'key7' : {'field':'value'},                                   "
+                + "    'key8' : {'field':'value', 'num':123},                        "
+                + "    'key9' : null,                                                "
+                + "    'key10': null                                                 "
+                + "}                                                                 ");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldOmitNullConstants() throws IOException {
+    public void tryJsonShouldTransformTextValueToJson() throws Exception {
+
+        String pattern = toJson(
+                  "{                                                                  "
+                + "    'key1' : '#tryJson{true}',                                     "
+                + "    'key2' : '#tryJson{123}',                                      "
+                + "    'key3' : '#tryJson{123.4}',                                    "
+                + "    'key4' : '#tryJson{\\'123\\'}',                                "
+                + "    'key5' : '#tryJson{[1, 2]}',                                   "
+                + "    'key6' : '#tryJson{[1, \\'2\\']}',                             "
+                + "    'key7' : '#tryJson{{\\'field\\':\\'value\\'}}',                "
+                + "    'key8' : '#tryJson{{\\'field\\':\\'value\\',\\'num\\':123}}',  "
+                + "    'key9' : '#tryJson{{\\'field\\':\\'value\\'} extra}',          "
+                + "    'key10': '#tryJson{one two three}',                            "
+                + "    'key11': '#tryJson{ false }',                                  "
+                + "    'key12': '#tryJson{ false true}',                              "
+                + "    'key13': '#tryJson{123 foo}',                                  "
+                + "    'key14': '#tryJson{ 123 }'                                     "
+                + "}                                                                  ");
+
+        String expected = toJson(
+                  "{                                                                  "
+                + "    'key1' : true,                                                 "
+                + "    'key2' : 123,                                                  "
+                + "    'key3' : 123.4,                                                "
+                + "    'key4' : '123',                                                "
+                + "    'key5' : [1, 2],                                               "
+                + "    'key6' : [1, '2'],                                             "
+                + "    'key7' : {'field':'value'},                                    "
+                + "    'key8' : {'field':'value', 'num':123},                         "
+                + "    'key9' : '{\\'field\\':\\'value\\'} extra',                    "
+                + "    'key10': 'one two three',                                      "
+                + "    'key11': false,                                                "
+                + "    'key12': ' false true',                                        "
+                + "    'key13': '123 foo',                                            "
+                + "    'key14': 123                                                   "
+                + "}                                                                  ");
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void shouldSendNonTransformableValuesAsNulls() throws Exception {
+
+        String pattern = toJson(
+                  "{                               "
+                + "    'key1': '#asLong{abc}',     "
+                + "    'key2': 'test',             "
+                + "    'key3': '#asDouble{abc}',   "
+                + "    'key4': '#asJson{[1, 2}'    "
+                + "}                               ");
+
+        String expected = toJson(
+                  "{                               "
+                + "    'key1': null,               "
+                + "    'key2': 'test',             "
+                + "    'key3': null,               "
+                + "    'key4': null                "
+                + "}                               ");
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void shouldKeepUnrecognisedOrInvalidOperationsAsStringLiterals() throws Exception {
+
+        String pattern = toJson(
+                  "{                               "
+                + "    'key1': '#asDouble{0',      "
+                + "    'key2': '#asDouble',        "
+                + "    'key3': '#something',       "
+                + "    'key4': '#asJson{[1, 2]'    "
+                + "}                               ");
+
+        String expected = toJson(
+                  "{                               "
+                + "    'key1': '#asDouble{0',      "
+                + "    'key2': '#asDouble',        "
+                + "    'key3': '#something',       "
+                + "    'key4': '#asJson{[1, 2]'    "
+                + "}                               ");
+
+        verifyFields(pattern, expected);
+    }
+
+    @Test
+    public void shouldOmitNullConstants() throws Exception {
         parser.setOmitEmptyFields(true);
 
-        String pattern = ""
-                + "{\n"
-                + "    \"const\": null\n"
-                + "}";
+        String pattern = toJson(
+                "{ 'const': null }");
 
-        String expected = ""
-                + "{\n"
-                + "}";
+        String expected = toJson(
+                "{}");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldOmitEmptyConstants() throws IOException {
+    public void shouldOmitEmptyConstants() throws Exception {
         parser.setOmitEmptyFields(true);
 
-        String pattern = ""
-                + "{\n"
-                + "    \"string\": \"\",\n"
-                + "    \"list\": [\n"
-                + "    ],\n"
-                + "    \"map\": {\n"
-                + "    }\n"
-                + "}";
+        String pattern = toJson(
+                  "{                  "
+                + "    'string': '',  "
+                + "    'list'  : [],  "
+                + "    'map'   : {}   "
+                + "}                  ");
 
-        String expected = ""
-                + "{\n"
-                + "}";
+        String expected = toJson("{}");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldOmitEmptyJsonValues() throws IOException {
+    public void shouldOmitEmptyJsonValues() throws Exception {
         parser.setOmitEmptyFields(true);
-        String pattern = ""
-                + "{\n"
-                + "    \"null\": \"#asJson{null}\",\n"
-                + "    \"string\": \"#asJson{}\",\n"
-                + "    \"list\": \"#asJson{[]}\",\n"
-                + "    \"object\": \"#asJson{{}}\"\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "}";
+        String pattern = toJson(
+                  "{                             "
+                + "  'null'   : '#asJson{null}', "
+                + "  'string:': '#asJson{}',     "
+                + "  'list'   : '#asJson{[]}',   "
+                + "  'object' : '#asJson{{}}'    "
+                + "}                             ");
+        
+        String expected = toJson("{}");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void shouldOmitEmptyConstantsRecursively() throws IOException {
+    public void shouldOmitEmptyConstantsRecursively() throws Exception {
         parser.setOmitEmptyFields(true);
 
-        String pattern = ""
-                + "{\n"
-                + "    \"object\": {\n"
-                + "        \"string\": \"\",\n"
-                + "        \"list\": [\n"
-                + "        ],\n"
-                + "        \"map\": {\n"
-                + "        }\n"
-                + "    },\n"
-                + "    \"list\": [\n"
-                + "        {\n"
-                + "            \"string\": \"\",\n"
-                + "            \"list\": [\n"
-                + "            ],\n"
-                + "            \"map\": {\n"
-                + "            }\n"
-                + "        }\n"
-                + "    ]\n"
-                + "}";
-
-        String expected = ""
-                + "{\n"
-                + "}";
+        String pattern = toJson(
+                  "{                          "
+                + "    'object': {            "
+                + "        'string': '',      "
+                + "        'list'  : [],      "
+                + "        'map'   : {}       "
+                + "    },                     "
+                + "    'list': [              "
+                + "        {                  "
+                + "            'string': '',  "
+                + "            'list'  : [],  "
+                + "            'map'   : {}   "
+                + "        }                  "
+                + "    ]                      "
+                + "}                          ");
+        
+        String expected = toJson("{}");
 
         verifyFields(pattern, expected);
     }
 
+    
+    @Test
+    public void invalidPatternLayout() throws Exception {
+        assertThatExceptionOfType(JsonPatternException.class).isThrownBy(() -> parser.parse(toJson("{'msg':'%foo'}")));
+    }
+    
+    
+    @Test
+    public void invalidJSON() throws Exception {
+        parser.parse(toJson("{'msg' : '#asJson{foo}' }"));
+        assertThatExceptionOfType(JsonPatternException.class).isThrownBy(() -> parser.parse(toJson("{'msg' = #asJson{foo} }")));
+    }
+    
+    
+    protected static String toJson(String str) {
+        return str.replace("'", "\"");
+    }
 }
