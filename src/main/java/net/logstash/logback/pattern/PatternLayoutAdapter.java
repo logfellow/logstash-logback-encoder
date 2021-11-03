@@ -29,6 +29,7 @@ import ch.qos.logback.core.pattern.PostCompileProcessor;
 import ch.qos.logback.core.status.Status;
 import ch.qos.logback.core.status.StatusManager;
 
+
 /**
  * Adapter around a {@link PatternLayoutBase} to allow writing the pattern into a supplied {@link StringBuilder}
  * instead of returning a String.
@@ -174,8 +175,7 @@ public class PatternLayoutAdapter<E> {
             PatternLayoutAdapter.this.head = head;
         }
     }
-    
-    
+
     /**
      * A {@link DelegatingContext} throwing an {@link IllegalArgumentException} exception when an
      * ERROR status is emitted.

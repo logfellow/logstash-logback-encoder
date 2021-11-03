@@ -48,5 +48,4 @@ public class AccessEventJsonPatternParser extends AbstractJsonPatternParser<IAcc
     protected PatternLayoutBase<IAccessEvent> createLayout() {
         return new PatternLayout();
     }
-
 }

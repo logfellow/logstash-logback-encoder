@@ -321,6 +321,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         if (node.isObject()) {
             return parseObject(location, (ObjectNode) node);
         }
+
         // Anything else, we will be just writing as is (nulls, numbers, booleans and whatnot)
         return new ValueWriter<>(g -> node);
     }
