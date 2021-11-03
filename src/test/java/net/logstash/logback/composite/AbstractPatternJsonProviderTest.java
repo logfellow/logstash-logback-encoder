@@ -15,82 +15,120 @@
  */
 package net.logstash.logback.composite;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-
-import java.io.IOException;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
+import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternException;
 import net.logstash.logback.pattern.NodeWriter;
+import net.logstash.logback.test.AbstractLogbackTest;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import ch.qos.logback.core.status.Status;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-/**
- * This test just verifies that AbstractPatternJsonProvider delegates all the work to Parser.
- *
- * @param <Event> - type of the event (ILoggingEvent, IAccessEvent)
- *
- * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
- */
-@ExtendWith(MockitoExtension.class)
-public abstract class AbstractPatternJsonProviderTest<Event extends DeferredProcessingAware> {
 
-    // What our TestNodeWriter generates when invoked
-    public static final String TEST_NODEWRITER_RESULT = "generated string";
+public class AbstractPatternJsonProviderTest extends AbstractLogbackTest {
 
     @Mock
-    private Event event;
-    
-    @Mock
-    private JsonGenerator generator;
+    private DeferredProcessingAware event;
 
     @Mock
     private JsonFactory jsonFactory;
     
-    private AbstractJsonPatternParser<Event> parser;
-
     @Mock
-    private NodeWriter<Event> nodeWriter;
+    private AbstractJsonPatternParser<DeferredProcessingAware> parser;
 
-    private AbstractPatternJsonProvider<Event> provider;
+    private AbstractPatternJsonProvider<DeferredProcessingAware> provider;
 
+    
     @BeforeEach
-    public void setUp() throws Exception {
-        provider = createProvider();
-    }
-
-    protected abstract AbstractPatternJsonProvider<Event> createProvider();
-
-    protected AbstractJsonPatternParser<Event> decorateParser(AbstractJsonPatternParser<Event> parser) {
-        this.parser = spy(parser);
-        doReturn(nodeWriter).when(this.parser).parse(anyString());
-        return this.parser;
-    }
-
-    @Test
-    public void shouldDelegateToParser() throws IOException {
-        // pattern used does not matter because decorated "parser" will always generate TEST_NODEWRITER_RESULT
-        final String pattern = "{\"key\":\"value\"}";
-        provider.setPattern(pattern);
+    public void setup() throws Exception {
+        super.setup();
+        
+        provider = new AbstractPatternJsonProvider<DeferredProcessingAware>() {
+            @Override
+            protected AbstractJsonPatternParser<DeferredProcessingAware> createParser(JsonFactory jsonFactory) {
+                return parser;
+            }
+        };
+        provider.setContext(context);
         provider.setJsonFactory(jsonFactory);
+    }
+
+    
+    /*
+     * Verify that AbstractPatternJsonProvider delegates all the work to Parser.
+     */
+    @Test
+    public void shouldDelegateToParser() throws Exception {
+        /*
+         * Configure the Parser to returned a mocked NodeWriter
+         */
+        @SuppressWarnings("unchecked")
+        NodeWriter<DeferredProcessingAware> nodeWriter = mock(NodeWriter.class);
+        doReturn(nodeWriter).when(this.parser).parse(anyString());
+        
+        JsonGenerator generator = mock(JsonGenerator.class);
+        
+        /*
+         * Configure and start the provider
+         */
+        final String pattern = "does not matter"; // pattern does not actually matter since we mocked the Parser...
+        provider.setPattern(pattern);
+        provider.setOmitEmptyFields(true);
         provider.start();
 
         // should actually invoke parser with the pattern requested
+        verify(parser).setOmitEmptyFields(true);
         verify(parser).parse(pattern);
         
         provider.writeTo(generator, event);
         
         // and the end result should be what NodeWriter returned by the parser produces
         verify(nodeWriter).write(generator, event);
+    }
+    
+    
+    /*
+     * Test behavior when provider is configured with an invalid pattern.
+     * Expected:
+     * - logs an ERROR
+     * - does not output anything at runtime
+     */
+    @Test
+    public void invalidConfiguration() throws Exception {
+        /*
+         * Make the Parser throw a JsonPatternException to simulate an invalid pattern
+         */
+        doThrow(new JsonPatternException("Invalid pattern")).when(parser).parse(anyString());
+        
+        /*
+         * Configure and start the provider
+         */
+        final String pattern = "does not matter"; // pattern does not actually matter since we mocked the Parser...
+        provider.setPattern(pattern);
+        provider.start();
+        
+        // Provider is started even when pattern is invalid
+        assertThat(provider.isStarted()).isTrue();
+        
+        // An ERROR status describing the problem is emitted
+        assertThat(statusManager.getCopyOfStatusList()).anyMatch(status ->
+                   status.getLevel() == Status.ERROR
+                && status.getMessage().startsWith("Invalid [pattern]")
+                && status.getOrigin() == provider);
 
+        // Provider output "nothing" after a configuration error
+        verifyNoInteractions(jsonFactory);
     }
 }

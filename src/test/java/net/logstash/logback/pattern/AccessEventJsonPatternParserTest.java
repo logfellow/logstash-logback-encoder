@@ -17,9 +17,9 @@ package net.logstash.logback.pattern;
 
 import static org.mockito.BDDMockito.given;
 
-import java.io.IOException;
-
 import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.core.Context;
+import com.fasterxml.jackson.core.JsonFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -42,40 +42,40 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
     }
 
     @Override
-    protected AbstractJsonPatternParser<IAccessEvent> createParser() {
-        return new AccessEventJsonPatternParser(contextAware, jsonFactory);
+    protected AbstractJsonPatternParser<IAccessEvent> createParser(Context context, JsonFactory jsonFactory) {
+        return new AccessEventJsonPatternParser(context, jsonFactory);
     }
 
     @Test
-    public void shouldRunPatternLayoutConversions() throws IOException {
+    public void shouldRunPatternLayoutConversions() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"level\": \"%requestMethod\"\n"
-                + "}";
+        String pattern = toJson(
+                  "{                              "
+                + "    'level': '%requestMethod'  "
+                + "}                              ");
 
-        String expected = ""
-                + "{\n"
-                + "    \"level\": \"PUT\"\n"
-                + "}";
+        String expected = toJson(
+                  "{                              "
+                + "    'level': 'PUT'             "
+                + "}                              ");
 
         verifyFields(pattern, expected);
     }
 
     @Test
-    public void noNaOperationShouldNullifySingleDash() throws IOException {
+    public void noNaOperationShouldNullifySingleDash() throws Exception {
 
-        String pattern = ""
-                + "{\n"
-                + "    \"cookie1\": \"%requestAttribute{MISSING}\",\n"
-                + "    \"cookie2\": \"#nullNA{%requestAttribute{MISSING}}\"\n"
-                + "}";
+        String pattern = toJson(
+                  "{                                                     "
+                + "    'cookie1': '%requestAttribute{MISSING}',          "
+                + "    'cookie2': '#nullNA{%requestAttribute{MISSING}}'  "
+                + "}                                                     ");
 
-        String expected = ""
-                + "{\n"
-                + "    \"cookie1\": \"-\",\n"
-                + "    \"cookie2\": null\n"
-                + "}";
+        String expected = toJson(
+                  "{                                                     "
+                + "    'cookie1': '-',                                   "
+                + "    'cookie2': null                                   "
+                + "}                                                     ");
 
         verifyFields(pattern, expected);
     }
