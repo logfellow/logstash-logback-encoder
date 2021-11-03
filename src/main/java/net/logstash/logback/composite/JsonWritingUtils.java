@@ -259,7 +259,18 @@ public class JsonWritingUtils {
             if (node instanceof NullNode) {
                 generator.writeNull();
             } else {
-                node.serialize(generator, null); //FIXME
+                /*
+                 * Ask the JsonNode to serialize itself using the supplied JsonGenerator
+                 * but without SerializerProvider (last parameter set to 'null').
+                 * 
+                 * This works except for:
+                 * - NullNode: the case is already handled above
+                 * - POJONode: this type of node is definitely not a "simple type" and requires
+                 *             the help of an ObjectCodec to be serialized. Attempts to serialize
+                 *             a POJONode with this method will throw a NullPointerException.
+                 * 
+                 */
+                node.serialize(generator, null);
             }
             return;
         }
