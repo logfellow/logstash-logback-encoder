@@ -32,13 +32,9 @@ public class AccessEventJsonPatternParser extends AbstractJsonPatternParser<IAcc
         addOperation("nullNA", new NullNaValueOperation());
     }
     
-    protected class NullNaValueOperation implements Operation<IAccessEvent, String> {
+    protected class NullNaValueOperation extends TransformingOperation<String> {
         @Override
-        public ValueGetter<String, IAccessEvent> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(this::convert);
-        }
-        
-        private String convert(final String value) {
+        protected String convert(final String value) {
             return "-".equals(value) ? null : value;
         }
     }

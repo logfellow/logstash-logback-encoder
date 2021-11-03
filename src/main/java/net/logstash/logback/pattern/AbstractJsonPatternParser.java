@@ -100,30 +100,35 @@ public abstract class AbstractJsonPatternParser<Event> {
          * @return a {@link ValueGetter} implementing the operation
          * @throws IllegalArgumentException if the supplied data is invalid
          */
-        ValueGetter<T, Event> createValueGetter(String data);
+        ValueGetter<Event, T> createValueGetter(String data);
     }
 
-    protected class AsLongOperation implements Operation<Event, Long> {
+    protected abstract class TransformingOperation<T> implements Operation<Event, T> {
         @Override
-        public ValueGetter<Long, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(Long::parseLong);
-        }
-    }
-
-    protected class AsDoubleOperation implements Operation<Event, Double> {
-        @Override
-        public ValueGetter<Double, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(Double::parseDouble);
-        }
-    }
-
-    protected class AsJsonOperation implements Operation<Event, JsonNode> {
-        @Override
-        public ValueGetter<JsonNode, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(this::convert); //FIXME if constant -> throw exception on invalid json
+        public ValueGetter<Event, T> createValueGetter(String data) {
+            return makeLayoutValueGetter(data).andThen(this::convert);
         }
         
-        private JsonNode convert(final String value) {
+        protected abstract T convert(String value);
+    }
+    
+    protected class AsLongOperation extends TransformingOperation<Long> {
+        @Override
+        protected Long convert(String value) {
+            return Long.parseLong(value);
+        }
+    }
+
+    protected class AsDoubleOperation extends TransformingOperation<Double> {
+        @Override
+        protected Double convert(String value) {
+            return Double.parseDouble(value);
+        }
+    }
+
+    protected class AsJsonOperation extends TransformingOperation<JsonNode> {
+        @Override
+        protected JsonNode convert(final String value) {
             try {
                 return JsonReadingUtils.readFully(jsonFactory, value);
             } catch (IOException e) {
@@ -132,13 +137,9 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
     }
 
-    protected class TryJsonOperation implements Operation<Event, Object> {
+    protected class TryJsonOperation extends TransformingOperation<Object> {
         @Override
-        public ValueGetter<Object, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(this::convert);
-        }
-        
-        private Object convert(final String value) {
+        protected Object convert(final String value) {
             final String trimmedValue = StringUtils.trimToEmpty(value);
             
             try (JsonParser parser = jsonFactory.createParser(trimmedValue)) {
@@ -161,7 +162,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     }
 
     
-    private ValueGetter<?, Event> makeComputableValueGetter(String pattern) {
+    private ValueGetter<Event, ?> makeComputableValueGetter(String pattern) {
         Matcher matcher = OPERATION_PATTERN.matcher(pattern);
 
         if (matcher.matches()) {
@@ -178,7 +179,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         return makeLayoutValueGetter(pattern);
     }
 
-    protected ValueGetter<String, Event> makeLayoutValueGetter(final String data) {
+    protected ValueGetter<Event, String> makeLayoutValueGetter(final String data) {
         /*
          * PatternLayout emits an ERROR status when pattern is null or empty and
          * defaults to an empty string. Better to handle it here to avoid the error
@@ -230,7 +231,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     protected abstract PatternLayoutBase<Event> createLayout();
     
     
-    protected static class LayoutValueGetter<Event> implements ValueGetter<String, Event> {
+    protected static class LayoutValueGetter<Event> implements ValueGetter<Event, String> {
         /**
          * The PatternLayout from which the value is generated
          */
@@ -308,7 +309,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     private NodeWriter<Event> parseNode(JsonPointer location, JsonNode node) throws JsonPatternException {
         if (node.isTextual()) {
             try {
-                ValueGetter<?, Event> getter = makeComputableValueGetter(node.asText());
+                ValueGetter<Event, ?> getter = makeComputableValueGetter(node.asText());
                 return new ValueWriter<>(getter);
             } catch (RuntimeException e) {
                 String msg = "Invalid JSON property '" + location + "' (was '" + node.asText() + "'): " + e.getMessage();
@@ -441,9 +442,9 @@ public abstract class AbstractJsonPatternParser<Event> {
     
     
     protected static class ValueWriter<Event> implements NodeWriter<Event> {
-        private final ValueGetter<?, Event> getter;
+        private final ValueGetter<Event, ?> getter;
 
-        ValueWriter(final ValueGetter<?, Event> getter) {
+        ValueWriter(final ValueGetter<Event, ?> getter) {
             this.getter = getter;
         }
 

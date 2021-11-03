@@ -25,7 +25,7 @@ import java.util.function.Function;
  *
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public interface ValueGetter<T, Event> {
+public interface ValueGetter<Event, T> {
     /**
      * Get the result of applying the ValueGetter to the event
      * 
@@ -48,7 +48,7 @@ public interface ValueGetter<T, Event> {
      *         applies the {@code after} function
      * @throws NullPointerException if after is null
      */
-    default <V> ValueGetter<V, Event> andThen(Function<T, V> after) {
+    default <V> ValueGetter<Event, V> andThen(Function<T, V> after) {
         return event -> {
             T value = getValue(event);
             return after.apply(value);
