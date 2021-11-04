@@ -34,30 +34,37 @@ public class DelegatingStatusManager implements StatusManager {
         this.delegate = delegate;
     }
 
+    @Override
     public void add(Status status) {
         delegate.add(status);
     }
 
+    @Override
     public List<Status> getCopyOfStatusList() {
         return delegate.getCopyOfStatusList();
     }
 
+    @Override
     public int getCount() {
         return delegate.getCount();
     }
 
+    @Override
     public boolean add(StatusListener listener) {
         return delegate.add(listener);
     }
 
+    @Override
     public void remove(StatusListener listener) {
         delegate.remove(listener);
     }
 
+    @Override
     public void clear() {
         delegate.clear();
     }
 
+    @Override
     public List<StatusListener> getCopyOfStatusListenerList() {
         return delegate.getCopyOfStatusListenerList();
     }

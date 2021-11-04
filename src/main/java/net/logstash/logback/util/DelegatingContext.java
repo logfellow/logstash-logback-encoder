@@ -38,46 +38,57 @@ public class DelegatingContext implements Context {
         this.delegate = Objects.requireNonNull(delegate);
     }
 
+    @Override
     public StatusManager getStatusManager() {
         return delegate.getStatusManager();
     }
 
+    @Override
     public Object getObject(String key) {
         return delegate.getObject(key);
     }
 
+    @Override
     public void putObject(String key, Object value) {
         delegate.putObject(key, value);
     }
 
+    @Override
     public String getProperty(String key) {
         return delegate.getProperty(key);
     }
 
+    @Override
     public void putProperty(String key, String value) {
         delegate.putProperty(key, value);
     }
 
+    @Override
     public Map<String, String> getCopyOfPropertyMap() {
         return delegate.getCopyOfPropertyMap();
     }
 
+    @Override
     public String getName() {
         return delegate.getName();
     }
 
+    @Override
     public void setName(String name) {
         delegate.setName(name);
     }
 
+    @Override
     public long getBirthTime() {
         return delegate.getBirthTime();
     }
 
+    @Override
     public Object getConfigurationLock() {
         return delegate.getConfigurationLock();
     }
 
+    @Override
     public ScheduledExecutorService getScheduledExecutorService() {
         return delegate.getScheduledExecutorService();
     }
@@ -86,14 +97,17 @@ public class DelegatingContext implements Context {
      * {@inheritDoc}
      */
     @Deprecated
+    @Override
     public ExecutorService getExecutorService() {
         return delegate.getExecutorService();
     }
 
+    @Override
     public void register(LifeCycle component) {
         delegate.register(component);
     }
 
+    @Override
     public void addScheduledFuture(ScheduledFuture<?> scheduledFuture) {
         delegate.addScheduledFuture(scheduledFuture);
     }
