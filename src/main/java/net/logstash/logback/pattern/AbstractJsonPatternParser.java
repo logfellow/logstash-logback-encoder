@@ -103,7 +103,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         ValueGetter<Event, T> createValueGetter(String data);
     }
 
-    protected abstract class TransformingOperation<T> implements Operation<Event, T> {
+    protected abstract class ConvertingOperation<T> implements Operation<Event, T> {
         @Override
         public ValueGetter<Event, T> createValueGetter(String data) {
             return makeLayoutValueGetter(data).andThen(this::convert);
@@ -112,32 +112,34 @@ public abstract class AbstractJsonPatternParser<Event> {
         protected abstract T convert(String value);
     }
     
-    protected class AsLongOperation extends TransformingOperation<Long> {
+    protected class AsLongOperation extends ConvertingOperation<Long> {
         @Override
         protected Long convert(String value) {
             return Long.parseLong(value);
         }
     }
 
-    protected class AsDoubleOperation extends TransformingOperation<Double> {
+    protected class AsDoubleOperation extends ConvertingOperation<Double> {
         @Override
         protected Double convert(String value) {
             return Double.parseDouble(value);
         }
     }
 
-    protected class AsJsonOperation extends TransformingOperation<JsonNode> {
+    protected class AsJsonOperation extends ConvertingOperation<JsonNode> {
         @Override
         protected JsonNode convert(final String value) {
             try {
                 return JsonReadingUtils.readFully(jsonFactory, value);
+            } catch (JsonParseException e) {
+                throw new IllegalArgumentException("Unparsable JSON value (was '" + value + "')", e);
             } catch (IOException e) {
-                throw new IllegalStateException("Unparsable JSON value (was '" + value + "')", e);
+                throw new IllegalStateException("Unexpected IOException when reading JSON value (was '" + value + "')", e);
             }
         }
     }
 
-    protected class TryJsonOperation extends TransformingOperation<Object> {
+    protected class TryJsonOperation extends ConvertingOperation<Object> {
         @Override
         protected Object convert(final String value) {
             final String trimmedValue = StringUtils.trimToEmpty(value);
@@ -313,7 +315,7 @@ public abstract class AbstractJsonPatternParser<Event> {
                 return new ValueWriter<>(getter);
             } catch (RuntimeException e) {
                 String msg = "Invalid JSON property '" + location + "' (was '" + node.asText() + "'): " + e.getMessage();
-                throw new JsonPatternException(msg, e.getCause());
+                throw new JsonPatternException(msg, e);
             }
         }
         if (node.isArray()) {
