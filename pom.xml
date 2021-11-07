@@ -455,6 +455,13 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>${maven-surefire-plugin.version}</version>
+                    <configuration>
+                        <!--
+                            GitHub CI runs tests against different jackson versions.
+                            Therefore, differentiate the report directories by jackson versions.
+                        -->
+                        <reportsDirectory>${project.build.directory}/surefire-reports/jackson-${jackson.version}</reportsDirectory>
+                    </configuration>
                 </plugin>
                 
                 <plugin>

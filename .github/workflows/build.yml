@@ -38,6 +38,10 @@ jobs:
       - name: Build
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml verify
 
+      # Run tests against Jackson 2.12 to ensure runtime compatibility (do not recompile)
+      - name: Test Jackson 2.12
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Djackson.version=2.12.5 surefire:test
+
       - name: Upload Test Reports
         uses: actions/upload-artifact@v2
         if: ${{ always() }}
