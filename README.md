@@ -1516,9 +1516,6 @@ for the path string format and more examples.  But in general:
 
 Specific values to be masked can be specified in several ways, as seen in the following example:
 
-When using regexes to identify strings to mask, all matches within each string field value will be replaced.
-If you want to match the full string field value, then use the beginning of line (`^`) and end of line (`$`) markers.
-
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
     <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
@@ -1560,6 +1557,13 @@ If you want to match the full string field value, then use the beginning of line
 
 Identifying data to mask by value is much more expensive than identifying data to mask by [path](#identifying-field-values-to-mask-by-path).
 Therefore, prefer identifying data to mask by path.
+
+The value to mask is passed through every value masker, with the output of one masker passed as input to the next masker. 
+This allows each masker to mask specific substrings within the value.
+The order in which the maskers are executed is not defined, and should not be relied upon.
+
+When using regexes to identify strings to mask, all matches within each string field value will be replaced.
+If you want to match the full string field value, then use the beginning of line (`^`) and end of line (`$`) markers.
 
 
 ## Customizing Standard Field Names
