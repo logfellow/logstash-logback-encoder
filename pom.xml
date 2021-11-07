@@ -263,6 +263,9 @@
                                  -->
                                 <enforceBytecodeVersion>
                                     <maxJdkVersion>1.8</maxJdkVersion>
+                                    <ignoreClasses>
+                                        <ignoreClass>META-INF/versions/*</ignoreClass>
+                                    </ignoreClasses>
                                 </enforceBytecodeVersion>
                             </rules>
                         </configuration>
