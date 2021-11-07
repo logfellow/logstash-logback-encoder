@@ -107,7 +107,7 @@ then ensure the required dependencies (and appropriate versions) as specified in
 from the maven repository exist on the runtime classpath.
 Specifically, the following need to be available on the runtime classpath:
 
-* jackson-databind / jackson-core / jackson-annotations
+* jackson-databind / jackson-core / jackson-annotations >= 2.12.0
 * logback-core >= 1.2.0
 * logback-classic >= 1.2.0 (required for logging _LoggingEvents_)
 * logback-access >= 1.2.0 (required for logging _AccessEvents_)
