@@ -120,6 +120,14 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
+    public void maskedSubstrings() throws IOException {
+        testMaskByValue(
+                "{\"fieldA\":\"tomask1\",\"fieldB\":\"tomask2\",\"fieldC\":\" tomask1-tomask2 \"}",
+                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\" ****-**** \"}",
+                "tomask1", "tomask2");
+    }
+
+    @Test
     public void onlyMaskedField() throws IOException {
         testMaskByPath(
                 "{\"fieldA\":\"valueA\"}",

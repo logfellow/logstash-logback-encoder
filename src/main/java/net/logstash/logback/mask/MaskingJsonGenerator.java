@@ -525,17 +525,21 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
         return null;
     }
     /**
-     * @param value the value to potentially mask
+     * @param originalValue the value to potentially mask
      * @return the masked value for the current path and value if the value should be masked.
      *         otherwise returns null.
      */
-    private Object getMaskedValueForCurrentPathAndValue(Object value) {
+    private Object getMaskedValueForCurrentPathAndValue(Object originalValue) {
         JsonStreamContext context = getOutputContext();
+        Object localValue = originalValue;
         for (ValueMasker valueMasker : valueMaskers) {
-            Object maskedValue = valueMasker.mask(context, value);
+            Object maskedValue = valueMasker.mask(context, localValue);
             if (maskedValue != null) {
-                return maskedValue;
+                localValue = maskedValue;
             }
+        }
+        if (localValue != originalValue) {
+            return localValue;
         }
         return null;
     }
