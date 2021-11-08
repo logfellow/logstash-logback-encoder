@@ -2374,8 +2374,9 @@ even for something which you may feel should be a number - like for `%b` (bytes 
 You can either deal with the type conversion on the logstash side or you may use special operations provided by this encoder.
 The operations are:
 
-* `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a long (or a null if conversion fails).
-* `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a double (or a null if conversion fails).
+* `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a Long (or a null if conversion fails).
+* `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a Double (or a null if conversion fails).
+* `#asBoolean{...}`- evaluates the pattern in curly braces and then converts resulting string to a Boolean. Conversion is case insensitive. `true`, `yes`, `y` and `1` (case insensitive) are converted to a boolean `true`, a null or empty string is converted to `null`, anything else returns `false`.
 * `#asJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or a null if conversion fails).
 * `#tryJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or just the string if conversion fails).
 
@@ -2386,7 +2387,7 @@ So this example...
     {
         "line_str": "%line",
         "line_long": "#asLong{%line}",
-        "has_message": "#asJson{%mdc{hasMessage}}",
+        "has_message": "#asBoolean{%mdc{hasMessage}}",
         "json_message": "#asJson{%message}"
     }
 </pattern>
@@ -2411,7 +2412,7 @@ LOGGER.info("{\"type\":\"example\",\"msg\":\"example of json message with type\"
 ```
 
 Note that the value that is sent for `line_long` is a number even though in your pattern it is a quoted text.
-And the json_message field value is a json object, not a string.
+And the `json_message` field value is a json object, not a string.
 
 You can escape an operation by prefixing it with `\` if you don't want it to be interpreted.
 

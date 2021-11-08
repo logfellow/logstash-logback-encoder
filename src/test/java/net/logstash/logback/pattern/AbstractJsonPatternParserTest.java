@@ -97,7 +97,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldKeepPrimitiveConstantValues() throws Exception {
+    public void shouldKeepPrimitiveConstantValues() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                        "
@@ -121,7 +121,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldAllowUsingArraysAsValues() throws Exception {
+    public void shouldAllowUsingArraysAsValues() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                    "
@@ -147,7 +147,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldAllowUsingObjectsAsValues() throws Exception {
+    public void shouldAllowUsingObjectsAsValues() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                              "
@@ -173,7 +173,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void asLongShouldTransformTextValueToLong() throws Exception {
+    public void asLongShouldTransformTextValueToLong() throws JsonPatternException {
 
         String pattern = toJson(
                 "{ 'key': '#asLong{555}' }");
@@ -185,7 +185,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void asDoubleShouldTransformTextValueToDouble() throws Exception {
+    public void asDoubleShouldTransformTextValueToDouble() throws JsonPatternException {
 
         String pattern = toJson(
                 "{ 'key': '#asDouble{0.5}' }");
@@ -197,7 +197,38 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void asJsonShouldTransformTextValueToJson() throws Exception {
+    public void asBooleanShouldTransformTextValueToBoolean() throws JsonPatternException {
+        String pattern = toJson(
+                "{                                    "
+              + "    'key1' : '#asBoolean{true}',     "
+              + "    'key2' : '#asBoolean{TrUe}',     "
+              + "    'key3' : '#asBoolean{1}',        "
+              + "    'key4' : '#asBoolean{yes}',      "
+              + "    'key5' : '#asBoolean{Yes}',      "
+              + "    'key6' : '#asBoolean{y}',        "
+              + "    'key7' : '#asBoolean{false}',    "
+              + "    'key8' : '#asBoolean{}',         "
+              + "    'key9' : '#asBoolean{foo}'       "
+              + "}                                    ");
+
+        String expected = toJson(
+                "{                                    "
+              + "    'key1' : true,                   "
+              + "    'key2' : true,                   "
+              + "    'key3' : true,                   "
+              + "    'key4' : true,                   "
+              + "    'key5' : true,                   "
+              + "    'key6' : true,                   "
+              + "    'key7' : false,                  "
+              + "    'key8' : null,                   "
+              + "    'key9' : false                   "
+              + "}                                    ");
+        
+        verifyFields(pattern, expected);
+    }
+    
+    @Test
+    public void asJsonShouldTransformTextValueToJson() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                                                                 "
@@ -273,7 +304,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldSendNonTransformableValuesAsNulls() throws Exception {
+    public void shouldSendNonTransformableValuesAsNulls() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                               "
@@ -295,7 +326,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldKeepUnrecognisedOrInvalidOperationsAsStringLiterals() throws Exception {
+    public void shouldKeepUnrecognisedOrInvalidOperationsAsStringLiterals() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                               "
@@ -317,7 +348,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldOmitNullConstants() throws Exception {
+    public void shouldOmitNullConstants() throws JsonPatternException {
         parser.setOmitEmptyFields(true);
 
         String pattern = toJson(
@@ -330,7 +361,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldOmitEmptyConstants() throws Exception {
+    public void shouldOmitEmptyConstants() throws JsonPatternException {
         parser.setOmitEmptyFields(true);
 
         String pattern = toJson(
@@ -346,7 +377,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldOmitEmptyJsonValues() throws Exception {
+    public void shouldOmitEmptyJsonValues() throws JsonPatternException {
         parser.setOmitEmptyFields(true);
         String pattern = toJson(
                   "{                             "

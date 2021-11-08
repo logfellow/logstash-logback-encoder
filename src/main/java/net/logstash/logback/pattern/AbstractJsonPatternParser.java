@@ -77,6 +77,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         this.jsonFactory = Objects.requireNonNull(jsonFactory);
         addOperation("asLong", new AsLongOperation());
         addOperation("asDouble", new AsDoubleOperation());
+        addOperation("asBoolean", new AsBooleanOperation());
         addOperation("asJson", new AsJsonOperation());
         addOperation("tryJson", new TryJsonOperation());
     }
@@ -116,6 +117,20 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
     }
 
+    protected static class AsBooleanOperation implements Operation<Boolean> {
+        @Override
+        public Boolean apply(String value) {
+            if (StringUtils.isEmpty(value)) {
+                return null;
+            }
+            return Boolean.valueOf(
+                       "true".equalsIgnoreCase(value)
+                    || "1".equals(value)
+                    || "yes".equalsIgnoreCase(value)
+                    || "y".equalsIgnoreCase(value));
+        }
+    }
+    
     protected class AsJsonOperation implements Operation<JsonNode> {
         @Override
         public JsonNode apply(final String value) {
