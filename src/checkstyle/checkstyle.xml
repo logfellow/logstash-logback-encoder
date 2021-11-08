@@ -69,7 +69,6 @@
         <module name="EmptyBlock"/>
         <module name="LeftCurly"/>
         <module name="NeedBraces"/>
-        <module name="RightCurly"/>
 
         <!-- Checks for common coding problems             -->
         <!-- See https://checkstyle.org/config_coding.html -->
