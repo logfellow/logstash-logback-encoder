@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +37,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonPointer;
-import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.core.filter.FilteringGeneratorDelegate;
 import com.fasterxml.jackson.core.filter.TokenFilter;
 import com.fasterxml.jackson.core.filter.TokenFilter.Inclusion;
@@ -63,7 +63,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     private final Context context;
     private final JsonFactory jsonFactory;
 
-    private final Map<String, Operation<Event, ?>> operations = new HashMap<>();
+    private final Map<String, Operation<?>> operations = new HashMap<>();
 
 
     /**
@@ -87,74 +87,53 @@ public abstract class AbstractJsonPatternParser<Event> {
      * @param name the name of the operation
      * @param operation the {@link Operation} instance
      */
-    protected void addOperation(String name, Operation<Event, ?> operation) {
+    protected void addOperation(String name, Operation<?> operation) {
         this.operations.put(name, operation);
     }
 
-    protected interface Operation<Event, T> {
-        /**
-         * Create a {@link ValueGetter} implementing the operation on the supplied arguments ({@code data}).
-         * Throws an {@link IllegalArgumentException} when the supplied data is invalid.
-         * 
-         * @param data the data to pass to the operation
-         * @return a {@link ValueGetter} implementing the operation
-         * @throws IllegalArgumentException if the supplied data is invalid
-         */
-        ValueGetter<Event, T> createValueGetter(String data);
+    protected interface Operation<T> extends Function<String, T> {
     }
 
-    protected abstract class ConvertingOperation<T> implements Operation<Event, T> {
+    protected static class AsLongOperation implements Operation<Long> {
         @Override
-        public ValueGetter<Event, T> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(this::convert);
-        }
-        
-        protected abstract T convert(String value);
-    }
-    
-    protected class AsLongOperation extends ConvertingOperation<Long> {
-        @Override
-        protected Long convert(String value) {
-            return Long.parseLong(value);
+        public Long apply(String value) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Failed to convert '" + value + "' into a Long numeric value");
+            }
         }
     }
 
-    protected class AsDoubleOperation extends ConvertingOperation<Double> {
+    protected static class AsDoubleOperation implements Operation<Double> {
         @Override
-        protected Double convert(String value) {
-            return Double.parseDouble(value);
+        public Double apply(String value) {
+            try {
+                return Double.parseDouble(value);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Failed to convert '" + value + "' into a Double numeric value");
+            }
         }
     }
 
-    protected class AsJsonOperation extends ConvertingOperation<JsonNode> {
+    protected class AsJsonOperation implements Operation<JsonNode> {
         @Override
-        protected JsonNode convert(final String value) {
+        public JsonNode apply(final String value) {
             try {
                 return JsonReadingUtils.readFully(jsonFactory, value);
             } catch (JsonParseException e) {
-                throw new IllegalArgumentException("Unparsable JSON value (was '" + value + "')", e);
+                throw new IllegalArgumentException("Failed to convert '" + value + "' into a JSON object", e);
             } catch (IOException e) {
                 throw new IllegalStateException("Unexpected IOException when reading JSON value (was '" + value + "')", e);
             }
         }
     }
 
-    protected class TryJsonOperation extends ConvertingOperation<Object> {
+    protected class TryJsonOperation implements Operation<Object> {
         @Override
-        protected Object convert(final String value) {
-            final String trimmedValue = StringUtils.trimToEmpty(value);
-            
-            try (JsonParser parser = jsonFactory.createParser(trimmedValue)) {
-                final TreeNode tree = parser.readValueAsTree();
-                if (parser.getCurrentLocation().getCharOffset() < trimmedValue.length()) {
-                    /*
-                     * If the full trimmed string was not read, then the full trimmed string contains a json value plus other text.
-                     * For example, trimmedValue = '10 foobar', or 'true foobar', or '{"foo","bar"} baz'.
-                     * In these cases readTree will only read the first part, and will not read the remaining text.
-                     */
-                    return value;
-                }
-                return tree;
+        public Object apply(final String value) {
+            try {
+                return JsonReadingUtils.readFully(jsonFactory, value);
             } catch (JsonParseException e) {
                 return value;
             } catch (IOException e) {
@@ -173,12 +152,21 @@ public abstract class AbstractJsonPatternParser<Event> {
                     ? matcher.group(2)
                     : null;
 
-            Operation<Event, ?> operation = this.operations.get(operationName);
-            if (operation != null) {
-                return operation.createValueGetter(operationData);
+            Operation<?> operation = this.operations.get(operationName);
+            if (operation == null) {
+                throw new IllegalArgumentException("Unknown operation '#" + operationName + "{}'");
             }
+
+            final ValueGetter<Event, String> layoutValueGetter = makeLayoutValueGetter(operationData);
+            return event -> operation.apply(layoutValueGetter.getValue(event));
+            
+        } else {
+            // Unescape pattern if needed
+            if (pattern != null && pattern.startsWith("\\#")) {
+                pattern = pattern.substring(1);
+            }
+            return makeLayoutValueGetter(pattern);
         }
-        return makeLayoutValueGetter(pattern);
     }
 
     protected ValueGetter<Event, String> makeLayoutValueGetter(final String data) {

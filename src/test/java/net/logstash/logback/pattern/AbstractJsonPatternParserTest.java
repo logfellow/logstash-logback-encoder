@@ -61,13 +61,15 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
 
     protected abstract AbstractJsonPatternParser<Event> createParser(Context context, JsonFactory jsonFactory);
 
-    private Map<String, Object> parseJson(final String text) throws IOException {
+    private Map<String, Object> parseJson(final String text) {
         try (JsonParser jsonParser = jsonFactory.createParser(text)) {
             return jsonParser.readValueAs(new TypeReference<Map<String, Object>>() { });
+        } catch (IOException e) {
+            throw new IllegalStateException("Unexpected IOException while writing to the JsonGenerator");
         }
     }
 
-    protected void verifyFields(String patternJson, String expectedJson) throws Exception {
+    protected void verifyFields(String patternJson, String expectedJson) throws JsonPatternException {
 
         Map<String, Object> actualResult = parseJson(process(patternJson));
         Map<String, Object> expectedResult = parseJson(expectedJson);
@@ -75,7 +77,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
         assertThat(actualResult).isEqualTo(expectedResult);
     }
 
-    private String process(final String patternJson) throws JsonPatternException, IOException {
+    private String process(final String patternJson) throws JsonPatternException {
         NodeWriter<Event> root = parser.parse(patternJson);
         assertThat(root).isNotNull();
         
@@ -86,6 +88,9 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
             root.write(jsonGenerator, event);
             jsonGenerator.writeEndObject();
             jsonGenerator.flush();
+            
+        } catch (IOException e) {
+            throw new IllegalStateException("Unexpected IOException while writing to the JsonGenerator", e);
         }
         
         return buffer.toString();
@@ -357,7 +362,7 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
 
     @Test
-    public void shouldOmitEmptyConstantsRecursively() throws Exception {
+    public void shouldOmitEmptyConstantsRecursively() throws JsonPatternException {
         parser.setOmitEmptyFields(true);
 
         String pattern = toJson(
@@ -383,15 +388,34 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
 
     
     @Test
-    public void invalidPatternLayout() throws Exception {
+    public void unknownOperation() {
+        assertThatExceptionOfType(JsonPatternException.class).isThrownBy(() -> parser.parse(toJson("{'msg':'#unknown{foo}")));
+    }
+    
+    @Test
+    public void invalidPatternLayout() {
         assertThatExceptionOfType(JsonPatternException.class).isThrownBy(() -> parser.parse(toJson("{'msg':'%foo'}")));
     }
     
-    
     @Test
-    public void invalidJSON() throws Exception {
+    public void invalidJSON() throws JsonPatternException {
         parser.parse(toJson("{'msg' : '#asJson{foo}' }"));
         assertThatExceptionOfType(JsonPatternException.class).isThrownBy(() -> parser.parse(toJson("{'msg' = #asJson{foo} }")));
+    }
+    
+    @Test
+    public void escapePattern() throws JsonPatternException {
+        String pattern = toJson(
+                  "{                            "
+                + "   'key1': '\\\\#asLong{1}'  "
+                + "}                            ");
+        
+        String expected = toJson(
+                  "{                            "
+                + "   'key1': '#asLong{1}'      "
+                + "}                            ");
+
+        verifyFields(pattern, expected);
     }
     
     
