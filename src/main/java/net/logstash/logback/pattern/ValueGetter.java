@@ -15,8 +15,6 @@
  */
 package net.logstash.logback.pattern;
 
-import java.util.function.Function;
-
 /**
  * Computes a value given an event.
  *
@@ -25,7 +23,7 @@ import java.util.function.Function;
  *
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
-public interface ValueGetter<T, Event> {
+public interface ValueGetter<Event, T> {
     /**
      * Get the result of applying the ValueGetter to the event
      * 
@@ -33,25 +31,4 @@ public interface ValueGetter<T, Event> {
      * @return the result of applying this ValueGetter on the event
      */
     T getValue(Event event);
-    
-    
-    /**
-     * Returns a composed ValueGetter that first applies this ValueGetter to
-     * its input, and then applies the {@code after} function to the result.
-     * If evaluation of either function throws an exception, it is relayed to
-     * the caller of the composed function.
-     *
-     * @param <V> the type of output of the {@code after} function, and of the
-     *            composed ValueGetter
-     * @param after the function to apply after this ValueGetter is applied
-     * @return a composed ValueGetter that first applies this ValueGetter and then
-     *         applies the {@code after} function
-     * @throws NullPointerException if after is null
-     */
-    default <V> ValueGetter<V, Event> andThen(Function<T, V> after) {
-        return event -> {
-            T value = getValue(event);
-            return after.apply(value);
-        };
-    }
 }

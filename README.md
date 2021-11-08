@@ -2413,6 +2413,9 @@ LOGGER.info("{\"type\":\"example\",\"msg\":\"example of json message with type\"
 Note that the value that is sent for `line_long` is a number even though in your pattern it is a quoted text.
 And the json_message field value is a json object, not a string.
 
+You can escape an operation by prefixing it with `\` if you don't want it to be interpreted.
+
+
 #### Omitting fields with empty values
  
 The pattern provider can be configured to omit fields with the following _empty_ values:

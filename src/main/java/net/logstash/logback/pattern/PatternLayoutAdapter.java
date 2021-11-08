@@ -15,30 +15,119 @@
  */
 package net.logstash.logback.pattern;
 
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import net.logstash.logback.util.StringUtils;
+
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.pattern.Converter;
 import ch.qos.logback.core.pattern.LiteralConverter;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
 import ch.qos.logback.core.pattern.PostCompileProcessor;
 
+
 /**
  * Adapter around a {@link PatternLayoutBase} to allow writing the pattern into a supplied {@link StringBuilder}
  * instead of returning a String.
+ * 
+ * The adapter also throws an {@link IllegalArgumentException} upon start when the configured pattern is not a
+ * valid pattern layout instead of simply emitting an ERROR status.
  * 
  * @author brenuart
  */
 public class PatternLayoutAdapter<E> {
     /**
+     * Regex pattern matching error place holders inserted by PatternLayout when it
+     * fails to parse the pattern
+     */
+    private static final Pattern ERROR_PATTERN = Pattern.compile("%PARSER_ERROR\\[(.*)\\]");
+
+    /**
+     * The wrapped pattern layout instance
+     */
+    private final PatternLayoutBase<E> layout;
+    
+    /**
      * The "head" converter of the pattern.
      * Initialized when the pattern is started.
-     * Can stay null after the pattern is started when the pattern is empty or invalid.
+     * Can stay null after the PatternLayout is started when the pattern is empty
+     * or a parse error occurred.
      */
     private Converter<E> head;
-
+    private boolean headCaptured;
+    
+    
     public PatternLayoutAdapter(PatternLayoutBase<E> layout) {
+        this.layout = Objects.requireNonNull(layout);
+    }
+    
+    /**
+     * Set the {@link Context}
+     * 
+     * @param context the context
+     */
+    public void setContext(Context context) {
+        this.layout.setContext(context);
+    }
+    
+    /**
+     * Set the layout pattern
+     * 
+     * @param pattern the layout pattern
+     */
+    public void setPattern(String pattern) {
+        this.layout.setPattern(pattern);
+    }
+    
+    
+    /**
+     * Start the underlying PatternLayoutBase and throw an {@link IllegalArgumentException} if the
+     * configured pattern is not a valid PatternLayout.
+     * 
+     * @throws IllegalArgumentException thrown when the configured pattern is not a valid PatternLayout
+     */
+    public void start() throws IllegalArgumentException {
+        if (layout.isStarted()) {
+            throw new IllegalStateException("Layout is already started");
+        }
+        
+        /*
+         * Start layout...
+         */
         layout.setPostCompileProcessor(new HeadConverterCapture());
         layout.start();
+
+        /*
+         * PostCompileProcessor is not invoked when parser fails to parse the
+         * input or when the pattern is empty...
+         */
+        if (!headCaptured && StringUtils.isEmpty(layout.getPattern())) {
+            throw new IllegalArgumentException("Failed to parse PatternLayout. See previous error statuses for more information.");
+        }
+        
+        /*
+         * Detect %PARSER_ERROR[]...
+         */
+        StringBuilder sb = new StringBuilder();
+        Converter<E> c = this.head;
+        while (c != null) {
+            if (isConstantConverter(c)) {
+                c.write(sb, null);
+                
+                Matcher matcher = ERROR_PATTERN.matcher(sb.toString());
+                if (matcher.matches()) {
+                    String conversionWord = matcher.group(1);
+                    throw new IllegalArgumentException("Failed to interpret '%" + conversionWord + "' conversion word. See previous error statuses for more information.");
+                }
+                
+                sb.setLength(0);
+            }
+            c = c.getNext();
+        }
     }
+    
     
     /**
      * Apply the PatternLayout to the <em>event</em> and write result into the supplied {@link StringBuilder}.
@@ -65,12 +154,12 @@ public class PatternLayoutAdapter<E> {
             return true;
         }
         
-        Converter<E> current = this.head;
-        while (current != null) {
-            if (!isConstantConverter(current)) {
+        Converter<E> c = this.head;
+        while (c != null) {
+            if (!isConstantConverter(c)) {
                 return false;
             }
-            current = current.getNext();
+            c = c.getNext();
         }
         return true;
     }
@@ -101,6 +190,7 @@ public class PatternLayoutAdapter<E> {
         @Override
         public void process(Context context, Converter<E> head) {
             PatternLayoutAdapter.this.head = head;
+            PatternLayoutAdapter.this.headCaptured = true;
         }
     }
 }

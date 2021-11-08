@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,13 +30,13 @@ import net.logstash.logback.composite.JsonReadingUtils;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.util.StringUtils;
 
+import ch.qos.logback.core.Context;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
-import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.core.JsonPointer;
 import com.fasterxml.jackson.core.filter.FilteringGeneratorDelegate;
 import com.fasterxml.jackson.core.filter.TokenFilter;
 import com.fasterxml.jackson.core.filter.TokenFilter.Inclusion;
@@ -55,10 +56,11 @@ public abstract class AbstractJsonPatternParser<Event> {
 
     /**
      * Pattern used to parse and detect {@link AbstractJsonPatternParser.Operation} in a string.
+     * An operation starts with a #, followed by a name and a pair of {} with possible arguments in between.
      */
-    public static final Pattern OPERATION_PATTERN = Pattern.compile("\\# (\\w+) (?: \\{ (.*) \\} )?", Pattern.COMMENTS);
+    public static final Pattern OPERATION_PATTERN = Pattern.compile("\\# (\\w+) (?: \\{ (.*) \\} )", Pattern.COMMENTS);
 
-    private final ContextAware contextAware;
+    private final Context context;
     private final JsonFactory jsonFactory;
 
     private final Map<String, Operation<?>> operations = new HashMap<>();
@@ -70,8 +72,8 @@ public abstract class AbstractJsonPatternParser<Event> {
      */
     private boolean omitEmptyFields;
 
-    public AbstractJsonPatternParser(final ContextAware contextAware, final JsonFactory jsonFactory) {
-        this.contextAware = Objects.requireNonNull(contextAware);
+    AbstractJsonPatternParser(final Context context, final JsonFactory jsonFactory) {
+        this.context = Objects.requireNonNull(context);
         this.jsonFactory = Objects.requireNonNull(jsonFactory);
         addOperation("asLong", new AsLongOperation());
         addOperation("asDouble", new AsDoubleOperation());
@@ -89,85 +91,49 @@ public abstract class AbstractJsonPatternParser<Event> {
         this.operations.put(name, operation);
     }
 
-    protected abstract class Operation<T> {
-        private final boolean requiresData;
-
-        Operation(boolean requiresData) {
-            this.requiresData = requiresData;
-        }
-
-        public boolean requiresData() {
-            return requiresData;
-        }
-
-        public abstract ValueGetter<T, Event> createValueGetter(String data);
+    protected interface Operation<T> extends Function<String, T> {
     }
 
-    protected class AsLongOperation extends Operation<Long> {
-        public AsLongOperation() {
-            super(true);
-        }
-
+    protected static class AsLongOperation implements Operation<Long> {
         @Override
-        public ValueGetter<Long, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(Long::parseLong);
+        public Long apply(String value) {
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Failed to convert '" + value + "' into a Long numeric value");
+            }
         }
     }
 
-    protected class AsDoubleOperation extends Operation<Double> {
-        public AsDoubleOperation() {
-            super(true);
-        }
-
+    protected static class AsDoubleOperation implements Operation<Double> {
         @Override
-        public ValueGetter<Double, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(Double::parseDouble);
+        public Double apply(String value) {
+            try {
+                return Double.parseDouble(value);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Failed to convert '" + value + "' into a Double numeric value");
+            }
         }
     }
 
-    protected class AsJsonOperation extends Operation<JsonNode> {
-        public AsJsonOperation() {
-            super(true);
-        }
-
+    protected class AsJsonOperation implements Operation<JsonNode> {
         @Override
-        public ValueGetter<JsonNode, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(this::convert);
-        }
-        
-        private JsonNode convert(final String value) {
+        public JsonNode apply(final String value) {
             try {
                 return JsonReadingUtils.readFully(jsonFactory, value);
+            } catch (JsonParseException e) {
+                throw new IllegalArgumentException("Failed to convert '" + value + "' into a JSON object", e);
             } catch (IOException e) {
                 throw new IllegalStateException("Unexpected IOException when reading JSON value (was '" + value + "')", e);
             }
         }
     }
 
-    protected class TryJsonOperation extends Operation<Object> {
-        public TryJsonOperation() {
-            super(true);
-        }
-
+    protected class TryJsonOperation implements Operation<Object> {
         @Override
-        public ValueGetter<Object, Event> createValueGetter(String data) {
-            return makeLayoutValueGetter(data).andThen(this::convert);
-        }
-        
-        private Object convert(final String value) {
-            final String trimmedValue = StringUtils.trimToEmpty(value);
-            
-            try (JsonParser parser = jsonFactory.createParser(trimmedValue)) {
-                final TreeNode tree = parser.readValueAsTree();
-                if (parser.getCurrentLocation().getCharOffset() < trimmedValue.length()) {
-                    /*
-                     * If the full trimmed string was not read, then the full trimmed string contains a json value plus other text.
-                     * For example, trimmedValue = '10 foobar', or 'true foobar', or '{"foo","bar"} baz'.
-                     * In these cases readTree will only read the first part, and will not read the remaining text.
-                     */
-                    return value;
-                }
-                return tree;
+        public Object apply(final String value) {
+            try {
+                return JsonReadingUtils.readFully(jsonFactory, value);
             } catch (JsonParseException e) {
                 return value;
             } catch (IOException e) {
@@ -177,7 +143,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     }
 
     
-    private ValueGetter<?, Event> makeComputableValueGetter(String pattern) {
+    private ValueGetter<Event, ?> makeComputableValueGetter(String pattern) {
         Matcher matcher = OPERATION_PATTERN.matcher(pattern);
 
         if (matcher.matches()) {
@@ -187,18 +153,23 @@ public abstract class AbstractJsonPatternParser<Event> {
                     : null;
 
             Operation<?> operation = this.operations.get(operationName);
-            if (operation != null) {
-                if (operation.requiresData() && operationData == null) {
-                    contextAware.addError("No parameter provided to operation: " + operationName);
-                } else {
-                    return operation.createValueGetter(operationData);
-                }
+            if (operation == null) {
+                throw new IllegalArgumentException("Unknown operation '#" + operationName + "{}'");
             }
+
+            final ValueGetter<Event, String> layoutValueGetter = makeLayoutValueGetter(operationData);
+            return event -> operation.apply(layoutValueGetter.getValue(event));
+            
+        } else {
+            // Unescape pattern if needed
+            if (pattern != null && pattern.startsWith("\\#")) {
+                pattern = pattern.substring(1);
+            }
+            return makeLayoutValueGetter(pattern);
         }
-        return makeLayoutValueGetter(pattern);
     }
 
-    protected ValueGetter<String, Event> makeLayoutValueGetter(final String data) {
+    protected ValueGetter<Event, String> makeLayoutValueGetter(final String data) {
         /*
          * PatternLayout emits an ERROR status when pattern is null or empty and
          * defaults to an empty string. Better to handle it here to avoid the error
@@ -223,18 +194,21 @@ public abstract class AbstractJsonPatternParser<Event> {
     }
     
     
+    /**
+     * Initialize a PatternLayout with the supplied format and throw an {@link IllegalArgumentException}
+     * if the format is invalid.
+     * 
+     * @param format the pattern layout format
+     * @return a configured and started {@link PatternLayoutAdapter} instance around the supplied format
+     * @throws IllegalArgumentException if the supplied format is not a valid PatternLayout
+     */
     protected PatternLayoutAdapter<Event> buildLayout(String format) {
-        PatternLayoutBase<Event> layout = createLayout();
+        PatternLayoutAdapter<Event> adapter = new PatternLayoutAdapter<>(createLayout());
+        adapter.setPattern(format);
+        adapter.setContext(context);
+        adapter.start();
         
-        if (layout.isStarted()) {
-            throw new IllegalStateException("PatternLayout should not be started");
-        }
-        
-        layout.setContext(contextAware.getContext());
-        layout.setPattern(format);
-        layout.setPostCompileProcessor(null); // Remove EnsureLineSeparation which is there by default
-       
-        return new PatternLayoutAdapter<>(layout);
+        return adapter;
     }
 
     
@@ -247,7 +221,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     protected abstract PatternLayoutBase<Event> createLayout();
     
     
-    protected static class LayoutValueGetter<Event> implements ValueGetter<String, Event> {
+    protected static class LayoutValueGetter<Event> implements ValueGetter<Event, String> {
         /**
          * The PatternLayout from which the value is generated
          */
@@ -294,8 +268,9 @@ public abstract class AbstractJsonPatternParser<Event> {
      * 
      * @param pattern the JSON pattern to parse
      * @return a {@link NodeWriter} configured according to the pattern
+     * @throws JsonPatternException denotes an invalid pattern
      */
-    public NodeWriter<Event> parse(String pattern) {
+    public NodeWriter<Event> parse(String pattern) throws JsonPatternException {
         if (StringUtils.isEmpty(pattern)) {
             return null;
         }
@@ -304,11 +279,10 @@ public abstract class AbstractJsonPatternParser<Event> {
         try (JsonParser jsonParser = jsonFactory.createParser(pattern)) {
             node = JsonReadingUtils.readFullyAsObjectNode(jsonFactory, pattern);
         } catch (IOException e) {
-            contextAware.addError("[pattern] is not a valid JSON object", e);
-            return null;
+            throw new JsonPatternException("pattern is not a valid JSON object", e);
         }
 
-        NodeWriter<Event> nodeWriter = new RootWriter<>(parseObject(node));
+        NodeWriter<Event> nodeWriter = new RootWriter<>(parseObject(JsonPointer.compile("/"), node));
         if (omitEmptyFields) {
             nodeWriter = new OmitEmptyFieldWriter<>(nodeWriter);
         }
@@ -319,19 +293,26 @@ public abstract class AbstractJsonPatternParser<Event> {
      * Parse a {@link JsonNode} and produce the corresponding {@link NodeWriter}.
      * 
      * @param node the {@link JsonNode} to parse.
-     * @return a {@link NodeWriter} corresponding to the given json node
+     * @return a {@link NodeWriter} corresponding to the given JSON node
+     * @throws JsonPatternException denotes an invalid pattern
      */
-    private NodeWriter<Event> parseNode(JsonNode node) {
+    private NodeWriter<Event> parseNode(JsonPointer location, JsonNode node) throws JsonPatternException {
         if (node.isTextual()) {
-            ValueGetter<?, Event> getter = makeComputableValueGetter(node.asText());
-            return new ValueWriter<>(getter);
+            try {
+                ValueGetter<Event, ?> getter = makeComputableValueGetter(node.asText());
+                return new ValueWriter<>(getter);
+            } catch (RuntimeException e) {
+                String msg = "Invalid JSON property '" + location + "' (was '" + node.asText() + "'): " + e.getMessage();
+                throw new JsonPatternException(msg, e);
+            }
         }
         if (node.isArray()) {
-            return parseArray((ArrayNode) node);
+            return parseArray(location, (ArrayNode) node);
         }
         if (node.isObject()) {
-            return parseObject((ObjectNode) node);
+            return parseObject(location, (ObjectNode) node);
         }
+
         // Anything else, we will be just writing as is (nulls, numbers, booleans and whatnot)
         return new ValueWriter<>(g -> node);
     }
@@ -342,11 +323,14 @@ public abstract class AbstractJsonPatternParser<Event> {
      * 
      * @param node the {@link ArrayNode} to parse
      * @return a {@link ArrayWriter}
+     * @throws JsonPatternException denotes an invalid pattern
      */
-    private ArrayWriter<Event> parseArray(ArrayNode node) {
+    private ArrayWriter<Event> parseArray(JsonPointer location, ArrayNode node) throws JsonPatternException {
         List<NodeWriter<Event>> children = new ArrayList<>();
+        
+        int index = 0;
         for (JsonNode item : node) {
-            children.add(parseNode(item));
+            children.add(parseNode(appendPath(location, Integer.toString(index++)), item));
         }
 
         return new ArrayWriter<>(children);
@@ -354,12 +338,13 @@ public abstract class AbstractJsonPatternParser<Event> {
     
     
     /**
-     * Parse an OBJECT json node
+     * Parse an JSON object node
      * 
      * @param node the {@link ObjectNode} to parse
      * @return a {@link ObjectWriter}
+     * @throws JsonPatternException denotes an invalid pattern
      */
-    private ObjectWriter<Event> parseObject(ObjectNode node) {
+    private ObjectWriter<Event> parseObject(JsonPointer location, ObjectNode node) throws JsonPatternException {
         ObjectWriter<Event> writer = new ObjectWriter<>();
 
         for (Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields(); nodeFields.hasNext();) {
@@ -368,11 +353,23 @@ public abstract class AbstractJsonPatternParser<Event> {
             String fieldName = field.getKey();
             JsonNode fieldValue = field.getValue();
 
-            NodeWriter<Event> fieldWriter = parseNode(fieldValue);
+            NodeWriter<Event> fieldWriter = parseNode(appendPath(location, fieldName), fieldValue);
             writer.addField(fieldName, fieldWriter);
         }
         
         return writer;
+    }
+    
+    
+    /**
+     * Append a path to an existing {@link JsonPointer}
+     * 
+     * @param ptr the pointer to add the path
+     * @param path the path to add
+     * @return a new {@link JsonPointer}
+     */
+    private static JsonPointer appendPath(JsonPointer ptr, String path) {
+        return ptr.append(JsonPointer.compile("/" + path));
     }
     
     
@@ -435,9 +432,9 @@ public abstract class AbstractJsonPatternParser<Event> {
     
     
     protected static class ValueWriter<Event> implements NodeWriter<Event> {
-        private final ValueGetter<?, Event> getter;
+        private final ValueGetter<Event, ?> getter;
 
-        ValueWriter(final ValueGetter<?, Event> getter) {
+        ValueWriter(final ValueGetter<Event, ?> getter) {
             this.getter = getter;
         }
 
@@ -545,5 +542,17 @@ public abstract class AbstractJsonPatternParser<Event> {
      */
     public void setOmitEmptyFields(boolean omitEmptyFields) {
         this.omitEmptyFields = omitEmptyFields;
+    }
+    
+    
+    @SuppressWarnings("serial")
+    public static class JsonPatternException extends Exception {
+        public JsonPatternException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public JsonPatternException(String message) {
+            super(message);
+        }
     }
 }
