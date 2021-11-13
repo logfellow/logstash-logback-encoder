@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-6.6).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-7.0).
 
 # Logstash Logback Encoder
 
@@ -83,7 +83,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>6.6</version>
+    <version>7.0</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logstash-logback-encoder,
          such as usage of StructuredArguments/Markers or implementations such as
          JsonProvider, AppenderListener, JsonFactoryDecorator, JsonGeneratorDecorator, etc
