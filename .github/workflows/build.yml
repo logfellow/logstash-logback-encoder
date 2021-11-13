@@ -61,7 +61,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: "temurin"
-          java-version: 1.8
+          java-version: 8
 
       - name: Setup GPG
         run: .github/workflows/steps/setup-gpg.sh
