@@ -53,7 +53,7 @@ jobs:
     if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v1.1.0
         with:
           ref: main
 
