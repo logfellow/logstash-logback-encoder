@@ -19,7 +19,3 @@ git config --local tag.forceSignAnnotated true
 echo Setting git user to "${GPG_USER_NAME}" with email "${GPG_USER_EMAIL}"
 git config --local user.name "${GPG_USER_NAME}"
 git config --local user.email "${GPG_USER_EMAIL}"
-
-echo Propagating git authentication from local config to global config
-git config --global http.https://github.com/.extraheader "$(git config --get http.https://github.com/.extraheader)"
-
