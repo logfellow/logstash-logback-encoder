@@ -26,7 +26,7 @@ If you have a question, check Stack Overflow using the
 [logstash-logback-encoder](https://stackoverflow.com/questions/tagged/logstash-logback-encoder) tag.
 
 If you believe there is an issue, search through
-[existing issues](https://github.com/logstash/logstash-logback-encoder/issues) trying a
+[existing issues](https://github.com/logfellow/logstash-logback-encoder/issues) trying a
 few different ways to find discussions, past or current, that are related to the issue.
 Reading those discussions helps you to learn about the issue, and helps us to make a decision.
 
@@ -40,7 +40,7 @@ If creating an issue after a discussion on Stack Overflow, please provide a desc
 in the issue instead of simply referring to Stack Overflow.
 The issue tracker is an important place of record for design discussions and should be self-sufficient.
 
-Once you're ready, create an [issue](https://github.com/logstash/logstash-logback-encoder/issues).
+Once you're ready, create an [issue](https://github.com/logfellow/logstash-logback-encoder/issues).
 
 ### Submit a Pull Request
 
@@ -139,5 +139,5 @@ License
 -------
 
 By contributing, you agree that the contributions will be licensed under the
-[Apache License 2.0](https://github.com/logstash/logstash-logback-encoder/blob/main/LICENSE).
+[Apache License 2.0](https://github.com/logfellow/logstash-logback-encoder/blob/main/LICENSE).
 

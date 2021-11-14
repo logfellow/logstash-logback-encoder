@@ -1,13 +1,13 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logstash/logstash-logback-encoder/tree/logstash-logback-encoder-7.0).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-7.0).
 
 # Logstash Logback Encoder
 
-[![Build](https://github.com/logstash/logstash-logback-encoder/workflows/build/badge.svg?branch=main)](https://github.com/logstash/logstash-logback-encoder/actions)
+[![Build](https://github.com/logfellow/logstash-logback-encoder/workflows/build/badge.svg?branch=main)](https://github.com/logfellow/logstash-logback-encoder/actions)
 [![Javadocs](http://www.javadoc.io/badge/net.logstash.logback/logstash-logback-encoder.svg)](http://www.javadoc.io/doc/net.logstash.logback/logstash-logback-encoder)
 [![Maven Central](https://img.shields.io/maven-central/v/net.logstash.logback/logstash-logback-encoder)](https://search.maven.org/artifact/net.logstash.logback/logstash-logback-encoder)
-[![Release Notes](https://img.shields.io/github/v/release/logstash/logstash-logback-encoder?label=release%20notes)](https://github.com/logstash/logstash-logback-encoder/releases/latest)
+[![Release Notes](https://img.shields.io/github/v/release/logfellow/logstash-logback-encoder?label=release%20notes)](https://github.com/logfellow/logstash-logback-encoder/releases/latest)
 
 Provides [logback](http://logback.qos.ch/) encoders, layouts, and appenders to log in JSON and [other formats supported by Jackson](#data-format).
 
@@ -568,7 +568,7 @@ Buffering can be disabled by setting the `writeBufferSize` to `0`.
 Consider disabling the write buffer if you are concerned about losing data from the buffer for flaky connections.
 Disabling the buffer can potentially slow down the writer thread due to increased system calls,
 but in some environments, this does not seem to affect overall performance.
-See [this discussion](https://github.com/logstash/logstash-logback-encoder/issues/342).
+See [this discussion](https://github.com/logfellow/logstash-logback-encoder/issues/342).
 
 
 #### Write Timeouts

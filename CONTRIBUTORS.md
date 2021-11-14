@@ -1,4 +1,4 @@
-See [contributors](https://github.com/logstash/logstash-logback-encoder/graphs/contributors) for the most up-to-date list.
+See [contributors](https://github.com/logfellow/logstash-logback-encoder/graphs/contributors) for the most up-to-date list.
 
 The list below is no longer being maintained, but is kept for historical purposes.
 

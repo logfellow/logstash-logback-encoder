@@ -50,7 +50,7 @@ jobs:
     name: release
     runs-on: ubuntu-20.04
     needs: [build]
-    if: github.event_name == 'push' && github.repository == 'logstash/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
+    if: github.event_name == 'push' && github.repository == 'logfellow/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2

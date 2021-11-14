@@ -447,7 +447,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                     if (!Thread.currentThread().isInterrupted()) {
                         executorService.submit(() ->
                             /*
-                             * https://github.com/logstash/logstash-logback-encoder/issues/341
+                             * https://github.com/logfellow/logstash-logback-encoder/issues/341
                              *
                              * Pro-actively trigger the event handler's onEvent method in the handler thread
                              * by publishing a null event (which usually means a keepAlive event).
