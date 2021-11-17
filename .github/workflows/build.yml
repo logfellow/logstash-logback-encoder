@@ -38,13 +38,20 @@ jobs:
       - name: Test Jackson 2.12
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Djackson.version=2.12.5 surefire:test
 
-      - name: Upload Test Reports
+      - name: Upload Test Reports to Github
         uses: actions/upload-artifact@v2
         if: ${{ always() }}
         with:
           name: test-reports-${{ matrix.java }}
           path: '**/target/surefire-reports/**'
           if-no-files-found: ignore
+
+      - name: Upload Test Coverage to Codecov
+        uses: codecov/codecov-action@v2
+        if: matrix.java == '8'
+        with:
+          files: target/site/jacoco/jacoco.xml
+
 
   release:
     name: release

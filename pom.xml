@@ -413,6 +413,29 @@
                     </execution>
                 </executions>
             </plugin>
+            
+            <!-- Install JaCoCo agent and produce reports at the end of the build.
+            -->
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>jacoco-prepare-agent</id>
+                        <phase>process-test-classes</phase> <!-- must be ready for the `test` phase, default is "initialize" -->
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>jacoco-report</id>
+                        <phase>verify</phase> <!-- this is the default -->
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
         <pluginManagement>
             <plugins>
@@ -544,6 +567,29 @@
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>${maven-resources-plugin.version}</version>
                 </plugin>
+                
+                <!-- Java Code Coverage (JaCoCo)
+                 -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>0.8.7</version>
+                    <configuration>
+                        <!-- Only instrument "net.logstash.**" by default
+                         -->
+                        <includes>
+                            <include>net/logstash/**</include>
+                        </includes>
+                        
+                        <!-- Produce XML report for Codecov, and HTML for local builds if user wants to
+                             have a look at it...    
+                         -->
+                        <formats>
+                            <format>XML</format>
+                            <format>HTML</format>
+                        </formats>
+                    </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -605,30 +651,30 @@
             </properties>
         </profile>
         
-		<!--
-			Profile used by the Eclipse Maven plugin (m2eclipse).
-	   
-			Activation:
-				Profile is activated if the property "m2e.version" is found.
-				The Eclipse plugin automatically exports this property which in turn causes the profile
-				to be automatically activated under Eclipse.
-		 -->
-		<profile>
-			<id>m2e</id>
-			<activation>
-				<property>
-					<name>m2e.version</name>
-				</property>
-			</activation>
+        <!--
+            Profile used by the Eclipse Maven plugin (m2eclipse).
+       
+            Activation:
+                Profile is activated if the property "m2e.version" is found.
+                The Eclipse plugin automatically exports this property which in turn causes the profile
+                to be automatically activated under Eclipse.
+         -->
+        <profile>
+            <id>m2e</id>
+            <activation>
+                <property>
+                    <name>m2e.version</name>
+                </property>
+            </activation>
 
-			<build>
-				<!--
-					Tell eclipse to use another directory for its generated classes than the one
-					used by the command line Maven.
-				 -->
-				<directory>target-eclipse</directory>
-			</build>
-		</profile>
+            <build>
+                <!--
+                    Tell eclipse to use another directory for its generated classes than the one
+                    used by the command line Maven.
+                 -->
+                <directory>target-eclipse</directory>
+            </build>
+        </profile>
         
         <!-- 
             "Fast" profile that can be used during local development to disable most of the "heavy"
