@@ -48,6 +48,7 @@ jobs:
 
       - name: Upload Test Coverage to Codecov
         uses: codecov/codecov-action@v2
+        if: matrix.java == '8'
         with:
           files: target/site/jacoco/jacoco.xml
 
