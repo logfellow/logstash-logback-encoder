@@ -51,7 +51,7 @@ jobs:
         with:
           files: target/site/jacoco/jacoco.xml
         env:
-          CODECOV_TOKEN: db650146-b71e-4afd-879d-88bc3b64e111
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   release:
     name: release
