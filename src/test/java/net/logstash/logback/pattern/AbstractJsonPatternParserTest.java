@@ -155,7 +155,8 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
                 + "        'string': 'value',     "
                 + "        'int'   : 100,         "
                 + "        'double': 0.33,        "
-                + "        'bool'  : true         "
+                + "        'bool'  : true,        "
+                + "        'null'  : null         "
                 + "    }                          "
                 + "}                              ");
 
@@ -165,7 +166,8 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
                 + "        'string': 'value',     "
                 + "        'int'   : 100,         "
                 + "        'double': 0.33,        "
-                + "        'bool'  : true         "
+                + "        'bool'  : true,        "
+                + "        'null'  : null         "
                 + "    }                          "
                 + "}                              ");
 
@@ -238,10 +240,24 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
                 + "    'key4' : '#asJson{\\'123\\'}',                                "
                 + "    'key5' : '#asJson{[1, 2]}',                                   "
                 + "    'key6' : '#asJson{[1, \\'2\\']}',                             "
-                + "    'key7' : '#asJson{{\\'field\\':\\'value\\'}}',                "
-                + "    'key8' : '#asJson{{\\'field\\':\\'value\\',\\'num\\':123}}',  "
-                + "    'key9' : '#asJson{one two three}',                            "
-                + "    'key10': '#asJson{1 suffix}'                                  "
+                + "    'key7' : '#asJson{ {                                          "
+                +                escape(
+                  "                  'string' : 'value',                             "
+                + "                  'int'    : 1,                                   "
+                + "                  'float'  : 1.23,                                "
+                + "                  'boolean': true,                                "
+                + "                  'null' : null,                                  "
+                + "                  'nested': {                                     "
+                + "                      'field': 'value'                            "
+                + "                  },                                              "
+                + "                  'array': [                                      "
+                + "                       'string',                                  "
+                + "                       1,                                         "
+                + "                       null                                       "
+                + "                  ]                                               "
+                                 ) + "} }',                                          "
+                + "    'key8' : '#asJson{one two three}',                            "
+                + "    'key9' : '#asJson{1 suffix}'                                  "
                 + "}                                                                 ");
 
         String expected = toJson(
@@ -252,10 +268,23 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
                 + "    'key4' : '123',                                               "
                 + "    'key5' : [1, 2],                                              "
                 + "    'key6' : [1, '2'],                                            "
-                + "    'key7' : {'field':'value'},                                   "
-                + "    'key8' : {'field':'value', 'num':123},                        "
-                + "    'key9' : null,                                                "
-                + "    'key10': null                                                 "
+                + "    'key7' : {                                                    "
+                + "                  'string' : 'value',                             "
+                + "                  'int'    : 1,                                   "
+                + "                  'float'  : 1.23,                                "
+                + "                  'boolean': true,                                "
+                + "                  'null'   : null,                                "
+                + "                  'nested': {                                     "
+                + "                      'field': 'value'                            "
+                + "                  },                                              "
+                + "                  'array': [                                      "
+                + "                       'string',                                  "
+                + "                       1,                                         "
+                + "                       null                                       "
+                + "                  ]                                               "
+                + "             },                                                   "
+                + "    'key8' : null,                                                "
+                + "    'key9' : null                                                 "
                 + "}                                                                 ");
 
         verifyFields(pattern, expected);
@@ -452,5 +481,8 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     
     protected static String toJson(String str) {
         return str.replace("'", "\"");
+    }
+    protected static String escape(String str) {
+        return str.replace("'", "\\'");
     }
 }
