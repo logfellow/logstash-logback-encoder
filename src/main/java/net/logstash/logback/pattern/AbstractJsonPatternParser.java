@@ -454,7 +454,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         public void write(JsonGenerator generator, Event event) throws IOException {
-            JsonWritingUtils.writeSimpleObject(generator, getValue(event));
+            JsonWritingUtils.writeObject(generator, getValue(event));
         }
         
         private Object getValue(Event event) {

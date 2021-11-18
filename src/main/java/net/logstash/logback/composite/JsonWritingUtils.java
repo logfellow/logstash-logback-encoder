@@ -18,7 +18,9 @@ package net.logstash.logback.composite;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,7 +30,8 @@ import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.NullNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Utilities for writing JSON
@@ -180,8 +183,8 @@ public class JsonWritingUtils {
 
     /**
      * Helper method to try to call appropriate write method for given
-     * untyped Object. At this point, no structural conversions should be done,
-     * only simple basic types are to be coerced as necessary.
+     * untyped Object. Delegates to {@link JsonGenerator#writeObject(Object)} if the value
+     * cannot be efficiently handled by this method.
      *
      * @param generator the {@link JsonGenerator} to produce JSON content
      * @param value Value to write
@@ -189,16 +192,16 @@ public class JsonWritingUtils {
      * @throws IOException if there is either an underlying I/O problem or encoding
      *    issue at format layer
      */
-    public static void writeSimpleObject(JsonGenerator generator, Object value) throws IOException {
+    public static void writeObject(JsonGenerator generator, Object value) throws IOException {
         if (value == null) {
             generator.writeNull();
             return;
         }
-        if (value instanceof String) {
+        else if (value instanceof String) {
             generator.writeString((String) value);
             return;
         }
-        if (value instanceof Number) {
+        else if (value instanceof Number) {
             Number n = (Number) value;
             if (n instanceof Integer) {
                 generator.writeNumber(n.intValue());
@@ -241,39 +244,96 @@ public class JsonWritingUtils {
                 return;
             }
         }
-        if (value instanceof byte[]) {
+        else if (value instanceof byte[]) {
             generator.writeBinary((byte[]) value);
             return;
         }
-        if (value instanceof Boolean) {
+        else if (value instanceof Boolean) {
             generator.writeBoolean((Boolean) value);
             return;
         }
-        if (value instanceof AtomicBoolean) {
+        else if (value instanceof AtomicBoolean) {
             generator.writeBoolean(((AtomicBoolean) value).get());
             return;
         }
-        if (value instanceof JsonNode) {
+        else if (value instanceof JsonNode) {
             JsonNode node = (JsonNode) value;
             
-            if (node instanceof NullNode) {
-                generator.writeNull();
-            } else {
-                /*
-                 * Ask the JsonNode to serialize itself using the supplied JsonGenerator
-                 * but without SerializerProvider (last parameter set to 'null').
-                 * 
-                 * This works except for:
-                 * - NullNode: the case is already handled above
-                 * - POJONode: this type of node is definitely not a "simple type" and requires
-                 *             the help of an ObjectCodec to be serialized. Attempts to serialize
-                 *             a POJONode with this method will throw a NullPointerException.
-                 * 
-                 */
-                node.serialize(generator, null);
+            switch (node.getNodeType()) {
+                case NULL:
+                    generator.writeNull();
+                    return;
+                    
+                case STRING:
+                    generator.writeString(node.asText());
+                    return;
+                    
+                case BOOLEAN:
+                    generator.writeBoolean(node.asBoolean());
+                    return;
+                    
+                case BINARY:
+                    generator.writeBinary(node.binaryValue());
+                    return;
+                    
+                case NUMBER:
+                    if (node.isInt()) {
+                        generator.writeNumber(node.intValue());
+                        return;
+                    }
+                    if (node.isLong()) {
+                        generator.writeNumber(node.longValue());
+                        return;
+                    }
+                    if (node.isShort()) {
+                        generator.writeNumber(node.shortValue());
+                        return;
+                    }
+                    if (node.isDouble()) {
+                        generator.writeNumber(node.doubleValue());
+                        return;
+                    }
+                    if (node.isFloat()) {
+                        generator.writeNumber(node.floatValue());
+                        return;
+                    }
+                    if (node.isBigDecimal()) {
+                        generator.writeNumber(node.decimalValue());
+                        return;
+                    }
+                    if (node.isBigInteger()) {
+                        generator.writeNumber(node.bigIntegerValue());
+                        return;
+                    }
+                    
+                case OBJECT:
+                    generator.writeStartObject(node);
+                    for (Iterator<Entry<String, JsonNode>> entries = ((ObjectNode) node).fields(); entries.hasNext();) {
+                        Entry<String, JsonNode> entry = entries.next();
+                        generator.writeFieldName(entry.getKey());
+                        writeObject(generator, entry.getValue());
+                    }
+                    generator.writeEndObject();
+                    return;
+                    
+                case ARRAY:
+                    ArrayNode arrayNode = (ArrayNode) node;
+                    int size = arrayNode.size();
+                    generator.writeStartArray(arrayNode, size);
+                    for (Iterator<JsonNode> elements = arrayNode.elements(); elements.hasNext();) {
+                        writeObject(generator, elements.next());
+                    }
+                    generator.writeEndArray();
+                    return;
+                    
+                default:
+                    // default case is handled below
+                    break;
             }
-            return;
         }
-        throw new IllegalArgumentException("Can only serialize simple wrapper types (type passed " + value.getClass().getName() + ")");
+
+        // Default case if not handled by one of the specialized methods above
+        //
+        generator.writeObject(value);
     }
 }
