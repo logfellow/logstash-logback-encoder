@@ -98,6 +98,10 @@
             <name>John E. Vincent</name>
             <email>lusis.org+github.com@gmail.com</email>
         </developer>
+        <developer>
+            <id>brenuart</id>
+            <name>Bertrand Renuart</name>
+        </developer>
     </developers>
 
     <dependencyManagement>
