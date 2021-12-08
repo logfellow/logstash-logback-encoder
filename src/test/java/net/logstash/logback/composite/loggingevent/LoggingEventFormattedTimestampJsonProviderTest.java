@@ -70,12 +70,12 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
     @Test
     public void constant() throws IOException {
         LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
-        provider.setPattern("[ISO_DATE_TIME]");
+        provider.setPattern("[RFC_1123_DATE_TIME]"); // use a DateTimeFormatter pattern not supported by the FastISOTimestampFormatter
         when(event.getTimeStamp()).thenReturn(0L);
 
         provider.writeTo(generator, event);
 
-        String expectedValue = DateTimeFormatter.ISO_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(0));
+        String expectedValue = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(0));
         verify(generator).writeStringField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, expectedValue);
     }
 
