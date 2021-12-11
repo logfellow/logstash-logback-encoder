@@ -56,37 +56,32 @@ class FastISOTimestampFormatter {
     /**
      * Whether trailing zero should be trimmed from the millis part
      */
-    private boolean trimMillis = true;
+    private final boolean trimMillis;
     
     
     /* Visible for testing */
-    FastISOTimestampFormatter(DateTimeFormatter formatter) {
+    FastISOTimestampFormatter(DateTimeFormatter formatter, boolean trimMillis) {
         this.formatter = formatter;
+        this.trimMillis = trimMillis;
         this.zoneOffsetState = new ZoneOffsetState(System.currentTimeMillis());
     }
     
     
-    /* Visible for testing */
-    private void setTrimMillis(boolean trimMillis) {
-        this.trimMillis = trimMillis;
-    }
-    
-    
     /**
-     * Format the {@code timestamp} millis.
+     * Format the {@code timestampInMillis} millis.
      * 
-     * @param timestamp the millis to format
+     * @param timestampInMillis the millis to format
      * @return the formatted result
      */
-    public String format(long timestamp) {
+    public String format(long timestampInMillis) {
         ZoneOffsetState current = this.zoneOffsetState;
         
-        if (!current.isApplicable(timestamp)) {
-            current = new ZoneOffsetState(timestamp);
+        if (!current.canFormat(timestampInMillis)) {
+            current = new ZoneOffsetState(timestampInMillis);
             this.zoneOffsetState = current;
         }
 
-        return current.format(timestamp);
+        return current.format(timestampInMillis);
     }
 
     
@@ -97,7 +92,7 @@ class FastISOTimestampFormatter {
      * @return a fast formatter
      */
     public static FastISOTimestampFormatter isoOffsetDateTime(ZoneId zoneId) {
-        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(zoneId));
+        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(zoneId), true);
     }
 
     /**
@@ -107,7 +102,7 @@ class FastISOTimestampFormatter {
      * @return a fast formatter
      */
     public static FastISOTimestampFormatter isoZonedDateTime(ZoneId zoneId) {
-        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_ZONED_DATE_TIME.withZone(zoneId));
+        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_ZONED_DATE_TIME.withZone(zoneId), true);
     }
     
     /**
@@ -117,7 +112,7 @@ class FastISOTimestampFormatter {
      * @return a fast formatter
      */
     public static FastISOTimestampFormatter isoLocalDateTime(ZoneId zoneId) {
-        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(zoneId));
+        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_LOCAL_DATE_TIME.withZone(zoneId), true);
     }
     
     /**
@@ -127,7 +122,7 @@ class FastISOTimestampFormatter {
      * @return a fast formatter
      */
     public static FastISOTimestampFormatter isoDateTime(ZoneId zoneId) {
-        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_DATE_TIME.withZone(zoneId));
+        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_DATE_TIME.withZone(zoneId), true);
     }
     
     /**
@@ -137,9 +132,7 @@ class FastISOTimestampFormatter {
      * @return a fast formatter
      */
     public static FastISOTimestampFormatter isoInstant(ZoneId zoneId) {
-        FastISOTimestampFormatter fast = new FastISOTimestampFormatter(DateTimeFormatter.ISO_INSTANT.withZone(zoneId));
-        fast.setTrimMillis(false);
-        return fast;
+        return new FastISOTimestampFormatter(DateTimeFormatter.ISO_INSTANT.withZone(zoneId), false);
     }
     
     
@@ -151,9 +144,9 @@ class FastISOTimestampFormatter {
         private final long zoneTransitionStart;
         private final long zoneTransitionStop;
         private final boolean cachingEnabled;
-        private TimestampCache cache;
+        private TimestampPeriod cachedTimestampPeriod;
         
-        ZoneOffsetState(long tstamp) {
+        ZoneOffsetState(long timestampInMillis) {
             // Determine how long we can cache the previous result.
             // ZoneOffsets are usually expressed in hour:minutes but the Java time API accepts ZoneOffset with
             // a resolution up to the second:
@@ -168,7 +161,7 @@ class FastISOTimestampFormatter {
                 throw new IllegalArgumentException("formatter must be configured with a Zone override to format millis");
             }
             
-            Instant now = Instant.ofEpochMilli(tstamp);
+            Instant now = Instant.ofEpochMilli(timestampInMillis);
             ZoneOffset zoneOffset;
             
             /*
@@ -185,7 +178,7 @@ class FastISOTimestampFormatter {
              */
             else {
                 ZoneOffsetTransition zoneOffsetTransition = zoneId.getRules().nextTransition(now);
-                this.zoneTransitionStart = tstamp;
+                this.zoneTransitionStart = timestampInMillis;
                 this.zoneTransitionStop = zoneOffsetTransition.toEpochSecond() * 1_000;
                 zoneOffset = zoneOffsetTransition.getOffsetBefore();
             }
@@ -210,53 +203,65 @@ class FastISOTimestampFormatter {
         
         
         /**
-         * Check whether this state is applicable for the given timestamp.
+         * Check whether the given timestamp is within the ZoneOffset represented by this state.
          * 
-         * @param tstamp the timestamp millis
-         * @return {@code true} if this state is applicable to the given timestamp
+         * @param timestampInMillis the timestamp millis
+         * @return {@code true} if the timestamp is within the ZoneOffset represented by this state
          */
-        public boolean isApplicable(long tstamp) {
-            return tstamp >= this.zoneTransitionStart && tstamp < this.zoneTransitionStop;
+        public boolean canFormat(long timestampInMillis) {
+            return timestampInMillis >= this.zoneTransitionStart && timestampInMillis < this.zoneTransitionStop;
         }
         
         
         /**
-         * Format the timestamp millis.
-         * Note: you must first invoke {@link #isApplicable(long)} to check that the state can be used to format the timestamp.
+         * Format a timestamp expressed in millis.
+         * Note: you must first invoke {@link #canFormat(long)} to check that the state can be used to format the timestamp.
          * 
-         * @param tstamp the timestamp milis to format
+         * @param timestampInMillis the timestamp milis to format
          * @return the formatted timestamp
          */
-        public String format(long tstamp) {
+        public String format(long timestampInMillis) {
             // If caching is disabled...
             //
             if (!this.cachingEnabled) {
-                return buildFromFormatter(tstamp);
+                return buildFromFormatter(timestampInMillis);
             }
             
             // If tstamp is within the caching period...
             //
-            TimestampCache currentCache = this.cache;
-            if (currentCache != null && currentCache.isApplicable(tstamp)) {
-                return buildFromCache(currentCache, tstamp);
+            TimestampPeriod currentTimestampPeriod = this.cachedTimestampPeriod;
+            if (currentTimestampPeriod != null && currentTimestampPeriod.canFormat(timestampInMillis)) {
+                return buildFromCache(currentTimestampPeriod, timestampInMillis);
             }
             
             // ... otherwise, use the formatter and cache the formatted value
             //
-            String formatted = buildFromFormatter(tstamp);
-            cache = createNewCache(tstamp, formatted);
+            String formatted = buildFromFormatter(timestampInMillis);
+            cachedTimestampPeriod = createNewCache(timestampInMillis, formatted);
             return formatted;
         }
         
         
-        private TimestampCache createNewCache(long timestampInMillis, String formatted) {
+        private TimestampPeriod createNewCache(long timestampInMillis, String formatted) {
+            // Examples of the supported formats:
+            //
+            //   ISO_OFFSET_DATE_TIME   2020-01-01T10:20:30.123+01:00
+            //   ISO_ZONED_DATE_TIME    2020-01-01T10:20:30.123+01:00[Europe/Brussels]
+            //   ISO_LOCAL_DATE_TIME    2020-01-01T10:20:30.123
+            //   ISO_DATE_TIME          2020-01-01T10:20:30.123+01:00[Europe/Brussels]
+            //   ISO_INSTANT            2020-01-01T09:20:30.123Z
+            //                          +---------------+      +---------------------+
+            //                               prefix                    suffix
+            //
+            // Seconds start at position 17 and are two digits long.
+            // Millis are optional.
+            
+            
             // The part up to the minutes (included)
             String prefix = formatted.substring(0, 17);
-                
-            // The part after the millis (i.e. the timezone)
-            // Note:
-            //   ISO_LOCAL_DATE_TIME has nothing after millis
-            //   ISO_INSTANT has a 'Z'
+            
+
+            // The part of after the millis (i.e. the timezone)
             int pos = formatted.indexOf('+', 17);
             if (pos == -1) {
                 pos = formatted.indexOf('-', 17);
@@ -272,34 +277,35 @@ class FastISOTimestampFormatter {
             long cacheStop = (cachePeriod + 1) * 60_000;
 
             // Store in cache
-            return new TimestampCache(cacheStart, cacheStop, prefix, suffix);
+            return new TimestampPeriod(cacheStart, cacheStop, prefix, suffix);
         }
         
         
-        private String buildFromCache(TimestampCache cache, long timestampInMillis) {
+        private String buildFromCache(TimestampPeriod cache, long timestampInMillis) {
             return cache.format(timestampInMillis);
         }
     }
     
+    /* visible for testing */
     String buildFromFormatter(long timestampInMillis) {
         return FastISOTimestampFormatter.this.formatter.format(Instant.ofEpochMilli(timestampInMillis));
     }
     
-    private class TimestampCache {
-        private final long cacheStart;
-        private final long cacheStop;
+    private class TimestampPeriod {
+        private final long periodStartInMillis;
+        private final long periodStopInMillis;
         private final String suffix;
         private final String prefix;
 
-        TimestampCache(long cacheStart, long cacheStop, String prefix, String suffix) {
-            this.cacheStart = cacheStart;
-            this.cacheStop = cacheStop;
+        TimestampPeriod(long periodStartInMillis, long periodStopInMillis, String prefix, String suffix) {
+            this.periodStartInMillis = periodStartInMillis;
+            this.periodStopInMillis = periodStopInMillis;
             this.prefix = prefix;
             this.suffix = suffix;
         }
         
-        public boolean isApplicable(long tstamp) {
-            return tstamp >= this.cacheStart && tstamp < this.cacheStop;
+        public boolean canFormat(long timestampInMillis) {
+            return timestampInMillis >= this.periodStartInMillis && timestampInMillis < this.periodStopInMillis;
         }
         
         public String format(long timestampInMillis) {
@@ -307,9 +313,9 @@ class FastISOTimestampFormatter {
             sb.setLength(0);
             sb.append(prefix);
             
-            int millisSinceCacheStart = (int) (timestampInMillis - this.cacheStart); // seconds & millis
-            int seconds = millisSinceCacheStart / 1_000;
-            int millis = millisSinceCacheStart % 1000;
+            int millisSincePeriodStart = (int) (timestampInMillis - this.periodStartInMillis); // seconds & millis
+            int seconds = millisSincePeriodStart / 1_000;
+            int millis = millisSincePeriodStart % 1000;
 
             // seconds are always TWO digits...
             //

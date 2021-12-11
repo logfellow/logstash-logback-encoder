@@ -35,7 +35,7 @@ import java.time.zone.ZoneOffsetTransition;
 import java.time.zone.ZoneOffsetTransitionRule;
 import java.time.zone.ZoneRules;
 import java.time.zone.ZoneRulesProvider;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -83,14 +83,23 @@ public class FastISOTimestampFormatterTest {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FastISOTimestampFormatter.isoOffsetDateTime(null));
     }
     
-    
+    @Test
+    public void a() {
+        ZonedDateTime now = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, 123000000, zone);
+
+        System.out.println(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(now));
+        System.out.println(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(now));
+        System.out.println(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now));
+        System.out.println(DateTimeFormatter.ISO_DATE_TIME.format(now));
+        System.out.println(DateTimeFormatter.ISO_INSTANT.format(now));
+    }
     /*
      * Check that caching of previous values works as expected
      */
     @Test
     public void checkCaching() {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(zone);
-        FastISOTimestampFormatter fast = spy(new FastISOTimestampFormatter(formatter));
+        FastISOTimestampFormatter fast = spy(new FastISOTimestampFormatter(formatter, true));
         
         ZonedDateTime now = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, 0, zone);
 
@@ -205,7 +214,7 @@ public class FastISOTimestampFormatterTest {
         // At least one transition is required
         ZoneOffsetTransition initialTransition = ZoneOffsetTransition.of(
                 LocalDateTime.of(2000, 1, 1, 3, 0), summerTimeOffset, winterTimeOffset);
-        List<ZoneOffsetTransition> transitionList = listOf(initialTransition);
+        List<ZoneOffsetTransition> transitionList = Arrays.asList(initialTransition);
 
         // Winter->Summer: switch around Jan 1st @ 2AM
         ZoneOffsetTransitionRule springRule =
@@ -218,7 +227,7 @@ public class FastISOTimestampFormatterTest {
                         false, ZoneOffsetTransitionRule.TimeDefinition.STANDARD, winterTimeOffset,
                         summerTimeOffset, winterTimeOffset);
         ZoneRules rules = ZoneRules.of(winterTimeOffset, winterTimeOffset,
-                transitionList, transitionList, listOf(springRule, fallRule));
+                transitionList, transitionList, Arrays.asList(springRule, fallRule));
 
         // Register the new custom rule - the heart of the magic: the ZoneRulesProvider
         Set<String> zoneIds = new HashSet<>();
@@ -336,7 +345,7 @@ public class FastISOTimestampFormatterTest {
      * Create a collection of DynamicTests, one for each supported time format
      */
     private static Collection<DynamicTest> doForAllSupportedFormats(ZoneId zone, TestCase testCase) {
-        return listOf(
+        return Arrays.asList(
             DynamicTest.dynamicTest("ISO_OFFSET_DATE_TIME", () ->
                 testCase.execute(
                     DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(zone),
@@ -422,15 +431,5 @@ public class FastISOTimestampFormatterTest {
         finally {
             verify(fast, times(1)).buildFromFormatter(millis);
         }
-    }
-    
-    
-    @SafeVarargs
-    private static <T> List<T> listOf(T... items) {
-        ArrayList<T> l = new ArrayList<>();
-        for (T item: items) {
-            l.add(item);
-        }
-        return l;
     }
 }
