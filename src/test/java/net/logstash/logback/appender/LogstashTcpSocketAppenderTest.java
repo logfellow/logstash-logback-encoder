@@ -57,37 +57,29 @@ import net.logstash.logback.appender.destination.RoundRobinDestinationConnection
 import net.logstash.logback.appender.listener.TcpAppenderListener;
 import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.encoder.StreamingEncoder;
+import net.logstash.logback.test.AbstractLogbackTest;
 
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.BasicStatusManager;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.encoder.EncoderBase;
-import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
-import ch.qos.logback.core.status.StatusManager;
 import ch.qos.logback.core.util.Duration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.verification.VerificationWithTimeout;
 
-@ExtendWith(MockitoExtension.class)
-public class LogstashTcpSocketAppenderTest {
+public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
     
     private static final int VERIFICATION_TIMEOUT = 1000 * 10;
 
     @InjectMocks
     private final LogstashTcpSocketAppender appender = new TestableLogstashTcpSocketAppender();
-    
-    private StatusManager statusManager = new BasicStatusManager();
-    
+        
     @Mock
     private ILoggingEvent event1;
     
@@ -118,15 +110,8 @@ public class LogstashTcpSocketAppenderTest {
     }
     
     @BeforeEach
-    public void setup() throws IOException {
-        // Output statuses on the console for easy debugging. Must be initialized early to capture
-        // warnings emitted by setter/getter methods before the appender is started.
-        OnConsoleStatusListener consoleListener = new OnConsoleStatusListener();
-        consoleListener.start();
-        statusManager.add(consoleListener);
-        
-        LoggerContext context = new LoggerContext();
-        context.setStatusManager(statusManager);
+    public void setup() throws Exception {
+        super.setup();
         
         when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);

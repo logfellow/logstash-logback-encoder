@@ -40,28 +40,20 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import net.logstash.logback.appender.AsyncDisruptorAppender.LogEvent;
 import net.logstash.logback.appender.listener.AppenderListener;
+import net.logstash.logback.test.AbstractLogbackTest;
 
-import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.BasicStatusManager;
-import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.Status;
-import ch.qos.logback.core.status.StatusManager;
 import com.lmax.disruptor.EventHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
-public class AsyncDisruptorAppenderTest {
+public class AsyncDisruptorAppenderTest extends AbstractLogbackTest {
 
     private TestAsyncAppender appender = new TestAsyncAppender();
-    
-    private StatusManager statusManager = new BasicStatusManager();
-    
+        
     @Mock
     private ILoggingEvent event1;
     
@@ -75,16 +67,8 @@ public class AsyncDisruptorAppenderTest {
 
     
     @BeforeEach
-    public void setup() {
-        // Output statuses on the console for easy debugging. Must be initialized early to capture
-        // warnings emitted by setter/getter methods before the appender is started.
-        OnConsoleStatusListener consoleListener = new OnConsoleStatusListener();
-        consoleListener.start();
-        statusManager.add(consoleListener);
-        
-        LoggerContext context = new LoggerContext();
-        context.setStatusManager(statusManager);
-        context.start();
+    public void setup() throws Exception {
+        super.setup();
         
         appender.setContext(context);
         appender.addListener(listener);
@@ -457,6 +441,47 @@ public class AsyncDisruptorAppenderTest {
             barrier.reset();
         }
     }
+    
+    
+    /*
+     * Assert that all listeners are invoked even after one threw an exception
+     */
+    @Test
+    public void listenersInvokedAfterException_eventAppended() {
+        @SuppressWarnings("unchecked")
+        AppenderListener<ILoggingEvent> exceptionThrowingListener = mock(AppenderListener.class);
+        doThrow(RuntimeException.class).when(exceptionThrowingListener).eventAppended(eq(appender), any(), anyLong());
+        
+        appender.removeListener(listener);
+        appender.addListener(exceptionThrowingListener);
+        appender.addListener(listener);
+        appender.start();
+        
+        appender.doAppend(event1);
+        
+        verify(exceptionThrowingListener).eventAppended(eq(appender), eq(event1), anyLong());
+        verify(listener).eventAppended(eq(appender), eq(event1), anyLong());
+    }
+    
+    @Test
+    public void listenersInvokedAfterException_appenderStarted() {
+        @SuppressWarnings("unchecked")
+        AppenderListener<ILoggingEvent> exceptionThrowingListener = mock(AppenderListener.class);
+        doThrow(RuntimeException.class).when(exceptionThrowingListener).appenderStarted(appender);
+        
+        appender.removeListener(listener);
+        appender.addListener(exceptionThrowingListener);
+        appender.addListener(listener);
+        appender.start();
+        
+        // exception thrown by listeners does not prevent the appender to start
+        assertThat(appender.isStarted()).isTrue();
+        
+        // all listeners invoked
+        verify(exceptionThrowingListener).appenderStarted(appender);
+        verify(listener).appenderStarted(appender);
+    }
+
     
     
     @SuppressWarnings("deprecation")

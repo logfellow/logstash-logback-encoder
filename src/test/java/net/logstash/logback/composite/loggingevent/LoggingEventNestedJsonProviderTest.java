@@ -16,10 +16,13 @@
 package net.logstash.logback.composite.loggingevent;
 
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonFactoryBuilder;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,4 +61,26 @@ public class LoggingEventNestedJsonProviderTest {
         inOrder.verify(generator).writeEndObject();
     }
 
+    
+    /*
+     * start/stop cascaded to the enclosed JsonProviders
+     */
+    @Test
+    public void startStopProviders() {
+        provider.start();
+        verify(providers).start();
+        
+        provider.stop();
+        verify(providers).stop();
+    }
+    
+    /*
+     * JsonFactory set on the enclosed JsonProviders as well
+     */
+    @Test
+    public void jsonFactoryOnProviders() {
+        JsonFactory jsonFactory = new JsonFactoryBuilder().build();
+        provider.setJsonFactory(jsonFactory);
+        verify(providers).setJsonFactory(jsonFactory);
+    }
 }
