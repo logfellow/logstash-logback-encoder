@@ -32,10 +32,14 @@ import java.time.zone.ZoneOffsetTransition;
  * @author brenuart
  */
 class FastISOTimestampFormatter {
+    private static final long MILLISECONDS_PER_MINUTE = 60_000;
+    
     /**
-     * ThreadLocal with reusable {@link StringBuilder} instances
+     * ThreadLocal with reusable {@link StringBuilder} instances.
+     * Initialized with a size large enough to hold formats that do not include the Zone.
+     * Will need to grow on first use otherwise.
      */
-    private static ThreadLocal<StringBuilder> STRING_BUILDERS = ThreadLocal.withInitial(StringBuilder::new);
+    private static ThreadLocal<StringBuilder> STRING_BUILDERS = ThreadLocal.withInitial(() -> new StringBuilder(30));
 
     /**
      * The actual DateTimeFormatter used to format the timestamp when the cached
@@ -272,12 +276,12 @@ class FastISOTimestampFormatter {
             String suffix = pos == -1 ? "" : formatted.substring(pos);
             
             // Determine how long we can use this cache
-            long cachePeriod = timestampInMillis / 60_000;
-            long cacheStart = cachePeriod * 60_000;
-            long cacheStop = (cachePeriod + 1) * 60_000;
+            long timstampInMinutes = timestampInMillis / MILLISECONDS_PER_MINUTE;
+            long minuteStartInMillis = timstampInMinutes * MILLISECONDS_PER_MINUTE;
+            long minuteStopInMillis = (timstampInMinutes + 1) * MILLISECONDS_PER_MINUTE;
 
             // Store in cache
-            return new TimestampPeriod(cacheStart, cacheStop, prefix, suffix);
+            return new TimestampPeriod(minuteStartInMillis, minuteStopInMillis, prefix, suffix);
         }
         
         
