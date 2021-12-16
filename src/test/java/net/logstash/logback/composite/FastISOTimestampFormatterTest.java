@@ -83,16 +83,7 @@ public class FastISOTimestampFormatterTest {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> FastISOTimestampFormatter.isoOffsetDateTime(null));
     }
     
-    @Test
-    public void a() {
-        ZonedDateTime now = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, 123000000, zone);
 
-        System.out.println(DateTimeFormatter.ISO_OFFSET_DATE_TIME.format(now));
-        System.out.println(DateTimeFormatter.ISO_ZONED_DATE_TIME.format(now));
-        System.out.println(DateTimeFormatter.ISO_LOCAL_DATE_TIME.format(now));
-        System.out.println(DateTimeFormatter.ISO_DATE_TIME.format(now));
-        System.out.println(DateTimeFormatter.ISO_INSTANT.format(now));
-    }
     /*
      * Check that caching of previous values works as expected
      */
