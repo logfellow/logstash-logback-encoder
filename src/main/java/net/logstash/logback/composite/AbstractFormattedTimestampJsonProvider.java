@@ -191,7 +191,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
             //
             String constant = pattern.substring(1, pattern.length() - 1);
 
-            // Use our fast ISOTimestampFormatter if suitable...
+            // Use our fast FastISOTimestampFormatter if suitable...
             //
             ZoneId zone = timeZone.toZoneId();
             if ("ISO_OFFSET_DATE_TIME".equals(constant)) {
