@@ -1643,8 +1643,16 @@ The value of the `timestampPattern` can be any of the following:
 * `[` _`constant`_ `]` - (e.g. `[ISO_OFFSET_DATE_TIME]`) timestamp written using the given `DateTimeFormatter` constant
 * any other value - (e.g. `yyyy-MM-dd'T'HH:mm:ss.SSS`) timestamp written using a `DateTimeFormatter` created from the given pattern
 
+The provider uses a standard Java DateTimeFormatter under the hood. However, special optimisations are applied when using one of  the following standard ISO formats that make it nearly 7x faster:
 
-You can change the timezone like this:
+* `[ISO_OFFSET_DATE_TIME]`
+* `[ISO_ZONED_DATE_TIME`]
+* `[ISO_LOCAL_DATE_TIME`]
+* `[ISO_DATE_TIME`]
+* `[ISO_INSTANT`]
+
+
+The formatter uses the default TimeZone of the host Java platform by default. You can change it like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -1655,6 +1663,7 @@ You can change the timezone like this:
 The value of the `timeZone` element can be any string accepted by java's `TimeZone.getTimeZone(String id)` method.
 For example `America/Los_Angeles`, `GMT+10` or `UTC`.
 Use the special value `[DEFAULT]` to use the default TimeZone of the system.
+
 
 
 ## Customizing LoggingEvent Message

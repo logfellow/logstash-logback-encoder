@@ -19,8 +19,11 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.Objects;
 import java.util.TimeZone;
+import java.util.function.Function;
 
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.util.TimeZoneUtils;
@@ -86,43 +89,21 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
      * Writes the timestamp to the JsonGenerator.
      */
     private TimestampWriter timestampWriter;
-
+    
     /**
      * Writes the timestamp to the JsonGenerator
      */
-    private interface TimestampWriter {
+    protected interface TimestampWriter {
         void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException;
 
         String getTimestampAsString(long timestampInMillis);
     }
 
-    /**
-     * Writes the timestamp to the JsonGenerator as a string formatted by the pattern.
-     */
-    private static class PatternTimestampWriter implements TimestampWriter {
-
-        private final DateTimeFormatter formatter;
-
-        PatternTimestampWriter(DateTimeFormatter formatter) {
-            this.formatter = formatter;
-        }
-
-
-        @Override
-        public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
-            JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestampInMillis));
-        }
-
-        @Override
-        public String getTimestampAsString(long timestampInMillis) {
-            return formatter.format(Instant.ofEpochMilli(timestampInMillis));
-        }
-    }
 
     /**
      * Writes the timestamp to the JsonGenerator as a number of milliseconds since unix epoch.
      */
-    private static class NumberTimestampWriter implements TimestampWriter {
+    protected static class NumberTimestampWriter implements TimestampWriter {
 
         @Override
         public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
@@ -136,10 +117,16 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
     }
 
     /**
-     * Writes the timestamp to the JsonGenerator as a string representation of the of milliseconds since unix epoch.
+     * Writes the timestamp to the JsonGenerator as a string, converting the timestamp millis into a
+     * String using the supplied Function.
      */
-    private static class StringTimestampWriter implements TimestampWriter {
-
+    protected static class StringFormatterWriter implements TimestampWriter {
+        private final Function<Long, String> provider;
+        
+        StringFormatterWriter(Function<Long, String> provider) {
+            this.provider = Objects.requireNonNull(provider);
+        }
+        
         @Override
         public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
             JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestampInMillis));
@@ -147,11 +134,21 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
 
         @Override
         public String getTimestampAsString(long timestampInMillis) {
-            return Long.toString(timestampInMillis);
+            return provider.apply(timestampInMillis);
         }
-
+        
+        static StringFormatterWriter with(DateTimeFormatter formatter) {
+            return new StringFormatterWriter(tstamp -> formatter.format(Instant.ofEpochMilli(tstamp)));
+        }
+        static StringFormatterWriter with(FastISOTimestampFormatter formatter) {
+            return new StringFormatterWriter(formatter::format);
+        }
+        static StringFormatterWriter with(Function<Long, String> formatter) {
+            return new StringFormatterWriter(formatter);
+        }
     }
-
+    
+    
     public AbstractFormattedTimestampJsonProvider() {
         setFieldName(FIELD_TIMESTAMP);
         updateTimestampWriter();
@@ -177,34 +174,78 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
      * Updates the {@link #timestampWriter} value based on the current pattern and timeZone.
      */
     private void updateTimestampWriter() {
+        timestampWriter = createTimestampWriter();
+    }
+    
+    private TimestampWriter createTimestampWriter() {
         if (UNIX_TIMESTAMP_AS_NUMBER.equals(pattern)) {
-            timestampWriter = new NumberTimestampWriter();
-        } else if (UNIX_TIMESTAMP_AS_STRING.equals(pattern)) {
-            timestampWriter = new StringTimestampWriter();
-        } else if (pattern.startsWith("[") && pattern.endsWith("]")) {
-            String constant = pattern.substring("[".length(), pattern.length() - "]".length());
-            try {
-                Field field = DateTimeFormatter.class.getField(constant);
-                if (Modifier.isStatic(field.getModifiers())
-                        && Modifier.isFinal(field.getModifiers())
-                        && field.getType().equals(DateTimeFormatter.class)) {
-                    try {
-                        DateTimeFormatter formatter = (DateTimeFormatter) field.get(null);
-                        timestampWriter = new PatternTimestampWriter(formatter.withZone(timeZone.toZoneId()));
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalArgumentException(String.format("Unable to get value of constant named %s in %s", constant, DateTimeFormatter.class), e);
-                    }
-                } else {
-                    throw new IllegalArgumentException(String.format("Field named %s in %s is not a constant %s", constant, DateTimeFormatter.class, DateTimeFormatter.class));
-                }
-            } catch (NoSuchFieldException e) {
-                throw new IllegalArgumentException(String.format("No constant named %s found in %s", constant, DateTimeFormatter.class), e);
+            return new NumberTimestampWriter();
+        }
+        
+        if (UNIX_TIMESTAMP_AS_STRING.equals(pattern)) {
+            return StringFormatterWriter.with(tstamp -> Long.toString(tstamp));
+        }
+        
+        if (pattern.startsWith("[") && pattern.endsWith("]")) {
+            // Get the standard formatter by name...
+            //
+            String constant = pattern.substring(1, pattern.length() - 1);
+
+            // Use our fast FastISOTimestampFormatter if suitable...
+            //
+            ZoneId zone = timeZone.toZoneId();
+            if ("ISO_OFFSET_DATE_TIME".equals(constant)) {
+                return StringFormatterWriter.with(FastISOTimestampFormatter.isoOffsetDateTime(zone));
             }
-        } else {
-            timestampWriter = new PatternTimestampWriter(DateTimeFormatter.ofPattern(pattern).withZone(timeZone.toZoneId()));
+            if ("ISO_ZONED_DATE_TIME".equals(constant)) {
+                return StringFormatterWriter.with(FastISOTimestampFormatter.isoZonedDateTime(zone));
+            }
+            if ("ISO_LOCAL_DATE_TIME".equals(constant)) {
+                return StringFormatterWriter.with(FastISOTimestampFormatter.isoLocalDateTime(zone));
+            }
+            if ("ISO_DATE_TIME".equals(constant)) {
+                return StringFormatterWriter.with(FastISOTimestampFormatter.isoDateTime(zone));
+            }
+            if ("ISO_INSTANT".equals(constant)) {
+                return StringFormatterWriter.with(FastISOTimestampFormatter.isoInstant(zone));
+            }
+
+            
+            // Otherwise try one of the default formatters...
+            //
+            DateTimeFormatter formatter = getStandardDateTimeFormatter(constant).withZone(zone);
+            return StringFormatterWriter.with(formatter);
+        }
+        
+        
+        // Construct using a pattern
+        //
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern).withZone(timeZone.toZoneId());
+        return StringFormatterWriter.with(formatter);
+    }
+    
+    
+    private DateTimeFormatter getStandardDateTimeFormatter(String name) {
+        try {
+            Field field = DateTimeFormatter.class.getField(name);
+            if (Modifier.isStatic(field.getModifiers())
+                    && Modifier.isFinal(field.getModifiers())
+                    && field.getType().equals(DateTimeFormatter.class)) {
+                    return (DateTimeFormatter) field.get(null);
+            }
+            else {
+                throw new IllegalArgumentException(String.format("Field named %s in %s is not a constant %s", name, DateTimeFormatter.class, DateTimeFormatter.class));
+            }
+        }
+        catch (IllegalAccessException e) {
+            throw new IllegalArgumentException(String.format("Unable to get value of constant named %s in %s", name, DateTimeFormatter.class), e);
+        }
+        catch (NoSuchFieldException e) {
+            throw new IllegalArgumentException(String.format("No constant named %s found in %s", name, DateTimeFormatter.class), e);
         }
     }
-
+    
+    
     public String getPattern() {
         return pattern;
     }
