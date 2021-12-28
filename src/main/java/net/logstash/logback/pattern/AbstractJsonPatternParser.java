@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.logstash.logback.composite.JsonReadingUtils;
-import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.util.StringUtils;
 
 import ch.qos.logback.core.Context;
@@ -454,7 +453,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         public void write(JsonGenerator generator, Event event) throws IOException {
-            JsonWritingUtils.writeObject(generator, getValue(event));
+            generator.writeObject(getValue(event));
         }
         
         private Object getValue(Event event) {

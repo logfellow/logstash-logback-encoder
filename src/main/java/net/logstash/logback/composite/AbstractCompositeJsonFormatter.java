@@ -26,6 +26,7 @@ import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.decorate.NullJsonFactoryDecorator;
 import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
 import net.logstash.logback.util.ProxyOutputStream;
+import net.logstash.logback.util.SimpleObjectJsonGeneratorDelegate;
 import net.logstash.logback.util.ThreadLocalHolder;
 
 import ch.qos.logback.access.spi.IAccessEvent;
@@ -283,7 +284,7 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
     }
 
     private JsonGenerator decorateGenerator(JsonGenerator generator) {
-        return this.jsonGeneratorDecorator.decorate(generator)
+        return new SimpleObjectJsonGeneratorDelegate(jsonGeneratorDecorator.decorate(generator)
                /*
                 * When generators are flushed, don't flush the underlying outputStream.
                 *
@@ -306,10 +307,9 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
 
                /*
                 * JsonGenerator are reused to serialize multiple log events.
-                * Change the default root value separator to an empty string.
+                * Change the default root value separator to an empty string instead of a single space.
                 */
-               .setRootValueSeparator(new SerializedString(CoreConstants.EMPTY_STRING));
-
+               .setRootValueSeparator(new SerializedString(CoreConstants.EMPTY_STRING)));
     }
     
     public JsonFactory getJsonFactory() {
