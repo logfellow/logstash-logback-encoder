@@ -39,6 +39,7 @@ import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.FloatNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.LongNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.ShortNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -90,25 +91,27 @@ public class SimpleObjectJsonGeneratorDelegateTests {
     
     @Test
     public void writeObject_Numbers() throws IOException {
-        generator.writeObject((short) 1);
-        generator.writeObject((int) 2);
-        generator.writeObject((long) 3);
-        generator.writeObject((double) 4);
-        generator.writeObject((float) 5);
-        generator.writeObject(BigInteger.valueOf(6));
-        generator.writeObject(BigDecimal.valueOf(7));
-        generator.writeObject(new AtomicInteger(8));
-        generator.writeObject(new AtomicLong(9));
+        generator.writeObject((byte) 1);
+        generator.writeObject((short) 2);
+        generator.writeObject((int) 3);
+        generator.writeObject((long) 4);
+        generator.writeObject((double) 5);
+        generator.writeObject((float) 6);
+        generator.writeObject(BigInteger.valueOf(7));
+        generator.writeObject(BigDecimal.valueOf(8));
+        generator.writeObject(new AtomicInteger(9));
+        generator.writeObject(new AtomicLong(10));
         
-        verify(delegate).writeNumber((short) 1);
-        verify(delegate).writeNumber((int) 2);
-        verify(delegate).writeNumber((long) 3);
-        verify(delegate).writeNumber((double) 4);
-        verify(delegate).writeNumber((float) 5);
-        verify(delegate).writeNumber(BigInteger.valueOf(6));
-        verify(delegate).writeNumber(BigDecimal.valueOf(7));
-        verify(delegate).writeNumber((int) 8);
-        verify(delegate).writeNumber((long) 9);
+        verify(delegate).writeNumber((byte) 1);
+        verify(delegate).writeNumber((short) 2);
+        verify(delegate).writeNumber((int) 3);
+        verify(delegate).writeNumber((long) 4);
+        verify(delegate).writeNumber((double) 5);
+        verify(delegate).writeNumber((float) 6);
+        verify(delegate).writeNumber(BigInteger.valueOf(7));
+        verify(delegate).writeNumber(BigDecimal.valueOf(8));
+        verify(delegate).writeNumber((int) 9);
+        verify(delegate).writeNumber((long) 10);
     }
     
     
@@ -188,6 +191,14 @@ public class SimpleObjectJsonGeneratorDelegateTests {
         verify(delegate).writeBoolean(true);
         verify(delegate).writeNumber((int) 1);
         verify(delegate).writeEndArray();
+    }
+    
+    
+    @Test
+    public void writeObject_jsonNode_Null() throws IOException {
+        generator.writeObject(NullNode.instance);
+        
+        verify(delegate).writeNull();
     }
     
     
