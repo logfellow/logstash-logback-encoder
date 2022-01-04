@@ -31,7 +31,7 @@
         <disruptor.version>3.4.4</disruptor.version>
 
         <!-- test dependencies -->
-        <assertj.version>3.21.0</assertj.version>
+        <assertj.version>3.22.0</assertj.version>
         <awaitility.version>4.1.1</awaitility.version>
         <javax-servlet-api.version>4.0.1</javax-servlet-api.version>
         <junit.version>5.8.2</junit.version>
