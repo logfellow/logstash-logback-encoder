@@ -15,17 +15,17 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 
-public class ThrowableRootCauseClassNameJsonProvider extends AbstractThrowableClassNameJsonProvider {
-    static final String FIELD_NAME = "throwable_root_cause_class";
+public class ThrowableMessageJsonProvider extends AbstractThrowableMessageJsonProvider {
 
-    public ThrowableRootCauseClassNameJsonProvider() {
-        super(FIELD_NAME);
+    public ThrowableMessageJsonProvider() {
+        super("throwable_message");
     }
 
     @Override
-    IThrowableProxy getThrowable(IThrowableProxy throwable) {
-        return throwable == null ? null : ThrowableSelectors.rootCause(throwable);
+    protected IThrowableProxy getThrowable(ILoggingEvent event) {
+        return event.getThrowableProxy();
     }
 }
