@@ -42,10 +42,9 @@ public class LoggerNameJsonProviderTest {
     
     @Test
     public void testFullName() throws IOException {
-        
         when(event.getLoggerName()).thenReturn(getClass().getName());
         
-        provider.writeTo(generator, event);
+        writeEvent();
         
         verify(generator).writeStringField(LoggerNameJsonProvider.FIELD_LOGGER_NAME, getClass().getName());
     }
@@ -56,7 +55,7 @@ public class LoggerNameJsonProviderTest {
         
         when(event.getLoggerName()).thenReturn(getClass().getName());
         
-        provider.writeTo(generator, event);
+        writeEvent();
         
         verify(generator).writeStringField("newFieldName", getClass().getName());
     }
@@ -70,7 +69,7 @@ public class LoggerNameJsonProviderTest {
         
         when(event.getLoggerName()).thenReturn(getClass().getName());
         
-        provider.writeTo(generator, event);
+        writeEvent();
         
         verify(generator).writeStringField("newFieldName", getClass().getName());
     }
@@ -81,9 +80,27 @@ public class LoggerNameJsonProviderTest {
         
         when(event.getLoggerName()).thenReturn(getClass().getName());
         
-        provider.writeTo(generator, event);
+        writeEvent();
         
         verify(generator).writeStringField(LoggerNameJsonProvider.FIELD_LOGGER_NAME, "n.l.l.c.l.LoggerNameJsonProviderTest");
     }
 
+    @Test
+    public void testShortName_zeroLength() throws IOException {
+        provider.setShortenedLoggerNameLength(0);
+        
+        when(event.getLoggerName()).thenReturn(getClass().getName());
+        
+        writeEvent();
+        
+        verify(generator).writeStringField(LoggerNameJsonProvider.FIELD_LOGGER_NAME, "LoggerNameJsonProviderTest");
+    }
+    
+    protected void writeEvent() throws IOException {
+        if (!provider.isStarted()) {
+            provider.start();
+        }
+        
+        provider.writeTo(generator, event);
+    }
 }

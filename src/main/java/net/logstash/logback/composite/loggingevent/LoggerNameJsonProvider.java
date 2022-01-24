@@ -25,6 +25,7 @@ import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.pattern.Abbreviator;
+import ch.qos.logback.classic.pattern.ClassNameOnlyAbbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -63,11 +64,33 @@ public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
 
     public void setShortenedLoggerNameLength(int length) {
         this.shortenedLoggerNameLength = length;
-        if (length >= 0) {
-            abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength));
-        } else {
-            abbreviator = NullAbbreviator.INSTANCE;
-        }
     }
     
+    @Override
+    public void start() {
+        this.abbreviator = createAbbreviator();
+        super.start();
+    }
+    
+    @Override
+    public void stop() {
+        super.stop();
+        this.abbreviator = null;
+    }
+    
+    protected Abbreviator createAbbreviator() {
+        if (this.shortenedLoggerNameLength < 0) {
+            return NullAbbreviator.INSTANCE;
+        }
+        
+        Abbreviator abbreviator;
+        if (this.shortenedLoggerNameLength == 0) {
+            abbreviator = new ClassNameOnlyAbbreviator();
+        }
+        else {
+            abbreviator = new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength);
+        }
+        
+        return new CachingAbbreviator(abbreviator);
+    }
 }
