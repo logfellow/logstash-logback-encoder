@@ -2014,7 +2014,7 @@ The provider name is the xml element name to use when configuring. Each provider
       <td valign="top"><tt>arguments</tt></td>
       <td>
         <p>Outputs fields from the event arguments array.</p>
-        <p>See <a href="#loggingevent_custom_event">Event-specific Custom Fields</a>.</p>
+        <p>See <a href="#event-specific-custom-fields">Event-specific Custom Fields</a>.</p>
         <ul>
           <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
           <li><tt>includeNonStructuredArguments</tt> - Include arguments that are not an instance
