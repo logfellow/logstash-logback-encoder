@@ -56,7 +56,7 @@
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
         
-        <checkstyle.version>9.2.1</checkstyle.version>
+        <checkstyle.version>9.3</checkstyle.version>
         
         <!-- maven-javadoc-plugin configuration -->
         <maven.javadoc.failOnError>true</maven.javadoc.failOnError>
