@@ -1964,7 +1964,7 @@ The provider name is the xml element name to use when configuring.
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
           <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
-          <li><tt>timeZone</tt> - Timezone (local timezone)</li>
+          <li><tt>timeZone</tt> - Timezone (system timezone)</li>
         </ul>
       </td>
     </tr>
@@ -2130,7 +2130,7 @@ The provider name is the xml element name to use when configuring. Each provider
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>stack_hash</tt>)</li>
           <li><tt>exclude</tt> - Regular expression pattern matching <i>stack trace elements</i> to exclude when computing the error hash</li>
-          <li><tt>exclusions</tt> - Coma separated list of regular expression patterns matching <i>stack trace elements</i> to exclude when computing the error hash</li>
+          <li><tt>exclusions</tt> - Comma separated list of regular expression patterns matching <i>stack trace elements</i> to exclude when computing the error hash</li>
         </ul>
       </td>
     </tr>
@@ -2207,7 +2207,7 @@ The provider name is the xml element name to use when configuring. Each provider
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>message</tt>)</li>
           <li><tt>pattern</tt> - Output format of the timestamp (<tt>[ISO_OFFSET_DATE_TIME]</tt>). See <a href="#customizing-timestamp">above</a> for possible values.</li>
-          <li><tt>timeZone</tt> - Timezone (local timezone)</li>
+          <li><tt>timeZone</tt> - Timezone (system timezone)</li>
         </ul>
       </td>
     </tr>
@@ -2383,10 +2383,10 @@ even for something which you may feel should be a number - like for `%b` (bytes 
 You can either deal with the type conversion on the logstash side or you may use special operations provided by this encoder.
 The operations are:
 
-* `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a Long (or a null if conversion fails).
-* `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a Double (or a null if conversion fails).
-* `#asBoolean{...}`- evaluates the pattern in curly braces and then converts resulting string to a Boolean. Conversion is case insensitive. `true`, `yes`, `y` and `1` (case insensitive) are converted to a boolean `true`, a null or empty string is converted to `null`, anything else returns `false`.
-* `#asJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or a null if conversion fails).
+* `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a Long (or a `null` if conversion fails).
+* `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a Double (or a `null` if conversion fails).
+* `#asBoolean{...}`- evaluates the pattern in curly braces and then converts resulting string to a Boolean. Conversion is case insensitive. `true`, `yes`, `y` and `1` (case insensitive) are converted to a boolean `true`, a `null` or empty string is converted to `null`, anything else returns `false`.
+* `#asJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or a `null` if conversion fails).
 * `#tryJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or just the string if conversion fails).
 
 So this example...
@@ -2402,7 +2402,7 @@ So this example...
 </pattern>
 ```
 
-... And this logging code...
+... and this logging code...
 
 ```java
 MDC.put("hasMessage", "true");
@@ -2470,7 +2470,7 @@ If the MDC did not contain a `traceId` entry, then a JSON log event from the abo
 
 #### LoggingEvent patterns
 
-For LoggingEvents, patterns from logback-classic's
+For LoggingEvents, conversion specifiers from logback-classic's
 [`PatternLayout`](http://logback.qos.ch/manual/layouts.html#conversionWord) are supported.
 
 For example:
@@ -2496,10 +2496,14 @@ For example:
 </encoder>
 ```
 
+Note that the [`%property{key}`](https://logback.qos.ch/manual/layouts.html#property) conversion specifier behaves slightly differently when used in the context of the Pattern Json provider. If the property cannot be found in the logger context or the System properties, it returns **an empty string** instead of `null` as it would normally do. For example, assuming the "foo" property is not defined, `%property{foo}` would return `""` (an empty string) instead of `"null"` (a string whose content is made of 4 letters).
+
+The _property_ conversion specifier also allows you to specify a default value to use when the property is not defined. The default value is optional and can be specified using the `:-` operator as in Bash shell. For example, assuming the "foo" property is not defined, `%property{foo:-bar}` will return `bar`.
+
 
 #### AccessEvent patterns
 
-For AccessEvents, patterns from logback-access's
+For AccessEvents, conversion specifiers from logback-access's
 [`PatternLayout`](http://logback.qos.ch/xref/ch/qos/logback/access/PatternLayout.html) are supported.
 
 For example:  
@@ -2529,9 +2533,9 @@ For example:
 
 There is also a special operation that can be used with this AccessEvents:
 
-* `#nullNA{...}` - if the pattern in curly braces evaluates to a dash ("-"), it will be replaced with a null value.
+* `#nullNA{...}` - if the pattern in curly braces evaluates to a dash (`-`), it will be replaced with a `null` value.
 
-You may want to use it because many of the `PatternLayout` conversion specifiers from logback-access will evaluate to "-"
+You may want to use it because many of the `PatternLayout` conversion words from logback-access will evaluate to `-`
 for non-existent value (for example for a cookie, header or a request attribute).
 
 So the following pattern...
