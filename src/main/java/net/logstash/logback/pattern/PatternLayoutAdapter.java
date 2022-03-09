@@ -144,7 +144,7 @@ public class PatternLayoutAdapter<E> {
     }
     
     /**
-     * Indicate whether the {@link PatternLayoutBase} always generates the same constant value independent of
+     * Indicate whether the {@link PatternLayoutBase} always generates the same constant value regardless of
      * the event it is given.
      * 
      * @return <em>true</em> if the pattern is constant

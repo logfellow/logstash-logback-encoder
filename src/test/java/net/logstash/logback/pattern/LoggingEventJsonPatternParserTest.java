@@ -15,10 +15,13 @@
  */
 package net.logstash.logback.pattern;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternException;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -46,6 +49,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
         mdc.put("key2", "value2");
         given(event.getMDCPropertyMap()).willReturn(mdc);
         given(event.getLevel()).willReturn(Level.DEBUG);
+        given(event.getLoggerContextVO()).willAnswer(invocation -> context.getLoggerContextRemoteView());
         return event;
     }
 
@@ -55,7 +59,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
     }
 
     @Test
-    public void shouldRunPatternLayoutConversions() throws Exception {
+    public void shouldRunPatternLayoutConversions() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                      "
@@ -71,7 +75,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
     }
 
     @Test
-    public void shouldAllowIndividualMdcItemsToBeIncludedUsingConverter() throws Exception {
+    public void shouldAllowIndividualMdcItemsToBeIncludedUsingConverter() throws JsonPatternException {
 
         String pattern = toJson(
                   "{                             "
@@ -87,7 +91,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
     }
 
     @Test
-    public void shouldOmitNullMdcValue() throws Exception {
+    public void shouldOmitNullMdcValue() throws JsonPatternException {
         parser.setOmitEmptyFields(true);
 
         String pattern = toJson(
@@ -102,5 +106,54 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
                 + "}                              ");
 
         verifyFields(pattern, expected);
+    }
+    
+    
+    @Test
+    public void propertyDefined() throws JsonPatternException {
+        context.putProperty("PROP", "value");
+
+        String pattern = toJson(
+                  "{                  "
+                + "    'prop1': '%property{PROP}',      "
+                + "    'prop2': '%property{PROP:-}',    "
+                + "    'prop3': '%property{PROP:-foo}'  "
+                + "}                  ");
+
+        String expected = toJson(
+                "{                           "
+              + "    'prop1': 'value',       "
+              + "    'prop2': 'value',       "
+              + "    'prop3': 'value'        "
+              + "}                           ");
+              
+        verifyFields(pattern, expected);
+    }
+    
+    
+    @Test
+    public void propertyUndefined() throws JsonPatternException {
+
+        String pattern = toJson(
+                  "{                  "
+                + "    'prop1': '%property{PROP}',      "
+                + "    'prop2': '%property{PROP:-}',    "
+                + "    'prop3': '%property{PROP:-foo}'  "
+                + "}                  ");
+
+        String expected = toJson(
+                "{                      "
+              + "    'prop1': '',       "
+              + "    'prop2': '',       "
+              + "    'prop3': 'foo'     "
+              + "}                      ");
+              
+        verifyFields(pattern, expected);
+    }
+    
+    
+    @Test
+    public void propertyInvalid() throws JsonPatternException {
+        assertThatThrownBy(() -> parser.parse(toJson("{ 'prop': '%property{}' }"))).isInstanceOf(JsonPatternException.class);
     }
 }

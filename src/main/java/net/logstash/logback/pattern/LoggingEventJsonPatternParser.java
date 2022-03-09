@@ -30,9 +30,16 @@ public class LoggingEventJsonPatternParser extends AbstractJsonPatternParser<ILo
         super(context, jsonFactory);
     }
 
+    /**
+     * Create a new {@link PatternLayout} and replace the default {@code %property} converter
+     * with a {@link EnhancedPropertyConverter} to add support for default value in case the
+     * property is not defined.
+     */
     @Override
     protected PatternLayoutBase<ILoggingEvent> createLayout() {
-        return new PatternLayout();
+        PatternLayoutBase<ILoggingEvent> layout = new PatternLayout();
+        layout.getInstanceConverterMap().put("property", EnhancedPropertyConverter.class.getName());
+        return layout;
     }
 
 }
