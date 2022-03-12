@@ -44,9 +44,10 @@ import ch.qos.logback.classic.spi.LoggerContextVO;
  */
 public class EnhancedPropertyConverter extends ClassicConverter {
     /**
-     * Regex pattern used to extract the optional default value from the key name.
+     * Regex pattern used to extract the optional default value from the key name (split
+     * at the first :-).
      */
-    private static final Pattern PATTERN = Pattern.compile("(.+):-(.*)");
+    private static final Pattern PATTERN = Pattern.compile("(.+?):-(.*)");
     
     /**
      * The property name.
