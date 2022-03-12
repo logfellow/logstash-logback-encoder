@@ -2386,6 +2386,7 @@ The operations are:
 * `#asLong{...}` - evaluates the pattern in curly braces and then converts resulting string to a Long (or a `null` if conversion fails).
 * `#asDouble{...}` - evaluates the pattern in curly braces and then converts resulting string to a Double (or a `null` if conversion fails).
 * `#asBoolean{...}`- evaluates the pattern in curly braces and then converts resulting string to a Boolean. Conversion is case insensitive. `true`, `yes`, `y` and `1` (case insensitive) are converted to a boolean `true`, a `null` or empty string is converted to `null`, anything else returns `false`.
+* `asNullIfEmpty{...}` - evaluates the pattern in curly braces and the converts resulting string into `null` if it is empty.
 * `#asJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or a `null` if conversion fails).
 * `#tryJson{...}` - evaluates the pattern in curly braces and then converts resulting string to json (or just the string if conversion fails).
 

@@ -79,6 +79,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         addOperation("asBoolean", new AsBooleanOperation());
         addOperation("asJson", new AsJsonOperation());
         addOperation("tryJson", new TryJsonOperation());
+        addOperation("asNullIfEmpty", new AsNullIfEmptyOperation());
     }
 
     /**
@@ -153,6 +154,13 @@ public abstract class AbstractJsonPatternParser<Event> {
             } catch (IOException e) {
                 throw new IllegalStateException("Unexpected IOException when reading JSON value (was '" + value + "')", e);
             }
+        }
+    }
+    
+    protected class AsNullIfEmptyOperation implements Operation<Object> {
+        @Override
+        public Object apply(String t) {
+            return StringUtils.isEmpty(t) ? null : t;
         }
     }
 
