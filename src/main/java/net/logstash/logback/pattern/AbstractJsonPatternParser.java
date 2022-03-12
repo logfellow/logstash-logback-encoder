@@ -236,7 +236,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     
     /**
      * Create a PatternLayout instance of the appropriate type. The returned instance
-     * will further configured with the context and appropriate pattern then started.
+     * will be further configured with the context and appropriate pattern then started.
      * 
      * @return an unstarted {@link PatternLayoutBase} instance
      */
