@@ -25,9 +25,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerContextVO;
 
 /**
- * Variation of the legacy Logback {@link PropertyConverter} with the option to specify a
- * default value to use when the property does not exist instead of returning {@code null}
- * as does the original Logback implementation.
+ * Variation of the Logback {@link PropertyConverter} with the option to specify a default
+ * value to use when the property does not exist instead of returning {@code null} as does
+ * the original Logback implementation.
  * 
  * <p>The default value is optional and can be specified using the <code>:-</code> operator as
  * in Bash shell. For example, assuming the property "foo" is not defined, <code>%property{foo:-bar}</code>
