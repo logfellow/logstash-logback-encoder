@@ -17,8 +17,19 @@ package net.logstash.logback.composite.loggingevent;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 
+/**
+ * Utilities to obtain {@code Throwables} from {@code IThrowableProxies}.
+ */
 public class ThrowableSelectors {
 
+    /**
+     * Returns the innermost cause of {@code throwable}.
+     *
+     * @return the innermost cause, which may be {@code throwable} itself if there
+     *         is no cause, or {@code null} if there is a loop in the causal chain.
+     *
+     * @throws NullPointerException if {@code throwable} is {@code null}
+     */
     public static IThrowableProxy rootCause(IThrowableProxy throwable) {
         // Keep a second pointer that slowly walks the causal chain.
         // If the fast pointer ever catches the slower pointer, then there's a loop.

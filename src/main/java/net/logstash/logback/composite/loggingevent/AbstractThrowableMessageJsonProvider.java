@@ -24,6 +24,11 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Logs an exception message for a given logging event. Which exception to be
+ * logged depends on the subclass's implementation of
+ * {@link #getThrowable(ILoggingEvent)}.
+ */
 public abstract class AbstractThrowableMessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> {
 
     protected AbstractThrowableMessageJsonProvider(String fieldName) {
@@ -41,7 +46,9 @@ public abstract class AbstractThrowableMessageJsonProvider extends AbstractField
 
     /**
      * @param event the event being logged, never {@code null}
-     * @return the throwable to use, or {@code null} if no appropriate throwable is available
+     * @return the throwable to use, or {@code null} if no appropriate throwable is
+     *         available
+     * @throws NullPointerException if {@code event} is {@code null}
      */
     protected abstract IThrowableProxy getThrowable(ILoggingEvent event);
 }

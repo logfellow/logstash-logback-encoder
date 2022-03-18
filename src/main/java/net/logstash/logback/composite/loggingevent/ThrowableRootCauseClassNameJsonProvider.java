@@ -17,6 +17,11 @@ package net.logstash.logback.composite.loggingevent;
 
 import ch.qos.logback.classic.spi.IThrowableProxy;
 
+/**
+ * Logs the class name of the innermost cause of the throwable associated with a
+ * given logging event, if any. The root cause may be the throwable itself, if
+ * it has no cause.
+ */
 public class ThrowableRootCauseClassNameJsonProvider extends AbstractThrowableClassNameJsonProvider {
     static final String FIELD_NAME = "throwable_root_cause_class";
 

@@ -18,6 +18,10 @@ package net.logstash.logback.composite.loggingevent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 
+/**
+ * Logs the message of the throwable associated with a given logging event, if
+ * any.
+ */
 public class ThrowableMessageJsonProvider extends AbstractThrowableMessageJsonProvider {
 
     public ThrowableMessageJsonProvider() {
