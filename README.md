@@ -1512,8 +1512,25 @@ for the path string format and more examples.  But in general:
 * Use `~1` to escape `/` within a token
 * Use `~0` to escape `~` within a token
 
-### Identifying field values to mask by value
+### Identifying field values to mask by Annotation
 
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+        <fieldMasker class="net.logstash.logback.mask.AnnotatedFieldMasker"/>
+    </jsonGeneratorDecorator>
+</encoder>
+```
+See [`AnnotatedFieldMasker`](src/main/java/net/logstash/logback/mask/AnnotatedFieldMasker.java)
+for a description.  It will mask all fields that have been marked with the annotation.
+
+To activate this feature, include the AnnotatedFieldMasker in the logback configuration. Then, in the object model annotate all classes containing 
+fields to be masked with @LogMaskFields.  Within these classes, the fields to mask then are annotated with @LogMask.
+
+When these objects are logged, the marked fields will automatically be masked 
+
+
+### Identifying field values to mask by value
 Specific values to be masked can be specified in several ways, as seen in the following example:
 
 ```xml

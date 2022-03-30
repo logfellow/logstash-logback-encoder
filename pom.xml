@@ -26,6 +26,7 @@
         <jackson.version>2.13.2</jackson.version>
         <java-uuid-generator.version>4.0.1</java-uuid-generator.version>
         <logback.version>1.2.11</logback.version>
+        <classindex.version>3.11</classindex.version>
 
         <!-- shaded runtime dependencies -->
         <disruptor.version>3.4.4</disruptor.version>
@@ -202,6 +203,11 @@
             <groupId>com.lmax</groupId>
             <artifactId>disruptor</artifactId>
             <version>${disruptor.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.atteo.classindex</groupId>
+            <artifactId>classindex</artifactId>
+            <version>${classindex.version}</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
