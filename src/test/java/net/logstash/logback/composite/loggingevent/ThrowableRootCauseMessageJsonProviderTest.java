@@ -16,9 +16,9 @@
 package net.logstash.logback.composite.loggingevent;
 
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -35,9 +35,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class ThrowableRootCauseClassNameJsonProviderTest {
+public class ThrowableRootCauseMessageJsonProviderTest {
 
-    private AbstractThrowableClassNameJsonProvider provider = new ThrowableRootCauseClassNameJsonProvider();
+    private AbstractThrowableMessageJsonProvider provider = new ThrowableRootCauseMessageJsonProvider();
 
     @Mock
     private JsonGenerator generator;
@@ -46,51 +46,52 @@ public class ThrowableRootCauseClassNameJsonProviderTest {
     private ILoggingEvent event;
 
     @Test
-    public void testFieldName() throws IOException {
-        check(ThrowableRootCauseClassNameJsonProvider.FIELD_NAME);
+    public void testNoThrowable() throws IOException {
+        when(event.getThrowableProxy()).thenReturn(null);
+
+        provider.writeTo(generator, event);
+
+        verify(event, atLeastOnce()).getThrowableProxy();
+        verifyNoInteractions(generator);
+    }
+
+    @Test
+    public void testDefaultFieldName() throws IOException {
+        when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(new Exception("kaput")));
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeStringField("throwable_root_cause_message", "kaput");
     }
 
     @Test
     public void testCustomFieldName() throws IOException {
-        provider.setFieldName("newFieldName");
-        check("newFieldName");
+        when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(new Exception("kaput")));
+
+        provider.setFieldName("some_custom_field");
+        provider.writeTo(generator, event);
+
+        verify(generator).writeStringField("some_custom_field", "kaput");
     }
 
     @Test
-    public void testFieldNameWithoutNestedException() throws IOException {
-        IOException throwable = new IOException();
-        check(ThrowableRootCauseClassNameJsonProvider.FIELD_NAME, throwable,
-                throwable.getClass().getSimpleName());
-    }
-
-    private void check(String fieldName) throws IOException {
-        check(fieldName, new IOException(new IllegalArgumentException(new IllegalStateException())),
-                IllegalStateException.class.getSimpleName());
-    }
-
-    private void check(String fieldName, Throwable throwable, String expectedClassName) throws IOException {
-        when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(throwable));
+    public void testNestedException() throws IOException {
+        Exception foo = new Exception("foo", new Exception("bar", new Exception("baz")));
+        when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(foo));
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(fieldName, expectedClassName);
-    }
-
-    @Test
-    public void testNoThrowable() throws IOException {
-        provider.writeTo(generator, event);
-
-        verify(generator, times(0)).writeStringField(anyString(), anyString());
+        verify(generator).writeStringField(anyString(), eq("baz"));
     }
 
     @Test
     public void testCircularReference() throws IOException {
-         IThrowableProxy baz = mock(IThrowableProxy.class, "baz");
-         IThrowableProxy bar = mock(IThrowableProxy.class, "bar");
-         IThrowableProxy foo = mock(IThrowableProxy.class, "foo");
-         when(foo.getCause()).thenReturn(bar);
-         when(bar.getCause()).thenReturn(baz);
-         when(baz.getCause()).thenReturn(foo);
+        IThrowableProxy foo = mock(IThrowableProxy.class, "foo");
+        IThrowableProxy bar = mock(IThrowableProxy.class, "bar");
+        IThrowableProxy baz = mock(IThrowableProxy.class, "baz");
+        when(foo.getCause()).thenReturn(bar);
+        when(bar.getCause()).thenReturn(baz);
+        when(baz.getCause()).thenReturn(foo);
 
         when(event.getThrowableProxy()).thenReturn(foo);
 

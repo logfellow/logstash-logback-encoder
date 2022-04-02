@@ -91,7 +91,13 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addThrowableClassName(ThrowableClassNameJsonProvider provider) {
         addProvider(provider);
     }
+    public void addThrowableMessage(ThrowableMessageJsonProvider provider) {
+        addProvider(provider);
+    }
     public void addThrowableRootCauseClassName(ThrowableRootCauseClassNameJsonProvider provider) {
+        addProvider(provider);
+    }
+    public void addThrowableRootCauseMessage(ThrowableRootCauseMessageJsonProvider provider) {
         addProvider(provider);
     }
 }

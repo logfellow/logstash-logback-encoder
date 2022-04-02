@@ -15,22 +15,21 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 
 /**
- * Logs the class name of the innermost cause of the throwable associated with a
- * given logging event, if any. The root cause may be the throwable itself, if
- * it has no cause.
+ * Logs the message of the throwable associated with a given logging event, if
+ * any.
  */
-public class ThrowableRootCauseClassNameJsonProvider extends AbstractThrowableClassNameJsonProvider {
-    static final String FIELD_NAME = "throwable_root_cause_class";
+public class ThrowableMessageJsonProvider extends AbstractThrowableMessageJsonProvider {
 
-    public ThrowableRootCauseClassNameJsonProvider() {
-        super(FIELD_NAME);
+    public ThrowableMessageJsonProvider() {
+        super("throwable_message");
     }
 
     @Override
-    IThrowableProxy getThrowable(IThrowableProxy throwable) {
-        return throwable == null ? null : ThrowableSelectors.rootCause(throwable);
+    protected IThrowableProxy getThrowable(ILoggingEvent event) {
+        return event.getThrowableProxy();
     }
 }
