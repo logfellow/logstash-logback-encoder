@@ -230,6 +230,25 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
     }
     
     @Test
+    public void asNullIfEmpty() throws JsonPatternException {
+        String pattern = toJson(
+                "{                                    "
+              + "    'key1' : '#asNullIfEmpty{}',       "
+              + "    'key2' : '#asNullIfEmpty{ }',    "
+              + "    'key3' : '#asNullIfEmpty{foo}'   "
+              + "}                                    ");
+
+        String expected = toJson(
+                "{                                    "
+              + "    'key1' : null,                   "
+              + "    'key2' : ' ',                    "
+              + "    'key3' : 'foo'                   "
+              + "}                                    ");
+        
+        verifyFields(pattern, expected);
+    }
+    
+    @Test
     public void asJsonShouldTransformTextValueToJson() throws JsonPatternException {
 
         String pattern = toJson(

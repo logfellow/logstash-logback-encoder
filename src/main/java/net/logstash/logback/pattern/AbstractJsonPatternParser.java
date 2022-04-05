@@ -79,6 +79,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         addOperation("asBoolean", new AsBooleanOperation());
         addOperation("asJson", new AsJsonOperation());
         addOperation("tryJson", new TryJsonOperation());
+        addOperation("asNullIfEmpty", new AsNullIfEmptyOperation());
     }
 
     /**
@@ -155,6 +156,13 @@ public abstract class AbstractJsonPatternParser<Event> {
             }
         }
     }
+    
+    protected class AsNullIfEmptyOperation implements Operation<Object> {
+        @Override
+        public Object apply(String t) {
+            return StringUtils.isEmpty(t) ? null : t;
+        }
+    }
 
     
     private ValueGetter<Event, ?> makeComputableValueGetter(String pattern) {
@@ -228,7 +236,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     
     /**
      * Create a PatternLayout instance of the appropriate type. The returned instance
-     * will further configured with the context and appropriate pattern then started.
+     * will be further configured with the context and appropriate pattern then started.
      * 
      * @return an unstarted {@link PatternLayoutBase} instance
      */
