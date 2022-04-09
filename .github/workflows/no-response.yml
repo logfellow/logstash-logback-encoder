@@ -1,0 +1,22 @@
+# Automatically closes issues if a response was not received for requested information
+# https://github.com/lee-dohm/no-response
+
+name: no-response
+
+# Both `issue_comment` and `scheduled` event types are required for this Action
+# to work properly.
+on:
+  issue_comment:
+    types: [created]
+  schedule:
+    # Once a day, at 12:15 UTC
+    - cron: '15 12 * * *
+
+jobs:
+  noResponse:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: lee-dohm/no-response@v0.5.0
+        with:
+          token: ${{ github.token }}
+          responseRequiredLabel: "status: waiting-for-feedback"
