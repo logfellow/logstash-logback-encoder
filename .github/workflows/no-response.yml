@@ -10,7 +10,7 @@ on:
     types: [created]
   schedule:
     # Once a day, at 12:15 UTC
-    - cron: '15 12 * * *
+    - cron: '15 12 * * *'
 
 jobs:
   noResponse:
