@@ -20,6 +20,8 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.zone.ZoneOffsetTransition;
+import java.time.zone.ZoneRules;
+import java.util.List;
 
 /**
  * A fast alternative to DateTimeFormatter when formatting millis using an ISO format.
@@ -167,12 +169,13 @@ class FastISOTimestampFormatter {
             
             Instant now = Instant.ofEpochMilli(timestampInMillis);
             ZoneOffset zoneOffset;
-            
+
+            ZoneRules rules = zoneId.getRules();
             /*
              * The Zone has a fixed offset that will never change.
              */
-            if (zoneId.getRules().isFixedOffset()) {
-                zoneOffset = zoneId.getRules().getOffset(now);
+            if (rules.isFixedOffset()) {
+                zoneOffset = rules.getOffset(now);
                 this.zoneTransitionStart = 0;
                 this.zoneTransitionStop = Long.MAX_VALUE;
             }
@@ -181,7 +184,12 @@ class FastISOTimestampFormatter {
              * and how long it is valid.
              */
             else {
-                ZoneOffsetTransition zoneOffsetTransition = zoneId.getRules().nextTransition(now);
+                ZoneOffsetTransition zoneOffsetTransition = rules.nextTransition(now);
+                if (zoneOffsetTransition == null) {
+                    List<ZoneOffsetTransition> transitions = rules.getTransitions();
+                    zoneOffsetTransition = transitions.get(transitions.size() - 1);
+                }
+
                 this.zoneTransitionStart = timestampInMillis;
                 this.zoneTransitionStop = zoneOffsetTransition.toEpochSecond() * 1_000;
                 zoneOffset = zoneOffsetTransition.getOffsetBefore();

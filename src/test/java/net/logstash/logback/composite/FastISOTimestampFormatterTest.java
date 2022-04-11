@@ -18,6 +18,7 @@ package net.logstash.logback.composite;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -267,8 +268,14 @@ public class FastISOTimestampFormatterTest {
             assertThat(invokeTwice(fast, after.toInstant())).isEqualTo(formatter.format(after));
         });
     }
-    
-    
+
+    /*
+     * Assert after the last transitions are not exception
+     */
+    @Test
+    public void afterTheLastTransition() {
+        assertThatNoException().isThrownBy(() -> FastISOTimestampFormatter.isoOffsetDateTime(ZoneId.of("Asia/Bangkok")));
+    }
     
     /*
      * Invoke same formatter from concurrent threads. Force invalidation of the cache by making
