@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>7.2-SNAPSHOT</version>
+    <version>7.1.1-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Provides logback encoders, layouts, and appenders to log in JSON and other formats supported by Jackson</description>
