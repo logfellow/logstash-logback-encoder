@@ -187,7 +187,7 @@ public class FastISOTimestampFormatterTest {
     
     
     /*
-     * Create a custom TimeZone with two rules and offsets expressed with different precision:
+     * Create a custom TimeZone with two rules and offsets expressed with different precisions:
      * - winter has an offset in HOURS
      * - summer has an offset in HOURS:MINUTES
      * 
@@ -251,23 +251,48 @@ public class FastISOTimestampFormatterTest {
         //
         // TestCase:
         //
-        // Render times before and after the winter/summer transition.
+        // Render times during summer and winter
         //
         ZoneId zoneId = ZoneId.of(customZoneId);
         
-        Instant now = Instant.now();
-        ZoneOffsetTransition zoneOffsetTransition = zoneId.getRules().nextTransition(now);
+        ZonedDateTime duringSummer = ZonedDateTime.of(2022,  1, 31, 0, 0, 0, 0, zoneId);
+        ZonedDateTime duringWinter = ZonedDateTime.of(2022, 10, 31, 0, 0, 0, 0, zoneId);
         
-        ZonedDateTime before = zoneOffsetTransition.getDateTimeBefore().atZone(ZoneId.systemDefault()).minusMinutes(1);
-        ZonedDateTime after = zoneOffsetTransition.getDateTimeAfter().atZone(ZoneId.systemDefault()).plusMinutes(1);
+        return doForAllSupportedFormats(zoneId, (formatter, fast2) -> {
+            FastISOTimestampFormatter fast = spy(fast2);
+            
+            // Caching is DISABLED during summer because of the offset expressed with minutes precision
+            //
+            assertThat(invokeTwice(fast, duringSummer.toInstant())).isEqualTo(formatter.format(duringSummer));
+            verify(fast, times(2)).buildFromFormatter(duringSummer.toInstant().toEpochMilli());
+            
+            // Caching is ENABLED during winter
+            //
+            Mockito.reset(fast);
+            assertThat(invokeTwice(fast, duringWinter.toInstant())).isEqualTo(formatter.format(duringWinter));
+            verify(fast, times(1)).buildFromFormatter(duringWinter.toInstant().toEpochMilli());
+        });
+    }
 
+
+    /*
+     * "Asia/Bangkok" has a single transition 1 Apr 1920.
+     * 
+     * Assert that rendering a timestamp before/after the transition works as expected (and does
+     * not throw any exception).
+     */
+    @TestFactory
+    public Collection<DynamicTest> afterTheLastTransition() {
+        ZoneId zoneId = ZoneId.of("Asia/Bangkok");
+        
+        ZonedDateTime before = ZonedDateTime.of(1919, 1, 1, 0, 0, 0, 0, zoneId);
+        ZonedDateTime after  = ZonedDateTime.of(1921, 1, 1, 0, 0, 0, 0, zoneId);
+        
         return doForAllSupportedFormats(zoneId, (formatter, fast) -> {
             assertThat(invokeTwice(fast, before.toInstant())).isEqualTo(formatter.format(before));
-            
             assertThat(invokeTwice(fast, after.toInstant())).isEqualTo(formatter.format(after));
         });
     }
-    
     
     
     /*
@@ -378,7 +403,7 @@ public class FastISOTimestampFormatterTest {
         // Format a first time to "warm" the cache
         fast.format(millis);
         
-        // Format a second time - value should come out of the cache
+        // Format a second time - value should come out of the cache when enabled
         return fast.format(millis);
     }
 
@@ -394,13 +419,13 @@ public class FastISOTimestampFormatterTest {
      */
     private static String isFromCache(FastISOTimestampFormatter fast, Instant instant) {
         Mockito.clearInvocations(fast);
+        
         long millis = instant.toEpochMilli();
-        try {
-            return fast.format(millis);
-        }
-        finally {
-            verify(fast, times(0)).buildFromFormatter(millis);
-        }
+        String formattedValue = fast.format(millis);
+        
+        verify(fast, times(0)).buildFromFormatter(millis);
+        
+        return formattedValue;
     }
 
     /**
@@ -416,11 +441,10 @@ public class FastISOTimestampFormatterTest {
         Mockito.clearInvocations(fast);
         
         long millis = instant.toEpochMilli();
-        try {
-            return fast.format(millis);
-        }
-        finally {
-            verify(fast, times(1)).buildFromFormatter(millis);
-        }
+        String formattedValue = fast.format(millis);
+        
+        verify(fast, times(1)).buildFromFormatter(millis);
+        
+        return formattedValue;
     }
 }

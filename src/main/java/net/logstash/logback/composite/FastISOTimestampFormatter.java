@@ -17,9 +17,10 @@ package net.logstash.logback.composite;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.zone.ZoneOffsetTransition;
+import java.time.zone.ZoneRules;
+import java.util.Objects;
 
 /**
  * A fast alternative to DateTimeFormatter when formatting millis using an ISO format.
@@ -65,9 +66,12 @@ class FastISOTimestampFormatter {
     
     /* Visible for testing */
     FastISOTimestampFormatter(DateTimeFormatter formatter, boolean trimMillis) {
-        this.formatter = formatter;
+        this.formatter = Objects.requireNonNull(formatter);
         this.trimMillis = trimMillis;
-        this.zoneOffsetState = new ZoneOffsetState(System.currentTimeMillis());
+
+        if (formatter.getZone() == null) {
+            throw new IllegalArgumentException("formatter must be configured with a Zone override to format millis");
+        }
     }
     
     
@@ -80,7 +84,7 @@ class FastISOTimestampFormatter {
     public String format(long timestampInMillis) {
         ZoneOffsetState current = this.zoneOffsetState;
         
-        if (!current.canFormat(timestampInMillis)) {
+        if (current == null || !current.canFormat(timestampInMillis)) {
             current = new ZoneOffsetState(timestampInMillis);
             this.zoneOffsetState = current;
         }
@@ -160,31 +164,36 @@ class FastISOTimestampFormatter {
             //
             // Also, take care of ZoneOffset transition (e.g. day light saving time).
             
-            ZoneId zoneId = formatter.getZone();
-            if (zoneId == null) {
-                throw new IllegalArgumentException("formatter must be configured with a Zone override to format millis");
-            }
-            
             Instant now = Instant.ofEpochMilli(timestampInMillis);
-            ZoneOffset zoneOffset;
-            
+            ZoneRules rules = formatter.getZone().getRules();
+
             /*
              * The Zone has a fixed offset that will never change.
              */
-            if (zoneId.getRules().isFixedOffset()) {
-                zoneOffset = zoneId.getRules().getOffset(now);
-                this.zoneTransitionStart = 0;
+            if (rules.isFixedOffset()) {
+                this.zoneTransitionStart = Long.MIN_VALUE;
                 this.zoneTransitionStop = Long.MAX_VALUE;
             }
             /*
-             * The Zone has multiple offsets. Determine the one applicable at the given timestamp
-             * and how long it is valid.
+             * The Zone has multiple offsets. Find the offset for the given timestamp
+             * and determine how long it is valid.
              */
             else {
-                ZoneOffsetTransition zoneOffsetTransition = zoneId.getRules().nextTransition(now);
-                this.zoneTransitionStart = timestampInMillis;
-                this.zoneTransitionStop = zoneOffsetTransition.toEpochSecond() * 1_000;
-                zoneOffset = zoneOffsetTransition.getOffsetBefore();
+                ZoneOffsetTransition previousZoneOffsetTransition = rules.previousTransition(now);
+                if (previousZoneOffsetTransition == null) {
+                    this.zoneTransitionStart = Long.MIN_VALUE;
+                }
+                else {
+                    this.zoneTransitionStart = previousZoneOffsetTransition.toEpochSecond() * 1_000;
+                }
+                
+                ZoneOffsetTransition zoneOffsetTransition = rules.nextTransition(now);
+                if (zoneOffsetTransition == null) {
+                    this.zoneTransitionStop = Long.MAX_VALUE;
+                }
+                else {
+                    this.zoneTransitionStop = zoneOffsetTransition.toEpochSecond() * 1_000;
+                }
             }
 
             /*
@@ -201,7 +210,7 @@ class FastISOTimestampFormatter {
              * 
              * Caching is therefore limited to one minute which is good enough for our usage.
              */
-            int offsetSeconds = zoneOffset.getTotalSeconds();
+            int offsetSeconds = rules.getOffset(now).getTotalSeconds();
             this.cachingEnabled = (offsetSeconds % 60 == 0);
         }
         
