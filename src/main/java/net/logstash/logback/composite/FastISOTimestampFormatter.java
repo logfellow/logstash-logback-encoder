@@ -260,8 +260,10 @@ class FastISOTimestampFormatter {
             //
             //   ISO_OFFSET_DATE_TIME   2020-01-01T10:20:30.123+01:00
             //   ISO_ZONED_DATE_TIME    2020-01-01T10:20:30.123+01:00[Europe/Brussels]
+            //                          2020-01-01T10:20:30.123Z[UTC]
             //   ISO_LOCAL_DATE_TIME    2020-01-01T10:20:30.123
             //   ISO_DATE_TIME          2020-01-01T10:20:30.123+01:00[Europe/Brussels]
+            //                          2020-01-01T10:20:30.123Z[UTC]
             //   ISO_INSTANT            2020-01-01T09:20:30.123Z
             //                          +---------------+      +---------------------+
             //                               prefix                    suffix
@@ -272,17 +274,9 @@ class FastISOTimestampFormatter {
             
             // The part up to the minutes (included)
             String prefix = formatted.substring(0, 17);
-            
 
             // The part of after the millis (i.e. the timezone)
-            int pos = formatted.indexOf('+', 17);
-            if (pos == -1) {
-                pos = formatted.indexOf('-', 17);
-            }
-            if (pos == -1 && formatted.charAt(formatted.length() - 1) == 'Z') {
-                pos = formatted.length() - 1;
-            }
-            String suffix = pos == -1 ? "" : formatted.substring(pos);
+            String suffix = findSuffix(formatted, 17);
             
             // Determine how long we can use this cache
             long timstampInMinutes = timestampInMillis / MILLISECONDS_PER_MINUTE;
@@ -293,6 +287,36 @@ class FastISOTimestampFormatter {
             return new TimestampPeriod(minuteStartInMillis, minuteStopInMillis, prefix, suffix);
         }
         
+        private String findSuffix(String formatted, int beginIndex) {
+            boolean dotFound = false;
+            int pos = beginIndex;
+            
+            while (pos < formatted.length()) {
+                char c = formatted.charAt(pos);
+                
+                // Allow for a single dot...
+                if (c == '.') {
+                    if (dotFound) {
+                        break;
+                    }
+                    else {
+                        dotFound = true;
+                    }
+                }
+                else if (!Character.isDigit(c)) {
+                    break;
+                }
+                
+                pos++;
+            }
+            
+            if (pos < formatted.length()) {
+                return formatted.substring(pos);
+            }
+            else {
+                return "";
+            }
+        }
         
         private String buildFromCache(TimestampPeriod cache, long timestampInMillis) {
             return cache.format(timestampInMillis);
