@@ -18,7 +18,8 @@ package net.logstash.logback.util;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 
@@ -60,7 +61,7 @@ public class ThreadLocalHolder<T> {
     /**
      * Collection of values assigned to each thread
      */
-    protected final CopyOnWriteArrayList<HolderRef> threadValues = new CopyOnWriteArrayList<>(); /* visible for testing */
+    protected final Set<HolderRef> threadValues = ConcurrentHashMap.newKeySet(); /* visible for testing */
     
     /**
      * Reference to dead threads
