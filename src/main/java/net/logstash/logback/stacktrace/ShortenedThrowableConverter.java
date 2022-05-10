@@ -112,9 +112,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final String OPTION_VALUE_ROOT_FIRST = "rootFirst";
     private static final String OPTION_VALUE_INLINE_HASH = "inlineHash";
 
+    private static final String OPTION_VALUE_INLINE_STACK = "inline";
+
     private static final int OPTION_INDEX_MAX_DEPTH = 0;
     private static final int OPTION_INDEX_SHORTENED_CLASS_NAME = 1;
     private static final int OPTION_INDEX_MAX_LENGTH = 2;
+
+    /** String sequence to use to delimit lines instead of {@link CoreConstants#LINE_SEPARATOR} when {@link #inline} is active */
+    public static final String INLINE_SEPARATOR = "\\n";
 
     private AtomicInteger errorCount = new AtomicInteger();
 
@@ -159,6 +164,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * True to compute and inline stack hashes.
      */
     private boolean inlineHash;
+
+    /**
+     * True to use "\\n" sequence instead of {@link CoreConstants#LINE_SEPARATOR}
+     */
+    private boolean inline;
 
     private StackElementFilter stackElementFilter;
 
@@ -217,6 +227,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                      * Remaining options are either
                      *     - "rootFirst" - indicating that stacks should be printed root-cause first
                      *     - "inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
+                     *     - "inline" - indicating that the whole stack trace should be inlined, using "\\n" as separator
                      *     - evaluator name - name of evaluators that will determine if the stacktrace is ignored
                      *     - exclusion pattern - pattern for stack trace elements to exclude
                      */
@@ -224,6 +235,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                         setRootCauseFirst(true);
                     } else if (OPTION_VALUE_INLINE_HASH.equals(option)) {
                         setInlineHash(true);
+                    } else if (OPTION_VALUE_INLINE_STACK.equals(option)) {
+                        setInline(true);
                     } else {
                         @SuppressWarnings("rawtypes")
                         Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
@@ -282,10 +295,16 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         }
         if (builder.length() > maxLength) {
-            builder.setLength(maxLength - ELLIPSIS.length() - CoreConstants.LINE_SEPARATOR.length());
-            builder.append(ELLIPSIS).append(CoreConstants.LINE_SEPARATOR);
+            builder.setLength(maxLength - ELLIPSIS.length() - getLineSeparator().length());
+            builder.append(ELLIPSIS).append(getLineSeparator());
         }
         return builder.toString();
+    }
+
+    private String getLineSeparator() {
+        return isInline()
+                ? INLINE_SEPARATOR
+                : CoreConstants.LINE_SEPARATOR;
     }
 
     /**
@@ -467,7 +486,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             .append(consecutiveExcluded)
             .append(" ")
             .append(message)
-            .append(CoreConstants.LINE_SEPARATOR);
+            .append(getLineSeparator());
     }
 
     /**
@@ -506,7 +525,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         if (shouldAppendPackagingData(step, previousStep)) {
             appendPackagingData(builder, step);
         }
-        builder.append(CoreConstants.LINE_SEPARATOR);
+        builder.append(getLineSeparator());
     }
 
     /**
@@ -547,7 +566,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         builder.append(abbreviator.abbreviate(throwableProxy.getClassName()))
             .append(": ")
             .append(throwableProxy.getMessage())
-            .append(CoreConstants.LINE_SEPARATOR);
+            .append(getLineSeparator());
     }
 
     private void indent(StringBuilder builder, int indent) {
@@ -604,6 +623,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     public void setInlineHash(boolean inlineHash) {
         this.inlineHash = inlineHash;
+    }
+
+    public boolean isInline() {
+        return inline;
+    }
+
+    public void setInline(boolean inlineHash) {
+        this.inline = inlineHash;
     }
 
     protected void setStackHasher(StackHasher stackHasher) {
