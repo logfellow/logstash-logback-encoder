@@ -501,6 +501,7 @@
                         <links>
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-core/${logback.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback.version}</link>
+                            <link>https://javadoc.io/doc/ch.qos.logback/logback-access/${logback.version}</link>
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/${jackson.version}</link>
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/${jackson.version}</link>
                         </links>
