@@ -444,7 +444,7 @@ public class ShortenedThrowableConverterTest {
             String formatted = converter.convert(createEvent(e));
 
             // THEN
-            // verify we have expected stack hashes inlined
+            // verify we have the expected stack trace line separator inlined
             assertThat(formatted).doesNotContain(CoreConstants.LINE_SEPARATOR);
             assertThat(formatted).contains(ShortenedThrowableConverter.DEFAULT_INLINE_SEPARATOR);
         }
