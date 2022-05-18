@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <jackson.version>2.13.2.20220328</jackson.version>
+        <jackson.version>2.13.3</jackson.version>
         <java-uuid-generator.version>4.0.1</java-uuid-generator.version>
         <logback.version>1.2.11</logback.version>
 
@@ -40,7 +40,7 @@
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.21</animal-sniffer-maven-plugin.version>
         <license-maven-plugin.version>4.1</license-maven-plugin.version>
-        <maven-bundle-plugin.version>5.1.4</maven-bundle-plugin.version>
+        <maven-bundle-plugin.version>5.1.6</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.1.2</maven-checkstyle-plugin.version>
         <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
@@ -499,7 +499,9 @@
                         <!-- Setup links to external api docs
                          -->
                         <links>
-                            <link>http://logback.qos.ch/apidocs</link>
+                            <link>https://javadoc.io/doc/ch.qos.logback/logback-core/${logback.version}</link>
+                            <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback.version}</link>
+                            <link>https://javadoc.io/doc/ch.qos.logback/logback-access/${logback.version}</link>
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/${jackson.version}</link>
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/${jackson.version}</link>
                         </links>
