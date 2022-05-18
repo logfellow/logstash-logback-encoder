@@ -118,8 +118,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final int OPTION_INDEX_SHORTENED_CLASS_NAME = 1;
     private static final int OPTION_INDEX_MAX_LENGTH = 2;
 
-    /** String sequence to use to delimit lines instead of {@link CoreConstants#LINE_SEPARATOR} when {@link #inline} is active */
-    public static final String INLINE_SEPARATOR = "\\n";
+    /** String sequence to use to delimit lines instead of {@link CoreConstants#LINE_SEPARATOR} when inline is active */
+    public static final String DEFAULT_INLINE_SEPARATOR = "\\n";
 
     private AtomicInteger errorCount = new AtomicInteger();
 
@@ -165,10 +165,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      */
     private boolean inlineHash;
 
-    /**
-     * True to use "\\n" sequence instead of {@link CoreConstants#LINE_SEPARATOR}
-     */
-    private boolean inline;
+    /** line delimiter */
+    private String lineSeparator = CoreConstants.LINE_SEPARATOR;
 
     private StackElementFilter stackElementFilter;
 
@@ -236,7 +234,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                     } else if (OPTION_VALUE_INLINE_HASH.equals(option)) {
                         setInlineHash(true);
                     } else if (OPTION_VALUE_INLINE_STACK.equals(option)) {
-                        setInline(true);
+                        setLineSeparator(DEFAULT_INLINE_SEPARATOR);
                     } else {
                         @SuppressWarnings("rawtypes")
                         Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
@@ -301,10 +299,12 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         return builder.toString();
     }
 
-    private String getLineSeparator() {
-        return isInline()
-                ? INLINE_SEPARATOR
-                : CoreConstants.LINE_SEPARATOR;
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+
+    public void setLineSeparator(String lineSeparator) {
+        this.lineSeparator = lineSeparator;
     }
 
     /**
@@ -623,14 +623,6 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     public void setInlineHash(boolean inlineHash) {
         this.inlineHash = inlineHash;
-    }
-
-    public boolean isInline() {
-        return inline;
-    }
-
-    public void setInline(boolean inlineHash) {
-        this.inline = inlineHash;
     }
 
     protected void setStackHasher(StackHasher stackHasher) {

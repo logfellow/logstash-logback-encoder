@@ -315,7 +315,7 @@ public class ShortenedThrowableConverterTest {
         assertThat(converter.getShortenedClassNameLength()).isEqualTo(ShortenedThrowableConverter.FULL_CLASS_NAME_LENGTH);
         assertThat(converter.getMaxLength()).isEqualTo(ShortenedThrowableConverter.FULL_MAX_LENGTH);
         assertThat(converter.isRootCauseFirst()).isTrue();
-        assertThat(converter.isInline()).isFalse();
+        assertThat(converter.getLineSeparator()).isEqualTo(CoreConstants.LINE_SEPARATOR);
         assertThat(converter.getEvaluators().get(0)).isEqualTo(evaluator);
         assertThat(converter.getExcludes().get(0)).isEqualTo("regex");
         
@@ -326,7 +326,7 @@ public class ShortenedThrowableConverterTest {
         assertThat(converter.getMaxDepthPerThrowable()).isEqualTo(ShortenedThrowableConverter.SHORT_MAX_DEPTH_PER_THROWABLE);
         assertThat(converter.getShortenedClassNameLength()).isEqualTo(ShortenedThrowableConverter.SHORT_CLASS_NAME_LENGTH);
         assertThat(converter.getMaxLength()).isEqualTo(ShortenedThrowableConverter.SHORT_MAX_LENGTH);
-        assertThat(converter.isInline()).isTrue();
+        assertThat(converter.getLineSeparator()).isEqualTo(ShortenedThrowableConverter.DEFAULT_INLINE_SEPARATOR);
 
         // test numeric values
         converter.setOptionList(Arrays.asList("1", "2", "3"));
@@ -435,7 +435,7 @@ public class ShortenedThrowableConverterTest {
             // GIVEN
             StackHasher mockedHasher = Mockito.mock(StackHasher.class);
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-            converter.setInline(true);
+            converter.setLineSeparator(ShortenedThrowableConverter.DEFAULT_INLINE_SEPARATOR);
             converter.setRootCauseFirst(true);
             converter.start();
             converter.setStackHasher(mockedHasher);
@@ -446,7 +446,7 @@ public class ShortenedThrowableConverterTest {
             // THEN
             // verify we have expected stack hashes inlined
             assertThat(formatted).doesNotContain(CoreConstants.LINE_SEPARATOR);
-            assertThat(formatted).contains(ShortenedThrowableConverter.INLINE_SEPARATOR);
+            assertThat(formatted).contains(ShortenedThrowableConverter.DEFAULT_INLINE_SEPARATOR);
         }
     }
 
