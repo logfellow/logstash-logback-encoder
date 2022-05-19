@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
 
 import net.logstash.logback.CachingAbbreviator;
 import net.logstash.logback.NullAbbreviator;
+import net.logstash.logback.encoder.SeparatorParser;
 
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
@@ -112,9 +113,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final String OPTION_VALUE_ROOT_FIRST = "rootFirst";
     private static final String OPTION_VALUE_INLINE_HASH = "inlineHash";
 
+    private static final String OPTION_VALUE_INLINE_STACK = "inline";
+
     private static final int OPTION_INDEX_MAX_DEPTH = 0;
     private static final int OPTION_INDEX_SHORTENED_CLASS_NAME = 1;
     private static final int OPTION_INDEX_MAX_LENGTH = 2;
+
+    /** String sequence to use to delimit lines instead of {@link CoreConstants#LINE_SEPARATOR} when inline is active */
+    public static final String DEFAULT_INLINE_SEPARATOR = "\\n";
 
     private AtomicInteger errorCount = new AtomicInteger();
 
@@ -159,6 +165,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * True to compute and inline stack hashes.
      */
     private boolean inlineHash;
+
+    /** line delimiter */
+    private String lineSeparator = CoreConstants.LINE_SEPARATOR;
 
     private StackElementFilter stackElementFilter;
 
@@ -217,6 +226,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                      * Remaining options are either
                      *     - "rootFirst" - indicating that stacks should be printed root-cause first
                      *     - "inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
+                     *     - "inline" - indicating that the whole stack trace should be inlined, using "\\n" as separator
                      *     - evaluator name - name of evaluators that will determine if the stacktrace is ignored
                      *     - exclusion pattern - pattern for stack trace elements to exclude
                      */
@@ -224,6 +234,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                         setRootCauseFirst(true);
                     } else if (OPTION_VALUE_INLINE_HASH.equals(option)) {
                         setInlineHash(true);
+                    } else if (OPTION_VALUE_INLINE_STACK.equals(option)) {
+                        setLineSeparator(DEFAULT_INLINE_SEPARATOR);
                     } else {
                         @SuppressWarnings("rawtypes")
                         Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
@@ -282,10 +294,34 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         }
         if (builder.length() > maxLength) {
-            builder.setLength(maxLength - ELLIPSIS.length() - CoreConstants.LINE_SEPARATOR.length());
-            builder.append(ELLIPSIS).append(CoreConstants.LINE_SEPARATOR);
+            builder.setLength(maxLength - ELLIPSIS.length() - getLineSeparator().length());
+            builder.append(ELLIPSIS).append(getLineSeparator());
         }
         return builder.toString();
+    }
+
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+
+    /**
+     * Sets which lineSeparator to use between events.
+     * <p>
+     *
+     * The following values have special meaning:
+     * <ul>
+     * <li>{@code null} or empty string = no new line.</li>
+     * <li>"{@code SYSTEM}" = operating system new line (default).</li>
+     * <li>"{@code UNIX}" = unix line ending ({@code \n}).</li>
+     * <li>"{@code WINDOWS}" = windows line ending {@code \r\n}).</li>
+     * </ul>
+     * <p>
+     * Any other value will be used as given as the lineSeparator.
+     *
+     * @param lineSeparator the line separator
+     */
+    public void setLineSeparator(String lineSeparator) {
+        this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
     }
 
     /**
@@ -467,7 +503,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             .append(consecutiveExcluded)
             .append(" ")
             .append(message)
-            .append(CoreConstants.LINE_SEPARATOR);
+            .append(getLineSeparator());
     }
 
     /**
@@ -506,7 +542,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         if (shouldAppendPackagingData(step, previousStep)) {
             appendPackagingData(builder, step);
         }
-        builder.append(CoreConstants.LINE_SEPARATOR);
+        builder.append(getLineSeparator());
     }
 
     /**
@@ -547,7 +583,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         builder.append(abbreviator.abbreviate(throwableProxy.getClassName()))
             .append(": ")
             .append(throwableProxy.getMessage())
-            .append(CoreConstants.LINE_SEPARATOR);
+            .append(getLineSeparator());
     }
 
     private void indent(StringBuilder builder, int indent) {
