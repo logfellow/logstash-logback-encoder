@@ -40,6 +40,7 @@ import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
 import ch.qos.logback.core.boolex.EventEvaluator;
 import ch.qos.logback.core.status.ErrorStatus;
+import net.logstash.logback.encoder.SeparatorParser;
 
 /**
  * A {@link ThrowableHandlingConverter} (similar to logback's {@link ThrowableProxyConverter})
@@ -303,8 +304,24 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         return lineSeparator;
     }
 
+    /**
+     * Sets which lineSeparator to use between events.
+     * <p>
+     *
+     * The following values have special meaning:
+     * <ul>
+     * <li>{@code null} or empty string = no new line.</li>
+     * <li>"{@code SYSTEM}" = operating system new line (default).</li>
+     * <li>"{@code UNIX}" = unix line ending ({@code \n}).</li>
+     * <li>"{@code WINDOWS}" = windows line ending {@code \r\n}).</li>
+     * </ul>
+     * <p>
+     * Any other value will be used as given as the lineSeparator.
+     *
+     * @param lineSeparator the line separator
+     */
     public void setLineSeparator(String lineSeparator) {
-        this.lineSeparator = lineSeparator;
+        this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
     }
 
     /**
