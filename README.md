@@ -1752,6 +1752,7 @@ is included in the logstash-logback-encoder library to format stacktraces by:
 * Using evaluators to determine if the stacktrace should be logged.
 * Outputting in either 'normal' order (root-cause-last), or root-cause-first.
 * Computing and inlining hexadecimal hashes for each exception stack using the `inlineHash` or `stackHash` provider ([more info](stack-hash.md)).
+* Use custom line separator for stack traces
 
 For example:
 
@@ -1766,6 +1767,7 @@ For example:
         <evaluator class="myorg.MyCustomEvaluator"/>
         <rootCauseFirst>true</rootCauseFirst>
         <inlineHash>true</inlineHash>
+        <lineSeparator>\\n</lineSeparator>
     </throwableConverter>
 </encoder>
 ```
