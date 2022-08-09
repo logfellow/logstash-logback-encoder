@@ -21,37 +21,38 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Including it in your project](#including-it-in-your-project)
 * [Java Version Requirements](#java-version-requirements)
 * [Usage](#usage)
-  * [UDP Appender](#udp-appender)
-  * [TCP Appenders](#tcp-appenders)
-    * [Keep-alive](#keep-alive)
-    * [Multiple Destinations](#multiple-destinations)
-    * [Reconnection Delay](#reconnection-delay)
-    * [Connection Timeout](#connection-timeout)
-    * [Write Buffer Size](#write-buffer-size)
-    * [Write Timeouts](#write-timeouts)
-    * [SSL](#ssl)
-  * [Async Appenders](#async-appenders)
-      * [RingBuffer Full](#ringbuffer-full)
-      * [Graceful Shutdown](#graceful-shutdown)
-      * [Wait Strategy](#wait-strategy)
-  * [Appender Listeners](#appender-listeners)
-  * [Encoders / Layouts](#encoders--layouts)
+	* [UDP Appenders](#udp-appenders)
+	* [TCP Appenders](#tcp-appenders)
+		* [Keep-alive](#keep-alive)
+		* [Multiple Destinations](#multiple-destinations)
+		* [Reconnection Delay](#reconnection-delay)
+		* [Connection Timeout](#connection-timeout)
+		* [Write Buffer Size](#write-buffer-size)
+		* [Write Timeout](#write-timeout)
+		* [SSL](#ssl)
+	* [Async Appenders](#async-appenders)
+		* [RingBuffer Size](#ringbuffer-size)
+		* [RingBuffer Full](#ringbuffer-full)
+		* [Graceful Shutdown](#graceful-shutdown)
+		* [Wait Strategy](#wait-strategy)
+	* [Appender Listeners](#appender-listeners)
+	* [Encoders / Layouts](#encoders--layouts)
 * [LoggingEvent Fields](#loggingevent-fields)
-  * [Standard Fields](#standard-fields)
-  * [MDC fields](#mdc-fields)
-  * [Context fields](#context-fields)
-  * [Caller Info Fields](#caller-info-fields)
-  * [Custom Fields](#custom-fields)
-    * [Global Custom Fields](#global-custom-fields)
-    * [Event-specific Custom Fields](#event-specific-custom-fields)
+	* [Standard Fields](#standard-fields)
+	* [MDC fields](#mdc-fields)
+	* [Context fields](#context-fields)
+	* [Caller Info Fields](#caller-info-fields)
+	* [Custom Fields](#custom-fields)
+		* [Global Custom Fields](#global-custom-fields)
+		* [Event-specific Custom Fields](#event-specific-custom-fields)
 * [AccessEvent Fields](#accessevent-fields)
-  * [Standard Fields](#standard-fields-1)
-  * [Header Fields](#header-fields)
+	* [Standard Fields](#standard-fields-1)
+	* [Header Fields](#header-fields)
 * [Customizing Jackson](#customizing-jackson)
-  * [Data Format](#data-format)
-  * [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
-  * [Registering Jackson Modules](#registering-jackson-modules)
-  * [Customizing Character Escapes](#customizing-character-escapes)
+	* [Data Format](#data-format)
+	* [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+	* [Registering Jackson Modules](#registering-jackson-modules)
+	* [Customizing Character Escapes](#customizing-character-escapes)
 * [Masking](#masking)
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
@@ -62,17 +63,17 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing Stack Traces](#customizing-stack-traces)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
 * [Composite Encoder/Layout](#composite-encoderlayout)
-  * [Providers common to LoggingEvents and AccessEvents](#providers-common-to-loggingevents-and-accessevents)
-  * [Providers for LoggingEvents](#providers-for-loggingevents)
-  * [Providers for AccessEvents](#providers-for-accessevents)
-  * [Nested JSON Provider](#nested-json-provider)
-  * [Pattern JSON Provider](#pattern-json-provider)
-    * [LoggingEvent patterns](#loggingevent-patterns)
-    * [AccessEvent patterns](#accessevent-patterns)
-  * [Custom JSON Provider](#custom-json-provider)
+	* [Providers common to LoggingEvents and AccessEvents](#providers-common-to-loggingevents-and-accessevents)
+	* [Providers for LoggingEvents](#providers-for-loggingevents)
+	* [Providers for AccessEvents](#providers-for-accessevents)
+	* [Nested JSON Provider](#nested-json-provider)
+	* [Pattern JSON Provider](#pattern-json-provider)
+		* [LoggingEvent patterns](#loggingevent-patterns)
+		* [AccessEvent patterns](#accessevent-patterns)
+	* [Custom JSON Provider](#custom-json-provider)
 * [Status Listeners](#status-listeners)
 * [Joran/XML Configuration](#joran-xml-configuration)
-    * [Duration Property](#duration-property)
+	* [Duration Property](#duration-property)
 
 
 ## Including it in your project
@@ -310,14 +311,11 @@ All the encoding and TCP communication is delegated to a single writer thread.
 There is no need to wrap the TCP appenders with another asynchronous appender
 (such as `AsyncAppender` or `LoggingEventAsyncDisruptorAppender`).
 
-All the configuration parameters (except for sub-appender) of the [async appenders](#async)
-are valid for TCP appenders.  For example, `waitStrategyType` and `ringBufferSize`.
+All the configuration parameters (except for sub-appender) of the [async appenders](#async-appenders) are valid for TCP appenders. For example, `waitStrategyType` and `ringBufferSize`.
 
-The TCP appenders will never block the logging thread.
-If the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped.
+By default the TCP appenders will never block the logging thread - if the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped. If desired, the appender can also be configured to block and wait for free space, see [RingBuffer Full](#ringbuffer-full) for more information.
 
-The TCP appenders will automatically reconnect if the connection breaks.
-However, events may be lost before Java's socket realizes the connection has broken.
+The TCP appenders will automatically reconnect if the connection breaks. Multiple destinations can be configured to increase availability and reduce message lost. See [Multiple Destinations](#multiple-destinations) for more information.
 
 To receive TCP input in logstash, configure a [`tcp`](https://www.elastic.co/guide/en/logstash/current/plugins-inputs-tcp.html) input with the [`json_lines`](https://www.elastic.co/guide/en/logstash/current/plugins-codecs-json_lines.html) codec in logstash's configuration like this:
 
@@ -554,7 +552,7 @@ This setting accepts a Logback Duration value - see the section dedicated to [Du
 
 #### Write Buffer Size
 
-By default, a buffer size of 8192 is used to buffer socket output stream writes.
+By default, a buffer size of `8192` bytes is used to buffer socket output stream writes.
 You can adjust this by setting the appender's `writeBufferSize`.
  
 ```xml
@@ -571,7 +569,7 @@ but in some environments, this does not seem to affect overall performance.
 See [this discussion](https://github.com/logfellow/logstash-logback-encoder/issues/342).
 
 
-#### Write Timeouts
+#### Write Timeout
 
 If a destination stops reading from its socket input, but does not close the connection, then writes from the TCP appender will eventually backup, causing the ring buffer to backup, causing events to be dropped.
 
@@ -656,6 +654,14 @@ For example:
 </appender>
 ```
 
+#### RingBuffer Size
+
+Logging events are first enqueued in a ring buffer before they are delivered to their final destination by a separate handler thread.
+The buffer size is fixed, it does not grow or shrink at runtime. Its size is determined  by the `ringBufferSize` configuration property set to `8192` by default.
+
+If the handler thread is not as fast as the producing threads, then the ring buffer will eventually fill up, at which point events will be dropped (the default) or the producing threads are blocked depending on configured `appendTimeout` (see [RingBuffer Full](#ringbuffer-full).
+
+
 #### RingBuffer Full
 
 The async appenders will by default never block the logging thread.
@@ -675,7 +681,7 @@ The behaviour of the appender when the RingBuffer is controlled by the `appendTi
 Logging threads waiting for space in the RingBuffer wake up periodically at a frequency starting at `1ns` and increasing exponentially up to `appendRetryFrequency` (default `5ms`). 
 Only one thread is allowed to retry at a time. If a thread is already retrying, additional threads are waiting on a lock until the first is finished. This strategy should help to limit CPU consumption while providing good enough latency and throughput when the ring buffer is at (or close) to its maximal capacity.
 
-When the appender drops an event, it emits a warning status message every `droppedWarnFrequency` consecutive dropped events. Another status message is emitted when the drop period is over and a first event is succesfully enqueued reporting the total number of events that were dropped.
+When the appender drops an event, it emits a warning status message every `droppedWarnFrequency` consecutive dropped events (`1000` by default, use `0` to turn off warnings). Another status message is emitted when the drop period is over and a first event is succesfully enqueued reporting the total number of events that were dropped.
 
 
 #### Graceful Shutdown
@@ -811,7 +817,7 @@ Listeners can be registered to an appender to receive notifications for the appe
 
 See the two listener interfaces for the types of notifications that can be received:
 
-* [`AppenderListener`](/src/main/java/net/logstash/logback/appender/listener/AppenderListener.java) - basic notifications for the [async appenders](#async-appenders) and [udp appender](#udp-appender).
+* [`AppenderListener`](/src/main/java/net/logstash/logback/appender/listener/AppenderListener.java) - basic notifications for the [async appenders](#async-appenders) and [udp appenders](#udp-appenders).
 * [`TcpAppenderListener`](/src/main/java/net/logstash/logback/appender/listener/TcpAppenderListener.java) - extension of `AppenderListener` with additional TCP-specific notifications.  Only works with the [TCP appenders](#tcp-appenders). 
 
 Some example use cases for a listener are:
