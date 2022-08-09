@@ -1325,11 +1325,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     }
 
     /**
-     * Sets the maximum number of events in the queue. Once the queue is full
-     * additional events will be dropped.
-     *
-     * <p>
-     * Must be a positive power of 2.
+     * Sets the maximum number of events in the queue.
      *
      * @param queueSize the maximum number of entries in the queue.
      * @deprecated use {@link #setRingBufferSize(int)} instead.

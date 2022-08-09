@@ -697,8 +697,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Defaults to {@value #DEFAULT_RING_BUFFER_SIZE}.
      * 
      * <p>If the handler thread is not as fast as the producing threads, then the {@link RingBuffer}
-     * will eventually fill up, at which point events will be dropped or producing threads blocked
-     * depending on {@link #appendTimeout}.
+     * will eventually fill up, at which point events will be dropped or the producing threads are
+     * blocked depending on {@link #appendTimeout}.
      *
      * @param ringBufferSize the maximum number of entries in the queue.
      */
