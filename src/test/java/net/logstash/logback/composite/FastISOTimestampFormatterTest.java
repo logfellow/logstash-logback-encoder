@@ -136,27 +136,34 @@ public class FastISOTimestampFormatterTest {
         return doForAllSupportedFormats(zone, (formatter, fast) -> {
             // Warm the cache
             Instant instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 0, 0, zone).toInstant();
-            assertThat(fast.format(instant.toEpochMilli())).isEqualTo(formatter.format(instant));
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
 
-            // millis: 0
+            // nanos: 0 (always ignored)
             instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, 0, zone).toInstant();
-            assertThat(fast.format(instant.toEpochMilli())).isEqualTo(formatter.format(instant));
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
 
             // millis: .001 (3 decimals)
+            instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, 1, zone).toInstant();
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
+            
             instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, (int) TimeUnit.MILLISECONDS.toNanos(1), zone).toInstant();
-            assertThat(fast.format(instant.toEpochMilli())).isEqualTo(formatter.format(instant));
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
             
             // millis: .01 (2 decimals)
             instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, (int) TimeUnit.MILLISECONDS.toNanos(10), zone).toInstant();
-            assertThat(fast.format(instant.toEpochMilli())).isEqualTo(formatter.format(instant));
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
             
             // millis: .1 (1 decimals)
             instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, (int) TimeUnit.MILLISECONDS.toNanos(100), zone).toInstant();
-            assertThat(fast.format(instant.toEpochMilli())).isEqualTo(formatter.format(instant));
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
             
             // millis: .123 (3 decimals)
             instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, (int) TimeUnit.MILLISECONDS.toNanos(123), zone).toInstant();
-            assertThat(fast.format(instant.toEpochMilli())).isEqualTo(formatter.format(instant));
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
+
+            // nanos: .1234 (4 decimals -> ISO_INSTANT outputs 3, 6 or 9 digits -> .123400)
+            instant = ZonedDateTime.of(2020, 01, 01, 10, 20, 30, 123_400_000, zone).toInstant();
+            assertThat(fast.format(instant)).isEqualTo(formatter.format(instant));
         });
     }
     
@@ -264,13 +271,13 @@ public class FastISOTimestampFormatterTest {
             // Caching is DISABLED during summer because of the offset expressed with minutes precision
             //
             assertThat(invokeTwice(fast, duringSummer.toInstant())).isEqualTo(formatter.format(duringSummer));
-            verify(fast, times(2)).buildFromFormatter(duringSummer.toInstant().toEpochMilli());
+            verify(fast, times(2)).buildFromFormatter(duringSummer.toInstant());
             
             // Caching is ENABLED during winter
             //
             Mockito.reset(fast);
             assertThat(invokeTwice(fast, duringWinter.toInstant())).isEqualTo(formatter.format(duringWinter));
-            verify(fast, times(1)).buildFromFormatter(duringWinter.toInstant().toEpochMilli());
+            verify(fast, times(1)).buildFromFormatter(duringWinter.toInstant());
         });
     }
 
@@ -320,7 +327,7 @@ public class FastISOTimestampFormatterTest {
                     
                     ZonedDateTime current = now;
                     for (int i = 0; i < 3600; i++) {
-                        assertThat(fast.format(current.toInstant().toEpochMilli())).isEqualTo(formatter.format(current));
+                        assertThat(fast.format(current.toInstant())).isEqualTo(formatter.format(current));
                         current = current.plusSeconds(1);
                     }
                     
@@ -332,7 +339,7 @@ public class FastISOTimestampFormatterTest {
                 
                 ZonedDateTime current = now;
                 for (int i = 0; i < 3600; i++) {
-                    assertThat(fast.format(current.toInstant().toEpochMilli())).isEqualTo(formatter.format(current));
+                    assertThat(fast.format(current.toInstant())).isEqualTo(formatter.format(current));
                     current = current.minusSeconds(1);
                 }
                 
@@ -398,13 +405,11 @@ public class FastISOTimestampFormatterTest {
      * @return the formatted result
      */
     private static String invokeTwice(FastISOTimestampFormatter fast, Instant instant) {
-        long millis = instant.toEpochMilli();
-        
         // Format a first time to "warm" the cache
-        fast.format(millis);
+        fast.format(instant);
         
         // Format a second time - value should come out of the cache when enabled
-        return fast.format(millis);
+        return fast.format(instant);
     }
 
     
@@ -420,10 +425,9 @@ public class FastISOTimestampFormatterTest {
     private static String isFromCache(FastISOTimestampFormatter fast, Instant instant) {
         Mockito.clearInvocations(fast);
         
-        long millis = instant.toEpochMilli();
-        String formattedValue = fast.format(millis);
+        String formattedValue = fast.format(instant);
         
-        verify(fast, times(0)).buildFromFormatter(millis);
+        verify(fast, times(0)).buildFromFormatter(instant);
         
         return formattedValue;
     }
@@ -440,10 +444,9 @@ public class FastISOTimestampFormatterTest {
     private static String isNotFromCache(FastISOTimestampFormatter fast, Instant instant) {
         Mockito.clearInvocations(fast);
         
-        long millis = instant.toEpochMilli();
-        String formattedValue = fast.format(millis);
+        String formattedValue = fast.format(instant);
         
-        verify(fast, times(1)).buildFromFormatter(millis);
+        verify(fast, times(1)).buildFromFormatter(instant);
         
         return formattedValue;
     }

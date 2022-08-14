@@ -39,6 +39,7 @@ import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
+import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
@@ -53,6 +54,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.assertj.core.util.Files;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,23 +70,34 @@ public class LogstashEncoderTest {
     private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
     private final LogstashEncoder encoder = new LogstashEncoder();
     
+    private Instant now;
+    
+    @BeforeEach
+    public void setup() {
+        // Logback as nanos precision since version 1.3
+        if (LogbackUtils.isVersion13()) {
+            now = Instant.now();
+        }
+        else {
+            now = Instant.ofEpochMilli(System.currentTimeMillis());
+        }
+    }
+    
+    
     @Test
     public void basicsAreIncluded_logback12() throws Exception {
-        final long timestamp = System.currentTimeMillis();
-        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getTimeStamp()).thenReturn(timestamp);
         
         encoder.start();
         byte[] encoded = encoder.encode(event);
         
         JsonNode node = MAPPER.readTree(encoded);
         
-        verifyBasics(timestamp, node);
+        verifyBasics(now, node);
     }
 
-    protected void verifyBasics(final long timestamp, JsonNode node) {
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
+    protected void verifyBasics(Instant timestamp, JsonNode node) {
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(timestamp));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
@@ -95,18 +108,15 @@ public class LogstashEncoderTest {
     
     @Test
     public void basicsAreIncludedWithShortenedNames() throws Exception {
-        final long timestamp = System.currentTimeMillis();
-        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         
-        when(event.getTimeStamp()).thenReturn(timestamp);
         encoder.setFieldNames(new ShortenedFieldNames());
         encoder.start();
         byte[] encoded = encoder.encode(event);
         
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(now));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
@@ -135,10 +145,8 @@ public class LogstashEncoderTest {
         });
         
         encoder.start();
-        final long timestamp = System.currentTimeMillis();
         
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getTimeStamp()).thenReturn(timestamp);
         
         byte[] encoded = encoder.encode(event);
         
@@ -146,7 +154,7 @@ public class LogstashEncoderTest {
         
         assertThat(output).isEqualTo(String.format(
                 "{%n"
-                + "  @timestamp : \"" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)) + "\",%n"
+                + "  @timestamp : \"" + DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(now) + "\",%n"
                 + "  @version : \"1\",%n"
                 + "  message : \"My message\",%n"
                 + "  logger_name : \"LoggerName\",%n"
@@ -159,14 +167,12 @@ public class LogstashEncoderTest {
 
     @Test
     public void loggerNameIsShortenedProperly() throws Exception {
-        final long timestamp = System.currentTimeMillis();
         final int length = 36;
         final String shortenedLoggerName = new TargetLengthBasedClassNameAbbreviator(length).abbreviate(DateTimeFormatter.class.getCanonicalName());
 
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getLoggerName()).thenReturn(DateTimeFormatter.class.getCanonicalName());
 
-        when(event.getTimeStamp()).thenReturn(timestamp);
         encoder.setFieldNames(new ShortenedFieldNames());
         encoder.setShortenedLoggerNameLength(length);
         encoder.start();
@@ -174,7 +180,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(now));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger").textValue()).isEqualTo(shortenedLoggerName);
         assertThat(node.get("thread").textValue()).isEqualTo("ThreadName");
@@ -344,14 +350,10 @@ public class LogstashEncoderTest {
     
     @Test
     public void callerDataIsNotIncludedIfSwitchedOff() throws Exception {
-        ILoggingEvent event = mock(ILoggingEvent.class);
-        when(event.getLoggerName()).thenReturn("LoggerName");
-        when(event.getThreadName()).thenReturn("ThreadName");
-        when(event.getFormattedMessage()).thenReturn("My message");
-        when(event.getLevel()).thenReturn(Level.ERROR);
+        ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         when(event.getMDCPropertyMap()).thenReturn(Collections.emptyMap());
-        encoder.setIncludeCallerData(false);
         
+        encoder.setIncludeCallerData(false);
         encoder.start();
         byte[] encoded = encoder.encode(event);
         
@@ -517,10 +519,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void customTimeZone() throws Exception {
-        final long timestamp = System.currentTimeMillis();
-        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getTimeStamp()).thenReturn(timestamp);
         
         encoder.setTimeZone("UTC");
         encoder.start();
@@ -528,7 +527,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getTimeZone("UTC").toZoneId()).format(Instant.ofEpochMilli(timestamp)));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getTimeZone("UTC").toZoneId()).format(now));
         assertThat(node.get("@version").textValue()).isEqualTo("1");
         assertThat(node.get("logger_name").textValue()).isEqualTo("LoggerName");
         assertThat(node.get("thread_name").textValue()).isEqualTo("ThreadName");
@@ -614,10 +613,7 @@ public class LogstashEncoderTest {
     
     @Test
     public void unixTimestampAsNumber() throws Exception {
-        final long timestamp = System.currentTimeMillis();
-        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getTimeStamp()).thenReturn(timestamp);
         
         encoder.setTimestampPattern(AbstractFormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_NUMBER);
         encoder.start();
@@ -625,15 +621,12 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
         
-        assertThat(node.get("@timestamp").numberValue()).isEqualTo(timestamp);
+        assertThat(node.get("@timestamp").numberValue()).isEqualTo(event.getTimeStamp());
     }
     
     @Test
     public void unixTimestampAsString() throws Exception {
-        final long timestamp = System.currentTimeMillis();
-        
         ILoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        when(event.getTimeStamp()).thenReturn(timestamp);
         
         encoder.setTimestampPattern(AbstractFormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_STRING);
         encoder.start();
@@ -641,7 +634,7 @@ public class LogstashEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
         
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
+        assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(event.getTimeStamp()));
     }
     
     @Test
@@ -698,12 +691,19 @@ public class LogstashEncoderTest {
         assertThat(values).containsExactly(expected);
     }
     
+    
     private ILoggingEvent mockBasicILoggingEvent(Level level) {
         ILoggingEvent event = mock(ILoggingEvent.class);
         when(event.getLoggerName()).thenReturn("LoggerName");
         when(event.getThreadName()).thenReturn("ThreadName");
         when(event.getFormattedMessage()).thenReturn("My message");
         when(event.getLevel()).thenReturn(level);
+        
+        when(event.getTimeStamp()).thenReturn(now.toEpochMilli());
+        if (LogbackUtils.isVersion13()) {
+            when(event.getInstant()).thenReturn(now);
+        }
+        
         return event;
     }
     
