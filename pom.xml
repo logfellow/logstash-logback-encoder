@@ -31,11 +31,11 @@
         <disruptor.version>3.4.4</disruptor.version>
 
         <!-- test dependencies -->
-        <assertj.version>3.22.0</assertj.version>
+        <assertj.version>3.23.1</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
         <jakarta-servlet-api.version>5.0.0</jakarta-servlet-api.version>
         <junit.version>5.8.2</junit.version>
-        <mockito.version>4.5.1</mockito.version>
+        <mockito.version>4.7.0</mockito.version>
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.21</animal-sniffer-maven-plugin.version>
