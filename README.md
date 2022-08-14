@@ -91,11 +91,11 @@ Maven style:
     <scope>runtime</scope>
     -->
 </dependency>
-<!-- Your project must also directly depend on either logback-classic or logback-access.  For example: -->
+<!-- Your project must also directly depend on either logback-classic or logback-access. For example: -->
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
-    <version>1.2.11</version>
+    <version>1.3.0</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logback,
          such as implementations of Appender, Encoder, Layout, TurboFilter, etc
     <scope>runtime</scope>
@@ -112,7 +112,7 @@ Specifically, the following need to be available on the runtime classpath:
 * logback-core >= 1.2.0
 * logback-classic >= 1.2.0 (required for logging _LoggingEvents_)
 * logback-access >= 1.2.0 (required for logging _AccessEvents_)
-* slf4j-api
+* slf4j-api (usually comes as a transitive dependency of logback-classic)
 * java-uuid-generator (required if the `uuid` provider is used)
 
 Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
@@ -124,7 +124,7 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 ```xml
 <properties>
-    <logback.version>1.2.6</logback.version>
+    <logback.version>1.3.0</logback.version>
 </properties>
 <dependencyManagement>
     <dependencies>
@@ -932,7 +932,7 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 | Field         | Description
 |---------------|------------
-| `@timestamp`  | Time of the log event (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`) - see [Customizing Timestamp](#customizing-timestamp)
+| `@timestamp`  | Time of the log event (`ISO_OFFSET_DATE_TIME`) - see [Customizing Timestamp](#customizing-timestamp)
 | `@version`    | Logstash format version (e.g. `1`) - see [Customizing Version](#customizing-version)
 | `message`     | Formatted log message of the event - see [Customizing Message](#customizing-message)
 | `logger_name` | Name of the logger that logged the event
@@ -1649,13 +1649,19 @@ The value of the `timestampPattern` can be any of the following:
 * `[` _`constant`_ `]` - (e.g. `[ISO_OFFSET_DATE_TIME]`) timestamp written using the given `DateTimeFormatter` constant
 * any other value - (e.g. `yyyy-MM-dd'T'HH:mm:ss.SSS`) timestamp written using a `DateTimeFormatter` created from the given pattern
 
-The provider uses a standard Java DateTimeFormatter under the hood. However, special optimisations are applied when using one of  the following standard ISO formats that make it nearly 7x faster:
+The provider uses a standard Java DateTimeFormatter under the hood. However, special optimisations are applied when using one of the following standard ISO formats that make it nearly 7x faster and more GC friendly:
 
 * `[ISO_OFFSET_DATE_TIME]`
-* `[ISO_ZONED_DATE_TIME`]
-* `[ISO_LOCAL_DATE_TIME`]
-* `[ISO_DATE_TIME`]
-* `[ISO_INSTANT`]
+* `[ISO_ZONED_DATE_TIME]`
+* `[ISO_LOCAL_DATE_TIME]`
+* `[ISO_DATE_TIME]`
+* `[ISO_INSTANT]`
+
+
+Note that the precision of the timestamp depends on the Logback version being used:
+- versions before `1.3.0` have a timestamp with millisecond precision
+- nanosecond precision is available starting from Logback `1.3.0`
+The standard `[...]` formats will therefore output millis or nanos depending on which version of Logback is on the runtime classpath.
 
 
 The formatter uses the default TimeZone of the host Java platform by default. You can change it like this:
