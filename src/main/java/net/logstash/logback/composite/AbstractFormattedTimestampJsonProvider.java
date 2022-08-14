@@ -94,9 +94,9 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
      * Writes the timestamp to the JsonGenerator
      */
     protected interface TimestampWriter {
-        void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException;
+        void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) throws IOException;
 
-        String getTimestampAsString(long timestampInMillis);
+        String getTimestampAsString(Instant timestamp);
     }
 
 
@@ -106,13 +106,13 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
     protected static class NumberTimestampWriter implements TimestampWriter {
 
         @Override
-        public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
-            JsonWritingUtils.writeNumberField(generator, fieldName, timestampInMillis);
+        public void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) throws IOException {
+            JsonWritingUtils.writeNumberField(generator, fieldName, timestamp.toEpochMilli());
         }
 
         @Override
-        public String getTimestampAsString(long timestampInMillis) {
-            return Long.toString(timestampInMillis);
+        public String getTimestampAsString(Instant timestamp) {
+            return Long.toString(timestamp.toEpochMilli());
         }
     }
 
@@ -121,29 +121,29 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
      * String using the supplied Function.
      */
     protected static class StringFormatterWriter implements TimestampWriter {
-        private final Function<Long, String> provider;
+        private final Function<Instant, String> provider;
         
-        StringFormatterWriter(Function<Long, String> provider) {
+        StringFormatterWriter(Function<Instant, String> provider) {
             this.provider = Objects.requireNonNull(provider);
         }
         
         @Override
-        public void writeTo(JsonGenerator generator, String fieldName, long timestampInMillis) throws IOException {
-            JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestampInMillis));
+        public void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) throws IOException {
+            JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestamp));
         }
 
         @Override
-        public String getTimestampAsString(long timestampInMillis) {
-            return provider.apply(timestampInMillis);
+        public String getTimestampAsString(Instant timestamp) {
+            return provider.apply(timestamp);
         }
         
         static StringFormatterWriter with(DateTimeFormatter formatter) {
-            return new StringFormatterWriter(tstamp -> formatter.format(Instant.ofEpochMilli(tstamp)));
+            return new StringFormatterWriter(tstamp -> formatter.format(tstamp));
         }
         static StringFormatterWriter with(FastISOTimestampFormatter formatter) {
             return new StringFormatterWriter(formatter::format);
         }
-        static StringFormatterWriter with(Function<Long, String> formatter) {
+        static StringFormatterWriter with(Function<Instant, String> formatter) {
             return new StringFormatterWriter(formatter);
         }
     }
@@ -161,15 +161,15 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
 
     @Override
     public void writeTo(JsonGenerator generator, Event event) throws IOException {
-        timestampWriter.writeTo(generator, getFieldName(), getTimestampAsMillis(event));
+        timestampWriter.writeTo(generator, getFieldName(), getTimestampAsInstant(event));
     }
 
     protected String getFormattedTimestamp(Event event) {
-        return timestampWriter.getTimestampAsString(getTimestampAsMillis(event));
+        return timestampWriter.getTimestampAsString(getTimestampAsInstant(event));
     }
 
-    protected abstract long getTimestampAsMillis(Event event);
-
+    protected abstract Instant getTimestampAsInstant(Event event);
+    
     /**
      * Updates the {@link #timestampWriter} value based on the current pattern and timeZone.
      */
@@ -183,7 +183,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
         }
         
         if (UNIX_TIMESTAMP_AS_STRING.equals(pattern)) {
-            return StringFormatterWriter.with(tstamp -> Long.toString(tstamp));
+            return StringFormatterWriter.with(tstamp -> Long.toString(tstamp.toEpochMilli()));
         }
         
         if (pattern.startsWith("[") && pattern.endsWith("]")) {

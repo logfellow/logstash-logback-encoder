@@ -26,9 +26,11 @@ import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
+import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -37,21 +39,36 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class LoggingEventFormattedTimestampJsonProviderTest {
 
-
     @Mock
     private JsonGenerator generator;
 
-    @Mock
+    @Mock(lenient = true)
     private ILoggingEvent event;
 
+    private Instant now;
+    
+    @BeforeEach
+    public void setup() {
+        // Logback has nano precision since version 1.3
+        if (LogbackUtils.isVersion13()) {
+            now = Instant.now();
+            when(event.getTimeStamp()).thenReturn(now.toEpochMilli());
+            when(event.getInstant()).thenReturn(now);
+        }
+        else {
+            now = Instant.ofEpochMilli(System.currentTimeMillis());
+            when(event.getTimeStamp()).thenReturn(now.toEpochMilli());
+        }
+    }
+    
+    
     @Test
     public void withDefaults() throws IOException {
         LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
-        when(event.getTimeStamp()).thenReturn(0L);
 
         provider.writeTo(generator, event);
 
-        String expectedValue = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(0));
+        String expectedValue = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(now);
         verify(generator).writeStringField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, expectedValue);
     }
 
@@ -59,11 +76,10 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
     public void customTimeZone() throws IOException {
         LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
         provider.setTimeZone("UTC");
-        when(event.getTimeStamp()).thenReturn(0L);
 
         provider.writeTo(generator, event);
 
-        String expectedValue = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.of("UTC")).format(Instant.ofEpochMilli(0));
+        String expectedValue = DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(ZoneId.of("UTC")).format(now);
         verify(generator).writeStringField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, expectedValue);
     }
 
@@ -71,11 +87,10 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
     public void constant() throws IOException {
         LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
         provider.setPattern("[RFC_1123_DATE_TIME]"); // use a DateTimeFormatter pattern not supported by the FastISOTimestampFormatter
-        when(event.getTimeStamp()).thenReturn(0L);
 
         provider.writeTo(generator, event);
 
-        String expectedValue = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(0));
+        String expectedValue = DateTimeFormatter.RFC_1123_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(now);
         verify(generator).writeStringField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, expectedValue);
     }
 
@@ -92,11 +107,10 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
         LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
         String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
         provider.setPattern(pattern);
-        when(event.getTimeStamp()).thenReturn(0L);
 
         provider.writeTo(generator, event);
 
-        String expectedValue = DateTimeFormatter.ofPattern(pattern).withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(0));
+        String expectedValue = DateTimeFormatter.ofPattern(pattern).withZone(TimeZone.getDefault().toZoneId()).format(now);
         verify(generator).writeStringField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, expectedValue);
     }
 
@@ -104,21 +118,19 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
     public void unixEpochAsNumber() throws IOException {
         LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
         provider.setPattern(AbstractFormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_NUMBER);
-        when(event.getTimeStamp()).thenReturn(0L);
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeNumberField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, 0L);
+        verify(generator).writeNumberField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, event.getTimeStamp());
     }
 
     @Test
     public void unixEpochAsString() throws IOException {
         LoggingEventFormattedTimestampJsonProvider provider = new LoggingEventFormattedTimestampJsonProvider();
         provider.setPattern(AbstractFormattedTimestampJsonProvider.UNIX_TIMESTAMP_AS_STRING);
-        when(event.getTimeStamp()).thenReturn(0L);
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, "0");
+        verify(generator).writeStringField(AbstractFormattedTimestampJsonProvider.FIELD_TIMESTAMP, Long.toString(event.getTimeStamp()));
     }
 }
