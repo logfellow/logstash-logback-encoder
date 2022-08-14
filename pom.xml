@@ -504,9 +504,20 @@
                         <!-- Setup links to external api docs
                          -->
                         <links>
+                        	<!-- Javadoc generation fails under Java8 because the Logback javadoc does not contain a
+                        	     "package-list" index file anymore since version 1.3.0. It seems to work however with
+                        	     Java 9 and 11.
+                        	     
+                        	     Note: "package-list" has been replaced by "element-list" in Java 9... Newer jdk versions
+                        	     seem to look for "element-list" first and fallback to "package-list".
+                        	     
+                        	     A possible workaround is to build the project (and generate javadoc) using Java 9 instead
+                        	     of 8. In the meantime links to Logback apidoc are commented.
+                        	     
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-core/${logback.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-access/${logback.version}</link>
+                            -->
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/${jackson.version}</link>
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/${jackson.version}</link>
                         </links>
