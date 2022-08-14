@@ -35,8 +35,12 @@ jobs:
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml verify
 
       # Run tests against Jackson 2.12 to ensure runtime compatibility (do not recompile)
-      - name: Test Jackson 2.12
-        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Djackson.version=2.12.5 surefire:test
+      - name: Test Jackson 2.12.x
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Pcompat-jackson surefire:test
+
+      # Run tests against Logback 1.2 to ensure runtime compatibility (do not recompile)
+      - name: Test Logback 1.2.x
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Pcompat-logback surefire:test
 
       - name: Upload Test Reports to Github
         uses: actions/upload-artifact@v2
