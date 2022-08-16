@@ -15,51 +15,135 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import net.logstash.logback.marker.LogstashMarker;
+import net.logstash.logback.util.LogbackUtils;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 @ExtendWith(MockitoExtension.class)
 public class LogstashMarkersJsonProviderTest {
     
-    private LogstashMarkersJsonProvider provider = new LogstashMarkersJsonProvider();
-    
     @Mock
     private JsonGenerator generator;
     
-    @Mock
-    private ILoggingEvent event;
+    private LogstashMarkersJsonProvider provider = new LogstashMarkersJsonProvider();
+    private int markerCount;
     
-    @Mock
-    private LogstashMarker outerMarker;
-    
-    @Mock
-    private LogstashMarker innerMarker;
+
     
     @Test
-    public void test() throws IOException {
+    public void noMarkers() throws IOException {
+        LoggingEvent event = createEvent();
+        assertThatCode(() -> provider.writeTo(generator, event)).doesNotThrowAnyException();
+    }
+    
+    
+    /*
+     * 
+     */
+    @Test
+    public void singleMarker() throws IOException {
         
-        when(outerMarker.hasReferences()).thenReturn(true);
-        when(outerMarker.iterator()).thenReturn(Collections.<Marker>singleton(innerMarker).iterator());
+        // event:
+        //  * basic1 -> marker1 -> marker11
+        //                      -> basic12 -> marker121
+        //           -> marker2
         
-        when(event.getMarker()).thenReturn(outerMarker);
+        
+        Marker         basic1    = createBasicMarker();
+        LogstashMarker marker1   = createLogstashMarker(); basic1.add(marker1);
+        LogstashMarker marker11  = createLogstashMarker(); marker1.add(marker11);
+        Marker         basic12   = createBasicMarker();    marker11.add(basic12);
+        LogstashMarker marker121 = createLogstashMarker(); basic12.add(marker121);
+                
+        LoggingEvent event = createEvent(basic1);
         
         provider.writeTo(generator, event);
         
-        verify(outerMarker).writeTo(generator);
-        verify(innerMarker).writeTo(generator);
+        verify(marker1).writeTo(generator);
+        verify(marker11).writeTo(generator);
+        verify(marker121).writeTo(generator);
     }
+    
+    
+    @Test
+    public void multipleMarkers() throws IOException {
+        Assumptions.assumeTrue(LogbackUtils::isVersion13);
+        
+        // event:
+        //  * basic1 -> marker1
+        //  * marker2
+        
+        
+        Marker         basic1  = createBasicMarker();
+        LogstashMarker marker1 = createLogstashMarker(); basic1.add(marker1);
+        LogstashMarker marker2 = createLogstashMarker();
+                
+        LoggingEvent event = createEvent(basic1, marker2);
+        
+        provider.writeTo(generator, event);
+        
+        verify(marker1).writeTo(generator);
+        verify(marker2).writeTo(generator);
+    }
+    
+    
+    
+    // -- Utility methods -------------------------------------------------------------------------
+    
+    private Marker createBasicMarker() {
+        return MarkerFactory.getDetachedMarker(Integer.toString(this.markerCount++));
+    }
+    
+    private LogstashMarker createLogstashMarker() {
+        return spy(new TestLogstashMarker(Integer.toString(this.markerCount++)));
+    }
+    
+    @SuppressWarnings("deprecation")
+    private LoggingEvent createEvent(Marker...markers) {
+        LoggingEvent event = spy(new LoggingEvent());
+        
+        if (markers != null && markers.length > 0) {
+            if (LogbackUtils.isVersion13()) {
+                for (Marker marker: markers) {
+                    event.addMarker(marker);
+                }
+            }
+            else {
+                if (markers.length > 1) {
+                    throw new IllegalStateException("Logback 1.2 supports only one Marker per event");
+                }
+                when(event.getMarker()).thenReturn(markers[0]);
+            }
+        }
+        
+        return event;
+    }
+    
+    @SuppressWarnings("serial")
+    private static class TestLogstashMarker extends LogstashMarker {
+        TestLogstashMarker(String name) {
+            super(name);
+        }
 
+        @Override
+        public void writeTo(JsonGenerator generator) throws IOException {
+            // noop
+        }
+    }
 }

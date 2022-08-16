@@ -17,11 +17,13 @@ package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.List;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
+import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -41,6 +43,7 @@ public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> i
         setFieldName(FIELD_TAGS);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         /*
@@ -48,33 +51,44 @@ public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> i
          */
         boolean hasWrittenStart = false;
         
-        final Marker marker = event.getMarker();
-        
-        if (marker != null) {
-            hasWrittenStart = writeTagIfNecessary(generator, hasWrittenStart, marker);
+        if (LogbackUtils.isVersion13()) {
+            hasWrittenStart = writeTagIfNecessary(generator, hasWrittenStart, event.getMarkerList());
+        }
+        else {
+            hasWrittenStart = writeTagIfNecessary(generator, hasWrittenStart, event.getMarker());
         }
         
         if (hasWrittenStart) {
             generator.writeEndArray();
         }
     }
-    
-    @SuppressWarnings("deprecation")
-    private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) throws IOException {
-        if (!LogstashMarkersJsonProvider.isLogstashMarker(marker)) {
 
-            if (!hasWrittenStart) {
-                generator.writeArrayFieldStart(getFieldName());
-                hasWrittenStart = true;
+    private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final List<Marker> markers) throws IOException {
+        if (markers != null) {
+            for (Marker marker: markers) {
+                hasWrittenStart |= writeTagIfNecessary(generator, hasWrittenStart, marker);
             }
-            generator.writeString(marker.getName());
         }
-        if (marker.hasReferences()) {
-            
-            for (Iterator<?> i = marker.iterator(); i.hasNext();) {
-                Marker next = (Marker) i.next();
-                
-                hasWrittenStart |= writeTagIfNecessary(generator, hasWrittenStart, next);
+        
+        return hasWrittenStart;
+    }
+    
+    private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) throws IOException {
+        if (marker != null) {
+            if (!LogstashMarkersJsonProvider.isLogstashMarker(marker)) {
+                if (!hasWrittenStart) {
+                    generator.writeArrayFieldStart(getFieldName());
+                    hasWrittenStart = true;
+                }
+                generator.writeString(marker.getName());
+            }
+
+            if (marker.hasReferences()) {
+                for (Iterator<?> i = marker.iterator(); i.hasNext();) {
+                    Marker next = (Marker) i.next();
+                    
+                    hasWrittenStart |= writeTagIfNecessary(generator, hasWrittenStart, next);
+                }
             }
         }
         return hasWrittenStart;

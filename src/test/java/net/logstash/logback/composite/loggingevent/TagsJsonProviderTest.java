@@ -16,23 +16,27 @@
 package net.logstash.logback.composite.loggingevent;
 
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.Collections;
 
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
+import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.LoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 @ExtendWith(MockitoExtension.class)
 public class TagsJsonProviderTest {
@@ -42,31 +46,27 @@ public class TagsJsonProviderTest {
     @Mock
     private JsonGenerator generator;
     
-    @Mock
     private ILoggingEvent event;
-    
-    @Mock
     private Marker marker1;
-    
-    @Mock
     private LogstashMarker marker2;
-    
-    @Mock
     private Marker marker3;
+    private Marker marker4;
+
     
     @BeforeEach
     public void setup() {
-        when(marker1.hasReferences()).thenReturn(true);
-        when(marker1.iterator()).thenReturn(Collections.<Marker>singleton(marker2).iterator());
+        marker1 = createBasicMarker("marker1");
+        marker2 = createLogstashMarker("marker2");
+        marker3 = createBasicMarker("marker3");
         
-        when(marker2.hasReferences()).thenReturn(true);
-        when(marker2.iterator()).thenReturn(Collections.singleton(marker3).iterator());
+        marker1.add(marker2);
+        marker2.add(marker3);
+        
+        marker4 = createBasicMarker("marker4");
 
-        when(marker1.getName()).thenReturn("marker1");
-        when(marker3.getName()).thenReturn("marker3");
-        
-        when(event.getMarker()).thenReturn(marker1);
-        
+        // Logback 1.3: both markers are added to the event
+        // Logback 1.2: only marker1 is added to the event
+        event = createEvent(marker1, marker4);
     }
     
     @Test
@@ -79,7 +79,12 @@ public class TagsJsonProviderTest {
         inOrder.verify(generator).writeArrayFieldStart(TagsJsonProvider.FIELD_TAGS);
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
+        if (LogbackUtils.isVersion13()) {
+            inOrder.verify(generator).writeString("marker4");
+        }
         inOrder.verify(generator).writeEndArray();
+        
+        Mockito.verifyNoMoreInteractions(generator);
     }
 
     @Test
@@ -93,7 +98,12 @@ public class TagsJsonProviderTest {
         inOrder.verify(generator).writeArrayFieldStart("newFieldName");
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
+        if (LogbackUtils.isVersion13()) {
+            inOrder.verify(generator).writeString("marker4");
+        }
         inOrder.verify(generator).writeEndArray();
+        
+        Mockito.verifyNoMoreInteractions(generator);
     }
 
     @Test
@@ -109,7 +119,52 @@ public class TagsJsonProviderTest {
         inOrder.verify(generator).writeArrayFieldStart("newFieldName");
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
+        if (LogbackUtils.isVersion13()) {
+            inOrder.verify(generator).writeString("marker4");
+        }
         inOrder.verify(generator).writeEndArray();
+        
+        Mockito.verifyNoMoreInteractions(generator);
     }
 
+    
+    // -- Utility methods -------------------------------------------------------------------------
+    
+    private Marker createBasicMarker(String name) {
+        return MarkerFactory.getDetachedMarker(name);
+    }
+    
+    private LogstashMarker createLogstashMarker(String name) {
+        return spy(new TestLogstashMarker(name));
+    }
+    
+    @SuppressWarnings("deprecation")
+    private LoggingEvent createEvent(Marker...markers) {
+        LoggingEvent event = spy(new LoggingEvent());
+        
+        if (markers != null && markers.length > 0) {
+            if (LogbackUtils.isVersion13()) {
+                for (Marker marker: markers) {
+                    event.addMarker(marker);
+                }
+            }
+            else {
+                when(event.getMarker()).thenReturn(markers[0]);
+            }
+        }
+        
+        return event;
+    }
+    
+    @SuppressWarnings("serial")
+    private static class TestLogstashMarker extends LogstashMarker {
+        TestLogstashMarker(String name) {
+            super(name);
+        }
+
+        @Override
+        public void writeTo(JsonGenerator generator) throws IOException {
+            // noop
+        }
+    }
 }
