@@ -193,7 +193,7 @@ These async appenders can delegate to any other underlying logback appender.
 
 
 
-### UDP Appender
+### UDP Appenders
 
 To output JSON for LoggingEvents to a syslog/UDP channel,
 use the `LogstashUdpSocketAppender` with a `LogstashLayout` or `LoggingEventCompositeJsonLayout`
@@ -302,7 +302,7 @@ in your `logback-access.xml`, like this:
 </configuration>
 ```
 
-The TCP appenders use an encoder, rather than a layout as the [UDP appenders](#udp) . 
+The TCP appenders use an encoder, rather than a layout as the [UDP appenders](#udp-appenders) . 
 You can use a `Logstash*Encoder`, `*EventCompositeJsonEncoder`, or any other logback encoder.
 All of the output formatting options are configured at the encoder level.
 
@@ -817,7 +817,7 @@ Listeners can be registered to an appender to receive notifications for the appe
 
 See the two listener interfaces for the types of notifications that can be received:
 
-* [`AppenderListener`](/src/main/java/net/logstash/logback/appender/listener/AppenderListener.java) - basic notifications for the [async appenders](#async-appenders) and [udp appenders](#udp-appenders).
+* [`AppenderListener`](/src/main/java/net/logstash/logback/appender/listener/AppenderListener.java) - basic notifications for the [async appenders](#async-appenders) and [UDP appenders](#udp-appenders).
 * [`TcpAppenderListener`](/src/main/java/net/logstash/logback/appender/listener/TcpAppenderListener.java) - extension of `AppenderListener` with additional TCP-specific notifications.  Only works with the [TCP appenders](#tcp-appenders). 
 
 Some example use cases for a listener are:
