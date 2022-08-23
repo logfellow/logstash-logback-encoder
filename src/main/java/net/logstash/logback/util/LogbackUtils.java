@@ -15,11 +15,11 @@
  */
 package net.logstash.logback.util;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.LoggerContext;
 
 public abstract class LogbackUtils {
 
-    private static final boolean IS_VERSION_13 = hasMethod(ILoggingEvent.class, "getInstant");
+    private static final boolean IS_VERSION_13 = hasMethod(LoggerContext.class, "getSequenceNumberGenerator");
     
     private LogbackUtils() {
         // utility class
@@ -27,7 +27,7 @@ public abstract class LogbackUtils {
     
     private static boolean hasMethod(Class<?> clazz, String name, Class<?>... args) {
         try {
-            return clazz.getMethod("getInstant", args) != null;
+            return clazz.getMethod(name, args) != null;
         }
         catch (NoSuchMethodException e) {
             return false;
