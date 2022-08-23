@@ -100,4 +100,7 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addThrowableRootCauseMessage(ThrowableRootCauseMessageJsonProvider provider) {
         addProvider(provider);
     }
+    public void addSequence(SequenceJsonProvider provider) {
+        addProvider(provider);
+    }
 }

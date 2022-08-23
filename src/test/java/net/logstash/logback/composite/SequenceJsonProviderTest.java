@@ -27,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
+@Deprecated
 public class SequenceJsonProviderTest {
 
     private SequenceJsonProvider<ILoggingEvent> provider = new SequenceJsonProvider<>();

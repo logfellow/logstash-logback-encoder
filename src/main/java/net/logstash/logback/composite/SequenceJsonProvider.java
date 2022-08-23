@@ -24,6 +24,8 @@ import com.fasterxml.jackson.core.JsonGenerator;
 /**
  * Outputs an incrementing sequence number.
  * Useful for determining if log events get lost along the transport chain.
+ * 
+ * @deprecated use {@link net.logstash.logback.composite.loggingevent.SequenceJsonProvider} or {@link net.logstash.logback.composite.accessevent.SequenceJsonProvider} instead.
  */
 public class SequenceJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> {
 

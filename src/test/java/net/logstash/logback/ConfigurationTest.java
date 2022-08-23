@@ -33,7 +33,6 @@ import net.logstash.logback.composite.ContextJsonProvider;
 import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
-import net.logstash.logback.composite.SequenceJsonProvider;
 import net.logstash.logback.composite.UuidJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
@@ -49,6 +48,7 @@ import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
+import net.logstash.logback.composite.loggingevent.SequenceJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
@@ -208,7 +208,7 @@ public class ConfigurationTest {
         assertThat(uuidProvider.getEthernet()).isEqualTo("00:C0:F0:3D:5B:7C");
         assertThat(uuidProvider.getStrategy()).isEqualTo(UuidJsonProvider.STRATEGY_TIME);
 
-        SequenceJsonProvider<ILoggingEvent> sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
+        SequenceJsonProvider sequenceJsonProvider = getInstance(providers, SequenceJsonProvider.class);
         assertThat(sequenceJsonProvider).isNotNull();
         assertThat(sequenceJsonProvider.getFieldName()).isEqualTo("sequenceNumberField");
     }

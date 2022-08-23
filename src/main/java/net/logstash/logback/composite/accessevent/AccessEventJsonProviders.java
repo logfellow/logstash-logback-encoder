@@ -92,4 +92,7 @@ public class AccessEventJsonProviders extends JsonProviders<IAccessEvent> {
     public void addThreadName(AccessEventThreadNameJsonProvider provider) {
         addProvider(provider);
     }
+    public void addSequence(SequenceJsonProvider provider) {
+        addProvider(provider);
+    }
 }
