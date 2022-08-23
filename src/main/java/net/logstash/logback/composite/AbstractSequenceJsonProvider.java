@@ -50,7 +50,7 @@ public abstract class AbstractSequenceJsonProvider<Event extends DeferredProcess
      * The function used to get the sequence number associated with the supplied event.
      * May be {@code null} until the provider is started.
      * If none is explicitly assigned through {@link #setSequenceProvider(Function)} one is automatically deduced from the Logback version
-     * found on the classpath. 
+     * found on the classpath.
      */
     private Function<Event, Long> sequenceProvider;
     
@@ -92,7 +92,7 @@ public abstract class AbstractSequenceJsonProvider<Event extends DeferredProcess
     
     /**
      * Get the sequence provider used to get the sequence number associated with the supplied event.
-     *  
+     * 
      * @return a sequence provider
      */
     public Function<Event, Long> getSequenceProvider() {

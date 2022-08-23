@@ -147,7 +147,7 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
             @Override
             public Long apply(ILoggingEvent t) {
                 return 456L;
-            }  
+            }
         });
         provider.setSequenceProvider(sequenceProvider);
         provider.setContext(context);
