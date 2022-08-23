@@ -104,9 +104,6 @@ public class JsonProviders<Event extends DeferredProcessingAware> implements Jso
     public void addGlobalCustomFields(GlobalCustomFieldsJsonProvider<Event> provider) {
         addProvider(provider);
     }
-    public void addSequence(SequenceJsonProvider<Event> provider) {
-        addProvider(provider);
-    }
     public void addUuid(UuidJsonProvider<Event> provider) {
         addProvider(provider);
     }

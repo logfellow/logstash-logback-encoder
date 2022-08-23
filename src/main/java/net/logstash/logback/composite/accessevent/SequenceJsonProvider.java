@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.composite.loggingevent;
+package net.logstash.logback.composite.accessevent;
 
 import java.util.function.Function;
 
 import net.logstash.logback.composite.AbstractSequenceJsonProvider;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.access.spi.IAccessEvent;
 
 
-public class SequenceJsonProvider extends AbstractSequenceJsonProvider<ILoggingEvent> {
+public class SequenceJsonProvider extends AbstractSequenceJsonProvider<IAccessEvent> {
 
     @Override
-    protected Function<ILoggingEvent, Long> createNativeSequenceNumberFieldAccessor() {
-        return ILoggingEvent::getSequenceNumber;
+    protected Function<IAccessEvent, Long> createNativeSequenceNumberFieldAccessor() {
+        return IAccessEvent::getSequenceNumber;
     }
 }
