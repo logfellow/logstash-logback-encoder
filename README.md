@@ -1960,12 +1960,17 @@ The provider name is the xml element name to use when configuring.
     <tr>
       <td valign="top"><tt>sequence</tt></td>
       <td>
-        <p>
-          Outputs an incrementing sequence number for every log event.
-          Useful for tracking pottential message loss during transport (eg. UDP).
+        <p>Event sequence number.
+        </p>
+        <p>With Logback 1.3 the sequence number is obtained from the event itself as long as the LoggerContext is configured with a `SequenceNumberGenerator` (which is not by default).
+If no SequenceNumberGenerator is configured, the provider emits a warning and reverts to a locally generated incrementing number starting at 1.
+        </p>
+        <p>With Logback versions prior to 1.3 the sequence number is generated locally by the provider itself.
         </p>
         <ul>
-          <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li></ul>
+          <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li>
+          <li><tt>sequenceProvider</tt> - Alternate strategy to obtain the sequence number associated with the supplied event. Must implement `Function<ILoggingEvent, Long>` or `Function<IAccessEvent, Long>` depending on the type of event to process.
+        </ul>
       </td>
     </tr>
     <tr>
@@ -1981,7 +1986,7 @@ The provider name is the xml element name to use when configuring.
       <td><p>Event timestamp.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>@timestamp</tt>)</li>
-          <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">above</a> for possible values.</li>
+          <li><tt>pattern</tt> - Output format (<tt>[ISO_OFFSET_DATE_TIME]</tt>)  See <a href="#customizing-timestamp">Customizing Timestamp</a> for possible values.</li>
           <li><tt>timeZone</tt> - Timezone (system timezone)</li>
         </ul>
       </td>

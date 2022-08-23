@@ -30,7 +30,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * Outputs an incrementing sequence number.
  * Useful for determining if log events get lost along the transport chain.
  * 
- * <p>With Logback 1.3 the sequence number is obtained for {@link ILoggingEvent#getSequenceNumber()} provided the
+ * <p>With Logback 1.3 the sequence number is obtained from {@link ILoggingEvent#getSequenceNumber()} provided the
  * LoggerContext is configured with a {@link SequenceNumberGenerator} (which is not by default).
  * If no SequenceNumberGenerator is configured, the provider issues a warning and reverts to a locally generated
  * incrementing number.
