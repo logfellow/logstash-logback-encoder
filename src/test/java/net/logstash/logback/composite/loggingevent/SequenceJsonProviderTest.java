@@ -163,6 +163,8 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
         verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 456L);
         
         verify(sequenceProvider).apply(event);
-        verify(event, never()).getSequenceNumber();
+        if (LogbackUtils.isVersion13()) {
+            verify(event, never()).getSequenceNumber();
+        }
     }
 }
