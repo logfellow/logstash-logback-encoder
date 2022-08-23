@@ -24,6 +24,7 @@ import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
+import ch.qos.logback.core.spi.SequenceNumberGenerator;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 /**
