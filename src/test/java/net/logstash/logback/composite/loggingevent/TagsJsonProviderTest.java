@@ -139,7 +139,7 @@ public class TagsJsonProviderTest {
     }
     
     @SuppressWarnings("deprecation")
-    private LoggingEvent createEvent(Marker...markers) {
+    private LoggingEvent createEvent(Marker... markers) {
         LoggingEvent event = spy(new LoggingEvent());
         
         if (markers != null && markers.length > 0) {

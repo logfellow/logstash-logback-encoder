@@ -36,6 +36,7 @@ public class CharacterEscapesJsonFactoryDecorator implements JsonFactoryDecorato
     /**
      * A {@link CharacterEscapes} implementation that has been created from the registered {@link CharacterEscapesJsonFactoryDecorator#escapes}
      */
+    @SuppressWarnings("serial")
     private static class CustomizedCharacterEscapes extends CharacterEscapes {
 
         /**
