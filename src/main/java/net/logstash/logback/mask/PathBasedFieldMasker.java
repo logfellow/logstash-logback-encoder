@@ -115,7 +115,7 @@ import com.fasterxml.jackson.core.JsonStreamContext;
  *
  * <h2>Wildcard Tokens</h2>
  *
- * The wildcard value ({@value WILDCARD_TOKEN}) can be used as a token in the path string.
+ * The wildcard value ({@value #WILDCARD_TOKEN}) can be used as a token in the path string.
  * The wildcard token will match any token.
  *
  * <p>For example, given the following JSON:
@@ -203,8 +203,7 @@ public class PathBasedFieldMasker implements FieldMasker {
                 return null;
             }
         }
-
-        return (currentContext != null && (!isAbsolutePath || currentContext.getParent() == null || currentContext.getParent().inRoot()))
+        return (currentContext != null && (!isAbsolutePath || currentContext.inRoot()))
                 ? mask
                 : null;
     }

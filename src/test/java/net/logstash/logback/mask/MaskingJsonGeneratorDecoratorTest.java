@@ -229,21 +229,26 @@ public class MaskingJsonGeneratorDecoratorTest {
     @Test
     public void subObjectWithMaskedField() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"}}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":\"****\"}",
                 "fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"}}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":\"****\"}",
+                "/fieldAB");
+        testMaskByPath(
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
                 "fieldA/fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"}}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
                 "/fieldA/fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"}}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
                 "/*/fieldAB");
+
         testMaskByPath(
                 "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
                 "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
