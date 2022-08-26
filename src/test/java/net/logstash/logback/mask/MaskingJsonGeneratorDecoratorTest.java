@@ -16,6 +16,7 @@
 package net.logstash.logback.mask;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,6 +41,7 @@ import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
+import org.opentest4j.AssertionFailedError;
 
 
 public class MaskingJsonGeneratorDecoratorTest {
@@ -276,6 +278,38 @@ public class MaskingJsonGeneratorDecoratorTest {
                 "foo/fieldA");
     }
 
+    @Test
+    public void masedArrayByIndex() throws IOException {
+        testMaskByPath(
+                "{ 'array':[{'foo':'bar' },{'a':'b'}] }",
+                "{ 'array':[{'foo':'****'},{'a':'b'}] }",
+                "/array/0/foo"
+                );
+
+        testMaskByPath(
+                "{ 'array':[{'foo':'bar' },{'a':'b'   }] }",
+                "{ 'array':[{'foo':'bar' },{'a':'****'}] }",
+                "/array/1/a"
+                );
+        
+        
+        // Failed tests - see issue #735
+        
+        assertThatThrownBy(() ->
+            testMaskByPath(
+                    "{ 'array':['a','b',   'c'] }",
+                    "{ 'array':['a','****','c'] }",
+                    "/array/1"
+                    )).isInstanceOf(AssertionFailedError.class);
+        
+        assertThatThrownBy(() ->
+            testMaskByPath(
+                    "{ 'array':[{'foo':'bar'},{'a':'b'}] }",
+                    "{ 'array':['****'       ,{'a':'b'}] }",
+                    "/array/0"
+                    )).isInstanceOf(AssertionFailedError.class);
+    }
+    
     @Test
     public void maskedArrayOfObjects() throws IOException {
         testMaskByPath(
