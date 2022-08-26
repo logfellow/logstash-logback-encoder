@@ -19,10 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Arrays;
 
+import net.logstash.logback.composite.JsonReadingUtils;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 
@@ -38,6 +38,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonStreamContext;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 
 
@@ -80,7 +81,7 @@ public class MaskingJsonGeneratorDecoratorTest {
         }
     }
 
-    JsonGeneratorDecorator configure(String file) {
+    private JsonGeneratorDecorator configure(String file) {
         LoggerContext loggerContext = new LoggerContext();
         JoranConfigurator jc = new JoranConfigurator();
         jc.setContext(loggerContext);
@@ -98,264 +99,268 @@ public class MaskingJsonGeneratorDecoratorTest {
     @Test
     public void maskedAndUnmaskedField() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\"}",
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"****\",\"fieldC\":\"valueC\"}",
+                "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC'}",
+                "{'fieldA':'valueA','fieldB':'****',  'fieldC':'valueC'}",
                 "fieldB");
         testMaskByPath(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\"}",
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"****\",\"fieldC\":\"valueC\"}",
+                "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC'}",
+                "{'fieldA':'valueA','fieldB':'****',  'fieldC':'valueC'}",
                 "/fieldB");
         testMaskByPath(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\"}",
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\"}",
+                "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC'}",
+                "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC'}",
                 "foo/fieldB");
         testMaskByValue(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\"}",
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"****\",\"fieldC\":\"valueC\"}",
+                "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC'}",
+                "{'fieldA':'valueA','fieldB':'****',  'fieldC':'valueC'}",
                 "valueB");
         testMaskByValue(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"****\"}",
+                "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC'}",
+                "{'fieldA':'****'  ,'fieldB':'****',  'fieldC':'****'  }",
                 "value.");
     }
 
     @Test
     public void maskedSubstrings() throws IOException {
         testMaskByValue(
-                "{\"fieldA\":\"tomask1\",\"fieldB\":\"tomask2\",\"fieldC\":\" tomask1-tomask2 \"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\" ****-**** \"}",
+                "{'fieldA':'tomask1','fieldB':'tomask2','fieldC':' tomask1-tomask2 '}",
+                "{'fieldA':'****',   'fieldB':'****',   'fieldC':' ****-**** '      }",
                 "tomask1", "tomask2");
     }
 
     @Test
     public void onlyMaskedField() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":\"valueA\"}",
-                "{\"fieldA\":\"****\"}",
+                "{'fieldA':'valueA'}",
+                "{'fieldA':'****'  }",
                 "fieldA");
         testMaskByPath(
-                "{\"fieldA\":\"valueA\"}",
-                "{\"fieldA\":\"****\"}",
+                "{'fieldA':'valueA'}",
+                "{'fieldA':'****'  }",
                 "/fieldA");
         testMaskByPath(
-                "{\"fieldA\":\"valueA\"}",
-                "{\"fieldA\":\"valueA\"}",
+                "{'fieldA':'valueA'}",
+                "{'fieldA':'valueA'}",
                 "foo/fieldA");
         testMaskByValue(
-                "{\"fieldA\":\"valueA\"}",
-                "{\"fieldA\":\"****\"}",
+                "{'fieldA':'valueA'}",
+                "{'fieldA':'****'  }",
                 "valueA");
     }
 
     @Test
     public void escapedPath() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":\"valueA\",\"field~/B\":\"valueB\",\"fieldC\":\"valueC\"}",
-                "{\"fieldA\":\"valueA\",\"field~/B\":\"****\",\"fieldC\":\"valueC\"}",
+                "{'fieldA':'valueA', 'field~/B':'valueB', 'fieldC':'valueC'}",
+                "{'fieldA':'valueA', 'field~/B':'****',   'fieldC':'valueC'}",
                 "field~0~1B");
     }
 
     @Test
     public void maskEverything() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"****\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]}, 'fieldB':'valueB'}",
+                "{'fieldA':'****',                                                                'fieldB':'****'}",
                 "*");
     }
 
     @Test
     public void maskNothing() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}");
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}");
     }
 
     @Test
     public void configuration() throws IOException {
         JsonGeneratorDecorator noMasks = configure("noMasks");
         test(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
                 noMasks);
 
 
         JsonGeneratorDecorator masks = configure("masks");
         test(
-                "{\"fieldA\":\"valueA\",\"fieldB\":\"valueB\",\"fieldC\":\"valueC\",\"fieldD\":\"valueD\",\"fieldE\":\"valueE\",\"fieldF\":\"valueF\",\"testfield\":\"valueE\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"****\",\"fieldC\":\"****\",\"fieldD\":\"****\",\"fieldE\":\"[masked]\",\"fieldF\":\"****\",\"testfield\":\"[maskedtestfield]\"}",
+                "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC','fieldD':'valueD','fieldE':'valueE',  'fieldF':'valueF','testfield':'valueE'           }",
+                "{'fieldA':'****',  'fieldB':'****',  'fieldC':'****',  'fieldD':'****',  'fieldE':'[masked]','fieldF':'****',  'testfield':'[maskedtestfield]'}",
                 masks);
         test(
-                "{\"field0\":\"value0\",\"field1\":\"value1\",\"field2\":\"value2\",\"field3\":\"value3\",\"field-Z\":\"value-Z\",\"field4\":\"value4\",\"field5\":\"testvalue\",\"field6\":\"value6\",\"field7\":\"nestedvalue1-nestedvalue1\"}",
-                "{\"field0\":\"****\",\"field1\":\"****\",\"field2\":\"****\",\"field3\":\"****\",\"field-Z\":\"value-masked\",\"field4\":\"value4\",\"field5\":\"[maskedtestvalue]\",\"field6\":\"****\",\"field7\":\"****-****\"}",
+                "{'field0':'value0','field1':'value1','field2':'value2','field3':'value3','field-Z':'value-Z',     'field4':'value4','field5':'testvalue',        'field6':'value6','field7':'nestedvalue1-nestedvalue1'}",
+                "{'field0':'****',  'field1':'****',  'field2':'****',  'field3':'****',  'field-Z':'value-masked','field4':'value4','field5':'[maskedtestvalue]','field6':'****',  'field7':'****-****'                }",
                 masks);
     }
 
     @Test
     public void maskAllStringValues() throws IOException {
         testMaskByValue(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\",\"fieldC\":1}",
-                "{\"fieldA\":{\"fieldAA\":\"****\",\"fieldAB\":{\"fieldABA\":\"****\"},\"fieldAC\":[1]},\"fieldB\":\"****\",\"fieldC\":1}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB','fieldC':1}",
+                "{'fieldA':{'fieldAA':'****',   'fieldAB':{'fieldABA':'****'    },'fieldAC':[1]},'fieldB':'****',  'fieldC':1}",
                 "^.*$");
     }
 
     @Test
     public void maskedSubObject() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"valueB\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB','fieldC':{'fieldA':''    }}",
+                "{'fieldA':'****',                                                               'fieldB':'valueB','fieldC':{'fieldA':'****'}}",
                 "fieldA");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"valueB\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB','fieldC':{'fieldA':''}}",
+                "{'fieldA':'****',                                                               'fieldB':'valueB','fieldC':{'fieldA':''}}",
                 "/fieldA");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"****\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'****'    },'fieldAC':[1]},'fieldB':'valueB'}",
                 "fieldA/*/fieldABA");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
                 "*/fieldA");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':'****',                 'fieldAC':[1]},'fieldB':'valueB'}",
                 "*/fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":{\"fieldABA\":\"valueABA\"},\"fieldAC\":[1]},\"fieldB\":\"valueB\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
                 "foo/fieldA");
+        testMaskByPath(
+                "{'fieldA':{'fieldAA':'valueAA'}}",
+                "{'fieldA':{'fieldAA':'****'   }}",
+                "fieldAA");
     }
 
     @Test
     public void subObjectWithMaskedField() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":\"****\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'},'fieldAB':0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':'****',  'fieldAC':'valueAC'},'fieldAB':'****'}",
                 "fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":\"****\"}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'},'fieldAB':0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'},'fieldAB':'****'}",
                 "/fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'},'fieldAB':0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':'****',  'fieldAC':'valueAC'},'fieldAB':0}",
                 "fieldA/fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'},'fieldAB':0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':'****',  'fieldAC':'valueAC'},'fieldAB':0}",
                 "/fieldA/fieldAB");
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":\"****\",\"fieldAC\":\"valueAC\"},\"fieldAB\":0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'},'fieldAB':0}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':'****',  'fieldAC':'valueAC'},'fieldAB':0}",
                 "/*/fieldAB");
 
         testMaskByPath(
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
-                "{\"fieldA\":{\"fieldAA\":\"valueAA\",\"fieldAB\":12345678,\"fieldAC\":\"valueAC\"}}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'}}",
+                "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'}}",
                 "foo/fieldA/fieldAB");
     }
 
     @Test
     public void maskedArray() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":[\"valueA0\",\"valueA1\"],\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"valueB\"}",
+                "{'fieldA':['valueA0','valueA1'],'fieldB':'valueB'}",
+                "{'fieldA':'****',               'fieldB':'valueB'}",
                 "fieldA");
         testMaskByPath(
-                "{\"fieldA\":[\"valueA0\",\"valueA1\"],\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"valueB\"}",
+                "{'fieldA':['valueA0','valueA1'],'fieldB':'valueB'}",
+                "{'fieldA':'****',               'fieldB':'valueB'}",
                 "/fieldA");
         testMaskByPath(
-                "{\"fieldA\":[\"valueA0\",\"valueA1\"],\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":[\"valueA0\",\"valueA1\"],\"fieldB\":\"valueB\"}",
+                "{'fieldA':['valueA0','valueA1'],'fieldB':'valueB'}",
+                "{'fieldA':['valueA0','valueA1'],'fieldB':'valueB'}",
                 "foo/fieldA");
     }
 
     @Test
     public void maskedArrayOfObjects() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\"},{\"fieldA1A\":\"valueA1A\"}],\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"valueB\"}",
+                "{'fieldA':[{'fieldA0A':'valueA0A'},{'fieldA1A':'valueA1A'}],'fieldB':'valueB'}",
+                "{'fieldA':'****',                                           'fieldB':'valueB'}",
                 "fieldA");
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\"},{\"fieldA1A\":\"valueA1A\"}],\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":\"****\",\"fieldB\":\"valueB\"}",
+                "{'fieldA':[{'fieldA0A':'valueA0A'},{'fieldA1A':'valueA1A'}],'fieldB':'valueB'}",
+                "{'fieldA':'****',                                           'fieldB':'valueB'}",
                 "/fieldA");
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\"},{\"fieldA1A\":\"valueA1A\"}],\"fieldB\":\"valueB\"}",
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\"},{\"fieldA1A\":\"valueA1A\"}],\"fieldB\":\"valueB\"}",
+                "{'fieldA':[{'fieldA0A':'valueA0A'},{'fieldA1A':'valueA1A'}],'fieldB':'valueB'}",
+                "{'fieldA':[{'fieldA0A':'valueA0A'},{'fieldA1A':'valueA1A'}],'fieldB':'valueB'}",
                 "foo/fieldA");
     }
 
     @Test
     public void arrayOfObjectWithMaskedField() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":12345678,\"fieldA0C\":\"valueA0C\"}]}",
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":\"****\",\"fieldA0C\":\"valueA0C\"}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':'****',  'fieldA0C':'valueA0C'}]}",
                 "fieldA0B");
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":12345678,\"fieldA0C\":\"valueA0C\"}]}",
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":\"****\",\"fieldA0C\":\"valueA0C\"}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':'****',  'fieldA0C':'valueA0C'}]}",
                 "0/fieldA0B");
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":12345678,\"fieldA0C\":\"valueA0C\"}]}",
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":\"****\",\"fieldA0C\":\"valueA0C\"}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':'****',  'fieldA0C':'valueA0C'}]}",
                 "fieldA/0/fieldA0B");
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":12345678,\"fieldA0C\":\"valueA0C\"}]}",
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":\"****\",\"fieldA0C\":\"valueA0C\"}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':'****',  'fieldA0C':'valueA0C'}]}",
                 "/fieldA/0/fieldA0B");
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":12345678,\"fieldA0C\":\"valueA0C\"}]}",
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":\"****\",\"fieldA0C\":\"valueA0C\"}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':'****',  'fieldA0C':'valueA0C'}]}",
                 "/fieldA/*/fieldA0B");
         testMaskByPath(
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":12345678,\"fieldA0C\":\"valueA0C\"}]}",
-                "{\"fieldA\":[{\"fieldA0A\":\"valueA0A\",\"fieldA0B\":12345678,\"fieldA0C\":\"valueA0C\"}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
+                "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
                 "foo/fieldA/0/fieldA0B");
     }
 
     @Test
     public void arrayOfArrayOfObjectWithMaskedFields() throws IOException {
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "0/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "0/0/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "fieldA/0/0/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "fieldA/0/*/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "*/0/*/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "/fieldA/0/0/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "/fieldA/*/0/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":\"****\",\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
                 "/*/*/0/fieldA00B");
         testMaskByPath(
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
-                "{\"fieldA\":[[{\"fieldA00A\":\"valueA00A\",\"fieldA00B\":true,\"fieldA00C\":\"valueA00C\"}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,'fieldA00C':'valueA00C'}]]}",
+                "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,'fieldA00C':'valueA00C'}]]}",
                 "foo/fieldA/0/0/fieldA00B");
     }
 
@@ -421,7 +426,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     public void testReplacementGroup() throws IOException {
         MaskingJsonGeneratorDecorator decorator = new MaskingJsonGeneratorDecorator();
         decorator.addValueMask(new MaskingJsonGeneratorDecorator.ValueMask("(hello)? world", "$1 bob"));
-        test("{\"field\":\"hello world\"}", "{\"field\":\"hello bob\"}", decorator);
+        test("{'field':'hello world'}", "{'field':'hello bob'}", decorator);
     }
 
     private void test(String unmasked, String masked, JsonGeneratorDecorator decorator) throws IOException {
@@ -429,21 +434,34 @@ public class MaskingJsonGeneratorDecoratorTest {
             ((LifeCycle) decorator).start();
         }
 
+        unmasked = toJson(unmasked);
+        masked = toJson(masked);
+        
         StringWriter maskedWriter = new StringWriter();
         JsonGenerator maskingGenerator = decorator.decorate(FACTORY.createGenerator(maskedWriter));
 
         /*
          * Read through the unmasked string, while writing to the maskedWriter
+         * Note: replay read/parser events directly on the generator to simulate calls to the generator methods
          */
-        JsonParser parser = FACTORY.createParser(new StringReader(unmasked));
-
-        while (parser.nextToken() != null) {
-            maskingGenerator.copyCurrentEvent(parser);
+        try (JsonParser parser = FACTORY.createParser(unmasked)) {
+            while (parser.nextToken() != null) {
+                maskingGenerator.copyCurrentEvent(parser);
+            }
+            maskingGenerator.flush();
         }
-
-        maskingGenerator.flush();
-
-        assertThat(maskedWriter).hasToString(masked);
+        
+        /*
+         * Input strings may be formatted with extra blanks for convenience in the test.
+         * Better to convert them into ObjectNodes to compare their actual JSON structure irrespective of the "pretty printing".
+         */
+        ObjectNode expected = JsonReadingUtils.readFullyAsObjectNode(FACTORY, masked);
+        ObjectNode actual   = JsonReadingUtils.readFullyAsObjectNode(FACTORY, maskedWriter.toString());
+        assertThat(actual).isEqualTo(expected);
     }
-
+    
+    
+    private static String toJson(String str) {
+        return str.replace("'", "\"");
+    }
 }
