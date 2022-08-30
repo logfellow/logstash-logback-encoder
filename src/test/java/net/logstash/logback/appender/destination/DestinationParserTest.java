@@ -66,6 +66,13 @@ public class DestinationParserTest {
             DestinationParser.parse("localhost:-1", 1);
         });
     }
+
+    @Test
+    public void testParse_Single_MissingPortAfterColon() {
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
+            DestinationParser.parse(" localhost: ", 1);
+        });
+    }
     
     @Test
     public void testParse_Single_UndefinedProperty() {
@@ -104,5 +111,41 @@ public class DestinationParserTest {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
             DestinationParser.parse("localhost:1000, , localhost:1001", 1);
         });
+    }
+    
+    @Test
+    public void testIPv4_WithPort() {
+        List<InetSocketAddress> destinations = DestinationParser.parse(" 192.168.1.1:8080 ", 1);
+
+        assertThat(destinations).containsExactly(
+                InetSocketAddress.createUnresolved("192.168.1.1", 8080)
+            );
+    }
+
+    @Test
+    public void testIPv4_DefaultPort() {
+        List<InetSocketAddress> destinations = DestinationParser.parse(" 192.168.1.1 ", 1);
+
+        assertThat(destinations).containsExactly(
+                InetSocketAddress.createUnresolved("192.168.1.1", 1)
+            );
+    }
+    
+    @Test
+    public void testIPv6_WithPort() {
+        List<InetSocketAddress> destinations = DestinationParser.parse(" [2001:db8::1]:8080 ", 1);
+
+        assertThat(destinations).containsExactly(
+                InetSocketAddress.createUnresolved("2001:db8::1", 8080)
+            );
+    }
+
+    @Test
+    public void testIPv6_DefaultPort() {
+        List<InetSocketAddress> destinations = DestinationParser.parse(" [2001:db8::1] ", 1);
+
+        assertThat(destinations).containsExactly(
+                InetSocketAddress.createUnresolved("2001:db8::1", 1)
+            );
     }
 }

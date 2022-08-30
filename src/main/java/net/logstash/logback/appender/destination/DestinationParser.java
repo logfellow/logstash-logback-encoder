@@ -28,7 +28,9 @@ import ch.qos.logback.core.CoreConstants;
  */
 public class DestinationParser {
 
-    private static final Pattern DESTINATION_PATTERN = Pattern.compile("^\\s*(\\S+?)\\s*(:\\s*(\\S+)\\s*)?$");
+    private static final Pattern DESTINATION_PATTERN = Pattern.compile("^([^:]+)(:(.+))?$");
+    private static final Pattern DESTINATION_IPV6_PATTERN = Pattern.compile("^\\[(.+)\\](:(.+))?$");
+
     private static final int HOSTNAME_GROUP = 1;
     private static final int PORT_GROUP = 3;
 
@@ -39,14 +41,20 @@ public class DestinationParser {
     /**
      * Constructs {@link InetSocketAddress}es by parsing the given {@link String} value.
      * <p>
-     * The string is a comma separated list of destinations in the form of hostName[:portNumber].
+     * The string is a comma separated list of destinations in the form of hostName[:portNumber] where:
+     * <ul>
+     * <li>{@code hostName} can be a hostname (eg. <i>localhost</i>), an IPv4 (eg. <i>192.168.1.1</i>) or
+     *     an IPv6 enclosed between brackets (eg. <i>[2001:db8::1]</i>)
+     *
+     * <li>{@code portNumber} is optional and, if specified, must be prefixed by a colon. Must be a valid
+     *     integer between 0 and 65535. If {@code portNumber} is not provided, then the given {@code defaultPort}
+     *     will be used.
+     * </ul>
      * <p>
      *
      * For example, "host1.domain.com,host2.domain.com:5560"
      * <p>
      *
-     * If portNumber is not provided, then the given defaultPort will be used.
-     * 
      * @param destinations comma-separated list of destinations in the form of {@code hostName[:portNumber]}
      * @param defaultPort the port number to use when a destination does not specify one explicitly
      * @return ordered list of {@link InetSocketAddress} instances
@@ -56,8 +64,8 @@ public class DestinationParser {
         /*
          * Multiple destinations can be specified on one single line, separated by comma
          */
-        String[] destinationStrings = (destinations == null ? "" : destinations.trim()).split("\\s*,\\s*");
-
+        String[] destinationStrings = (destinations == null ? "" : destinations.replace(" ", "")).split(",");
+        
         List<InetSocketAddress> destinationList = new ArrayList<>(destinationStrings.length);
 
         for (String entry: destinationStrings) {
@@ -70,7 +78,10 @@ public class DestinationParser {
                 throw new IllegalArgumentException("Invalid destination '" + entry + "': unparseable value (expected format 'host[:port]').");
             }
 
-            Matcher matcher = DESTINATION_PATTERN.matcher(entry);
+            Matcher matcher = DESTINATION_IPV6_PATTERN.matcher(entry);
+            if (!matcher.matches()) {
+                matcher = DESTINATION_PATTERN.matcher(entry);
+            }
             if (!matcher.matches()) {
                 throw new IllegalArgumentException("Invalid destination '" + entry + "': unparseable value (expected format 'host[:port]').");
             }

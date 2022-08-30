@@ -386,6 +386,11 @@ or this:
 </appender>
 ```
 
+Destinations are expressed using the following format: `host[:port]` where:
+- `host` can be a hostname (eg. `localhost`) , an IPv4 address (eg. `192.168.1.1`) or an IPv6 address enclosed between brackets (eg. `[2001:db8::1]`).
+- `port` is optional and, if specified, must be prefixed by a colon (`:`). It must be a valid integer value between `0` and `65535`.
+
+
 The appender uses a `connectionStrategy` to determine:
 
 * the order in which destination connections are attempted, and 
