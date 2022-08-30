@@ -28,7 +28,9 @@ import ch.qos.logback.core.CoreConstants;
  */
 public class DestinationParser {
 
-    private static final Pattern DESTINATION_PATTERN = Pattern.compile("^\\s*(\\S+?)\\s*(:\\s*(\\S+)\\s*)?$");
+    private static final Pattern DESTINATION_PATTERN = Pattern.compile("^([^:]+)(:(.+))?$");
+    private static final Pattern DESTINATION_IPV6_PATTERN = Pattern.compile("^\\[(.+)\\](:(.+))?$");
+
     private static final int HOSTNAME_GROUP = 1;
     private static final int PORT_GROUP = 3;
 
@@ -56,8 +58,8 @@ public class DestinationParser {
         /*
          * Multiple destinations can be specified on one single line, separated by comma
          */
-        String[] destinationStrings = (destinations == null ? "" : destinations.trim()).split("\\s*,\\s*");
-
+        String[] destinationStrings = (destinations == null ? "" : destinations.replace(" ", "")).split(",");
+        
         List<InetSocketAddress> destinationList = new ArrayList<>(destinationStrings.length);
 
         for (String entry: destinationStrings) {
@@ -70,7 +72,10 @@ public class DestinationParser {
                 throw new IllegalArgumentException("Invalid destination '" + entry + "': unparseable value (expected format 'host[:port]').");
             }
 
-            Matcher matcher = DESTINATION_PATTERN.matcher(entry);
+            Matcher matcher = DESTINATION_IPV6_PATTERN.matcher(entry);
+            if (!matcher.matches()) {
+                matcher = DESTINATION_PATTERN.matcher(entry);
+            }
             if (!matcher.matches()) {
                 throw new IllegalArgumentException("Invalid destination '" + entry + "': unparseable value (expected format 'host[:port]').");
             }
