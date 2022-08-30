@@ -119,11 +119,6 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
         SequenceNumberGenerator seqGenerator = mock(SequenceNumberGenerator.class);
         context.setSequenceNumberGenerator(seqGenerator);
         provider.setContext(context);
-        
-        // Workaround for LOGBACK-1663 - can be removed once the issue is fixed upstream
-        assertThat(context.getSequenceNumberGenerator()).isNull();
-        when(context.getSequenceNumberGenerator()).thenReturn(seqGenerator);
-        
         provider.start();
         
         // LoggingEvent is a mock -> it won't have its sequence number out of the generator -> mock the returned values
