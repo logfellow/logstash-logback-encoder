@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <jackson.version>2.13.3</jackson.version>
+        <jackson.version>2.13.4</jackson.version>
         <java-uuid-generator.version>4.0.1</java-uuid-generator.version>
         <logback.version>1.3.0</logback.version>
 
