@@ -35,7 +35,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <servlet-api.version>4.0.1</servlet-api.version>
         <junit.version>5.9.0</junit.version>
-        <mockito.version>4.7.0</mockito.version>
+        <mockito.version>4.8.0</mockito.version>
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.22</animal-sniffer-maven-plugin.version>
