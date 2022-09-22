@@ -113,6 +113,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     public static final int DEFAULT_WRITE_TIMEOUT = 0;
 
     /**
+     * The default delay before sending data into a newly established connection
+     */
+    public static final int DEFAULT_INITIALSEND_DELAY = 0;
+    
+    /**
      * Default size of the queue used to hold logging events that are destined
      * for the remote peer.
      * Assuming an average log entry to take 1k, this would result in the application
@@ -187,6 +192,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      */
     private Duration connectionTimeout = new Duration(DEFAULT_CONNECTION_TIMEOUT);
 
+    /**
+     * The amount of time to wait before sending data into a newly established connection.
+     */
+    private Duration initialSendDelay = new Duration(DEFAULT_INITIALSEND_DELAY);
+    
     /**
      * Human readable identifier of the client (used for logback status messages)
      */
@@ -732,16 +742,9 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                         if (errorCount < MAX_REPEAT_CONNECTION_ERROR_LOG * destinations.size()) {
                             addWarn(peerId + "Waiting " + sleepTime + "ms before attempting reconnection.");
                         }
-                        try {
-                            shutdownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
-                            if (!isStarted()) {
-                                return;
-                            }
-                        } catch (InterruptedException ie) {
-                            Thread.currentThread().interrupt();
-                            addWarn(peerId + "connection interrupted. Will no longer attempt reconnection.");
-                            return;
-                        }
+                        
+                        sleepUnlessStopped(sleepTime);
+
                         // reset the start time to be after the wait period.
                         startWallTime = System.currentTimeMillis();
                     }
@@ -798,9 +801,25 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
                     fireConnectionOpened(this.socket);
 
+                    /*
+                     * wait for initialSendDelay before returning and start sending data in the newly
+                     * established connection
+                     */
+                    sleepUnlessStopped(initialSendDelay.getMilliseconds());
+                    
                     return;
-
-                } catch (Exception e) {
+                }
+                /*
+                 * We have been interrupted (appender stopped) while waiting between connection attempts
+                 * or during initialSendDelay
+                 */
+                catch (InterruptedException ie) {
+                    CloseUtil.closeQuietly(tempOutputStream);
+                    CloseUtil.closeQuietly(tempSocket);
+                    
+                    Thread.currentThread().interrupt();
+                }
+                catch (Exception e) {
                     CloseUtil.closeQuietly(tempOutputStream);
                     CloseUtil.closeQuietly(tempSocket);
 
@@ -816,7 +835,21 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
                 }
             }
         }
-
+        
+        
+        /**
+         * Sleep for the given amount of time and throws an {@link InterruptedException} if appender
+         * is stopped while waiting.
+         * 
+         * @param millis the amount of time to wait
+         * @throws InterruptedException thrown if the appender is stopped while waiting
+         */
+        private void sleepUnlessStopped(long millis) throws InterruptedException {
+            if (shutdownLatch.await(millis, TimeUnit.MILLISECONDS) || !isStarted()) {
+                throw new InterruptedException();
+            }
+        }
+        
         private synchronized void closeSocket() {
             connectedDestination = null;
             CloseUtil.closeQuietly(outputStream);
@@ -1226,6 +1259,21 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
         return reconnectionDelay;
     }
 
+    /**
+     * Time period to wait before sending data into a newly established connection.
+     * 
+     * @param delay the time to wait before sending the first data
+     */
+    public void setInitialSendDelay(Duration delay) {
+        if (delay == null || delay.getMilliseconds() < 0) {
+            throw new IllegalArgumentException("initialSendDelay must be >= 0");
+        }
+        this.initialSendDelay = delay;
+    }
+    
+    public Duration getInitialSendDelay() {
+        return initialSendDelay;
+    }
 
     /**
      * Convenience method for setting {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.

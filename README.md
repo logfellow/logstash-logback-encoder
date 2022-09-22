@@ -29,6 +29,7 @@ The structure of the output, and the data it contains, is fully configurable.
 		* [Connection Timeout](#connection-timeout)
 		* [Write Buffer Size](#write-buffer-size)
 		* [Write Timeout](#write-timeout)
+		* [Initial Send Delay](#initial-send-delay)
 		* [SSL](#ssl)
 	* [Async Appenders](#async-appenders)
 		* [RingBuffer Size](#ringbuffer-size)
@@ -596,6 +597,25 @@ Therefore, it is recommended to use longer write timeouts (e.g. > 30s, or minute
 Also, this approach means that it could take up to two times the write timeout before a write timeout is detected.
 
 The write timeout must be >0. A timeout of zero is interpreted as an infinite timeout which effecively means "no write timeout".
+
+This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
+
+
+
+#### Initial Send Delay
+
+The appender starts writing the events stored in the queue as soon as the connection is established. In some cases you may want to add an extra delay before sending the first events after the connection is established. This may come in handy in situations where the appender connects to an intermediate proxy that needs some time to establish a connection to the final destination. If the appender starts writing immediately, events may be lost in-flight if the proxy ultimately fails to connect to the final destination. 
+
+To enable this feature, set the `initialSendDelay` to the desired delay before the first event is sent after the connection is established. If the connection is lost before the delay expires, no event will be lost. The default value is `0` which means no delay and start flusing pending events immediately.
+
+The following example configures a delay of 5 secondes before writing in the new connection:
+
+```xml
+<appender name="stash" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+    ...
+    <initialSendDelay>5 secondes</initialSendDelay>
+</appender>
+```
 
 This setting accepts a Logback Duration value - see the section dedicated to [Duration Property](#duration-property) for more information about the valid values.
 
