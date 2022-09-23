@@ -20,6 +20,7 @@ import java.util.List;
 import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
+import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
@@ -228,5 +229,11 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
      */
     public void setMessageSplitRegex(String messageSplitRegex) {
         getFormatter().setMessageSplitRegex(messageSplitRegex);
+    }
+    
+    
+    @Override
+    public void setProviders(JsonProviders<ILoggingEvent> jsonProviders) {
+        throw new IllegalArgumentException("Using the <providers> configuration property is not allowed. Use <provider> instead to registerd additional " + JsonProvider.class.getSimpleName() + ".");
     }
 }
