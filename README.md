@@ -62,6 +62,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing AccessEvent Message](#customizing-accessevent-message)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
+* [Registering Additional Providers](#registering-additional-providers)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
 * [Composite Encoder/Layout](#composite-encoderlayout)
 	* [Providers common to LoggingEvents and AccessEvents](#providers-common-to-loggingevents-and-accessevents)
@@ -1815,6 +1816,37 @@ For example:
 
 [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
 can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
+
+
+## Registering Additional Providers
+
+`LogstashEncoder`, `LogstashAccessEncoder` and their "layout" counterparts all come with a predefined set of encoders. You can register additional JsonProviders using the `<provider>` configuration property as shown in the following example:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <!-- Add a new provider after those than come with the LogstashEncoder -->
+    <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
+        <pattern>
+          {
+             "message": "%mdc{custom_value} %message"
+          }
+        </pattern>
+    </provider>
+
+    <!-- Disable the default message provider -->
+    <fieldNames>
+        <message>[ignore]</message>
+    </fieldNames>
+</encoder>
+```
+
+You can add several additional JsonProviders using multiple `<provider>` entries. They will appear just after the default providers registered by the LogstashEncoder.
+
+In this example, the pattern provider produces a "message" JSON field that will conflict with the message field produced by the MessageJsonProvider already registered by the LogstashEncoder itself. Different options to avoid the conflict:
+
+- you instruct LogstashEncoder to use a different field name using the [fieldNames](#customizing-standard-field-names) configuration property;
+- you disable the message provider that comes with the encoder (that's the option illustrated in the example above);
+- you use a different field name in your pattern.
 
 
 ## Prefix/Suffix/Separator

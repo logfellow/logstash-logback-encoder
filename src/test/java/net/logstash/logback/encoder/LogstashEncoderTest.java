@@ -19,6 +19,7 @@ import static net.logstash.logback.marker.Markers.append;
 import static net.logstash.logback.marker.Markers.appendEntries;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
@@ -691,6 +693,12 @@ public class LogstashEncoderTest {
         assertThat(node.path("message").textValue()).isEqualTo(message);
     }
 
+    @Test
+    public void testJsonProvidersCannotBeChanged() {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+            .isThrownBy(() -> encoder.setProviders(new LoggingEventJsonProviders()));
+    }
+    
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         assertThat(jsonNode).isNotNull();
         assertThat(jsonNode.isArray()).isTrue();
