@@ -18,6 +18,7 @@ package net.logstash.logback.layout;
 import net.logstash.logback.LogstashAccessFormatter;
 import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
+import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.accessevent.HeaderFilter;
 import net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
@@ -134,4 +135,8 @@ public class LogstashAccessLayout extends AccessEventCompositeJsonLayout {
         getFormatter().setWriteVersionAsInteger(writeVersionAsInteger);
     }
 
+    @Override
+    public void setProviders(JsonProviders<IAccessEvent> jsonProviders) {
+        throw new IllegalArgumentException("Using the <providers> configuration property is not allowed. Use <provider> instead to registerd additional " + JsonProvider.class.getSimpleName() + ".");
+    }
 }
