@@ -159,9 +159,158 @@ public class ShortenedThrowableConverterTest {
             
             assertThat(formatted)
                 .hasSize(totalLength - 10)
-                .endsWith("..." + System.getProperty("line.separator"));
+                .endsWith("..." + converter.getLineSeparator());
         }
     }
+    
+    @Test
+    public void testTruncateAfter() {
+        
+        try {
+            StackTraceElementGenerator.generateSingle();
+            fail("Exception must have been thrown");
+        }
+        catch (RuntimeException e) {
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+
+            converter.addTruncateAfter("\\.generateSingle$");
+            converter.start();
+            String formatted = converter.convert(createEvent(e));
+
+            /* Expected:
+
+                java.lang.RuntimeException: message
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.eight(ShortenedThrowableConverterTest.java:76)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.seven(ShortenedThrowableConverterTest.java:73)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.six(ShortenedThrowableConverterTest.java:70)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.five(ShortenedThrowableConverterTest.java:67)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.four(ShortenedThrowableConverterTest.java:64)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.threeSingle(ShortenedThrowableConverterTest.java:61)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.twoSingle(ShortenedThrowableConverterTest.java:58)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.oneSingle(ShortenedThrowableConverterTest.java:55)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.generateSingle(ShortenedThrowableConverterTest.java:52)
+                    ... 71 frames truncated
+             */
+            assertThat(formatted)
+                .doesNotContain("org.junit")
+                .contains("generateSingle")
+                .endsWith("... 71 frames truncated" + converter.getLineSeparator());
+            
+            assertThat(countLines(formatted))
+                .isEqualTo(11);
+        }
+    }
+    
+    
+    @Test
+    public void testTruncateAfter_excluded() {
+        
+        try {
+            StackTraceElementGenerator.generateSingle();
+            fail("Exception must have been thrown");
+        }
+        catch (RuntimeException e) {
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+
+            converter.addTruncateAfter("\\.generateSingle$");
+            converter.addExclude("Single$");
+            converter.start();
+            String formatted = converter.convert(createEvent(e));
+
+            /* Expected:
+
+                java.lang.RuntimeException: message
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.eight(ShortenedThrowableConverterTest.java:76)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.seven(ShortenedThrowableConverterTest.java:73)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.six(ShortenedThrowableConverterTest.java:70)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.five(ShortenedThrowableConverterTest.java:67)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.four(ShortenedThrowableConverterTest.java:64)
+                    ... 3 frames excluded
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.generateSingle(ShortenedThrowableConverterTest.java:52)
+                    ... 71 frames truncated
+             */
+            assertThat(formatted)
+                .contains("generateSingle")
+                .endsWith("... 71 frames truncated" + converter.getLineSeparator());
+        }
+    }
+    
+    /*
+     * Use a truncateAfter pattern matching anything
+     * -> stop after the first frame.
+     */
+    @Test
+    public void testTruncateAfter_matchAll() {
+        
+        try {
+            StackTraceElementGenerator.generateSingle();
+            fail("Exception must have been thrown");
+        }
+        catch (RuntimeException e) {
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.addTruncateAfter(".*");
+            converter.start();
+            String formatted = converter.convert(createEvent(e));
+
+            /* Expected:
+
+                java.lang.RuntimeException: message
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.eight(ShortenedThrowableConverterTest.java:76)
+                    ... 79 frames truncated
+             */
+            assertThat(countLines(formatted)).isEqualTo(3);
+            assertThat(formatted)
+                .endsWith("... 79 frames truncated" + converter.getLineSeparator());
+        }
+    }
+    
+    
+    /*
+     * When truncateAfter kicks-in, the number of common frames omitted is reported on the
+     * same line as the total number of truncated lines
+     */
+    @Test
+    public void testTruncateAfter_commonFrames() {
+        try {
+            StackTraceElementGenerator.generateSuppressed();
+            fail("Exception must have been thrown");
+        }
+        catch (RuntimeException e) {
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setMaxDepthPerThrowable(8);
+            converter.addTruncateAfter("four");
+            converter.start();
+            
+            String formatted = converter.convert(createEvent(e));
+            
+            /* Expected:
+
+                java.lang.RuntimeException: null
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.twoSuppressed(ShortenedThrowableConverterTest.java:101)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.oneSuppressed(ShortenedThrowableConverterTest.java:95)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.generateSuppressed(ShortenedThrowableConverterTest.java:92)
+                    at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest.testTruncateAfter_commonFrames(ShortenedThrowableConverterTest.java:473)
+                    at sun.reflect.NativeMethodAccessorImpl.invoke0(NativeMethodAccessorImpl.java)
+                    at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+                    at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+                    at java.lang.reflect.Method.invoke(Method.java:498)
+                    ... 66 frames truncated
+                    Suppressed: java.lang.RuntimeException: message
+                        at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.eight(ShortenedThrowableConverterTest.java:76)
+                        at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.seven(ShortenedThrowableConverterTest.java:73)
+                        at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.six(ShortenedThrowableConverterTest.java:70)
+                        at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.five(ShortenedThrowableConverterTest.java:67)
+                        at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest$StackTraceElementGenerator.four(ShortenedThrowableConverterTest.java:64)
+                        ... 75 frames truncated (including 73 common frames)
+             */
+            assertThat(formatted)
+                .containsSubsequence(
+                        "66 frames truncated",
+                        "Suppressed",
+                        "75 frames truncated (including 73 common frames)");
+        }
+    }
+    
     
     @Test
     public void testExclusion_consecutive() {
@@ -186,6 +335,9 @@ public class ShortenedThrowableConverterTest {
         }
     }
     
+    /*
+     * Exclude match only one element -> it should not be excluded
+     */
     @Test
     public void testExclusion_noConsecutive() {
         
@@ -194,12 +346,14 @@ public class ShortenedThrowableConverterTest {
             fail("Exception must have been thrown");
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-            converter.setExcludes(Collections.singletonList("one"));
+            converter.addExclude("one");
             converter.setMaxDepthPerThrowable(8);
             converter.start();
             
             String formatted = converter.convert(createEvent(e));
-            assertThat(formatted).doesNotContain("frames excluded");
+            assertThat(formatted)
+                .contains("one")
+                .doesNotContain("frames excluded");
             assertThat(countLines(formatted)).isEqualTo(10);
         }
     }
@@ -233,11 +387,13 @@ public class ShortenedThrowableConverterTest {
             converter.addExclude(extractClassAndMethod(lines.get(lines.size() - 1)) + "$");
             converter.start();
             formatted = converter.convert(createEvent(e));
-            assertThat(formatted).contains("2 frames excluded");
-            assertThat(countLines(formatted)).isEqualTo(lines.size() - 1);
+            assertThat(formatted)
+                .endsWith("2 frames excluded" + converter.getLineSeparator());
+            assertThat(countLines(formatted))
+                .isEqualTo(lines.size() - 1);
         }
     }
-
+    
     @Test
     public void testCausedBy() {
         

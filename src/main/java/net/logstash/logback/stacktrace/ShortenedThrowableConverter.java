@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import net.logstash.logback.CachingAbbreviator;
 import net.logstash.logback.NullAbbreviator;
@@ -157,6 +158,14 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private List<Pattern> excludes = new ArrayList<Pattern>(5);
 
     /**
+     * Patterns used to determine after which element the stack trace must be truncated.
+     * 
+     * The strings being matched against are in the form "fullyQualifiedClassName.methodName"
+     * (e.g. "java.lang.Object.toString").
+     */
+    private List<Pattern> truncateAfterPatterns = new ArrayList<>();
+    
+    /**
      * True to print the root cause first.  False to print exceptions normally (root cause last).
      */
     private boolean rootCauseFirst;
@@ -173,6 +182,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     private StackHasher stackHasher;
 
+    private StackElementFilter truncateAfterFilter;
+    
     /**
      * Evaluators that determine if the stacktrace should be logged.
      */
@@ -199,6 +210,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         if (inlineHash) {
             stackHasher = new StackHasher(stackElementFilter);
         }
+        truncateAfterFilter = StackElementFilter.byPattern(truncateAfterPatterns);
         super.start();
     }
 
@@ -430,16 +442,17 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         int consecutiveExcluded = 0;
         int appended = 0;
         StackTraceElementProxy previousWrittenStackTraceElement = null;
-        for (int i = 0; i < stackTraceElements.length - commonFrames; i++) {
+        
+        int i = 0;
+        for (; i < stackTraceElements.length - commonFrames; i++) {
             if (maxDepthPerThrowable > 0 && appended >= maxDepthPerThrowable) {
                 /*
-                 * We reached the configure limit.  Bail out.
+                 * We reached the configured limit. Bail out.
                  */
-                appendPlaceHolder(builder, indent, stackTraceElements.length - commonFrames - maxDepthPerThrowable, "frames truncated");
                 break;
             }
             StackTraceElementProxy stackTraceElement = stackTraceElements[i];
-            if (i <= 1 || isIncluded(stackTraceElement)) {
+            if (i <= 1 || isIncluded(stackTraceElement)) { // First frame is always included
                 /*
                  * We should append this line.
                  *
@@ -465,32 +478,65 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                 previousWrittenStackTraceElement = stackTraceElement;
                 appendingExcluded = false;
                 appended++;
-            } else if (appendingExcluded) {
+            }
+            else if (appendingExcluded) {
                 /*
                  * We're going back and appending something we previously excluded
                  */
                 appendStackTraceElement(builder, indent, stackTraceElement, previousWrittenStackTraceElement);
                 previousWrittenStackTraceElement = stackTraceElement;
                 appended++;
-            } else {
+            }
+            else {
                 consecutiveExcluded++;
+            }
+
+            if (shouldTruncateAfter(stackTraceElement)) {
+                /*
+                 * Truncate after this line. Bail out.
+                 */
+                break;
             }
         }
 
-        if (consecutiveExcluded > 0) {
+        
+        /*
+         * We did not process the stack up to the last element (max depth, truncate line)
+         */
+        if (i + commonFrames < stackTraceElements.length) {
             /*
-             * We were excluding stuff at the end, so append a placeholder
+             * We were excluding elements but we want the truncateAfter element to be printed
              */
-            appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
-        }
+            if (consecutiveExcluded > 0) {
+                consecutiveExcluded--;
+                appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
 
-        if (commonFrames > 0) {
-            /*
-             * Common frames found, append a placeholder
-             */
-            appendPlaceHolder(builder, indent, commonFrames, "common frames omitted");
+                appendStackTraceElement(builder, indent, stackTraceElements[i], previousWrittenStackTraceElement);
+                appended++;
+            }
+            
+            if (commonFrames > 0) {
+                appendPlaceHolder(builder, indent, stackTraceElements.length - appended - consecutiveExcluded, "frames truncated (including " + commonFrames + " common frames)");
+            }
+            else {
+                appendPlaceHolder(builder, indent, stackTraceElements.length - appended - consecutiveExcluded, "frames truncated");
+            }
         }
-
+        else {
+            if (consecutiveExcluded > 0) {
+                /*
+                 * We were excluding stuff at the end, so append a placeholder
+                 */
+                appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
+            }
+    
+            if (commonFrames > 0) {
+                /*
+                 * Common frames found, append a placeholder
+                 */
+                appendPlaceHolder(builder, indent, commonFrames, "common frames omitted");
+            }
+        }
     }
 
     /**
@@ -507,12 +553,26 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     /**
-     * Return true if the stack trace element is included (i.e. doesn't match any exclude patterns).
+     * Return {@code true} if the stack trace element is included (i.e. doesn't match any exclude patterns).
+     * 
+     * @return {@code true} if the stacktrace element is included
      */
     private boolean isIncluded(StackTraceElementProxy step) {
         return stackElementFilter.accept(step.getStackTraceElement());
     }
 
+    
+    /**
+     * Return {@code true} if the stacktrace should be truncated after the element passed as argument
+     * 
+     * @param step the stacktrace element to evaluate
+     * @return {@code true} if the stacktrace should be truncated after the given element
+     */
+    private boolean shouldTruncateAfter(StackTraceElementProxy step) {
+        return step != null && !truncateAfterFilter.accept(step.getStackTraceElement());
+    }
+    
+    
     /**
      * Appends a single stack trace element.
      */
@@ -651,8 +711,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     /**
-     * Set exclusion patterns as a list of coma separated patterns
-     * @param comaSeparatedPatterns list of coma separated patterns
+     * Set exclusion patterns as a list of comma separated patterns
+     * @param comaSeparatedPatterns list of comma separated patterns
      */
     public void setExclusions(String comaSeparatedPatterns) {
         if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
@@ -674,13 +734,23 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     public List<String> getExcludes() {
-        List<String> exclusionPatterns = new ArrayList<String>(excludes.size());
-        for (Pattern pattern : excludes) {
-            exclusionPatterns.add(pattern.pattern());
-        }
-        return exclusionPatterns;
+        return this.excludes
+                .stream()
+                .map(Pattern::pattern)
+                .collect(Collectors.toList());
     }
 
+    public void addTruncateAfter(String regex) {
+        this.truncateAfterPatterns.add(Pattern.compile(regex));
+    }
+
+    public List<String> getTruncateAfters() {
+        return this.truncateAfterPatterns
+                        .stream()
+                        .map(Pattern::pattern)
+                        .collect(Collectors.toList());
+    }
+    
     public void addEvaluator(EventEvaluator<ILoggingEvent> evaluator) {
         evaluators.add(evaluator);
     }
