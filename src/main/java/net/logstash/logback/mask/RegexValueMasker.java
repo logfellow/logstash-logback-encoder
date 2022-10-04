@@ -32,9 +32,10 @@ public class RegexValueMasker implements ValueMasker {
     /**
      * @param regex the regex used to identify values to mask
      * @param mask the value to write for values that match the regex (can contain back references to capture groups in the regex)
+     * @param flag to compile the patter. {@link Pattern#MULTILINE} for example
      */
-    public RegexValueMasker(String regex, Object mask) {
-        this(Pattern.compile(regex), mask);
+    public RegexValueMasker(String regex, Object mask, Integer flag) {
+        this(Pattern.compile(regex, flag), mask);
     }
 
     /**

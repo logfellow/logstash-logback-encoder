@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -173,6 +174,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
          * The value to write as a mask for values that match the regex (can contain back references to capture groups in the regex).
          */
         private String mask = MaskingJsonGenerator.MASK;
+        private Integer flag = 0;
 
         public ValueMask() {
         }
@@ -217,6 +219,13 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
          */
         public void setMask(String mask) {
             this.mask = Objects.requireNonNull(mask);
+        }
+
+        /**
+         * @param flag to compile the patter. {@link Pattern#MULTILINE} for example
+         */
+        public void setFlag(Integer flag) {
+            this.flag = flag;
         }
     }
 
@@ -285,7 +294,7 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
         return Collections.unmodifiableList(Stream.concat(
                         Stream.concat(Stream.of(valuesWithDefaultMask), valueMaskSuppliers.stream().map(Supplier::get))
                                 .flatMap(valueMask -> valueMask.values.stream()
-                                        .map(value -> new RegexValueMasker(value, valueMask.mask))),
+                                        .map(value -> new RegexValueMasker(value, valueMask.mask, valueMask.flag))),
                         valueMaskers.stream())
                 .collect(Collectors.toList()));
 
