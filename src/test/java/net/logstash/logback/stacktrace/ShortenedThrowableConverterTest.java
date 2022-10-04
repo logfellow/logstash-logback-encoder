@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ch.qos.logback.classic.spi.ClassPackagingData;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
 import ch.qos.logback.core.Context;
@@ -402,6 +403,45 @@ public class ShortenedThrowableConverterTest {
         }
     }
     
+    
+    /*
+     * Do not repeat packaging data unless it differs from previous line
+     */
+    @Test
+    public void testPackagingData() {
+
+        // Add fake packaging data for the test
+        //
+        ThrowableProxy proxy = new ThrowableProxy(new Exception("boum"));
+        proxy.getStackTraceElementProxyArray()[0].setClassPackagingData(new ClassPackagingData("test.jar", "1.2.3"));
+        proxy.getStackTraceElementProxyArray()[1].setClassPackagingData(new ClassPackagingData("test.jar", "1.2.3"));
+        proxy.getStackTraceElementProxyArray()[2].setClassPackagingData(new ClassPackagingData("another.jar", "1.2.3"));
+        proxy.getStackTraceElementProxyArray()[3].setClassPackagingData(new ClassPackagingData("another.jar", "1.2.3"));
+        
+        // Render the exception
+        //
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+        converter.start();
+        String formatted = converter.convert(createEvent(proxy));
+        
+        /* Expected:
+
+            java.lang.Exception: Boum
+                at net.logstash.logback.stacktrace.ShortenedThrowableConverterTest.testDoNotRepeatPackagingData(ShortenedThrowableConverterTest.java:411) [test.jar:1.2.3]
+                at sun.reflect.NativeMethodAccessorImpl.invoke0(NativeMethodAccessorImpl.java)
+                at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) [another.jar:1.2.3]
+                at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+                at java.lang.reflect.Method.invoke(Method.java:498)
+         */
+        System.out.println(formatted);
+        List<String> lines = getLines(formatted);
+        assertThat(lines.get(1)).endsWith("[test.jar:1.2.3]");
+        assertThat(lines.get(2)).endsWith(")");
+        assertThat(lines.get(3)).endsWith("[another.jar:1.2.3]");
+        assertThat(lines.get(4)).endsWith(")");
+    }
+
+    
     @Test
     public void testCausedBy() {
         
@@ -667,9 +707,13 @@ public class ShortenedThrowableConverterTest {
         return getLines(formatted).size();
     }
 
-    private ILoggingEvent createEvent(RuntimeException e) {
+    private ILoggingEvent createEvent(Throwable e) {
+        return createEvent(new ThrowableProxy(e));
+    }
+    
+    private ILoggingEvent createEvent(ThrowableProxy proxy) {
         ILoggingEvent event = mock(ILoggingEvent.class);
-        when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(e));
+        when(event.getThrowableProxy()).thenReturn(proxy);
         return event;
     }
     
