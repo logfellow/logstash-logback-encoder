@@ -192,15 +192,14 @@ public class ShortenedThrowableConverterTest {
                     ... 71 frames truncated
              */
             assertThat(formatted)
-                .doesNotContain("org.junit")
                 .contains("generateSingle")
-                .endsWith("... 71 frames truncated" + converter.getLineSeparator());
+                .endsWith((e.getStackTrace().length - 9) + " frames truncated" + converter.getLineSeparator());
             
             assertThat(countLines(formatted))
                 .isEqualTo(11);
         }
     }
-    
+
     
     @Test
     public void testTruncateAfter_excluded() {
@@ -230,8 +229,12 @@ public class ShortenedThrowableConverterTest {
                     ... 71 frames truncated
              */
             assertThat(formatted)
-                .contains("generateSingle")
-                .endsWith("... 71 frames truncated" + converter.getLineSeparator());
+                .containsSubsequence(
+                        "four",
+                        "... 3 frames excluded",
+                        "generateSingle")
+                .endsWith(
+                        "... " + (e.getStackTrace().length - 9) + " frames truncated" + converter.getLineSeparator());
         }
     }
     
@@ -260,7 +263,8 @@ public class ShortenedThrowableConverterTest {
              */
             assertThat(countLines(formatted)).isEqualTo(3);
             assertThat(formatted)
-                .endsWith("... 79 frames truncated" + converter.getLineSeparator());
+                .contains("eight")
+                .endsWith((e.getStackTrace().length - 1) + " frames truncated" + converter.getLineSeparator());
         }
     }
     
@@ -305,9 +309,11 @@ public class ShortenedThrowableConverterTest {
              */
             assertThat(formatted)
                 .containsSubsequence(
-                        "66 frames truncated",
+                        (e.getStackTrace().length - 8) + " frames truncated",
                         "Suppressed",
-                        "75 frames truncated (including 73 common frames)");
+                        "... " + (e.getSuppressed()[0].getStackTrace().length - 5) + " frames truncated (including ")
+                .endsWith(
+                        "common frames)" + converter.getLineSeparator());
         }
     }
     
@@ -331,7 +337,8 @@ public class ShortenedThrowableConverterTest {
             String formatted = converter.convert(createEvent(e));
             assertThat(formatted)
                 .containsSubsequence("3 frames excluded", "2 frames excluded");
-            assertThat(countLines(formatted)).isEqualTo(12);
+            assertThat(countLines(formatted))
+                .isEqualTo(12);
         }
     }
     
@@ -354,7 +361,8 @@ public class ShortenedThrowableConverterTest {
             assertThat(formatted)
                 .contains("one")
                 .doesNotContain("frames excluded");
-            assertThat(countLines(formatted)).isEqualTo(10);
+            assertThat(countLines(formatted))
+                .isEqualTo(10);
         }
     }
 
@@ -631,6 +639,10 @@ public class ShortenedThrowableConverterTest {
         }
     }
 
+    
+    // --------------------------------------------------------------------------------------------
+    
+    
     private String extractClassAndMethod(String string) {
         int atIndex = string.indexOf("at ");
         int endIndex = string.indexOf('(');
