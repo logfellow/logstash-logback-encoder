@@ -1992,7 +1992,7 @@ The provider name is the xml element name to use when configuring.
       <td>
         <p>Nests a JSON object under the configured fieldName.</p>
         <p>The nested object is populated by other providers added to this provider.</p>
-        <p>See <a href="#provider_nested">Nested JSON provider</a>.</p>
+        <p>See <a href="#nested-json-provider">Nested JSON provider</a>.</p>
         <ul>
           <li><tt>fieldName</tt> - Output field name</li>
           <li><tt>providers</tt> - The providers that should populate the nested object.</li>
@@ -2006,7 +2006,7 @@ The provider name is the xml element name to use when configuring.
            while substituting patterns supported by logback's <tt>PatternLayout</tt>.
         </p>
         <p>
-           See <a href="#provider_pattern">Pattern JSON Provider</a>
+           See <a href="#pattern-json-provider">Pattern JSON Provider</a>
         </p>
         <ul>
           <li><tt>pattern</tt> - JSON object string (no default)</li>          
