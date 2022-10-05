@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -30,6 +31,7 @@ import net.logstash.logback.encoder.SeparatorParser;
 
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
+import ch.qos.logback.classic.pattern.ClassNameOnlyAbbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
@@ -57,6 +59,9 @@ import ch.qos.logback.core.status.ErrorStatus;
  *     See {@link #shortenedClassNameLength}.</li>
  * <li>Filters out consecutive unwanted stackTraceElements based on regular expressions.
  *     See {@link #excludes}.</li>
+ * <li>Truncate individual stacktraces after any element matching one the configured
+ *     regular expression.
+ *     See {@link #truncateAfterPatterns}.
  * <li>Uses evaluators to determine if the stacktrace should be logged.
  *     See {@link #evaluators}.</li>
  * <li>Outputs in either 'normal' order (root-cause-last), or root-cause-first.
@@ -155,7 +160,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Note that these elements will only be excluded if and only if
      * more than one consecutive line matches an exclusion pattern.
      */
-    private List<Pattern> excludes = new ArrayList<Pattern>(5);
+    private List<Pattern> excludes = new ArrayList<>(5);
 
     /**
      * Patterns used to determine after which element the stack trace must be truncated.
@@ -187,7 +192,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     /**
      * Evaluators that determine if the stacktrace should be logged.
      */
-    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(1);
+    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<>(1);
 
     @Override
     public void start() {
@@ -305,8 +310,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         } else {
             appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         }
-        if (builder.length() > maxLength) {
-            builder.setLength(maxLength - ELLIPSIS.length() - getLineSeparator().length());
+        if (builder.length() > this.maxLength) {
+            builder.setLength(this.maxLength - ELLIPSIS.length() - getLineSeparator().length());
             builder.append(ELLIPSIS).append(getLineSeparator());
         }
         return builder.toString();
@@ -376,7 +381,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             IThrowableProxy throwableProxy,
             Deque<String> stackHashes) {
 
-        if (throwableProxy == null || builder.length() > maxLength) {
+        if (throwableProxy == null || builder.length() > this.maxLength) {
             return;
         }
 
@@ -405,7 +410,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             IThrowableProxy throwableProxy,
             Deque<String> stackHashes) {
 
-        if (throwableProxy == null || builder.length() > maxLength) {
+        if (throwableProxy == null || builder.length() > this.maxLength) {
             return;
         }
 
@@ -432,7 +437,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      */
     private void appendStackTraceElements(StringBuilder builder, int indent, IThrowableProxy throwableProxy) {
 
-        if (builder.length() > maxLength) {
+        if (builder.length() > this.maxLength) {
             return;
         }
         StackTraceElementProxy[] stackTraceElements = throwableProxy.getStackTraceElementProxyArray();
@@ -577,7 +582,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Appends a single stack trace element.
      */
     private void appendStackTraceElement(StringBuilder builder, int indent, StackTraceElementProxy step, StackTraceElementProxy previousStep) {
-        if (builder.length() > maxLength) {
+        if (builder.length() > this.maxLength) {
             return;
         }
         indent(builder, indent);
@@ -629,7 +634,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Appends the first line containing the prefix and throwable message
      */
     private void appendFirstLine(StringBuilder builder, String prefix, int indent, IThrowableProxy throwableProxy, String hash) {
-        if (builder.length() > maxLength) {
+        if (builder.length() > this.maxLength) {
             return;
         }
         indent(builder, indent - 1);
@@ -650,36 +655,87 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         ThrowableProxyUtil.indent(builder, indent);
     }
 
+    
+    /**
+     * Abbreviates class names in a way similar to the Logback layout feature (see https://logback.qos.ch/manual/layouts.html#logger).
+     *
+     *  <p>The algorithm will shorten the full class name and attempt to reduce its size to a maximum of {@code length} characters.
+     *  It does so by reducing the package elements to their first letter and gradually expand them starting from the right until
+     *  the maximum size is reached.
+     *  Setting the length to zero constitutes an exception and returns the "simple" class name without package.
+     *
+     *  <p>The next table provides examples of the abbreviation algorithm in action.
+     *
+     *  <pre>
+     *  LENGTH   CLASSNAME                 SHORTENED
+     *  -------------------------------------------------------------
+     *  0        org.company.package.Bar   Bar
+     *  5        org.company.package.Bar   o.c.p.Bar
+     *  15       org.company.package.Bar   o.c.package.Bar
+     *  21       org.company.package.Bar   o.company.package.Bar
+     *  24       org.company.package.Bar   org.company.package.Bar
+     *  </pre>
+     *
+     *  @param length the desired maximum length or {@code -1} to disable the feature and allow for any arbitrary length.
+     */
+    public void setShortenedClassNameLength(int length) {
+        if (length <= 0 && length != -1) {
+            throw new IllegalArgumentException("shortenedClassNameLength must be >= 0, or -1 to disable the feature");
+        }
+
+        if (length == -1 || length == FULL_CLASS_NAME_LENGTH) {
+            this.shortenedClassNameLength = FULL_CLASS_NAME_LENGTH;
+            this.abbreviator = NullAbbreviator.INSTANCE;
+        }
+        else if (length == 0) {
+            this.shortenedClassNameLength = 0;
+            this.abbreviator = new CachingAbbreviator(new ClassNameOnlyAbbreviator());
+        }
+        else {
+            this.shortenedClassNameLength = length;
+            this.abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(length));
+        }
+    }
+
     public int getShortenedClassNameLength() {
         return shortenedClassNameLength;
     }
-
-    public void setShortenedClassNameLength(int length) {
-        if (length <= 0) {
-            throw new IllegalArgumentException();
-        }
-        this.shortenedClassNameLength = length;
-        if (length < FULL_CLASS_NAME_LENGTH) {
-            abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(this.shortenedClassNameLength));
-        } else {
-            abbreviator = NullAbbreviator.INSTANCE;
-        }
-    }
-
-
-    public int getMaxDepthPerThrowable() {
-        return maxDepthPerThrowable;
-    }
+    
+    
+    /**
+     * Set a limit on the number of stackTraceElements per throwable.
+     * Use {@code -1} to disable the feature and allow for an unlimited depth.
+     * 
+     * @param maxDepthPerThrowable the maximum number of stacktrace elements per throwable or {@code -1} to
+     * disable the feature and allows for an unlimited amount.
+     */
     public void setMaxDepthPerThrowable(int maxDepthPerThrowable) {
-        if (maxDepthPerThrowable <= 0) {
-            throw new IllegalArgumentException();
+        if (maxDepthPerThrowable <= 0 && maxDepthPerThrowable != -1) {
+            throw new IllegalArgumentException("maxDepthPerThrowable must be > 0, or -1 to disable the feature");
+        }
+        if (maxDepthPerThrowable == -1) {
+            maxDepthPerThrowable = FULL_MAX_DEPTH_PER_THROWABLE;
         }
         this.maxDepthPerThrowable = maxDepthPerThrowable;
     }
 
+    public int getMaxDepthPerThrowable() {
+        return maxDepthPerThrowable;
+    }
+    
+    
+    /**
+     * Set a hard limit on the size of the rendered stacktrace, all throwables included.
+     * Use {@code -1} to disable the feature and allows for any size.
+     * 
+     * @param maxLength the maximum size of the rendered stacktrace or {@code -1} for no limit.
+     */
     public void setMaxLength(int maxLength) {
-        if (maxLength <= 0) {
-            throw new IllegalArgumentException();
+        if (maxLength <= 0 && maxLength != -1) {
+            throw new IllegalArgumentException("maxLength must be > 0, or -1 to disable the feature");
+        }
+        if (maxLength == -1) {
+            maxLength = FULL_MAX_LENGTH;
         }
         this.maxLength = maxLength;
     }
@@ -702,7 +758,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         this.inlineHash = inlineHash;
     }
 
-    protected void setStackHasher(StackHasher stackHasher) {
+    /* visible for testing */
+    void setStackHasher(StackHasher stackHasher) {
         this.stackHasher = stackHasher;
     }
 
@@ -716,7 +773,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      */
     public void setExclusions(String comaSeparatedPatterns) {
         if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
-            this.excludes = new ArrayList<Pattern>(5);
+            this.excludes = new ArrayList<>(5);
         } else {
             setExcludes(Arrays.asList(comaSeparatedPatterns.split("\\s*\\,\\s*")));
         }
@@ -724,9 +781,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     public void setExcludes(List<String> exclusionPatterns) {
         if (exclusionPatterns == null || exclusionPatterns.isEmpty()) {
-            this.excludes = new ArrayList<Pattern>(5);
+            this.excludes = new ArrayList<>(5);
         } else {
-            this.excludes = new ArrayList<Pattern>(exclusionPatterns.size());
+            this.excludes = new ArrayList<>(exclusionPatterns.size());
             for (String pattern : exclusionPatterns) {
                 addExclude(pattern);
             }
@@ -752,19 +809,19 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
     
     public void addEvaluator(EventEvaluator<ILoggingEvent> evaluator) {
-        evaluators.add(evaluator);
+        evaluators.add(Objects.requireNonNull(evaluator));
     }
 
     public void setEvaluators(List<EventEvaluator<ILoggingEvent>> evaluators) {
         if (evaluators == null || evaluators.isEmpty()) {
-            this.evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(1);
+            this.evaluators = new ArrayList<>(1);
         } else {
-            this.evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(evaluators);
+            this.evaluators = new ArrayList<>(evaluators);
         }
     }
 
     public List<EventEvaluator<ILoggingEvent>> getEvaluators() {
-        return new ArrayList<EventEvaluator<ILoggingEvent>>(evaluators);
+        return new ArrayList<>(evaluators);
     }
 
 }

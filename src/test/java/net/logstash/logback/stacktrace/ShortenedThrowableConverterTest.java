@@ -423,7 +423,7 @@ public class ShortenedThrowableConverterTest {
         ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
         converter.start();
         String formatted = converter.convert(createEvent(proxy));
-        
+
         /* Expected:
 
             java.lang.Exception: Boum
@@ -433,7 +433,6 @@ public class ShortenedThrowableConverterTest {
                 at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
                 at java.lang.reflect.Method.invoke(Method.java:498)
          */
-        System.out.println(formatted);
         List<String> lines = getLines(formatted);
         assertThat(lines.get(1)).endsWith("[test.jar:1.2.3]");
         assertThat(lines.get(2)).endsWith(")");
@@ -566,7 +565,6 @@ public class ShortenedThrowableConverterTest {
             fail("Exception must have been thrown");
         } catch (RuntimeException e) {
             ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-            converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
             converter.setShortenedClassNameLength(10);
             converter.start();
             
