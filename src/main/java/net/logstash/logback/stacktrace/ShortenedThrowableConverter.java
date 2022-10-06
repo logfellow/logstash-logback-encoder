@@ -77,11 +77,17 @@ import ch.qos.logback.core.status.ErrorStatus;
  * <li>maxLength = "full" or "short" or an integer value</li>
  * </ol>
  * 
- * If any other remaining options are "rootFirst",
- * then the converter awill be configured as root-cause-first.
- * If any other remaining options equal to an evaluator name,
- * then the evaluator will be used to determine if the stacktrace should be printed.
- * Other options will be interpreted as exclusion regexes.
+ * The other options can be listed in any order and are interpreted as follows:
+ * <ul>
+ * <li>"rootFirst" - indicating that stacks should be printed root-cause first
+ * <li>"inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
+ * <li>"inline" - indicating that the whole stack trace should be inlined, using "\\n" as separator
+ * <li>"omitCommonFrames" - omit common frames
+ * <li>"keepCommonFrames" - keep common frames
+ * <li>evaluator name - name of evaluators that will determine if the stacktrace is ignored
+ * <li>exclusion pattern - pattern for stack trace elements to exclude
+ * </ul>
+ * 
  * <p>
  * For example,
  * <pre>
@@ -91,7 +97,7 @@ import ch.qos.logback.core.status.ErrorStatus;
  *
  *     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
  *         <encoder>
- *             <pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,regex1,regex2,evaluatorName}</pattern>
+ *             <pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,omitCommonFrames,regex1,regex2,evaluatorName}</pattern>
  *         </encoder>
  *     </appender>
  * }
@@ -118,7 +124,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final String OPTION_VALUE_SHORT = "short";
     private static final String OPTION_VALUE_ROOT_FIRST = "rootFirst";
     private static final String OPTION_VALUE_INLINE_HASH = "inlineHash";
-
+    private static final String OPTION_VALUE_OMITCOMMONFRAMES = "omitCommonFrames";
+    private static final String OPTION_VALUE_KEEPCOMMONFRAMES = "keepCommonFrames";
     private static final String OPTION_VALUE_INLINE_STACK = "inline";
 
     private static final int OPTION_INDEX_MAX_DEPTH = 0;
@@ -180,6 +187,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      */
     private boolean inlineHash;
 
+    /**
+     * True to omit common frames
+     */
+    private boolean omitCommonFrames = true;
+    
     /** line delimiter */
     private String lineSeparator = CoreConstants.LINE_SEPARATOR;
 
@@ -244,30 +256,46 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                      *     - "rootFirst" - indicating that stacks should be printed root-cause first
                      *     - "inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
                      *     - "inline" - indicating that the whole stack trace should be inlined, using "\\n" as separator
+                     *     - "omitCommonFrames" - omit common frames
+                     *     - "keepCommonFrames" - keep common frames
                      *     - evaluator name - name of evaluators that will determine if the stacktrace is ignored
                      *     - exclusion pattern - pattern for stack trace elements to exclude
                      */
-                    if (OPTION_VALUE_ROOT_FIRST.equals(option)) {
-                        setRootCauseFirst(true);
-                    } else if (OPTION_VALUE_INLINE_HASH.equals(option)) {
-                        setInlineHash(true);
-                    } else if (OPTION_VALUE_INLINE_STACK.equals(option)) {
-                        setLineSeparator(DEFAULT_INLINE_SEPARATOR);
-                    } else {
-                        @SuppressWarnings("rawtypes")
-                        Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
-                        @SuppressWarnings("unchecked")
-                        EventEvaluator<ILoggingEvent> evaluator = (evaluatorMap != null)
-                            ? (EventEvaluator<ILoggingEvent>) evaluatorMap.get(option)
-                            : null;
-
-                        if (evaluator != null) {
-                            addEvaluator(evaluator);
-                        } else {
-                            addExclude(option);
-                        }
+                    switch (option) {
+                        case OPTION_VALUE_ROOT_FIRST:
+                            setRootCauseFirst(true);
+                            break;
+                        
+                        case OPTION_VALUE_INLINE_HASH:
+                            setInlineHash(true);
+                            break;
+                            
+                        case OPTION_VALUE_INLINE_STACK:
+                            setLineSeparator(DEFAULT_INLINE_SEPARATOR);
+                            break;
+                        
+                        case OPTION_VALUE_OMITCOMMONFRAMES:
+                            setOmitCommonFrames(true);
+                            break;
+                            
+                        case OPTION_VALUE_KEEPCOMMONFRAMES:
+                            setOmitCommonFrames(false);
+                            break;
+                            
+                        default:
+                            @SuppressWarnings("rawtypes")
+                            Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
+                            @SuppressWarnings("unchecked")
+                            EventEvaluator<ILoggingEvent> evaluator = (evaluatorMap != null)
+                                ? (EventEvaluator<ILoggingEvent>) evaluatorMap.get(option)
+                                : null;
+    
+                            if (evaluator != null) {
+                                addEvaluator(evaluator);
+                            } else {
+                                addExclude(option);
+                            }
                     }
-                    break;
             }
         }
     }
@@ -281,7 +309,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             try {
                 return Integer.parseInt(option);
             } catch (NumberFormatException nfe) {
-                addError("Could not parse [" + option + "] as an integer");
+                addError("Could not parse [" + option + "] as an integer, default to " + valueIfNonParsable);
                 return valueIfNonParsable;
             }
         }
@@ -317,9 +345,6 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         return builder.toString();
     }
 
-    public String getLineSeparator() {
-        return lineSeparator;
-    }
 
     /**
      * Sets which lineSeparator to use between events.
@@ -341,6 +366,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
     }
 
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+    
+    
     /**
      * Return true if any evaluator returns true, indicating that
      * the stack trace should not be logged.
@@ -441,8 +471,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             return;
         }
         StackTraceElementProxy[] stackTraceElements = throwableProxy.getStackTraceElementProxyArray();
-        int commonFrames = throwableProxy.getCommonFrames();
-
+        int commonFrames = isOmitCommonFrames() ? throwableProxy.getCommonFrames() : 0;
+        
         boolean appendingExcluded = false;
         int consecutiveExcluded = 0;
         int appended = 0;
@@ -743,6 +773,20 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         return maxLength;
     }
 
+    
+    /**
+     * Control whether common frames should be omitted for nested throwables or not.
+     * 
+     * @param omitCommonFrames {@code true} to omit common frames
+     */
+    public void setOmitCommonFrames(boolean omitCommonFrames) {
+        this.omitCommonFrames = omitCommonFrames;
+    }
+    
+    public boolean isOmitCommonFrames() {
+        return this.omitCommonFrames;
+    }
+    
     public boolean isRootCauseFirst() {
         return rootCauseFirst;
     }
