@@ -20,8 +20,10 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import net.logstash.logback.CachingAbbreviator;
 import net.logstash.logback.NullAbbreviator;
@@ -29,6 +31,7 @@ import net.logstash.logback.encoder.SeparatorParser;
 
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
+import ch.qos.logback.classic.pattern.ClassNameOnlyAbbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
@@ -56,6 +59,9 @@ import ch.qos.logback.core.status.ErrorStatus;
  *     See {@link #shortenedClassNameLength}.</li>
  * <li>Filters out consecutive unwanted stackTraceElements based on regular expressions.
  *     See {@link #excludes}.</li>
+ * <li>Truncate individual stacktraces after any element matching one the configured
+ *     regular expression.
+ *     See {@link #truncateAfterPatterns}.
  * <li>Uses evaluators to determine if the stacktrace should be logged.
  *     See {@link #evaluators}.</li>
  * <li>Outputs in either 'normal' order (root-cause-last), or root-cause-first.
@@ -71,11 +77,17 @@ import ch.qos.logback.core.status.ErrorStatus;
  * <li>maxLength = "full" or "short" or an integer value</li>
  * </ol>
  * 
- * If any other remaining options are "rootFirst",
- * then the converter awill be configured as root-cause-first.
- * If any other remaining options equal to an evaluator name,
- * then the evaluator will be used to determine if the stacktrace should be printed.
- * Other options will be interpreted as exclusion regexes.
+ * The other options can be listed in any order and are interpreted as follows:
+ * <ul>
+ * <li>"rootFirst" - indicating that stacks should be printed root-cause first
+ * <li>"inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
+ * <li>"inline" - indicating that the whole stack trace should be inlined, using "\\n" as separator
+ * <li>"omitCommonFrames" - omit common frames
+ * <li>"keepCommonFrames" - keep common frames
+ * <li>evaluator name - name of evaluators that will determine if the stacktrace is ignored
+ * <li>exclusion pattern - pattern for stack trace elements to exclude
+ * </ul>
+ * 
  * <p>
  * For example,
  * <pre>
@@ -85,7 +97,7 @@ import ch.qos.logback.core.status.ErrorStatus;
  *
  *     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
  *         <encoder>
- *             <pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,regex1,regex2,evaluatorName}</pattern>
+ *             <pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,omitCommonFrames,regex1,regex2,evaluatorName}</pattern>
  *         </encoder>
  *     </appender>
  * }
@@ -112,7 +124,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final String OPTION_VALUE_SHORT = "short";
     private static final String OPTION_VALUE_ROOT_FIRST = "rootFirst";
     private static final String OPTION_VALUE_INLINE_HASH = "inlineHash";
-
+    private static final String OPTION_VALUE_OMITCOMMONFRAMES = "omitCommonFrames";
+    private static final String OPTION_VALUE_KEEPCOMMONFRAMES = "keepCommonFrames";
     private static final String OPTION_VALUE_INLINE_STACK = "inline";
 
     private static final int OPTION_INDEX_MAX_DEPTH = 0;
@@ -154,8 +167,16 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Note that these elements will only be excluded if and only if
      * more than one consecutive line matches an exclusion pattern.
      */
-    private List<Pattern> excludes = new ArrayList<Pattern>(5);
+    private List<Pattern> excludes = new ArrayList<>(5);
 
+    /**
+     * Patterns used to determine after which element the stack trace must be truncated.
+     * 
+     * The strings being matched against are in the form "fullyQualifiedClassName.methodName"
+     * (e.g. "java.lang.Object.toString").
+     */
+    private List<Pattern> truncateAfterPatterns = new ArrayList<>();
+    
     /**
      * True to print the root cause first.  False to print exceptions normally (root cause last).
      */
@@ -166,6 +187,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      */
     private boolean inlineHash;
 
+    /**
+     * True to omit common frames
+     */
+    private boolean omitCommonFrames = true;
+    
     /** line delimiter */
     private String lineSeparator = CoreConstants.LINE_SEPARATOR;
 
@@ -173,10 +199,12 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     private StackHasher stackHasher;
 
+    private StackElementFilter truncateAfterFilter;
+    
     /**
      * Evaluators that determine if the stacktrace should be logged.
      */
-    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(1);
+    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<>(1);
 
     @Override
     public void start() {
@@ -199,6 +227,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         if (inlineHash) {
             stackHasher = new StackHasher(stackElementFilter);
         }
+        truncateAfterFilter = StackElementFilter.byPattern(truncateAfterPatterns);
         super.start();
     }
 
@@ -227,30 +256,46 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                      *     - "rootFirst" - indicating that stacks should be printed root-cause first
                      *     - "inlineHash" - indicating that hexadecimal error hashes should be computed and inlined
                      *     - "inline" - indicating that the whole stack trace should be inlined, using "\\n" as separator
+                     *     - "omitCommonFrames" - omit common frames
+                     *     - "keepCommonFrames" - keep common frames
                      *     - evaluator name - name of evaluators that will determine if the stacktrace is ignored
                      *     - exclusion pattern - pattern for stack trace elements to exclude
                      */
-                    if (OPTION_VALUE_ROOT_FIRST.equals(option)) {
-                        setRootCauseFirst(true);
-                    } else if (OPTION_VALUE_INLINE_HASH.equals(option)) {
-                        setInlineHash(true);
-                    } else if (OPTION_VALUE_INLINE_STACK.equals(option)) {
-                        setLineSeparator(DEFAULT_INLINE_SEPARATOR);
-                    } else {
-                        @SuppressWarnings("rawtypes")
-                        Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
-                        @SuppressWarnings("unchecked")
-                        EventEvaluator<ILoggingEvent> evaluator = (evaluatorMap != null)
-                            ? (EventEvaluator<ILoggingEvent>) evaluatorMap.get(option)
-                            : null;
-
-                        if (evaluator != null) {
-                            addEvaluator(evaluator);
-                        } else {
-                            addExclude(option);
-                        }
+                    switch (option) {
+                        case OPTION_VALUE_ROOT_FIRST:
+                            setRootCauseFirst(true);
+                            break;
+                        
+                        case OPTION_VALUE_INLINE_HASH:
+                            setInlineHash(true);
+                            break;
+                            
+                        case OPTION_VALUE_INLINE_STACK:
+                            setLineSeparator(DEFAULT_INLINE_SEPARATOR);
+                            break;
+                        
+                        case OPTION_VALUE_OMITCOMMONFRAMES:
+                            setOmitCommonFrames(true);
+                            break;
+                            
+                        case OPTION_VALUE_KEEPCOMMONFRAMES:
+                            setOmitCommonFrames(false);
+                            break;
+                            
+                        default:
+                            @SuppressWarnings("rawtypes")
+                            Map evaluatorMap = (Map) getContext().getObject(CoreConstants.EVALUATOR_MAP);
+                            @SuppressWarnings("unchecked")
+                            EventEvaluator<ILoggingEvent> evaluator = (evaluatorMap != null)
+                                ? (EventEvaluator<ILoggingEvent>) evaluatorMap.get(option)
+                                : null;
+    
+                            if (evaluator != null) {
+                                addEvaluator(evaluator);
+                            } else {
+                                addExclude(option);
+                            }
                     }
-                    break;
             }
         }
     }
@@ -264,7 +309,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             try {
                 return Integer.parseInt(option);
             } catch (NumberFormatException nfe) {
-                addError("Could not parse [" + option + "] as an integer");
+                addError("Could not parse [" + option + "] as an integer, default to " + valueIfNonParsable);
                 return valueIfNonParsable;
             }
         }
@@ -293,16 +338,13 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         } else {
             appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes);
         }
-        if (builder.length() > maxLength) {
-            builder.setLength(maxLength - ELLIPSIS.length() - getLineSeparator().length());
+        if (builder.length() > this.maxLength) {
+            builder.setLength(this.maxLength - ELLIPSIS.length() - getLineSeparator().length());
             builder.append(ELLIPSIS).append(getLineSeparator());
         }
         return builder.toString();
     }
 
-    public String getLineSeparator() {
-        return lineSeparator;
-    }
 
     /**
      * Sets which lineSeparator to use between events.
@@ -324,6 +366,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
     }
 
+    public String getLineSeparator() {
+        return lineSeparator;
+    }
+    
+    
     /**
      * Return true if any evaluator returns true, indicating that
      * the stack trace should not be logged.
@@ -364,7 +411,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             IThrowableProxy throwableProxy,
             Deque<String> stackHashes) {
 
-        if (throwableProxy == null || builder.length() > maxLength) {
+        if (throwableProxy == null || builder.length() > this.maxLength) {
             return;
         }
 
@@ -393,7 +440,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             IThrowableProxy throwableProxy,
             Deque<String> stackHashes) {
 
-        if (throwableProxy == null || builder.length() > maxLength) {
+        if (throwableProxy == null || builder.length() > this.maxLength) {
             return;
         }
 
@@ -420,26 +467,27 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      */
     private void appendStackTraceElements(StringBuilder builder, int indent, IThrowableProxy throwableProxy) {
 
-        if (builder.length() > maxLength) {
+        if (builder.length() > this.maxLength) {
             return;
         }
         StackTraceElementProxy[] stackTraceElements = throwableProxy.getStackTraceElementProxyArray();
-        int commonFrames = throwableProxy.getCommonFrames();
-
+        int commonFrames = isOmitCommonFrames() ? throwableProxy.getCommonFrames() : 0;
+        
         boolean appendingExcluded = false;
         int consecutiveExcluded = 0;
         int appended = 0;
         StackTraceElementProxy previousWrittenStackTraceElement = null;
-        for (int i = 0; i < stackTraceElements.length - commonFrames; i++) {
-            if (maxDepthPerThrowable > 0 && appended >= maxDepthPerThrowable) {
+        
+        int i = 0;
+        for (; i < stackTraceElements.length - commonFrames; i++) {
+            if (this.maxDepthPerThrowable > 0 && appended >= this.maxDepthPerThrowable) {
                 /*
-                 * We reached the configure limit.  Bail out.
+                 * We reached the configured limit. Bail out.
                  */
-                appendPlaceHolder(builder, indent, stackTraceElements.length - commonFrames - maxDepthPerThrowable, "frames truncated");
                 break;
             }
             StackTraceElementProxy stackTraceElement = stackTraceElements[i];
-            if (i <= 1 || isIncluded(stackTraceElement)) {
+            if (i < 1 || isIncluded(stackTraceElement)) { // First 2 frames are always included
                 /*
                  * We should append this line.
                  *
@@ -465,32 +513,65 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                 previousWrittenStackTraceElement = stackTraceElement;
                 appendingExcluded = false;
                 appended++;
-            } else if (appendingExcluded) {
+            }
+            else if (appendingExcluded) {
                 /*
                  * We're going back and appending something we previously excluded
                  */
                 appendStackTraceElement(builder, indent, stackTraceElement, previousWrittenStackTraceElement);
                 previousWrittenStackTraceElement = stackTraceElement;
                 appended++;
-            } else {
+            }
+            else {
                 consecutiveExcluded++;
+            }
+
+            if (shouldTruncateAfter(stackTraceElement)) {
+                /*
+                 * Truncate after this line. Bail out.
+                 */
+                break;
             }
         }
 
-        if (consecutiveExcluded > 0) {
+        
+        /*
+         * We did not process the stack up to the last element (max depth, truncate line)
+         */
+        if (i + commonFrames < stackTraceElements.length) {
             /*
-             * We were excluding stuff at the end, so append a placeholder
+             * We were excluding elements but we want the truncateAfter element to be printed
              */
-            appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
-        }
+            if (consecutiveExcluded > 0) {
+                consecutiveExcluded--;
+                appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
 
-        if (commonFrames > 0) {
-            /*
-             * Common frames found, append a placeholder
-             */
-            appendPlaceHolder(builder, indent, commonFrames, "common frames omitted");
+                appendStackTraceElement(builder, indent, stackTraceElements[i], previousWrittenStackTraceElement);
+                appended++;
+            }
+            
+            if (commonFrames > 0) {
+                appendPlaceHolder(builder, indent, stackTraceElements.length - appended - consecutiveExcluded, "frames truncated (including " + commonFrames + " common frames)");
+            }
+            else {
+                appendPlaceHolder(builder, indent, stackTraceElements.length - appended - consecutiveExcluded, "frames truncated");
+            }
         }
-
+        else {
+            if (consecutiveExcluded > 0) {
+                /*
+                 * We were excluding stuff at the end, so append a placeholder
+                 */
+                appendPlaceHolder(builder, indent, consecutiveExcluded, "frames excluded");
+            }
+    
+            if (commonFrames > 0) {
+                /*
+                 * Common frames found, append a placeholder
+                 */
+                appendPlaceHolder(builder, indent, commonFrames, "common frames omitted");
+            }
+        }
     }
 
     /**
@@ -507,17 +588,31 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     /**
-     * Return true if the stack trace element is included (i.e. doesn't match any exclude patterns).
+     * Return {@code true} if the stack trace element is included (i.e. doesn't match any exclude patterns).
+     * 
+     * @return {@code true} if the stacktrace element is included
      */
     private boolean isIncluded(StackTraceElementProxy step) {
         return stackElementFilter.accept(step.getStackTraceElement());
     }
 
+    
+    /**
+     * Return {@code true} if the stacktrace should be truncated after the element passed as argument
+     * 
+     * @param step the stacktrace element to evaluate
+     * @return {@code true} if the stacktrace should be truncated after the given element
+     */
+    private boolean shouldTruncateAfter(StackTraceElementProxy step) {
+        return !truncateAfterFilter.accept(step.getStackTraceElement());
+    }
+    
+    
     /**
      * Appends a single stack trace element.
      */
     private void appendStackTraceElement(StringBuilder builder, int indent, StackTraceElementProxy step, StackTraceElementProxy previousStep) {
-        if (builder.length() > maxLength) {
+        if (builder.length() > this.maxLength) {
             return;
         }
         indent(builder, indent);
@@ -552,7 +647,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * from the packaging data from the previous step.
      */
     private boolean shouldAppendPackagingData(StackTraceElementProxy step, StackTraceElementProxy previousStep) {
-        if (step == null || step.getClassPackagingData() == null) {
+        if (step.getClassPackagingData() == null) {
             return false;
         }
         if (previousStep == null || previousStep.getClassPackagingData() == null) {
@@ -569,7 +664,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Appends the first line containing the prefix and throwable message
      */
     private void appendFirstLine(StringBuilder builder, String prefix, int indent, IThrowableProxy throwableProxy, String hash) {
-        if (builder.length() > maxLength) {
+        if (builder.length() > this.maxLength) {
             return;
         }
         indent(builder, indent - 1);
@@ -590,36 +685,87 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         ThrowableProxyUtil.indent(builder, indent);
     }
 
+    
+    /**
+     * Abbreviates class names in a way similar to the Logback layout feature (see https://logback.qos.ch/manual/layouts.html#logger).
+     *
+     *  <p>The algorithm will shorten the full class name and attempt to reduce its size to a maximum of {@code length} characters.
+     *  It does so by reducing the package elements to their first letter and gradually expand them starting from the right until
+     *  the maximum size is reached.
+     *  Setting the length to zero constitutes an exception and returns the "simple" class name without package.
+     *
+     *  <p>The next table provides examples of the abbreviation algorithm in action.
+     *
+     *  <pre>
+     *  LENGTH   CLASSNAME                 SHORTENED
+     *  -------------------------------------------------------------
+     *  0        org.company.package.Bar   Bar
+     *  5        org.company.package.Bar   o.c.p.Bar
+     *  15       org.company.package.Bar   o.c.package.Bar
+     *  21       org.company.package.Bar   o.company.package.Bar
+     *  24       org.company.package.Bar   org.company.package.Bar
+     *  </pre>
+     *
+     *  @param length the desired maximum length or {@code -1} to disable the feature and allow for any arbitrary length.
+     */
+    public void setShortenedClassNameLength(int length) {
+        if (length <= 0 && length != -1) {
+            throw new IllegalArgumentException("shortenedClassNameLength must be >= 0, or -1 to disable the feature");
+        }
+
+        if (length == -1 || length == FULL_CLASS_NAME_LENGTH) {
+            this.shortenedClassNameLength = FULL_CLASS_NAME_LENGTH;
+            this.abbreviator = NullAbbreviator.INSTANCE;
+        }
+        else if (length == 0) {
+            this.shortenedClassNameLength = 0;
+            this.abbreviator = new CachingAbbreviator(new ClassNameOnlyAbbreviator());
+        }
+        else {
+            this.shortenedClassNameLength = length;
+            this.abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(length));
+        }
+    }
+
     public int getShortenedClassNameLength() {
         return shortenedClassNameLength;
     }
-
-    public void setShortenedClassNameLength(int length) {
-        if (length <= 0) {
-            throw new IllegalArgumentException();
-        }
-        this.shortenedClassNameLength = length;
-        if (length < FULL_CLASS_NAME_LENGTH) {
-            abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(this.shortenedClassNameLength));
-        } else {
-            abbreviator = NullAbbreviator.INSTANCE;
-        }
-    }
-
-
-    public int getMaxDepthPerThrowable() {
-        return maxDepthPerThrowable;
-    }
+    
+    
+    /**
+     * Set a limit on the number of stackTraceElements per throwable.
+     * Use {@code -1} to disable the feature and allow for an unlimited depth.
+     * 
+     * @param maxDepthPerThrowable the maximum number of stacktrace elements per throwable or {@code -1} to
+     * disable the feature and allows for an unlimited amount.
+     */
     public void setMaxDepthPerThrowable(int maxDepthPerThrowable) {
-        if (maxDepthPerThrowable <= 0) {
-            throw new IllegalArgumentException();
+        if (maxDepthPerThrowable <= 0 && maxDepthPerThrowable != -1) {
+            throw new IllegalArgumentException("maxDepthPerThrowable must be > 0, or -1 to disable the feature");
+        }
+        if (maxDepthPerThrowable == -1) {
+            maxDepthPerThrowable = FULL_MAX_DEPTH_PER_THROWABLE;
         }
         this.maxDepthPerThrowable = maxDepthPerThrowable;
     }
 
+    public int getMaxDepthPerThrowable() {
+        return maxDepthPerThrowable;
+    }
+    
+    
+    /**
+     * Set a hard limit on the size of the rendered stacktrace, all throwables included.
+     * Use {@code -1} to disable the feature and allows for any size.
+     * 
+     * @param maxLength the maximum size of the rendered stacktrace or {@code -1} for no limit.
+     */
     public void setMaxLength(int maxLength) {
-        if (maxLength <= 0) {
-            throw new IllegalArgumentException();
+        if (maxLength <= 0 && maxLength != -1) {
+            throw new IllegalArgumentException("maxLength must be > 0, or -1 to disable the feature");
+        }
+        if (maxLength == -1) {
+            maxLength = FULL_MAX_LENGTH;
         }
         this.maxLength = maxLength;
     }
@@ -627,6 +773,20 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         return maxLength;
     }
 
+    
+    /**
+     * Control whether common frames should be omitted for nested throwables or not.
+     * 
+     * @param omitCommonFrames {@code true} to omit common frames
+     */
+    public void setOmitCommonFrames(boolean omitCommonFrames) {
+        this.omitCommonFrames = omitCommonFrames;
+    }
+    
+    public boolean isOmitCommonFrames() {
+        return this.omitCommonFrames;
+    }
+    
     public boolean isRootCauseFirst() {
         return rootCauseFirst;
     }
@@ -642,7 +802,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         this.inlineHash = inlineHash;
     }
 
-    protected void setStackHasher(StackHasher stackHasher) {
+    /* visible for testing */
+    void setStackHasher(StackHasher stackHasher) {
         this.stackHasher = stackHasher;
     }
 
@@ -651,12 +812,12 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     /**
-     * Set exclusion patterns as a list of coma separated patterns
-     * @param comaSeparatedPatterns list of coma separated patterns
+     * Set exclusion patterns as a list of comma separated patterns
+     * @param comaSeparatedPatterns list of comma separated patterns
      */
     public void setExclusions(String comaSeparatedPatterns) {
         if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
-            this.excludes = new ArrayList<Pattern>(5);
+            this.excludes = new ArrayList<>(5);
         } else {
             setExcludes(Arrays.asList(comaSeparatedPatterns.split("\\s*\\,\\s*")));
         }
@@ -664,9 +825,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     public void setExcludes(List<String> exclusionPatterns) {
         if (exclusionPatterns == null || exclusionPatterns.isEmpty()) {
-            this.excludes = new ArrayList<Pattern>(5);
+            this.excludes = new ArrayList<>(5);
         } else {
-            this.excludes = new ArrayList<Pattern>(exclusionPatterns.size());
+            this.excludes = new ArrayList<>(exclusionPatterns.size());
             for (String pattern : exclusionPatterns) {
                 addExclude(pattern);
             }
@@ -674,27 +835,44 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     public List<String> getExcludes() {
-        List<String> exclusionPatterns = new ArrayList<String>(excludes.size());
-        for (Pattern pattern : excludes) {
-            exclusionPatterns.add(pattern.pattern());
-        }
-        return exclusionPatterns;
+        return this.excludes
+                .stream()
+                .map(Pattern::pattern)
+                .collect(Collectors.toList());
     }
 
+    public void addTruncateAfter(String regex) {
+        this.truncateAfterPatterns.add(Pattern.compile(regex));
+    }
+
+    public List<String> getTruncateAfters() {
+        return this.truncateAfterPatterns
+                        .stream()
+                        .map(Pattern::pattern)
+                        .collect(Collectors.toList());
+    }
+    
+    public void setTruncateAfters(String commaSeparatedPatterns) {
+        this.truncateAfterPatterns = new ArrayList<>();
+        for (String regex: Arrays.asList(commaSeparatedPatterns.split("\\s*\\,\\s*"))) {
+            addTruncateAfter(regex);
+        }
+    }
+    
     public void addEvaluator(EventEvaluator<ILoggingEvent> evaluator) {
-        evaluators.add(evaluator);
+        evaluators.add(Objects.requireNonNull(evaluator));
     }
 
     public void setEvaluators(List<EventEvaluator<ILoggingEvent>> evaluators) {
         if (evaluators == null || evaluators.isEmpty()) {
-            this.evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(1);
+            this.evaluators = new ArrayList<>(1);
         } else {
-            this.evaluators = new ArrayList<EventEvaluator<ILoggingEvent>>(evaluators);
+            this.evaluators = new ArrayList<>(evaluators);
         }
     }
 
     public List<EventEvaluator<ILoggingEvent>> getEvaluators() {
-        return new ArrayList<EventEvaluator<ILoggingEvent>>(evaluators);
+        return new ArrayList<>(evaluators);
     }
 
 }
