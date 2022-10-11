@@ -16,6 +16,7 @@
 package net.logstash.logback.stacktrace;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -109,9 +110,61 @@ public class ShortenedThrowableConverterTest {
             }
         }
     }
+
     
     @Test
-    public void testDepthTruncation() {
+    public void testMaxLength() {
+        
+        try {
+            StackTraceElementGenerator.generateSingle();
+            fail("Exception must have been thrown");
+        } catch (RuntimeException e) {
+
+            /*
+             * First get the un-truncated length
+             */
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
+            converter.start();
+            String formatted = convert(converter, e);
+            int totalLength = formatted.length();
+            
+            /*
+             * Now truncate and compare
+             */
+            converter = new ShortenedThrowableConverter();
+            converter.setMaxLength(totalLength - 100);
+            converter.start();
+            formatted = convert(converter, e);
+            
+            assertThat(formatted)
+                .hasSize(totalLength - 100)
+                .endsWith("..." + converter.getLineSeparator());
+        }
+    }
+    
+    @Test
+    public void testMaxLength_invalidLength() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+
+        assertThatThrownBy(() -> converter.setMaxLength(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> converter.setMaxLength(-10)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void testMaxLength_disable() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+
+        converter.setMaxLength(-1);
+        converter.start();
+        
+        assertThat(converter.getMaxLength()).isEqualTo(ShortenedThrowableConverter.FULL_MAX_LENGTH);
+    }
+    
+    
+    
+    @Test
+    public void testMaxLengthPerThrowable() {
         
         try {
             StackTraceElementGenerator.generateSingle();
@@ -140,37 +193,26 @@ public class ShortenedThrowableConverterTest {
             assertThat(formatted).contains("4 frames truncated");
         }
     }
-    
-    @Test
-    public void testLengthTruncation() {
-        
-        try {
-            StackTraceElementGenerator.generateSingle();
-            fail("Exception must have been thrown");
-        } catch (RuntimeException e) {
 
-            /*
-             * First get the un-truncated length
-             */
-            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-            converter.setMaxDepthPerThrowable(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
-            converter.start();
-            String formatted = convert(converter, e);
-            int totalLength = formatted.length();
-            
-            /*
-             * Now truncate and compare
-             */
-            converter = new ShortenedThrowableConverter();
-            converter.setMaxLength(totalLength - 10);
-            converter.start();
-            formatted = convert(converter, e);
-            
-            assertThat(formatted)
-                .hasSize(totalLength - 10)
-                .endsWith("..." + converter.getLineSeparator());
-        }
+    @Test
+    public void testMaxLengthPerThrowable_invalidLength() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+
+        assertThatThrownBy(() -> converter.setMaxDepthPerThrowable(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> converter.setMaxDepthPerThrowable(-10)).isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    public void testMaxLengthPerThrowable_disable() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+
+        converter.setMaxDepthPerThrowable(-1);
+        converter.start();
+        
+        assertThat(converter.getMaxDepthPerThrowable()).isEqualTo(ShortenedThrowableConverter.FULL_MAX_DEPTH_PER_THROWABLE);
+    }
+    
+    
     
     @Test
     public void testTruncateAfter() {
@@ -414,6 +456,16 @@ public class ShortenedThrowableConverterTest {
     }
     
     
+    @Test
+    public void testExclusion_commaSeparated() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+        converter.setExclusions(".*,foo.bar");
+        converter.start();
+        
+        assertThat(converter.getExcludes()).containsExactly(".*", "foo.bar");
+    }
+    
+    
     /*
      * Do not repeat packaging data unless it differs from previous line
      */
@@ -581,6 +633,14 @@ public class ShortenedThrowableConverterTest {
         assertThat(converter.getMaxDepthPerThrowable()).isEqualTo(1);
         assertThat(converter.getShortenedClassNameLength()).isEqualTo(2);
         assertThat(converter.getMaxLength()).isEqualTo(3);
+        
+        // test invalid numeric values
+        converter.setOptionList(Arrays.asList("a", "b", "c"));
+        converter.start();
+        assertThat(converter.getMaxDepthPerThrowable()).isEqualByComparingTo(ShortenedThrowableConverter.DEFAULT_MAX_DEPTH_PER_THROWABLE);
+        assertThat(converter.getShortenedClassNameLength()).isEqualByComparingTo(ShortenedThrowableConverter.DEFAULT_CLASS_NAME_LENGTH);
+        assertThat(converter.getMaxLength()).isEqualByComparingTo(ShortenedThrowableConverter.DEFAULT_MAX_LENGTH);
+        
     }
 
     @Test
@@ -602,7 +662,7 @@ public class ShortenedThrowableConverterTest {
     }
 
     @Test
-    public void testShortenedName() {
+    public void testShortenedClassName() {
         
         try {
             StackTraceElementGenerator.generateSingle();
@@ -619,6 +679,25 @@ public class ShortenedThrowableConverterTest {
         }
     }
 
+    @Test
+    public void testShortenedClassName_invalidLength() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+
+        assertThatThrownBy(() -> converter.setShortenedClassNameLength(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> converter.setShortenedClassNameLength(-10)).isInstanceOf(IllegalArgumentException.class);
+    }
+    
+    @Test
+    public void testShortenedClassName_disable() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+        
+        converter.setShortenedClassNameLength(-1);
+        converter.start();
+        
+        assertThat(converter.getShortenedClassNameLength()).isEqualTo(ShortenedThrowableConverter.FULL_CLASS_NAME_LENGTH);
+    }
+    
+    
     @Test
     public void test_inline_hash() {
         try {

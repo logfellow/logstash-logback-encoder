@@ -480,7 +480,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         
         int i = 0;
         for (; i < stackTraceElements.length - commonFrames; i++) {
-            if (maxDepthPerThrowable > 0 && appended >= maxDepthPerThrowable) {
+            if (this.maxDepthPerThrowable > 0 && appended >= this.maxDepthPerThrowable) {
                 /*
                  * We reached the configured limit. Bail out.
                  */
@@ -604,7 +604,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * @return {@code true} if the stacktrace should be truncated after the given element
      */
     private boolean shouldTruncateAfter(StackTraceElementProxy step) {
-        return step != null && !truncateAfterFilter.accept(step.getStackTraceElement());
+        return !truncateAfterFilter.accept(step.getStackTraceElement());
     }
     
     
@@ -647,7 +647,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * from the packaging data from the previous step.
      */
     private boolean shouldAppendPackagingData(StackTraceElementProxy step, StackTraceElementProxy previousStep) {
-        if (step == null || step.getClassPackagingData() == null) {
+        if (step.getClassPackagingData() == null) {
             return false;
         }
         if (previousStep == null || previousStep.getClassPackagingData() == null) {
