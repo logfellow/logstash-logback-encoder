@@ -43,6 +43,8 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
 import ch.qos.logback.core.boolex.EventEvaluator;
+import ch.qos.logback.core.spi.ContextAware;
+import ch.qos.logback.core.spi.LifeCycle;
 import ch.qos.logback.core.status.ErrorStatus;
 
 /**
@@ -153,11 +155,17 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private int shortenedClassNameLength = DEFAULT_CLASS_NAME_LENGTH;
 
     /**
-     * Abbreviator that will shorten the classnames if {@link #shortenedClassNameLength}
-     * is set less than {@link #FULL_CLASS_NAME_LENGTH}
+     * Abbreviator used to shorten the classnames.
+     * Initialized during {@link #start()}.
      */
-    private Abbreviator abbreviator = NullAbbreviator.INSTANCE;
+    private Abbreviator abbreviator;
 
+    /**
+     * Custom user provided abbreviator used to shorten class names. If none is provided ({@code null}),
+     * one is deduced from the {@link #shortenedClassNameLength} value.
+     */
+    private Abbreviator customAbbreviator;
+    
     /**
      * Patterns used to determine which stacktrace elements to exclude.
      *
@@ -167,7 +175,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Note that these elements will only be excluded if and only if
      * more than one consecutive line matches an exclusion pattern.
      */
-    private List<Pattern> excludes = new ArrayList<>(5);
+    private List<Pattern> excludes = new ArrayList<>();
 
     /**
      * Patterns used to determine after which element the stack trace must be truncated.
@@ -204,7 +212,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     /**
      * Evaluators that determine if the stacktrace should be logged.
      */
-    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<>(1);
+    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<>();
 
     @Override
     public void start() {
@@ -228,9 +236,21 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             stackHasher = new StackHasher(stackElementFilter);
         }
         truncateAfterFilter = StackElementFilter.byPattern(truncateAfterPatterns);
+        abbreviator = createAbbreviator();
+        start(abbreviator);
         super.start();
     }
 
+    @Override
+    public void stop() {
+        super.stop();
+        stop(abbreviator);
+        this.abbreviator = null;
+        this.truncateAfterFilter = null;
+        this.stackElementFilter = null;
+        this.stackHasher = null;
+    }
+    
     private void parseOptions() {
         List<String> optionList = getOptionList();
 
@@ -314,9 +334,32 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             }
         }
     }
+    
+    private Abbreviator createAbbreviator() {
+        if (this.customAbbreviator != null) {
+            return customAbbreviator;
+        }
+        
+        if (this.shortenedClassNameLength == FULL_CLASS_NAME_LENGTH) {
+            return NullAbbreviator.INSTANCE;
+        }
+        
+        Abbreviator abbreviator;
+        if (this.shortenedClassNameLength == 0) {
+            abbreviator = new ClassNameOnlyAbbreviator();
+        }
+        else {
+            abbreviator = new TargetLengthBasedClassNameAbbreviator(this.shortenedClassNameLength);
+        }
+        return new CachingAbbreviator(abbreviator);
+    }
 
     @Override
     public String convert(ILoggingEvent event) {
+        if (!isStarted()) {
+            throw new IllegalStateException("Converter is not started");
+        }
+        
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy == null || isExcludedByEvaluator(event)) {
             return CoreConstants.EMPTY_STRING;
@@ -689,46 +732,54 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     /**
      * Abbreviates class names in a way similar to the Logback layout feature (see https://logback.qos.ch/manual/layouts.html#logger).
      *
-     *  <p>The algorithm will shorten the full class name and attempt to reduce its size to a maximum of {@code length} characters.
-     *  It does so by reducing the package elements to their first letter and gradually expand them starting from the right until
-     *  the maximum size is reached.
-     *  Setting the length to zero constitutes an exception and returns the "simple" class name without package.
+     * <p>The algorithm will shorten the full class name and attempt to reduce its size to a maximum of {@code length} characters.
+     * It does so by reducing the package elements to their first letter and gradually expand them starting from the right until
+     * the maximum size is reached.
+     * Setting the length to zero constitutes an exception and returns the "simple" class name without package.
      *
-     *  <p>The next table provides examples of the abbreviation algorithm in action.
+     * <p>The next table provides examples of the abbreviation algorithm in action.
      *
-     *  <pre>
-     *  LENGTH   CLASSNAME                 SHORTENED
-     *  -------------------------------------------------------------
-     *  0        org.company.package.Bar   Bar
-     *  5        org.company.package.Bar   o.c.p.Bar
-     *  15       org.company.package.Bar   o.c.package.Bar
-     *  21       org.company.package.Bar   o.company.package.Bar
-     *  24       org.company.package.Bar   org.company.package.Bar
-     *  </pre>
+     * <pre>
+     * LENGTH   CLASSNAME                 SHORTENED
+     * -------------------------------------------------------------
+     * 0        org.company.package.Bar   Bar
+     * 5        org.company.package.Bar   o.c.p.Bar
+     * 15       org.company.package.Bar   o.c.package.Bar
+     * 21       org.company.package.Bar   o.company.package.Bar
+     * 24       org.company.package.Bar   org.company.package.Bar
+     * </pre>
+     * 
+     * This parameter is ignored if an explicit abbreviator instance is set via {@link #setClassNameAbbreviator(Abbreviator)}.
      *
-     *  @param length the desired maximum length or {@code -1} to disable the feature and allow for any arbitrary length.
+     * @param length the desired maximum length or {@code -1} to disable the feature and allow for any arbitrary length.
      */
     public void setShortenedClassNameLength(int length) {
         if (length <= 0 && length != -1) {
             throw new IllegalArgumentException("shortenedClassNameLength must be >= 0, or -1 to disable the feature");
         }
 
-        if (length == -1 || length == FULL_CLASS_NAME_LENGTH) {
-            this.shortenedClassNameLength = FULL_CLASS_NAME_LENGTH;
-            this.abbreviator = NullAbbreviator.INSTANCE;
+        if (length == -1) {
+            length = FULL_CLASS_NAME_LENGTH;
         }
-        else if (length == 0) {
-            this.shortenedClassNameLength = 0;
-            this.abbreviator = new CachingAbbreviator(new ClassNameOnlyAbbreviator());
-        }
-        else {
-            this.shortenedClassNameLength = length;
-            this.abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(length));
-        }
+        this.shortenedClassNameLength = length;
     }
 
     public int getShortenedClassNameLength() {
         return shortenedClassNameLength;
+    }
+    
+    
+    /**
+     * Set a custom {@link Abbreviator} used to shorten class names.
+     * 
+     * @param abbreviator the {@link Abbreviator} to use.
+     */
+    public void setClassNameAbbreviator(Abbreviator abbreviator) {
+        this.customAbbreviator = Objects.requireNonNull(abbreviator);
+    }
+    
+    public Abbreviator getClassNameAbbreviator() {
+        return this.customAbbreviator;
     }
     
     
@@ -880,4 +931,19 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         return new ArrayList<>(evaluators);
     }
 
+    private void start(Object component) {
+        if (component instanceof ContextAware) {
+            ((ContextAware) component).setContext(getContext());
+        }
+        
+        if (component instanceof LifeCycle) {
+            ((LifeCycle) component).start();
+        }
+    }
+    
+    private void stop(Object component) {
+        if (component instanceof LifeCycle) {
+            ((LifeCycle) component).stop();
+        }
+    }
 }

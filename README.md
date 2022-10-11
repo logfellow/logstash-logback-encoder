@@ -694,7 +694,7 @@ For example:
 </appender>
 ```
 
-> **WARNING**
+> **Warning**
 > Since Logback 1.3 it is not allowed anymore to declare an `<appender>` inside another `<appender>`. The nested appender should instead be declared outside and `<appender-ref>` must be used to refer to it.
 > 
 > See [LOGBACK-1674](https://jira.qos.ch/browse/LOGBACK-1674) for more information.
@@ -2053,7 +2053,7 @@ The special value `-1` can be used to disable the feature and allow for an unlim
 ### Classname Shortening
 
 Class names can be abbreviated in a way similar to the Logback layout [feature](https://logback.qos.ch/manual/layouts.html#logger).
-The algorithm will shorten the full class name (class + package) and attempt to reduce its size down to a maximum of number of characters.
+The algorithm will shorten the full class name (package + class) and attempt to reduce its size down to a maximum of number of characters.
 It does so by reducing the package elements to their first letter and gradually expand them starting from the right most element until the maximum size is reached.
 
 To enable this feature, set the `shortenedClassNameLength` property to the desired value.
@@ -2099,6 +2099,21 @@ Caused by: j.lang.RuntimeException: Destination unreachable
 ```
 
 Note that the exception name is also shortened, as are the individual frames.
+
+Alternatively you can specify your own custom abbreviation strategy with the `<classNameAbbreviator>` configuration property as shown below:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <classNameAbbreviator class="package.MyCustomAbbreviator">
+            <param1>aValue</param1>
+        </classNameAbbreviator>
+    </throwableConverter>
+</encoder>
+```
+
+> **Note**
+> The value of `<shortenedClassNameLength>` property is ignored when a custom abbreviator is explicitly specified.
 
 
 
