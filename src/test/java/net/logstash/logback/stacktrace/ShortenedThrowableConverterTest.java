@@ -459,7 +459,7 @@ public class ShortenedThrowableConverterTest {
     @Test
     public void testExclusion_commaSeparated() {
         ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-        converter.setExclusions(".*,foo.bar");
+        converter.setExclusions(",.*, foo.bar ,, , \n");
         converter.start();
         
         assertThat(converter.getExcludes()).containsExactly(".*", "foo.bar");

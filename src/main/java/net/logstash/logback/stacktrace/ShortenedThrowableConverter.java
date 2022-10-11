@@ -16,7 +16,6 @@
 package net.logstash.logback.stacktrace;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +27,7 @@ import java.util.stream.Collectors;
 import net.logstash.logback.CachingAbbreviator;
 import net.logstash.logback.NullAbbreviator;
 import net.logstash.logback.encoder.SeparatorParser;
+import net.logstash.logback.util.StringUtils;
 
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
@@ -813,13 +813,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     /**
      * Set exclusion patterns as a list of comma separated patterns
-     * @param comaSeparatedPatterns list of comma separated patterns
+     * @param commaSeparatedPatterns list of comma separated patterns
      */
-    public void setExclusions(String comaSeparatedPatterns) {
-        if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
-            this.excludes = new ArrayList<>(5);
-        } else {
-            setExcludes(Arrays.asList(comaSeparatedPatterns.split("\\s*\\,\\s*")));
+    public void setExclusions(String commaSeparatedPatterns) {
+        for (String regex: StringUtils.commaDelimitedListToStringArray(commaSeparatedPatterns)) {
+            addExclude(regex);
         }
     }
 
@@ -853,8 +851,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
     
     public void setTruncateAfters(String commaSeparatedPatterns) {
-        this.truncateAfterPatterns = new ArrayList<>();
-        for (String regex: Arrays.asList(commaSeparatedPatterns.split("\\s*\\,\\s*"))) {
+        for (String regex: StringUtils.commaDelimitedListToStringArray(commaSeparatedPatterns)) {
             addTruncateAfter(regex);
         }
     }

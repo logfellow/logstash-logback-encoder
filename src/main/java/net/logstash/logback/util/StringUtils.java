@@ -16,6 +16,11 @@
 package net.logstash.logback.util;
 
 import static ch.qos.logback.core.CoreConstants.EMPTY_STRING;
+import static ch.qos.logback.core.CoreConstants.EMPTY_STRING_ARRAY;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Operations on {@link java.lang.String} that are
@@ -162,5 +167,73 @@ public class StringUtils {
      */
     public static int length(final CharSequence cs) {
         return cs == null ? 0 : cs.length();
+    }
+    
+    /**
+     * Convert a comma delimited list into an
+     * array of strings.
+     * 
+     * @param str the input {@code String} (potentially {@code null} or empty)
+     * @return an array of strings, or the empty array in case of empty input
+     * @see #delimitedListToStringArray
+     */
+    public static String[] commaDelimitedListToStringArray(String str) {
+        return delimitedListToStringArray(str, ",");
+    }
+    
+    /**
+     * Take a {@code String} that is a delimited list and convert it into
+     * a {@code String} array.
+     * 
+     * <p>A single {@code delimiter} may consist of more than one character,
+     * but it will still be considered as a single delimiter string, rather
+     * than as a bunch of potential delimiter characters.
+     * 
+     * <p>Values are trimmed, and are added to the resulting array only if not blank.
+     * Therefore two consecutive delimiters are treated as a single delimiter.
+     * 
+     * <p>A {@code null} delimiter is treated as no delimiter and returns an array with
+     * the original {@code str} string as single element.
+     * An empty delimiter splits the input string at each character.
+     * 
+     * <p>A {code null} input returns an empty array.
+     * 
+     * @param str the input {@code String} (potentially {@code null} or empty)
+     * @param delimiter the delimiter between elements
+     * @return an array of the tokens in the list
+     */
+    public static String[] delimitedListToStringArray(String str, String delimiter) {
+
+        if (str == null) {
+            return EMPTY_STRING_ARRAY;
+        }
+        if (delimiter == null) {
+            return new String[] {str};
+        }
+
+        List<String> result = new ArrayList<>();
+        if (delimiter.isEmpty()) {
+            for (int i = 0; i < str.length(); i++) {
+                result.add(str.substring(i, i + 1));
+            }
+        }
+        else {
+            int pos = 0;
+            int nextPos;
+            while ((nextPos = str.indexOf(delimiter, pos)) != -1) {
+                addIfNotBlank(result, trim(str.substring(pos, nextPos)));
+                pos = nextPos + delimiter.length();
+            }
+            if (str.length() > 0 && pos <= str.length()) {
+                addIfNotBlank(result, trim(str.substring(pos)));
+            }
+        }
+        return result.toArray(EMPTY_STRING_ARRAY);
+    }
+    
+    private static void addIfNotBlank(Collection<String> col, String str) {
+        if (!isBlank(str)) {
+            col.add(str);
+        }
     }
 }
