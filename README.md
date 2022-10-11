@@ -225,7 +225,7 @@ in your `logback.xml`, like this:
     
     <root level="all">
         <appender-ref ref="stash" />
-  </root>
+    </root>
 </configuration>
 ```
 You can further customize the JSON output by customizing the layout as described in later sections.
@@ -684,12 +684,20 @@ These async appenders can delegate to any other underlying logback appender.
 For example:
 
 ```xml
+<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    ...
+</appender>
+    
 <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
-    <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
-        ...
-    </appender>
+    <appender-ref ref="file" />
 </appender>
 ```
+
+> **WARNING**
+> Since Logback 1.3 it is not allowed anymore to declare an `<appender>` inside another `<appender>`. The nested appender should instead be declared outside and `<appender-ref>` must be used to refer to it.
+> 
+> See [LOGBACK-1674](https://jira.qos.ch/browse/LOGBACK-1674] for more information.
+
 
 #### RingBuffer Size
 
@@ -745,9 +753,7 @@ The wait strategy can be configured on the async appender using the `waitStrateg
 ```xml
 <appender name="async" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
     <waitStrategyType>sleeping</waitStrategyType>
-    <appender class="ch.qos.logback.core.rolling.RollingFileAppender">
-        ...
-    </appender>
+    ...
 </appender>
 ```
 
