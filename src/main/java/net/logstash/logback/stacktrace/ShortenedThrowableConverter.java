@@ -487,7 +487,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                 break;
             }
             StackTraceElementProxy stackTraceElement = stackTraceElements[i];
-            if (i <= 1 || isIncluded(stackTraceElement)) { // First frame is always included
+            if (i < 1 || isIncluded(stackTraceElement)) { // First 2 frames are always included
                 /*
                  * We should append this line.
                  *
@@ -850,6 +850,13 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
                         .stream()
                         .map(Pattern::pattern)
                         .collect(Collectors.toList());
+    }
+    
+    public void setTruncateAfters(String commaSeparatedPatterns) {
+        this.truncateAfterPatterns = new ArrayList<>();
+        for (String regex: Arrays.asList(commaSeparatedPatterns.split("\\s*\\,\\s*"))) {
+            addTruncateAfter(regex);
+        }
     }
     
     public void addEvaluator(EventEvaluator<ILoggingEvent> evaluator) {

@@ -62,6 +62,17 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Customizing AccessEvent Message](#customizing-accessevent-message)
 * [Customizing Logger Name Length](#customizing-logger-name-length)
 * [Customizing Stack Traces](#customizing-stack-traces)
+    * [Omit Common Frames](#omit-common-frames)
+    * [Truncate after Regex](#truncate-after-regex)
+    * [Exclude Frames per Regex](#exclude-frames-per-regex)
+    * [Maximum Depth per Throwable](#maximum-depth-per-throwable)
+    * [Maximum Trace Size (bytes)](#maximum-trace-size)
+    * [Classname Shortening](#classname-shortening)
+    * [Custom Line Separator](#custom-line-separator)
+    * [Root Cause First](#root-cause-first)
+    * [Conditional Output](#conditional-output)
+    * [Stack Hashes](#stack-hashes)
+    * [Using with PatternLayout](#using-with-patternlayout)
 * [Registering Additional Providers](#registering-additional-providers)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
 * [Composite Encoder/Layout](#composite-encoderlayout)
@@ -1756,10 +1767,11 @@ To customize the message pattern, specify the `messagePattern` like this:
 
 The pattern can contain any of the [AccessEvent conversion words](http://logback.qos.ch/manual/layouts.html#AccessPatternLayout).
 
+
 ## Customizing Logger Name Length
 
 For LoggingEvents, you can shorten the logger name field length similar to the normal pattern style of `%logger{36}`.
-Examples of how it is shortened can be found [here](http://logback.qos.ch/manual/layouts.html#conversionWord)
+Examples of how it is shortened can be found [here](https://logback.qos.ch/manual/layouts.html#logger).
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -1767,55 +1779,443 @@ Examples of how it is shortened can be found [here](http://logback.qos.ch/manual
 </encoder>
 ```
 
+The algorithm will shorten the logger name and attempt to reduce its size down to a maximum of number of characters.
+It does so by reducing each part between dots to their first letter and gradually expand them starting from the right most element until the maximum size is reached.
+
+To enable this feature, set the `shortenedLoggerNameLength` property to the desired value.
+Setting the length to zero constitutes an exception and returns only the part of the logger name after last dot.
+
+The next table provides examples of the abbreviation algorithm in action.
+
+|LENGTH|LOGGER NAME                 |SHORTENED                  |
+|------|----------------------------|---------------------------|
+|0     | `org.company.stack.Sample` | `Sample`                  |
+|5     | `org.company.stack.Sample` | `o.c.s.Sample`            |
+|16    | `org.company.stack.Sample` | `o.c.stack.Sample`        |
+|22    | `org.company.stack.Sample` | `o.company.stack.Sample`  |
+|25    | `org.company.stack.Sample` | `org.company.stack.Sample`|
+
+
 
 ## Customizing Stack Traces
 
 When [logging exceptions](https://www.baeldung.com/slf4j-log-exceptions),
 stack traces are formatted using logback's `ExtendedThrowableProxyConverter` by default.
-However, you can configure the encoder to use any `ThrowableHandlingConverter`
-to format stacktraces.
+However, you can configure the encoder to use any [`ThrowableHandlingConverter`](https://logback.qos.ch/apidocs/ch/qos/logback/classic/pattern/ThrowableHandlingConverter.html) to format stacktraces.
 
 Note that the `ThrowableHandlingConverter` only applies to the
 [exception passed as an extra argument](https://www.baeldung.com/slf4j-log-exceptions)
 to the log method, the way you normally log an exception in slf4j.
-Do NOT use [structured arguments or markers](#event-specific-custom-fields) for exceptions.
+Do **NOT** use [structured arguments or markers](#event-specific-custom-fields) for exceptions.
 
-A powerful [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
-is included in the logstash-logback-encoder library to format stacktraces by:
+A powerful [`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java) is included in the logstash-logback-encoder library to format stacktraces with the features listed in the next sections.
+This converter can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
 
-* Limiting the number of stackTraceElements per throwable (applies to each individual throwable.  e.g. caused-bys and suppressed)
-* Limiting the total length in characters of the trace
-* Abbreviating class names
-* Filtering out consecutive unwanted stackTraceElements based on regular expressions.
-* Using evaluators to determine if the stacktrace should be logged.
-* Outputting in either 'normal' order (root-cause-last), or root-cause-first.
-* Computing and inlining hexadecimal hashes for each exception stack using the `inlineHash` or `stackHash` provider ([more info](stack-hash.md)).
-* Using custom line separator for stack traces. The line separator can be specified as:
-	* `SYSTEM` (uses the system default)
-	* `UNIX` (uses `\n`)
-	* `WINDOWS` (uses `\r\n`), or
-	* any other string.
 
-For example:
+### Omit Common Frames
+
+Nested stacktraces often contain redudant frames that can safely be omitted without loosing any valuable information.
+
+The following example shows a standard stack trace of an exception with a single root cause:
+
+```
+java.lang.RuntimeException: Unable to invoke service
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:40)
+	at org.company.stack.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	at org.company.stack.framework.Dispatcher.invoke(Dispatcher.java:11)
+	at org.company.stack.framework.Dispatcher.dispatch(Dispatcher.java:8)
+	at org.company.stack.Sample.execute(Sample.java:36)
+	at org.company.stack.Sample.omitCommonFrames(Sample.java:22)
+	at org.company.stack.Sample.main(Sample.java:18)
+Caused by: java.lang.RuntimeException: Destination unreachable
+	at org.company.stack.gen.StackGenerator.two(StackGenerator.java:58)
+	at org.company.stack.gen.StackGenerator.one(StackGenerator.java:55)
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:38)
+	at org.company.stack.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	at org.company.stack.framework.Dispatcher.invoke(Dispatcher.java:11)
+	at org.company.stack.framework.Dispatcher.dispatch(Dispatcher.java:8)
+	at org.company.stack.Sample.execute(Sample.java:36)
+	at org.company.stack.Sample.omitCommonFrames(Sample.java:22)
+	at org.company.stack.Sample.main(Sample.java:18)
+```
+
+As we can see, the exception and the root cause have the first 7 frames in common. The overall stack trace length can be reduced by omitting these redundant frames from the root cause, as shown below:
+
+```
+java.lang.RuntimeException: Unable to invoke service
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:40)
+	at org.company.stack.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	at org.company.stack.framework.Dispatcher.invoke(Dispatcher.java:11)
+	at org.company.stack.framework.Dispatcher.dispatch(Dispatcher.java:8)
+	at org.company.stack.Sample.execute(Sample.java:36)
+	at org.company.stack.Sample.omitCommonFrames(Sample.java:22)
+	at org.company.stack.Sample.main(Sample.java:18)
+Caused by: java.lang.RuntimeException: Destination unreachable
+	at org.company.stack.gen.StackGenerator.two(StackGenerator.java:58)
+	at org.company.stack.gen.StackGenerator.one(StackGenerator.java:55)
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:38)
+	... 6 common frames omitted
+```
+
+Common frames are omitted and replaced with a message indicating the number of frames dropped. Note that the last common frame remains as a visual cue to the reader.
+
+This feature is enabled by default and can be disabled if desired by setting the `omitCommonFrames` property to `false`.
+
+
+
+### Truncate after Regex
+
+It is possible to use regular expressions to truncate the stacktrace after the first matching stacktrace element. The strings being matched against are in the form "fullyQualifiedClassName.methodName".
+
+For example, to suppress everything below `org.company.stack.framework` package or after a call to the `StackGenerator.one()` method, configure the following:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
     <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-        <maxDepthPerThrowable>30</maxDepthPerThrowable>
-        <maxLength>2048</maxLength>
-        <shortenedClassNameLength>20</shortenedClassNameLength>
-        <exclude>sun\.reflect\..*\.invoke.*</exclude>
-        <exclude>net\.sf\.cglib\.proxy\.MethodProxy\.invoke</exclude>
-        <evaluator class="myorg.MyCustomEvaluator"/>
-        <rootCauseFirst>true</rootCauseFirst>
-        <inlineHash>true</inlineHash>
-        <lineSeparator>\\n</lineSeparator>
+        <truncateAfter>^org\.company\.stack\.framework\..*</truncateAfter>
+        <truncateAfter>^\.StackGenerator\.one</truncateAfter>
     </throwableConverter>
 </encoder>
 ```
 
-[`ShortenedThrowableConverter`](/src/main/java/net/logstash/logback/stacktrace/ShortenedThrowableConverter.java)
-can even be used within a `PatternLayout` to format stacktraces in any non-JSON logs you may have.
+This will produce something similar to the following:
+
+```
+java.lang.RuntimeException: Unable to invoke service
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:40)
+	at org.company.stack.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	at org.company.stack.framework.Dispatcher.invoke(Dispatcher.java:11)
+	... 4 frames truncated
+Caused by: java.lang.RuntimeException: Destination unreachable
+	at org.company.stack.gen.StackGenerator.two(StackGenerator.java:58)
+	at org.company.stack.gen.StackGenerator.one(StackGenerator.java:55)
+	... 7 frames truncated (including 6 common frames)
+```
+
+Note how the stacktrace is truncated _after_ the matching frames.
+
+Alternatively, multiple regex patterns can be specified at once using the `<truncateAfters>` configuration keyword. This property accepts an optional comma separated list of patterns. The previous example configuration can also be written as follows:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <truncateAfters>
+            ^org\.company\.stack\.framework\..*,
+            ^\.StackGenerator\.one
+        </truncateAfters>
+    </throwableConverter>
+</encoder>
+```
+
+Using the `<truncateAfters>` configuration option can be useful when using an environment variable to specify the actual patterns at deployment time.
+
+
+
+### Exclude Frames per Regex
+
+Sometimes portions of the stacktrace are not worthy of interest and you want to exclude them to make the overall stacktrace shorter. The encoder allows to filter out consecutive unwanted stacktrace elements based on regular expressions and replace them with a single message indicating "something" has been removed.
+
+To enable this feature, simply define the regex patterns matching the frames you want to exclude using one or more `<exclude>` configuration keywords.
+
+Take the following stacktrace as an example:
+
+```
+java.lang.RuntimeException: Destination unreachable
+	at org.company.stack.gen.StackGenerator.two(StackGenerator.java:58)
+	at org.company.stack.gen.StackGenerator.one(StackGenerator.java:55)
+	at org.company.stack.gen.StackGenerator.threeSingle$SpringCGLIB(StackGenerator.java:14)
+	at org.company.stack.gen.StackGenerator.twoSingle$SpringCGLIB(StackGenerator.java:11)
+	at org.company.stack.gen.StackGenerator.oneSingle$SpringCGLIB(StackGenerator.java:8)
+	at org.company.stack.gen.StackGenerator.generateSingle(StackGenerator.java:5)
+	at org.company.stack.framework.Dispatcher.invoke(Dispatcher.java:11)
+	at org.company.stack.framework.Dispatcher.dispatch(Dispatcher.java:8)
+	at org.company.stack.Sample.execute(Sample.java:107)
+	at org.company.stack.Sample.exclude(Sample.java:94)
+	at org.company.stack.Sample.main(Sample.java:19)
+```
+
+Suppose the last three frames are common to all your exceptions (they come from the application bootstrap) and you want to reduce them to a single line for brevetiy. Also, you are not interested in frames with `package.classname` ending with `$SpringCGLIB` because they are generated by the Spring runtime... To do this, you will use the following configuration:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <exclude>\$SpringCGLIB$</exclude>
+        <exclude>^org\.company\.stack\.Sample\..*</exclude>
+    </throwableConverter>
+</encoder>
+```
+
+And your stacktrace would be rendered as follows:
+
+```
+java.lang.RuntimeException: Destination unreachable
+	at org.company.stack.gen.StackGenerator.two(StackGenerator.java:58)
+	at org.company.stack.gen.StackGenerator.one(StackGenerator.java:55)
+	... 3 frames excluded
+	at org.company.stack.gen.StackGenerator.generateSingle(StackGenerator.java:5)
+	at org.company.stack.framework.Dispatcher.invoke(Dispatcher.java:11)
+	at org.company.stack.framework.Dispatcher.dispatch(Dispatcher.java:8)
+	... 3 frames excluded
+```
+
+Note that the converter effectively removes stack trace elements only if at least **TWO** consecutive frames match the configured regex patterns. This is to avoid replacing a single frame with "... 1 frames excluded" that doesn't shorten the stacktrace at all...
+
+In addition, the first frame of the stacktrace is always output and cannot be excluded.
+
+
+Alternatively, multiple exclusion patterns can be specified at once using the `<exclusions>` configuration keyword. This property accepts an optional comma separated list of patterns. The previous example configuration can also be written as follows:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <exclusions>
+            \$SpringCGLIB$,
+            ^org\.company\.stack\.Sample\..*
+        </exclusions>
+    </throwableConverter>
+</encoder>
+```
+
+Using the `<exclusions>` configuration option can be useful when using an environment variable to specify the actual patterns at deployment time.
+
+
+
+### Maximum Depth per Throwable
+
+The `maxDepthPerThrowable` property is used to limit the depth of each individual throwable nested inside the original exception, caused-bys and suppressed exceptions included. Beyond this limit, additional elements are omitted and a message indicating the number elements removed is added instead.
+
+For example, the following configuration limits the stacktrace to 2 elements:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxDepthPerThrowable>2</maxDepthPerThrowable>
+    </throwableConverter>
+</encoder>
+```
+
+This would produce something similar to the following:
+
+```
+java.lang.RuntimeException: Unable to invoke service
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:40)
+	at org.company.stack.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	... 5 frames truncated
+Caused by: java.lang.RuntimeException: Destination unreachable
+	at org.company.stack.gen.StackGenerator.two(StackGenerator.java:58)
+	at org.company.stack.gen.StackGenerator.one(StackGenerator.java:55)
+	... 7 frames truncated (including 6 common frames)
+```
+
+Note how the maximum depth applies to each individual throwables. The last message indicates that 7 frames were truncated of which 6 are common to both the exception and the cause.
+
+The special value `-1` can be used to disable the feature and allow for an unlimited depth (no limit), which is the default.
+
+
+
+### Maximum Trace Size (bytes)
+
+The `maxLength` property is used to set a limit on the size of the overall trace, all throwables combined.
+
+For example, use the following configuration to limit the size to `256` characters:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <maxLength>256</maxLength>
+    </throwableConverter>
+</encoder>
+```
+
+The overall trace will be limited to 256 characters like this:
+
+```
+java.lang.RuntimeException: Unable to invoke service
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:40)
+	at org.company.stack.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	at org.company.stack.framework.Dispatcher....
+```
+
+The special value `-1` can be used to disable the feature and allow for an unlimited length (no limit), which is the default.
+
+
+
+### Classname Shortening
+
+Class names can be abbreviated in a way similar to the Logback layout [feature](https://logback.qos.ch/manual/layouts.html#logger).
+The algorithm will shorten the full class name (class + package) and attempt to reduce its size down to a maximum of number of characters.
+It does so by reducing the package elements to their first letter and gradually expand them starting from the right most element until the maximum size is reached.
+
+To enable this feature, set the `shortenedClassNameLength` property to the desired value.
+Setting the length to zero constitutes an exception and returns the "simple" class name without package name.
+
+The next table provides examples of the abbreviation algorithm in action.
+
+|LENGTH|CLASSNAME                   |SHORTENED                  |
+|------|----------------------------|---------------------------|
+|0     | `org.company.stack.Sample` | `Sample`                  |
+|5     | `org.company.stack.Sample` | `o.c.s.Sample`            |
+|16    | `org.company.stack.Sample` | `o.c.stack.Sample`        |
+|22    | `org.company.stack.Sample` | `o.company.stack.Sample`  |
+|25    | `org.company.stack.Sample` | `org.company.stack.Sample`|
+
+
+For example, use the following configuration to try to shorten the class names down to 25 characters:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <shortenedClassNameLength>25</shortenedClassNameLength>
+    </throwableConverter>
+</encoder>
+```
+
+This will produce an output similar to this:
+
+```
+j.lang.RuntimeException: Unable to invoke service
+	at o.c.s.gen.StackGenerator.causedBy(StackGenerator.java:40)
+	at o.c.s.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	at o.c.s.f.Dispatcher.invoke(Dispatcher.java:11)
+	at o.c.s.f.Dispatcher.dispatch(Dispatcher.java:8)
+	at org.company.stack.Sample.execute(Sample.java:97)
+	at org.company.stack.Sample.classNameShortening(Sample.java:77)
+	at org.company.stack.Sample.main(Sample.java:19)
+Caused by: j.lang.RuntimeException: Destination unreachable
+	at o.c.s.gen.StackGenerator.two(StackGenerator.java:58)
+	at o.c.s.gen.StackGenerator.one(StackGenerator.java:55)
+	at o.c.s.gen.StackGenerator.causedBy(StackGenerator.java:38)
+	... 6 common frames omitted
+```
+
+Note that the exception name is also shortened, as are the individual frames.
+
+
+
+### Custom Line Separator
+
+Stacktrace elements are sperated by the `SYSTEM` line separator by default. 
+The `linesSeparator` property can be used to specify a different value. The line separator can be specified as:
+
+* `SYSTEM` (uses the system default)
+* `UNIX` (uses `\n`)
+* `WINDOWS` (uses `\r\n`), or
+* any other string.
+
+For example, to use a pipe (`|`) as separator between stacktrace elements you would use the following configuration:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <lineSeparator>|</lineSeparator>
+    </throwableConverter>
+</encoder>
+```
+
+The stacktrace will be rendered on a single line with `|` between frames as follows (the line is truncated for readability):
+
+```
+java.lang.RuntimeException: Unable to invoke service|	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:40)|	at org.c
+```
+
+
+### Root Cause First
+
+Stacktraces are usually rendered with the root cause appearing last.
+You can invert the order and have the root cause output first by setting the `rootCauseFirst` property to `true` (`false` by default).
+
+Sample output:
+
+```
+java.lang.RuntimeException: Destination unreachable
+	at org.company.stack.gen.StackGenerator.two(StackGenerator.java:58)
+	at org.company.stack.gen.StackGenerator.one(StackGenerator.java:55)
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:38)
+	... 6 common frames omitted
+Wrapped by: java.lang.RuntimeException: Unable to invoke service
+	at org.company.stack.gen.StackGenerator.causedBy(StackGenerator.java:40)
+	at org.company.stack.gen.StackGenerator.generateCausedBy(StackGenerator.java:34)
+	at org.company.stack.framework.Dispatcher.invoke(Dispatcher.java:11)
+	at org.company.stack.framework.Dispatcher.dispatch(Dispatcher.java:8)
+	at org.company.stack.Sample.execute(Sample.java:79)
+	at org.company.stack.Sample.rootCauseFirst(Sample.java:66)
+	at org.company.stack.Sample.main(Sample.java:18)
+```
+
+
+### Conditional Output
+
+Standard Logback [EventEvaluators](https://logback.qos.ch/manual/filters.html#evalutatorFilter) can be used to determine if the stacktrace should be rendered.
+
+EventEvaluators are used to _skip_ generation of the stack trace for matching ILoggingEvents. In other words, an evaluator must evaluate to `false` (do not skip) to include the stacktrace...
+
+The following sample configuration leverage the Logback [JaninoEventEvaluator](https://logback.qos.ch/manual/filters.html#JaninoEventEvaluator) event evaluator to output the stacktrace only if the log message contains the word `billing`:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+        <evaluator class="ch.qos.logback.classic.boolex.JaninoEventEvaluator">
+            <expression>return !message.contains("billing");</expression>
+        </evaluator>
+    </throwableConverter>
+</encoder>
+```
+
+Multiple evaluators can be registered and are evaluated in the order in which they are registered. The stacktrace is only generated if all evaluators returned `false`.
+
+
+
+### Stack Hashes
+
+**To Be Documented**
+
+Computing and inlining hexadecimal hashes for each exception stack using the `inlineHash` or `stackHash` provider ([more info](stack-hash.md)).
+
+
+
+### Using with PatternLayout
+
+To use this with a PatternLayout, you must configure a new "conversionRule" as described [here](http://logback.qos.ch/manual/layouts.html#customConversionSpecifier). 
+
+For example:
+
+```xml
+<!-- Define a new conversion rule named "stack" -->
+<conversionRule conversionWord="stack"
+                converterClass="net.logstash.logback.stacktrace.ShortenedThrowableConverter" />
+```
+
+This configuration registers the ShortenedThrowableConverter under the name `stack`. From there the converter can be used in a PatternLayout using the syntax `%stack{options}` with optional configuration options between `{}`, each separated by a comma.
+
+The first three options must appear in the following order:
+
+1. maxDepthPerThrowable - `full` or `short` or an integer value
+2. shortenedClassNameLength - `full` or `short` or an integer value
+3. maxLength - `full` or `short` or an integer value
+
+The remaining options can appear in any order and are interpreted as follows:
+
+- keyword `rootFirst` - indicating that stacks should be printed root-cause first
+- keyword `inlineHash` - indicating that hexadecimal error hashes should be computed and inlined
+- keyword `inline` - indicating that the whole stack trace should be inlined, using `\\n` as separator
+- keyword `omitCommonFrames` - indicating that common frames should be omitted
+- keyword `keepCommonFrames` - indicating that common frames should be preserved
+- any other string:
+	- first evaluated as the name of a registered Evaluator that will determine if the stacktrace is ignored,
+	- if no evaluator is found with that name, the string is interpreted as a regex pattern for stack trace elements to exclude
+
+For example,
+
+```xml
+<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+	<encoder>
+		<pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,omitCommonFrames,regex1,regex2,evaluatorName}</pattern>
+	</encoder>
+</appender>
+```
+
+Note that it is not possible to configure the `truncateAfter` feature when the converter is used within a pattern layout.
+
 
 
 ## Registering Additional Providers
