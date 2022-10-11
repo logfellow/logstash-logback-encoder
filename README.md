@@ -2208,9 +2208,9 @@ For example,
 
 ```xml
 <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-	<encoder>
-		<pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,omitCommonFrames,regex1,regex2,evaluatorName}</pattern>
-	</encoder>
+    <encoder>
+        <pattern>[%thread] - %msg%n%stack{5,1024,10,rootFirst,omitCommonFrames,regex1,regex2,evaluatorName}</pattern>
+    </encoder>
 </appender>
 ```
 
