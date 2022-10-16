@@ -15,11 +15,13 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static net.logstash.logback.util.StringUtils.commaDelimitedListToStringArray;
+
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.JsonWritingUtils;
@@ -48,9 +50,9 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
      * The strings being matched against are in the form "fullyQualifiedClassName.methodName"
      * (e.g. "java.lang.Object.toString").
      */
-    private List<Pattern> excludes = new ArrayList<Pattern>(5);
+    private List<Pattern> excludes = new ArrayList<>();
 
-    private StackHasher hasher = new StackHasher();
+    private StackHasher hasher;
 
     public StackHashJsonProvider() {
         setFieldName(FIELD_NAME);
@@ -58,51 +60,54 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
 
     @Override
     public void start() {
-        if (!excludes.isEmpty()) {
-            hasher = new StackHasher(StackElementFilter.byPattern(excludes));
+        if (!isStarted()) {
+            this.hasher = new StackHasher(StackElementFilter.byPattern(excludes));
+            super.start();
         }
-        super.start();
+    }
+    
+    @Override
+    public void stop() {
+        if (isStarted()) {
+            super.stop();
+            this.hasher = null;
+        }
     }
 
     public void addExclude(String exclusionPattern) {
-        excludes.add(Pattern.compile(exclusionPattern));
+        this.excludes.add(Pattern.compile(exclusionPattern));
     }
 
     /**
-     * Set exclusion patterns as a list of coma separated patterns
-     * @param comaSeparatedPatterns list of coma separated patterns
+     * Add multiple exclusion patterns as a list of comma separated patterns
+     * @param commaSeparatedPatterns list of comma separated patterns
      */
-    public void setExclusions(String comaSeparatedPatterns) {
-        if (comaSeparatedPatterns == null || comaSeparatedPatterns.isEmpty()) {
-            this.excludes = new ArrayList<Pattern>(5);
-        } else {
-            setExcludes(Arrays.asList(comaSeparatedPatterns.split("\\s*\\,\\s*")));
+    public void addExclusions(String commaSeparatedPatterns) {
+        for (String regex: commaDelimitedListToStringArray(commaSeparatedPatterns)) {
+            addExclude(regex);
         }
     }
-
+    
     public void setExcludes(List<String> exclusionPatterns) {
-        if (exclusionPatterns == null || exclusionPatterns.isEmpty()) {
-            this.excludes = new ArrayList<Pattern>(5);
-        } else {
-            this.excludes = new ArrayList<Pattern>(exclusionPatterns.size());
-            for (String pattern : exclusionPatterns) {
-                addExclude(pattern);
-            }
+        this.excludes = new ArrayList<>(exclusionPatterns.size());
+        for (String pattern : exclusionPatterns) {
+            addExclude(pattern);
         }
     }
 
     public List<String> getExcludes() {
-        List<String> exclusionPatterns = new ArrayList<String>(excludes.size());
-        for (Pattern pattern : excludes) {
-            exclusionPatterns.add(pattern.pattern());
-        }
-        return exclusionPatterns;
+        return this.excludes
+                .stream()
+                .map(Pattern::pattern)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+        assertIsStarted();
+        
         IThrowableProxy throwableProxy = event.getThrowableProxy();
-        if (throwableProxy != null && throwableProxy instanceof  ThrowableProxy) {
+        if (throwableProxy instanceof ThrowableProxy) {
             String hash = hasher.hexHash(((ThrowableProxy) event.getThrowableProxy()).getThrowable());
             JsonWritingUtils.writeStringField(generator, getFieldName(), hash);
         }

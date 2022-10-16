@@ -35,8 +35,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class StackHashJsonProviderTest {
     
-    private StackHashJsonProvider provider = new StackHashJsonProvider();
-    
     @Mock
     private JsonGenerator generator;
     
@@ -50,6 +48,9 @@ public class StackHashJsonProviderTest {
 
     @Test
     public void testDefaultName() throws IOException {
+        StackHashJsonProvider provider = new StackHashJsonProvider();
+        provider.start();
+        
         // GIVEN
         when(event.getThrowableProxy()).thenReturn(throwableProxy);
         when(throwableProxy.getThrowable()).thenReturn(new Exception("test error"));
@@ -64,6 +65,9 @@ public class StackHashJsonProviderTest {
 
     @Test
     public void testFieldName() throws IOException {
+        StackHashJsonProvider provider = new StackHashJsonProvider();
+        provider.start();
+        
         // GIVEN
         when(event.getThrowableProxy()).thenReturn(throwableProxy);
         when(throwableProxy.getThrowable()).thenReturn(new Exception("test error"));

@@ -15,6 +15,8 @@
  */
 package net.logstash.logback.appender.destination;
 
+import static net.logstash.logback.util.StringUtils.commaDelimitedListToStringArray;
+
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,12 +66,15 @@ public class DestinationParser {
         /*
          * Multiple destinations can be specified on one single line, separated by comma
          */
-        String[] destinationStrings = (destinations == null ? "" : destinations.replace(" ", "")).split(",");
+        String[] destinationStrings = commaDelimitedListToStringArray(destinations);
         
         List<InetSocketAddress> destinationList = new ArrayList<>(destinationStrings.length);
 
         for (String entry: destinationStrings) {
 
+            // remove blanks
+            entry = entry.replace(" ", "");
+            
             /*
              * For #134, check to ensure properties are defined when destinations
              * are set using properties.

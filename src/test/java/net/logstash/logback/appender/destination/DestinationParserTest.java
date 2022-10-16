@@ -83,7 +83,7 @@ public class DestinationParserTest {
 
     @Test
     public void testParse_Multiple() {
-        List<InetSocketAddress> destinations = DestinationParser.parse(" localhost:2, localhost, localhost : 5 ", 1);
+        List<InetSocketAddress> destinations = DestinationParser.parse(" localhost:2, localhost, , localhost : 5 ", 1);
         
         assertThat(destinations).containsExactly(
                 InetSocketAddress.createUnresolved("localhost", 2),
@@ -103,13 +103,6 @@ public class DestinationParserTest {
     public void testParse_Multiple_NegativePort() {
         assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
             DestinationParser.parse("localhost:10000, localhost:-1", 1);
-        });
-    }
-    
-    @Test
-    public void testParse_Multiple_Empty() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
-            DestinationParser.parse("localhost:1000, , localhost:1001", 1);
         });
     }
     

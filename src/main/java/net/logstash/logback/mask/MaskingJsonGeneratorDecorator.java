@@ -15,8 +15,9 @@
  */
 package net.logstash.logback.mask;
 
+import static net.logstash.logback.util.StringUtils.commaDelimitedListToStringArray;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -136,10 +137,9 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
          * @param paths a comma-separated string of absolute or partial field paths to mask (see {@link PathBasedFieldMasker} for format)
          */
         public void addPaths(String paths) {
-            Arrays.stream(paths.split(","))
-                    .map(String::trim)
-                    .filter(path -> !path.isEmpty())
-                    .forEach(this::addPath);
+            for (String path: commaDelimitedListToStringArray(paths)) {
+                addPath(path);
+            }
         }
 
         /**
@@ -205,10 +205,9 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
          * @param values a comma-separated string of regexes to mask
          */
         public void addValues(String values) {
-            Arrays.stream(values.split(","))
-                    .map(String::trim)
-                    .filter(value -> !value.isEmpty())
-                    .forEach(this::addValue);
+            for (String value: commaDelimitedListToStringArray(values)) {
+                addValue(value);
+            }
         }
 
         /**

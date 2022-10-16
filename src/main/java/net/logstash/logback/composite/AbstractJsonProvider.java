@@ -49,4 +49,15 @@ public abstract class AbstractJsonProvider<Event extends DeferredProcessingAware
     public void prepareForDeferredProcessing(Event event) {
     }
 
+    
+    /**
+     * Assert the component is started and throw {@link IllegalStateException} if not
+     * 
+     * @throws IllegalStateException if component is not started
+     */
+    protected void assertIsStarted() {
+        if (!isStarted()) {
+            throw new IllegalStateException(this.getClass().getSimpleName() + " is not started");
+        }
+    }
 }
