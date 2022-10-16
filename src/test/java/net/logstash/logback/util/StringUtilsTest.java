@@ -17,6 +17,12 @@ package net.logstash.logback.util;
 
 import static net.logstash.logback.util.StringUtils.commaDelimitedListToStringArray;
 import static net.logstash.logback.util.StringUtils.delimitedListToStringArray;
+import static net.logstash.logback.util.StringUtils.isBlank;
+import static net.logstash.logback.util.StringUtils.isEmpty;
+import static net.logstash.logback.util.StringUtils.length;
+import static net.logstash.logback.util.StringUtils.trim;
+import static net.logstash.logback.util.StringUtils.trimToEmpty;
+import static net.logstash.logback.util.StringUtils.trimToNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
@@ -28,12 +34,76 @@ import org.junit.jupiter.api.Test;
 public class StringUtilsTest {
 
     @Test
+    public void isBlankTest() {
+        assertThat(isBlank(null)).isTrue();
+        assertThat(isBlank("")).isTrue();
+        assertThat(isBlank(" ")).isTrue();
+        assertThat(isBlank("\t")).isTrue();
+        assertThat(isBlank("\n")).isTrue();
+        assertThat(isBlank("\r")).isTrue();
+        assertThat(isBlank(" \t\n\r")).isTrue();
+        
+        assertThat(isBlank(" a ")).isFalse();
+    }
+    
+    
+    @Test
+    public void isEmptyTest() {
+        assertThat(isEmpty(null)).isTrue();
+        assertThat(isEmpty("")).isTrue();
+        assertThat(isEmpty(" ")).isFalse();
+        assertThat(isEmpty("\t")).isFalse();
+        assertThat(isEmpty("\n")).isFalse();
+        
+        assertThat(isEmpty(" a ")).isFalse();
+    }
+    
+    
+    @Test
+    public void trimTest() {
+        assertThat(trim(null)).isNull();
+        assertThat(trim("")).isEqualTo("");
+        assertThat(trim(" ")).isEqualTo("");
+        assertThat(trim(" foo ")).isEqualTo("foo");
+    }
+
+    
+    @Test
+    public void trimToEmptyTest() {
+        assertThat(trimToEmpty(null)).isEqualTo("");
+        assertThat(trimToEmpty("")).isEqualTo("");
+        assertThat(trimToEmpty(" ")).isEqualTo("");
+        assertThat(trimToEmpty(" foo ")).isEqualTo("foo");
+    }
+
+    
+    @Test
+    public void trimToNullTest() {
+        assertThat(trimToNull(null)).isNull();
+        assertThat(trimToNull("")).isNull();
+        assertThat(trimToNull(" ")).isNull();
+        assertThat(trimToNull(" foo ")).isEqualTo("foo");
+    }
+    
+    
+    @Test
+    public void lengthTest() {
+        assertThat(length(null)).isZero();
+        assertThat(length("")).isZero();
+        assertThat(length(" ")).isOne();
+    }
+    
+    
+    @Test
     public void commaDelimitedListToStringArrayTest() {
         // Null input -> empty array
         assertThat(commaDelimitedListToStringArray(null)).isEqualTo(new String[] {});
         
         // Empty string -> empty array
         assertThat(commaDelimitedListToStringArray("")).isEqualTo(new String[] {});
+        
+        // Blank string -> empty array
+        assertThat(commaDelimitedListToStringArray(" ")).isEqualTo(new String[] {});
         
         // Trim individual values
         assertThat(commaDelimitedListToStringArray("a,b,c")).isEqualTo(new String[] {"a", "b", "c"});

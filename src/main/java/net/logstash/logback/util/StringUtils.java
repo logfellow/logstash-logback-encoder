@@ -204,7 +204,7 @@ public class StringUtils {
      */
     public static String[] delimitedListToStringArray(String str, String delimiter) {
 
-        if (str == null) {
+        if (str == null || str.isEmpty()) {
             return EMPTY_STRING_ARRAY;
         }
         if (delimiter == null) {
@@ -224,7 +224,7 @@ public class StringUtils {
                 addIfNotBlank(result, trim(str.substring(pos, nextPos)));
                 pos = nextPos + delimiter.length();
             }
-            if (str.length() > 0 && pos <= str.length()) {
+            if (pos <= str.length()) {
                 addIfNotBlank(result, trim(str.substring(pos)));
             }
         }
