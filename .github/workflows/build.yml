@@ -14,15 +14,15 @@ jobs:
         java: [ '8', '11', '17' ]
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Setup JAVA
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: "temurin"
           java-version: ${{ matrix.java }}
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
@@ -43,7 +43,7 @@ jobs:
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Pcompat-logback surefire:test
 
       - name: Upload Test Reports to Github
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: ${{ always() }}
         with:
           name: test-reports-${{ matrix.java }}
@@ -51,7 +51,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Test Coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         if: matrix.java == '8'
         with:
           files: target/site/jacoco/jacoco.xml
@@ -64,12 +64,12 @@ jobs:
     if: github.event_name == 'push' && github.repository == 'logfellow/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: main
 
       - name: Setup JAVA
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: "temurin"
           java-version: 8
@@ -85,7 +85,7 @@ jobs:
           .github/workflows/steps/setup-git.sh
           git switch main
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
           path: |
             ~/.m2/repository
