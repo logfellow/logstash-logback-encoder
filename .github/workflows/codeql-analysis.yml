@@ -27,6 +27,7 @@ jobs:
     - name: setup JDK
       uses: actions/setup-java@v3
       with:
+        distribution: "temurin"
         java-version: 8
 
     - name: Initialize CodeQL
