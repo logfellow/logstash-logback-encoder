@@ -87,6 +87,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Status Listeners](#status-listeners)
 * [Joran/XML Configuration](#joran-xml-configuration)
 	* [Duration Property](#duration-property)
+	* [Comma separated list of values](#comma-separated-list-of-values)
 
 
 ## Including it in your project
@@ -1523,7 +1524,7 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
         <path>tilde~0slash~1escapedPath</path>
         
         <!-- Multiple field paths can be specified as a comma separated string in the <paths> element. -->
-        <paths>path1,path2,path3</paths>
+        <paths>path1, path2, path3</paths>
         
         <!-- Field paths to mask added via <pathMask> can use a non-default mask string -->
         <pathMask>
@@ -1579,7 +1580,10 @@ Specific values to be masked can be specified in several ways, as seen in the fo
         <value>bar</value>
         
         <!-- Multiple values can be specified as a comma separated string in the <values> element. -->
-        <values>^baz$,^blah$</values>
+        <values>
+            ^baz$,
+            ^blah$
+        </values>
         
         <!-- Values to mask added via <valueMask> can use a non-default mask string
              The mask string here can reference regex capturing groups if needed 
@@ -3125,6 +3129,36 @@ The following examples are therefore equivalent:
 <duration>2000</duration>
 <duration>2000 millisecond</duration>
 <duration>2000 milliseconds</duration>
+```
+
+### Comma separated list of values
+
+When specified, some properties accept a comma-separated list of values. 
+
+Leading and trailing whistespace characters are removed from each value during the decoding process, including tabs (`\t`), carriage return (`\r`) and line feeds (`\n`) - see the `String.trim()` function for more information. It is therefore safe to add an extra blank after the comma or write the values on multiple lines for better readability.
+
+The examples below are equivalent and produce a list containing the values `valueA`, `valueB`, and `valueC`:
+
+```xml
+<property>valueA, valueB, valueC</property>
+
+<property>
+    valueA,
+    valueB,
+    valueC
+</property>
+```
+
+Also, multiple consecutive comma are treated as a single delimiter. This allows you to write a generic configuration as follows where the actual value comes from an external environment variable whose value may be empty.
+
+```xml
+<property>valueA, ${ENV_VAR}, valueC</property>
+```
+
+If needed, the comma delimiter may be escaped by prefixing it with a backslash (`\`) to treat it as being part of the value instead of considered as an actual delimiter. The example below defines a list containing one single element whose value is the string `foo,bar`:
+
+```xml
+<property>foo\,bar</property>
 ```
 
 

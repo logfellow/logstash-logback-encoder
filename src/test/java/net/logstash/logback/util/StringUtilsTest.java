@@ -26,6 +26,8 @@ import static net.logstash.logback.util.StringUtils.trimToNull;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * @author brenuart
@@ -96,40 +98,79 @@ public class StringUtilsTest {
     
     @Test
     public void commaDelimitedListToStringArrayTest() {
+        String str = "a,b";
+        assertThat(commaDelimitedListToStringArray(str))
+            .isEqualTo(delimitedListToStringArray(str, ","));
+    }
+    
+
+    
+    @ParameterizedTest
+    @ValueSource(strings = {",", "--"})
+    public void delimitedListToStringArrayTest(String delimiter) {
         // Null input -> empty array
-        assertThat(commaDelimitedListToStringArray(null)).isEqualTo(new String[] {});
+        validate(delimiter, null, new String[] {});
         
         // Empty string -> empty array
-        assertThat(commaDelimitedListToStringArray("")).isEqualTo(new String[] {});
+        validate(delimiter, "", new String[] {});
         
         // Blank string -> empty array
-        assertThat(commaDelimitedListToStringArray(" ")).isEqualTo(new String[] {});
+        validate(delimiter, " ", new String[] {});
         
-        // Trim individual values
-        assertThat(commaDelimitedListToStringArray("a,b,c")).isEqualTo(new String[] {"a", "b", "c"});
-        assertThat(commaDelimitedListToStringArray("a, b , c \n")).isEqualTo(new String[] {"a", "b", "c"});
+        
+        // Single char delimiter
+        validate(delimiter, "a,b", new String[] {"a", "b"});
         
         // Consecutive delimiters
-        assertThat(commaDelimitedListToStringArray("a,,b")).isEqualTo(new String[] {"a", "b"});
-
+        validate(delimiter, "a,,b", new String[] {"a", "b"});
+        
         // Delimiter at end
-        assertThat(commaDelimitedListToStringArray("a,,")).isEqualTo(new String[] {"a"});
+        validate(delimiter, "a,", new String[] {"a"});
+        
+        // Trim individual values
+        validate(delimiter, " a, b\t , c \n", new String[] {"a", "b", "c"});
+        
+        // Escape
+        validate(delimiter, "a\\,b,c", new String[] {"a,b", "c"});
+        validate(delimiter, "a,b\\,c", new String[] {"a", "b,c"});
+        
+        validate(delimiter, "a\\,\\,b\\,,c",  new String[] {"a,,b,", "c"});
+        validate(delimiter, "a\\ ,\\,b\\,,c", new String[] {"a\\", ",b,", "c"});
+    }
+    
+    private static void validate(String delimiter, String delimitedList, String[] expected) {
+        String str = (delimiter == null || delimitedList == null) ? delimitedList : delimitedList.replace(",", delimiter);
+        
+        String[] e = new String[expected.length];
+        if (delimiter == null) {
+            e = expected;
+        }
+        else {
+            for (int i = 0; i < expected.length; i++) {
+                e[i] = expected[i].replace(",", delimiter);
+            }
+        }
+        assertThat(delimitedListToStringArray(str, delimiter)).isEqualTo(e);
     }
     
     
     @Test
-    public void delimitedListToStringArrayTest() {
-        // Single char delimiter
-        assertThat(delimitedListToStringArray("a|b", "|")).isEqualTo(new String[] {"a", "b"});
+    public void delimitedListToStringArrayTest_edgecases() {
         
-        // Two char delimiter
-        assertThat(delimitedListToStringArray("a|b", "||")).isEqualTo(new String[] {"a|b"});
-        assertThat(delimitedListToStringArray("a||b", "||")).isEqualTo(new String[] {"a", "b"});
+        // Null input -> empty array
+        assertThat(delimitedListToStringArray(null, "-")).isEqualTo(new String[] {});
         
-        // Empty delimiter
-        assertThat(delimitedListToStringArray("a,b", "")).isEqualTo(new String[] {"a", ",", "b"});
+        // Empty input -> empty array
+        assertThat(delimitedListToStringArray("", "-")).isEqualTo(new String[] {});
+        
+        // Blank input -> empty array
+        assertThat(delimitedListToStringArray(" ", "-")).isEqualTo(new String[] {});
+        
         
         // Null delimiter
         assertThat(delimitedListToStringArray("a,b", null)).isEqualTo(new String[] {"a,b"});
+
+        // Empty delimiter
+        assertThat(delimitedListToStringArray("a,b", "")).isEqualTo(new String[] {"a", ",", "b"});
     }
 }
