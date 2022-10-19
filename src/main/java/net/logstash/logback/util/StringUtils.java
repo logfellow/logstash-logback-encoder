@@ -170,8 +170,7 @@ public class StringUtils {
     }
     
     /**
-     * Convert a comma delimited list into an
-     * array of strings.
+     * Convert a comma delimited list into an array of strings.
      * 
      * @param str the input {@code String} (potentially {@code null} or empty)
      * @return an array of strings, or the empty array in case of empty input
@@ -188,15 +187,17 @@ public class StringUtils {
      * <p>A single {@code delimiter} may consist of more than one character,
      * but it will still be considered as a single delimiter string, rather
      * than as a bunch of potential delimiter characters.
+     * Delimiter can be escaped by prefixing it with a backslash ({@code \}).
      * 
      * <p>Values are trimmed, and are added to the resulting array only if not blank.
      * Therefore two consecutive delimiters are treated as a single delimiter.
+     * 
      * 
      * <p>A {@code null} delimiter is treated as no delimiter and returns an array with
      * the original {@code str} string as single element.
      * An empty delimiter splits the input string at each character.
      * 
-     * <p>A {code null} input returns an empty array.
+     * <p>A {@code null} input returns an empty array.
      * 
      * @param str the input {@code String} (potentially {@code null} or empty)
      * @param delimiter the delimiter between elements
@@ -219,21 +220,51 @@ public class StringUtils {
         }
         else {
             int pos = 0;
+            int searchPos = 0;
             int nextPos;
-            while ((nextPos = str.indexOf(delimiter, pos)) != -1) {
-                addIfNotBlank(result, trim(str.substring(pos, nextPos)));
-                pos = nextPos + delimiter.length();
+            boolean escaping = false;
+
+            while ((nextPos = str.indexOf(delimiter, searchPos)) != -1) {
+                if (nextPos > 0 && str.charAt(nextPos - 1) == '\\') {
+                    /*
+                     *  The delimiter is escaped -> continue search after the escaped
+                     *  delimiter we just found
+                     */
+                    searchPos = nextPos + delimiter.length();
+                    escaping = true;
+                }
+                else {
+                    addToResult(result, str.substring(pos, nextPos), escaping, delimiter);
+                    escaping = false;
+                    pos = nextPos + delimiter.length();
+                    searchPos = pos;
+                }
             }
+            
+            
             if (pos <= str.length()) {
-                addIfNotBlank(result, trim(str.substring(pos)));
+                addToResult(result, str.substring(pos), escaping, delimiter);
             }
         }
         return result.toArray(EMPTY_STRING_ARRAY);
     }
-    
-    private static void addIfNotBlank(Collection<String> col, String str) {
+
+    /**
+     * Add a string to the collection after unescaping the delimiter and trimming the result.
+     * The resulting string is actually added to the collection only if not blank.
+     *
+     * @param result the collection to add the string to
+     * @param str the string to eventually add to the collection
+     * @param unescape indicate whether delimiter should be "un-escaped" ({@code true}) or not ({@code false}).
+     * @param delimiter the delimiter
+     */
+    private static void addToResult(Collection<String> result, String str, boolean unescape, String delimiter) {
+        if (unescape) {
+            str = str.replace("\\" + delimiter, delimiter);
+        }
+        str = trim(str);
         if (!isBlank(str)) {
-            col.add(str);
+            result.add(str);
         }
     }
 }
