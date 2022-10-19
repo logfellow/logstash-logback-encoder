@@ -22,15 +22,16 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: setup JDK
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v3
       with:
+        distribution: "temurin"
         java-version: 8
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v1
+      uses: github/codeql-action/init@v2
       with:
         languages: ${{ matrix.language }}
 
@@ -38,4 +39,4 @@ jobs:
       run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml package
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v1
+      uses: github/codeql-action/analyze@v2
