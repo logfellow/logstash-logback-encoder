@@ -697,7 +697,7 @@ For example:
 > **WARNING**
 > Since Logback 1.3 it is not allowed anymore to declare an `<appender>` inside another `<appender>`. The nested appender should instead be declared outside and `<appender-ref>` must be used to refer to it.
 > 
-> See [LOGBACK-1674](https://jira.qos.ch/browse/LOGBACK-1674] for more information.
+> See [LOGBACK-1674](https://jira.qos.ch/browse/LOGBACK-1674) for more information.
 
 
 #### RingBuffer Size
