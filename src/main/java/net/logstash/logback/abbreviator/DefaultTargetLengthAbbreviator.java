@@ -98,9 +98,6 @@ public class DefaultTargetLengthAbbreviator implements Abbreviator, LifeCycle {
 
     @Override
     public String abbreviate(String in) {
-        if (!isStarted()) {
-            start();
-        }
         assertStarted();
         return delegate.abbreviate(in);
     }
