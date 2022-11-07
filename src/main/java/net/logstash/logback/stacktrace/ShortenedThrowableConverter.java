@@ -54,8 +54,8 @@ import ch.qos.logback.core.status.ErrorStatus;
  *     See {@link #maxDepthPerThrowable}.</li>
  * <li>Limits the total length in characters of the trace.
  *     See {@link #maxLength}.</li>
- * <li>Abbreviates class names based on the {@link #shortenedClassNameLength}.
- *     See {@link #shortenedClassNameLength}.</li>
+ * <li>Abbreviates class names based.
+ *     See {@link #setShortenedClassNameLength(int)}.</li>
  * <li>Filters out consecutive unwanted stackTraceElements based on regular expressions.
  *     See {@link #excludes}.</li>
  * <li>Truncate individual stacktraces after any element matching one the configured
