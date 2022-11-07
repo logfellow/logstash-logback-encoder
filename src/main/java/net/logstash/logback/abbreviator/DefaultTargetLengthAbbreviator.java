@@ -15,9 +15,6 @@
  */
 package net.logstash.logback.abbreviator;
 
-import net.logstash.logback.CachingAbbreviator;
-import net.logstash.logback.NullAbbreviator;
-
 import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.ClassNameOnlyAbbreviator;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
