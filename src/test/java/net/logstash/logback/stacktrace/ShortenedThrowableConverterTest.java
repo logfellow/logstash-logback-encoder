@@ -679,14 +679,6 @@ public class ShortenedThrowableConverterTest {
                 .contains("n.l.l.s.");
         }
     }
-
-    @Test
-    public void testShortenedClassName_invalidLength() {
-        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-
-        assertThatThrownBy(() -> converter.setShortenedClassNameLength(0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> converter.setShortenedClassNameLength(-10)).isInstanceOf(IllegalArgumentException.class);
-    }
     
     @Test
     public void testShortenedClassName_disable() {
@@ -708,7 +700,6 @@ public class ShortenedThrowableConverterTest {
         };
                 
         ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-        converter.setShortenedClassNameLength(10);
         converter.setClassNameAbbreviator(abbreviator);
         converter.start();
         
