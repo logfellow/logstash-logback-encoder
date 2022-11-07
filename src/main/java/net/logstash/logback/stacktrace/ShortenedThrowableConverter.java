@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
 
 import net.logstash.logback.abbreviator.DefaultTargetLengthAbbreviator;
 import net.logstash.logback.encoder.SeparatorParser;
-import net.logstash.logback.util.StringUtils;
 import net.logstash.logback.util.LogbackUtils;
+import net.logstash.logback.util.StringUtils;
 
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
