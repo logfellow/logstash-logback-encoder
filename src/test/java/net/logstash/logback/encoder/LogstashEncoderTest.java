@@ -67,8 +67,6 @@ import org.slf4j.MarkerFactory;
 
 public class LogstashEncoderTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
-
     private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
     private static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
     private final LogstashEncoder encoder = new LogstashEncoder();
@@ -588,6 +586,8 @@ public class LogstashEncoderTest {
 
     @Test
     public void testEncoderConfiguration() throws Exception {
+        Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
+
         File tempFile = new File(System.getProperty("java.io.tmpdir"), "test.log");
         // Empty the log file
         PrintWriter writer = new PrintWriter(tempFile);

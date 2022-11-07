@@ -38,7 +38,6 @@
                 <callerLine>line</callerLine>
             </fieldNames>
             <includeCallerData>true</includeCallerData>
-            <enableContextMap>true</enableContextMap>
             <shortenedLoggerNameLength>20</shortenedLoggerNameLength>
             <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
                 <maxDepthPerThrowable>20</maxDepthPerThrowable>
@@ -62,7 +61,7 @@
                     <provider class="net.logstash.logback.composite.loggingevent.RawMessageJsonProvider">
                         <fieldName>customRawMessage</fieldName>
                     </provider>
-                    <provider class="net.logstash.logback.composite.loggingevent.UuidProvider">
+                    <provider class="net.logstash.logback.composite.UuidJsonProvider">
                         <fieldName>id</fieldName>
                         <strategy>time</strategy>
                         <ethernet>00:C0:F0:3D:5B:7C</ethernet>
@@ -164,7 +163,7 @@
     <appender name="listAppender" class="ch.qos.logback.core.read.ListAppender"/>
     
     <appender name="asyncAppender" class="net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender">
-        <appender class="ch.qos.logback.core.read.ListAppender"/>
+        <appender-ref ref="listAppender"/>
         <listener class="net.logstash.logback.appender.listener.LoggingEventAppenderListenerImpl"/>
     </appender>
     
