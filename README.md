@@ -1794,6 +1794,7 @@ It does so by reducing each part between dots to their first letter and graduall
 
 To enable this feature, set the `shortenedLoggerNameLength` property to the desired value.
 Setting the length to zero constitutes an exception and returns only the part of the logger name after last dot.
+Use `-1` to disable shortening entirely.
 
 The next table provides examples of the abbreviation algorithm in action.
 
@@ -2058,6 +2059,7 @@ It does so by reducing the package elements to their first letter and gradually 
 
 To enable this feature, set the `shortenedClassNameLength` property to the desired value.
 Setting the length to zero constitutes an exception and returns the "simple" class name without package name.
+Set length to `-1` to disable shortening entirely.
 
 The next table provides examples of the abbreviation algorithm in action.
 
@@ -2104,8 +2106,8 @@ Alternatively you can specify your own custom abbreviation strategy with the `<c
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
-        <classNameAbbreviator class="package.MyCustomAbbreviator">
+    <throwableConverter>
+        <classNameAbbreviator class="your.own.CustomAbbreviator">
             <param1>aValue</param1>
         </classNameAbbreviator>
     </throwableConverter>
@@ -2210,7 +2212,7 @@ For example:
                 converterClass="net.logstash.logback.stacktrace.ShortenedThrowableConverter" />
 ```
 
-This configuration registers the ShortenedThrowableConverter under the name `stack`. From there the converter can be used in a PatternLayout using the syntax `%stack{options}` with optional configuration options between `{}`, each separated by a comma.
+This configuration registers the `ShortenedThrowableConverter` under the name `stack`. From there the converter can be used in a PatternLayout using the syntax `%stack{options}` with optional configuration options between `{}`, each separated by a comma.
 
 The first three options must appear in the following order:
 
