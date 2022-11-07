@@ -24,15 +24,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import net.logstash.logback.CachingAbbreviator;
-import net.logstash.logback.NullAbbreviator;
+import net.logstash.logback.abbreviator.DefaultTargetLengthAbbreviator;
 import net.logstash.logback.encoder.SeparatorParser;
+import net.logstash.logback.util.LogbackUtils;
 import net.logstash.logback.util.StringUtils;
 
 import ch.qos.logback.access.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
-import ch.qos.logback.classic.pattern.ClassNameOnlyAbbreviator;
-import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.pattern.ThrowableProxyConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -43,6 +41,7 @@ import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.boolex.EvaluationException;
 import ch.qos.logback.core.boolex.EventEvaluator;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.status.ErrorStatus;
 
 /**
@@ -55,8 +54,8 @@ import ch.qos.logback.core.status.ErrorStatus;
  *     See {@link #maxDepthPerThrowable}.</li>
  * <li>Limits the total length in characters of the trace.
  *     See {@link #maxLength}.</li>
- * <li>Abbreviates class names based on the {@link #shortenedClassNameLength}.
- *     See {@link #shortenedClassNameLength}.</li>
+ * <li>Abbreviates class names based.
+ *     See {@link #setShortenedClassNameLength(int)}.</li>
  * <li>Filters out consecutive unwanted stackTraceElements based on regular expressions.
  *     See {@link #excludes}.</li>
  * <li>Truncate individual stacktraces after any element matching one the configured
@@ -113,7 +112,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public static final int SHORT_MAX_LENGTH = 1024;
     public static final int DEFAULT_MAX_LENGTH = FULL_MAX_LENGTH;
 
-    public static final int FULL_CLASS_NAME_LENGTH = Integer.MAX_VALUE;
+    public static final int FULL_CLASS_NAME_LENGTH = -1;
     public static final int SHORT_CLASS_NAME_LENGTH = 10;
     public static final int DEFAULT_CLASS_NAME_LENGTH = FULL_CLASS_NAME_LENGTH;
 
@@ -132,7 +131,10 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final int OPTION_INDEX_SHORTENED_CLASS_NAME = 1;
     private static final int OPTION_INDEX_MAX_LENGTH = 2;
 
-    /** String sequence to use to delimit lines instead of {@link CoreConstants#LINE_SEPARATOR} when inline is active */
+    /**
+     * String sequence to use to delimit lines instead of {@link CoreConstants#LINE_SEPARATOR}
+     * when inline is active
+     */
     public static final String DEFAULT_INLINE_SEPARATOR = "\\n";
 
     private AtomicInteger errorCount = new AtomicInteger();
@@ -148,16 +150,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private int maxLength = DEFAULT_MAX_LENGTH;
 
     /**
-     * Will try to shorten class name lengths to less than this value
+     * Abbreviator used to shorten the classnames.
+     * Initialized during {@link #start()}.
      */
-    private int shortenedClassNameLength = DEFAULT_CLASS_NAME_LENGTH;
-
-    /**
-     * Abbreviator that will shorten the classnames if {@link #shortenedClassNameLength}
-     * is set less than {@link #FULL_CLASS_NAME_LENGTH}
-     */
-    private Abbreviator abbreviator = NullAbbreviator.INSTANCE;
-
+    private Abbreviator abbreviator = new DefaultTargetLengthAbbreviator();
+    
     /**
      * Patterns used to determine which stacktrace elements to exclude.
      *
@@ -167,7 +164,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * Note that these elements will only be excluded if and only if
      * more than one consecutive line matches an exclusion pattern.
      */
-    private List<Pattern> excludes = new ArrayList<>(5);
+    private List<Pattern> excludes = new ArrayList<>();
 
     /**
      * Patterns used to determine after which element the stack trace must be truncated.
@@ -204,7 +201,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     /**
      * Evaluators that determine if the stacktrace should be logged.
      */
-    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<>(1);
+    private List<EventEvaluator<ILoggingEvent>> evaluators = new ArrayList<>();
 
     @Override
     public void start() {
@@ -228,9 +225,16 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             stackHasher = new StackHasher(stackElementFilter);
         }
         truncateAfterFilter = StackElementFilter.byPattern(truncateAfterPatterns);
+        LogbackUtils.start(getContext(), abbreviator);
         super.start();
     }
 
+    @Override
+    public void stop() {
+        super.stop();
+        LogbackUtils.stop(this.abbreviator);
+    }
+    
     private void parseOptions() {
         List<String> optionList = getOptionList();
 
@@ -315,8 +319,13 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
         }
     }
 
+
     @Override
     public String convert(ILoggingEvent event) {
+        if (!isStarted()) {
+            throw new IllegalStateException("Converter is not started");
+        }
+        
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy == null || isExcludedByEvaluator(event)) {
             return CoreConstants.EMPTY_STRING;
@@ -687,48 +696,48 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
 
     
     /**
-     * Abbreviates class names in a way similar to the Logback layout feature (see https://logback.qos.ch/manual/layouts.html#logger).
-     *
-     *  <p>The algorithm will shorten the full class name and attempt to reduce its size to a maximum of {@code length} characters.
-     *  It does so by reducing the package elements to their first letter and gradually expand them starting from the right until
-     *  the maximum size is reached.
-     *  Setting the length to zero constitutes an exception and returns the "simple" class name without package.
-     *
-     *  <p>The next table provides examples of the abbreviation algorithm in action.
-     *
-     *  <pre>
-     *  LENGTH   CLASSNAME                 SHORTENED
-     *  -------------------------------------------------------------
-     *  0        org.company.package.Bar   Bar
-     *  5        org.company.package.Bar   o.c.p.Bar
-     *  15       org.company.package.Bar   o.c.package.Bar
-     *  21       org.company.package.Bar   o.company.package.Bar
-     *  24       org.company.package.Bar   org.company.package.Bar
-     *  </pre>
-     *
-     *  @param length the desired maximum length or {@code -1} to disable the feature and allow for any arbitrary length.
+     * Set the length to which class names should be abbreviated.
+     * Cannot be used if a custom {@link Abbreviator} has been set through {@link #setClassNameAbbreviator(Abbreviator)}.
+     * 
+     * @param length the desired maximum length or {@code -1} to disable the feature and allow for any arbitrary length.
      */
     public void setShortenedClassNameLength(int length) {
-        if (length <= 0 && length != -1) {
-            throw new IllegalArgumentException("shortenedClassNameLength must be >= 0, or -1 to disable the feature");
-        }
-
-        if (length == -1 || length == FULL_CLASS_NAME_LENGTH) {
-            this.shortenedClassNameLength = FULL_CLASS_NAME_LENGTH;
-            this.abbreviator = NullAbbreviator.INSTANCE;
-        }
-        else if (length == 0) {
-            this.shortenedClassNameLength = 0;
-            this.abbreviator = new CachingAbbreviator(new ClassNameOnlyAbbreviator());
+        if (this.abbreviator instanceof DefaultTargetLengthAbbreviator) {
+            ((DefaultTargetLengthAbbreviator) this.abbreviator).setTargetLength(length);
         }
         else {
-            this.shortenedClassNameLength = length;
-            this.abbreviator = new CachingAbbreviator(new TargetLengthBasedClassNameAbbreviator(length));
+            throw new IllegalStateException("Cannot set shortenedClassNameLength on non default Abbreviator");
         }
     }
 
+    /**
+     * Get the class name abbreviation target length.
+     * Cannot be used if a custom {@link Abbreviator} has been set through {@link #setClassNameAbbreviator(Abbreviator)}.
+     * 
+     * @return the abbreviation target length
+     */
     public int getShortenedClassNameLength() {
-        return shortenedClassNameLength;
+        if (this.abbreviator instanceof DefaultTargetLengthAbbreviator) {
+            return ((DefaultTargetLengthAbbreviator) this.abbreviator).getTargetLength();
+        }
+        else {
+            throw new IllegalStateException("Cannot invoke getShortenedClassNameLength on non default abbreviator");
+        }
+    }
+    
+    
+    /**
+     * Set a custom {@link Abbreviator} used to shorten class names.
+     * 
+     * @param abbreviator the {@link Abbreviator} to use.
+     */
+    @DefaultClass(DefaultTargetLengthAbbreviator.class)
+    public void setClassNameAbbreviator(Abbreviator abbreviator) {
+        this.abbreviator = Objects.requireNonNull(abbreviator);
+    }
+    
+    public Abbreviator getClassNameAbbreviator() {
+        return this.abbreviator;
     }
     
     
@@ -879,5 +888,4 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public List<EventEvaluator<ILoggingEvent>> getEvaluators() {
         return new ArrayList<>(evaluators);
     }
-
 }

@@ -694,7 +694,7 @@ For example:
 </appender>
 ```
 
-> **WARNING**
+> **Warning**
 > Since Logback 1.3 it is not allowed anymore to declare an `<appender>` inside another `<appender>`. The nested appender should instead be declared outside and `<appender-ref>` must be used to refer to it.
 > 
 > See [LOGBACK-1674](https://jira.qos.ch/browse/LOGBACK-1674) for more information.
@@ -1794,6 +1794,7 @@ It does so by reducing each part between dots to their first letter and graduall
 
 To enable this feature, set the `shortenedLoggerNameLength` property to the desired value.
 Setting the length to zero constitutes an exception and returns only the part of the logger name after last dot.
+Use `-1` to disable shortening entirely.
 
 The next table provides examples of the abbreviation algorithm in action.
 
@@ -2053,11 +2054,12 @@ The special value `-1` can be used to disable the feature and allow for an unlim
 ### Classname Shortening
 
 Class names can be abbreviated in a way similar to the Logback layout [feature](https://logback.qos.ch/manual/layouts.html#logger).
-The algorithm will shorten the full class name (class + package) and attempt to reduce its size down to a maximum of number of characters.
+The algorithm will shorten the full class name (package + class) and attempt to reduce its size down to a maximum of number of characters.
 It does so by reducing the package elements to their first letter and gradually expand them starting from the right most element until the maximum size is reached.
 
 To enable this feature, set the `shortenedClassNameLength` property to the desired value.
 Setting the length to zero constitutes an exception and returns the "simple" class name without package name.
+Set length to `-1` to disable shortening entirely.
 
 The next table provides examples of the abbreviation algorithm in action.
 
@@ -2099,6 +2101,21 @@ Caused by: j.lang.RuntimeException: Destination unreachable
 ```
 
 Note that the exception name is also shortened, as are the individual frames.
+
+Alternatively you can specify your own custom abbreviation strategy with the `<classNameAbbreviator>` configuration property as shown below:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <throwableConverter>
+        <classNameAbbreviator class="your.own.CustomAbbreviator">
+            <param1>aValue</param1>
+        </classNameAbbreviator>
+    </throwableConverter>
+</encoder>
+```
+
+> **Note**
+> The value of `<shortenedClassNameLength>` property is ignored when a custom abbreviator is explicitly specified.
 
 
 
@@ -2195,7 +2212,7 @@ For example:
                 converterClass="net.logstash.logback.stacktrace.ShortenedThrowableConverter" />
 ```
 
-This configuration registers the ShortenedThrowableConverter under the name `stack`. From there the converter can be used in a PatternLayout using the syntax `%stack{options}` with optional configuration options between `{}`, each separated by a comma.
+This configuration registers the `ShortenedThrowableConverter` under the name `stack`. From there the converter can be used in a PatternLayout using the syntax `%stack{options}` with optional configuration options between `{}`, each separated by a comma.
 
 The first three options must appear in the following order:
 

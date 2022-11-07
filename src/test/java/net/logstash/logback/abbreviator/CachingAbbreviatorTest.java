@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback.appender;
+package net.logstash.logback.abbreviator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
-import net.logstash.logback.CachingAbbreviator;
 
 import ch.qos.logback.classic.pattern.Abbreviator;
 import org.junit.jupiter.api.Test;

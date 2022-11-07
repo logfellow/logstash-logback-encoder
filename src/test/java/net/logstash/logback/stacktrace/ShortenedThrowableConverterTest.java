@@ -35,6 +35,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.spi.ClassPackagingData;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
@@ -50,7 +51,7 @@ public class ShortenedThrowableConverterTest {
     /* DEBUG:
      *    Set to true to dump original exception and formatted result on stdout...
      */
-    private boolean dumpOnStdOut = false;
+    private boolean dumpOnStdOut = true;
 
     
     private static class StackTraceElementGenerator {
@@ -678,14 +679,6 @@ public class ShortenedThrowableConverterTest {
                 .contains("n.l.l.s.");
         }
     }
-
-    @Test
-    public void testShortenedClassName_invalidLength() {
-        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
-
-        assertThatThrownBy(() -> converter.setShortenedClassNameLength(0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> converter.setShortenedClassNameLength(-10)).isInstanceOf(IllegalArgumentException.class);
-    }
     
     @Test
     public void testShortenedClassName_disable() {
@@ -696,6 +689,26 @@ public class ShortenedThrowableConverterTest {
         
         assertThat(converter.getShortenedClassNameLength()).isEqualTo(ShortenedThrowableConverter.FULL_CLASS_NAME_LENGTH);
     }
+    
+    @Test
+    public void testShortenedClassName_customAbbreviator() {
+        Abbreviator abbreviator = new Abbreviator() {
+            @Override
+            public String abbreviate(String in) {
+                return "foo";
+            }
+        };
+                
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+        converter.setClassNameAbbreviator(abbreviator);
+        converter.start();
+        
+        String formatted = convert(converter, new Exception());
+
+        assertThat(converter.getClassNameAbbreviator()).isEqualTo(abbreviator);
+        assertThat(getLines(formatted)).allMatch(l -> l.startsWith("foo:") || l.trim().startsWith("at foo."));
+    }
+    
     
     
     @Test

@@ -15,38 +15,16 @@
  */
 package net.logstash.logback;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
 import ch.qos.logback.classic.pattern.Abbreviator;
 
 /**
- * An {@link Abbreviator} that caches results from a {@link #delegate} abbreviator.
- * 
- * Logger names are typically reused constantly, so caching abbreviations
- * of class names helps performance.
+ * @deprecated use net.logstash.logback.abbreviator.CachingAbbreviator instead
  */
-public class CachingAbbreviator implements Abbreviator {
-    
-    private final Abbreviator delegate;
-    
-    private final ConcurrentMap<String, String> cache = new ConcurrentHashMap<>();
-    
-    public CachingAbbreviator(Abbreviator delegate) {
-        super();
-        this.delegate = delegate;
-    }
+@Deprecated
+public class CachingAbbreviator extends net.logstash.logback.abbreviator.CachingAbbreviator {
 
-    @Override
-    public String abbreviate(String in) {
-        return cache.computeIfAbsent(in, delegate::abbreviate);
-    }
-    
-    /**
-     * Clears the cache.
-     */
-    public void clear() {
-        cache.clear();
+    public CachingAbbreviator(Abbreviator delegate) {
+        super(delegate);
     }
 
 }

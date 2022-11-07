@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.logstash.logback;
+package net.logstash.logback.abbreviator;
 
-/**
- * @deprecated use net.logstash.logback.abbreviator.NullAbbreviator instead
- */
-@Deprecated
-public class NullAbbreviator extends net.logstash.logback.abbreviator.NullAbbreviator {
+import ch.qos.logback.classic.pattern.Abbreviator;
 
+public class NullAbbreviator implements Abbreviator {
+    public static final NullAbbreviator INSTANCE = new NullAbbreviator();
+    
+    @Override
+    public String abbreviate(String in) {
+        return in;
+    }
 }

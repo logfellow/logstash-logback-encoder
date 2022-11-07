@@ -16,6 +16,9 @@
 package net.logstash.logback.util;
 
 import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.core.Context;
+import ch.qos.logback.core.spi.ContextAware;
+import ch.qos.logback.core.spi.LifeCycle;
 
 public abstract class LogbackUtils {
 
@@ -41,5 +44,28 @@ public abstract class LogbackUtils {
      */
     public static boolean isVersion13() {
         return IS_VERSION_13;
+    }
+    
+    public static void start(Object component) {
+        if (component instanceof LifeCycle) {
+            ((LifeCycle) component).start();
+        }
+    }
+    
+    public static void stop(Object component) {
+        if (component instanceof LifeCycle) {
+            ((LifeCycle) component).stop();
+        }
+    }
+    
+    public static void setContext(Context context, Object component) {
+        if (component instanceof ContextAware) {
+            ((ContextAware) component).setContext(context);
+        }
+    }
+    
+    public static void start(Context context, Object component) {
+        setContext(context, component);
+        start(component);
     }
 }

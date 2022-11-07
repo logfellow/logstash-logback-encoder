@@ -16,18 +16,18 @@
 package net.logstash.logback.composite.loggingevent;
 
 import java.io.IOException;
+import java.util.Objects;
 
-import net.logstash.logback.CachingAbbreviator;
-import net.logstash.logback.NullAbbreviator;
+import net.logstash.logback.abbreviator.DefaultTargetLengthAbbreviator;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
+import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.pattern.Abbreviator;
-import ch.qos.logback.classic.pattern.ClassNameOnlyAbbreviator;
-import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.joran.spi.DefaultClass;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
@@ -35,14 +35,10 @@ public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     public static final String FIELD_LOGGER_NAME = "logger_name";
 
     /**
-     * When set to anything >= 0 we will try to abbreviate the logger name
+     * Abbreviator that will shorten the logger classname
      */
-    private int shortenedLoggerNameLength = -1;
-
-    /**
-     * Abbreviator that will shorten the logger classname if shortenedLoggerNameLength is set
-     */
-    private Abbreviator abbreviator = NullAbbreviator.INSTANCE;
+    private Abbreviator abbreviator = new DefaultTargetLengthAbbreviator();
+    
     
     public LoggerNameJsonProvider() {
         setFieldName(FIELD_LOGGER_NAME);
@@ -50,6 +46,9 @@ public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+        if (!isStarted()) {
+            throw new IllegalStateException("Generator is not started");
+        }
         JsonWritingUtils.writeStringField(generator, getFieldName(), abbreviator.abbreviate(event.getLoggerName()));
     }
     
@@ -59,38 +58,42 @@ public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     }
 
     public int getShortenedLoggerNameLength() {
-        return shortenedLoggerNameLength;
+        if (this.abbreviator instanceof DefaultTargetLengthAbbreviator) {
+            return ((DefaultTargetLengthAbbreviator) this.abbreviator).getTargetLength();
+        }
+        else {
+            throw new IllegalStateException("Cannot invoke getShortenedLoggerNameLength on non default abbreviator");
+        }
     }
 
     public void setShortenedLoggerNameLength(int length) {
-        this.shortenedLoggerNameLength = length;
+        if (this.abbreviator instanceof DefaultTargetLengthAbbreviator) {
+            ((DefaultTargetLengthAbbreviator) this.abbreviator).setTargetLength(length);
+        }
+        else {
+            throw new IllegalStateException("Cannot set shortenedLoggerNameLength on non default Abbreviator");
+        }
     }
     
     @Override
     public void start() {
-        this.abbreviator = createAbbreviator();
+        LogbackUtils.start(getContext(), this.abbreviator);
         super.start();
     }
     
     @Override
     public void stop() {
         super.stop();
-        this.abbreviator = null;
+        LogbackUtils.stop(this.abbreviator);
     }
     
-    protected Abbreviator createAbbreviator() {
-        if (this.shortenedLoggerNameLength < 0) {
-            return NullAbbreviator.INSTANCE;
-        }
-        
-        Abbreviator abbreviator;
-        if (this.shortenedLoggerNameLength == 0) {
-            abbreviator = new ClassNameOnlyAbbreviator();
-        }
-        else {
-            abbreviator = new TargetLengthBasedClassNameAbbreviator(this.shortenedLoggerNameLength);
-        }
-        
-        return new CachingAbbreviator(abbreviator);
+    
+    @DefaultClass(DefaultTargetLengthAbbreviator.class)
+    public void setAbbreviator(Abbreviator abbreviator) {
+        this.abbreviator = Objects.requireNonNull(abbreviator);
+    }
+    
+    public Abbreviator getAbbreviator() {
+        return abbreviator;
     }
 }
