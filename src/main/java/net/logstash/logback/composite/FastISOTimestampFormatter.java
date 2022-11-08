@@ -75,7 +75,7 @@ class FastISOTimestampFormatter {
         this.trimMillis = trimMillis;
 
         if (formatter.getZone() == null) {
-            throw new IllegalArgumentException("formatter must be configured with a Zone override to format millis");
+            throw new IllegalArgumentException("formatter must be configured with a Zone override to format Instant");
         }
     }
     
