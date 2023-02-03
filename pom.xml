@@ -19,7 +19,7 @@
     </scm>
 
     <properties>
-        <java.version>1.8</java.version>
+        <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
@@ -39,6 +39,7 @@
 
         <!-- maven plugins -->
         <animal-sniffer-maven-plugin.version>1.22</animal-sniffer-maven-plugin.version>
+        <extra-enforcer-rules.version>1.6.1</extra-enforcer-rules.version>
         <license-maven-plugin.version>4.1</license-maven-plugin.version>
         <maven-bundle-plugin.version>5.1.8</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.2.1</maven-checkstyle-plugin.version>
@@ -250,6 +251,7 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
+                    <release>${java.version}</release>
                 </configuration>
             </plugin>
             <plugin>
@@ -265,7 +267,7 @@
                         <configuration>
                             <rules>
                                 <requireJavaVersion>
-                                    <version>[1.8,)</version>
+                                    <version>[11,)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
                                     <version>[3.5.0,)</version>
@@ -279,6 +281,9 @@
                                     <ignoreClasses>
                                         <ignoreClass>META-INF/versions/*</ignoreClass>
                                     </ignoreClasses>
+                                    <ignoredScopes>
+                                        <ignoredScope>test</ignoredScope>
+                                    </ignoredScopes>
                                 </enforceBytecodeVersion>
                             </rules>
                         </configuration>
@@ -288,7 +293,7 @@
                     <dependency>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>extra-enforcer-rules</artifactId>
-                        <version>1.6.1</version>
+                        <version>${extra-enforcer-rules.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>

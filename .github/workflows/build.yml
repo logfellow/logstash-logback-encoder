@@ -7,11 +7,11 @@ on:
 jobs:
   build:
     name: build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        java: [ '8', '11', '17' ]
+        java: [ '11', '17' ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -59,7 +59,7 @@ jobs:
 
   release:
     name: release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build]
     if: github.event_name == 'push' && github.repository == 'logfellow/logstash-logback-encoder' && github.ref == 'refs/heads/main' && startsWith(github.event.commits[0].message, '[release]')
     steps:
@@ -72,7 +72,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: "temurin"
-          java-version: 8
+          java-version: 17
 
       - name: Setup GPG
         run: .github/workflows/steps/setup-gpg.sh
