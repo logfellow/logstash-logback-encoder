@@ -224,7 +224,7 @@
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
+            <artifactId>mockito-subclass</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
