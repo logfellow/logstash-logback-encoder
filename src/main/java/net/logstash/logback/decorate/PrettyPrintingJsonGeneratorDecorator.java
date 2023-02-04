@@ -15,16 +15,51 @@
  */
 package net.logstash.logback.decorate;
 
+import ch.qos.logback.core.CoreConstants;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
 /**
  * Enables pretty printing on the {@link JsonGenerator}
  */
 public class PrettyPrintingJsonGeneratorDecorator implements JsonGeneratorDecorator {
 
+    private DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter()
+            .withRootSeparator(CoreConstants.EMPTY_STRING);
+
     @Override
     public JsonGenerator decorate(JsonGenerator generator) {
-        return generator.useDefaultPrettyPrinter();
+        return generator.setPrettyPrinter(prettyPrinter);
     }
 
+    /**
+     * Sets the root separator used by the pretty printer.
+     *
+     * <p>Replaces occurrences of the string literal {@code [SPACE]} with a space character
+     * to work around the fact that logback trims values read from xml before calling the setter.
+     * Therefore, to set the root separator to a single space, you can specify
+     * {@code <rootSeparator>[SPACE]</rootSeparator>} in the xml configuration.</p>
+     *
+     * @param rootSeparator the new root separator
+     * @see DefaultPrettyPrinter#withRootSeparator(String)
+     */
+    public void setRootSeparator(String rootSeparator) {
+        prettyPrinter = prettyPrinter.withRootSeparator(
+                rootSeparator == null ? null : rootSeparator.replace("[SPACE]", " "));
+    }
+
+    /**
+     * Sets whether spaces appear in object entries.
+     *
+     * @param spacesInObjectEntries whether spaces appear in object entries.
+     * @see DefaultPrettyPrinter#withSpacesInObjectEntries()
+     * @see DefaultPrettyPrinter#withoutSpacesInObjectEntries()
+     */
+    public void setSpacesInObjectEntries(boolean spacesInObjectEntries) {
+        if (spacesInObjectEntries) {
+            prettyPrinter = prettyPrinter.withSpacesInObjectEntries();
+        } else {
+            prettyPrinter = prettyPrinter.withoutSpacesInObjectEntries();
+        }
+    }
 }
