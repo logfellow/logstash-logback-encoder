@@ -94,8 +94,8 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
     private volatile boolean started;
 
     private ThreadLocalHolder<JsonFormatter> threadLocalJsonFormatter;
-     
-    
+
+
     public AbstractCompositeJsonFormatter(ContextAware declaredOrigin) {
         super(declaredOrigin);
     }
@@ -254,7 +254,25 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
     }
 
     private JsonFactory decorateFactory(JsonFactory factory) {
-        return this.jsonFactoryDecorator.decorate(factory)
+        JsonFactory factoryToDecorate = factory
+                /*
+                 * When generators are flushed, don't flush the underlying outputStream.
+                 *
+                 * This allows some streaming optimizations when using an encoder.
+                 *
+                 * The encoder generally determines when the stream should be flushed
+                 * by an 'immediateFlush' property.
+                 *
+                 * The 'immediateFlush' property of the encoder can be set to false
+                 * when the appender performs the flushes at appropriate times
+                 * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
+                 *
+                 * Set this prior to decorating, because some generators require
+                 * FLUSH_PASSED_TO_STREAM to work properly (e.g. YAML)
+                 */
+                .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
+
+        return this.jsonFactoryDecorator.decorate(factoryToDecorate)
                 /*
                  * Jackson buffer recycling works by maintaining a pool of buffers per thread. This
                  * feature works best when one JsonGenerator is created per thread, typically in J2EE
@@ -284,32 +302,28 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
     }
 
     private JsonGenerator decorateGenerator(JsonGenerator generator) {
-        return new SimpleObjectJsonGeneratorDelegate(jsonGeneratorDecorator.decorate(generator)
-               /*
-                * When generators are flushed, don't flush the underlying outputStream.
-                *
-                * This allows some streaming optimizations when using an encoder.
-                *
-                * The encoder generally determines when the stream should be flushed
-                * by an 'immediateFlush' property.
-                *
-                * The 'immediateFlush' property of the encoder can be set to false
-                * when the appender performs the flushes at appropriate times
-                * (such as the end of a batch in the AbstractLogstashTcpSocketAppender).
-                */
-               .disable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM)
+        JsonGenerator decorated = jsonGeneratorDecorator.decorate(generator)
+                /*
+                 * Don't let the json generator close the underlying outputStream and let the
+                 * encoder managed it.
+                 */
+                .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
-               /*
-                * Don't let the json generator close the underlying outputStream and let the
-                * encoder managed it.
-                */
-               .disable(JsonGenerator.Feature.AUTO_CLOSE_TARGET)
+        try {
+            decorated = decorated
+                /*
+                 * JsonGenerator are reused to serialize multiple log events.
+                 * Change the default root value separator to an empty string instead of a single space.
+                 */
+                .setRootValueSeparator(new SerializedString(CoreConstants.EMPTY_STRING));
+        } catch (UnsupportedOperationException e) {
+            /*
+             * Ignore.
+             * Some generators do not support setting the rootValueSeparator.
+             */
+        }
 
-               /*
-                * JsonGenerator are reused to serialize multiple log events.
-                * Change the default root value separator to an empty string instead of a single space.
-                */
-               .setRootValueSeparator(new SerializedString(CoreConstants.EMPTY_STRING)));
+        return new SimpleObjectJsonGeneratorDelegate(decorated);
     }
     
     public JsonFactory getJsonFactory() {
