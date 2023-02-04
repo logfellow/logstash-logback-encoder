@@ -1,0 +1,24 @@
+changelog:
+  categories:
+    - title: ":warning: Update considerations and deprecations"
+      labels:
+        - "warn/api-change"
+        - "warn/behavior-change"
+        - "warn/deprecation"
+    - title: ":sparkles: New features and improvements"
+      labels:
+        - "type/enhancement"
+    - title: ":lady_beetle: Bug fixes"
+      labels:
+        - "type/bug"
+        - "type/bug-logback"
+    - title: ":book: Documentation, Tests and Build"
+      labels:
+        - "type/documentation"
+        - "type/chore"
+    - title: ":up: Dependency Upgrades"
+      labels:
+        - "type/dependencies"
+    - title: ":question: Other Changes"
+      labels:
+        - "*"
