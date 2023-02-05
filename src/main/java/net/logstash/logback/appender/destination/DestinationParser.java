@@ -55,7 +55,6 @@ public class DestinationParser {
      * <p>
      *
      * For example, "host1.domain.com,host2.domain.com:5560"
-     * <p>
      *
      * @param destinations comma-separated list of destinations in the form of {@code hostName[:portNumber]}
      * @param defaultPort the port number to use when a destination does not specify one explicitly
