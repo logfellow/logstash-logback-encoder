@@ -201,7 +201,7 @@
             <artifactId>java-uuid-generator</artifactId>
             <version>${java-uuid-generator.version}</version>
             <!--
-               Only needed if the UuidProvider is used.
+               Only needed if the UuidJsonProvider is used.
             -->
             <optional>true</optional>
         </dependency>
