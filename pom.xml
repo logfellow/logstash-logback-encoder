@@ -38,7 +38,6 @@
         <mockito.version>5.1.1</mockito.version>
 
         <!-- maven plugins -->
-        <animal-sniffer-maven-plugin.version>1.22</animal-sniffer-maven-plugin.version>
         <extra-enforcer-rules.version>1.6.1</extra-enforcer-rules.version>
         <license-maven-plugin.version>4.1</license-maven-plugin.version>
         <maven-bundle-plugin.version>5.1.8</maven-bundle-plugin.version>
@@ -296,27 +295,6 @@
                         <version>${extra-enforcer-rules.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <version>${animal-sniffer-maven-plugin.version}</version>
-                <configuration>
-                    <signature>
-                        <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java18</artifactId>
-                        <version>1.0</version>
-                    </signature>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>ensure-java-1.8-compatible</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
