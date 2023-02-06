@@ -18,6 +18,7 @@ package net.logstash.logback.decorate.yaml;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
@@ -35,6 +36,12 @@ public class YamlJsonFactoryDecorator implements JsonFactoryDecorator {
         YAMLFactory yamlFactory = new YAMLFactory();
         ObjectMapper mapper = new ObjectMapper(yamlFactory);
         yamlFactory.setCodec(mapper);
+        /*
+         * YAMLGenerator needs to pass the flush to the stream.
+         * It doesn't maintain an internal buffer like the other generators.
+         * To see this, look at the .flush() implementations of each of the generator classes.
+         */
+        yamlFactory.enable(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM);
         return yamlFactory;
     }
 }
