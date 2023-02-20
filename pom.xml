@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>7.3</version>
+    <version>7.4-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Provides logback encoders, layouts, and appenders to log in JSON and other formats supported by Jackson</description>
@@ -15,7 +15,7 @@
         <url>https://github.com/logfellow/logstash-logback-encoder</url>
         <connection>scm:git:https://github.com/logfellow/logstash-logback-encoder</connection>
         <developerConnection>scm:git:https://github.com/logfellow/logstash-logback-encoder</developerConnection>
-        <tag>logstash-logback-encoder-7.3</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
