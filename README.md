@@ -41,6 +41,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [LoggingEvent Fields](#loggingevent-fields)
 	* [Standard Fields](#standard-fields)
 	* [MDC fields](#mdc-fields)
+	* [KeyValuePairs fields](#keyvaluepairs-fields)
 	* [Context fields](#context-fields)
 	* [Caller Info Fields](#caller-info-fields)
 	* [Custom Fields](#custom-fields)
@@ -1025,6 +1026,46 @@ specify`<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
     <mdcKeyFieldName>key1=alternateFieldNameForKey1</mdcKeyFieldName>
+</encoder>
+```
+
+### KeyValuePairs fields
+
+By default, each entry in the KeyValuePairs (`org.slf4j.event.KeyValuePair`) via the Fluent Api
+will appear as a field in the LoggingEvent.
+
+This can be fully disabled by specifying `<includeKeyValuePairs>false</includeKeyValuePairs>`,
+in the encoder/layout/appender configuration.
+
+You can also configure specific entries in the KeyValuePairs to be included or excluded as follows:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <includeKeyValuePairsKeyName>key1ToInclude</includeKeyValuePairsKeyName>
+    <includeKeyValuePairsKeyName>key2ToInclude</includeKeyValuePairsKeyName>
+</encoder>
+```
+
+or
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <excludeKeyValuePairsKeyName>key1ToExclude</excludeKeyValuePairsKeyName>
+    <excludeKeyValuePairsKeyName>key2ToExclude</excludeKeyValuePairsKeyName>
+</encoder>
+```
+
+When key names are specified for inclusion, then all other fields will be excluded.
+When key names are specified for exclusion, then all other fields will be included.
+It is a configuration error to specify both included and excluded key names.
+
+By default, the KeyValuePairs key is used as the field name in the output.
+To use an alternative field name in the output for an KeyValuePairs entry,
+specify`<keyValuePairsKeyFieldName>kvpKeyName=fieldName</keyValuePairsKeyFieldName>`: 
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <keyValuePairsKeyFieldName>key1=alternateFieldNameForKey1</keyValuePairsKeyFieldName>
 </encoder>
 ```
 
@@ -2590,6 +2631,23 @@ The provider name is the xml element name to use when configuring. Each provider
           <li><tt>excludeMdcKeyName</tt> - Name of keys to exclude (none)</li>
           <li><tt>mdcKeyFieldName</tt> - Strings in the form <tt>mdcKeyName=fieldName</tt>
               that specify an alternate field name to output for specific MDC key (none)</li>
+        </ul>
+      </td>
+    </tr>    <tr>
+      <td valign="top"><tt>keyValuePairs</tt></td>
+      <td>
+        <p>Outputs entries from the keyValuePairs.
+           Will include all entries by default.
+           When key names are specified for inclusion, then all other fields will be excluded.
+           When key names are specified for exclusion, then all other fields will be included.
+           It is a configuration error to specify both included and excluded key names.
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+          <li><tt>includeKeyValuePairsKeyName</tt> - Name of keys to include (all)</li>
+          <li><tt>excludeKeyValuePairsKeyName</tt> - Name of keys to exclude (none)</li>
+          <li><tt>keyValuePairsKeyFieldName</tt> - Strings in the form <tt>kvpKeyName=fieldName</tt>
+              that specify an alternate field name to output for specific KeyValuePairs key (none)</li>
         </ul>
       </td>
     </tr>
