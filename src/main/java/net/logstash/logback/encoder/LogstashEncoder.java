@@ -110,6 +110,32 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().addMdcKeyFieldName(mdcKeyFieldName);
     }
 
+
+    public boolean isIncludeKeyValuePairs() {
+        return getFormatter().isIncludeKvp();
+    }
+
+    public void setIncludeKeyValuePairs(boolean includeKvp) {
+        getFormatter().setIncludeKvp(includeKvp);
+    }
+
+    public void addIncludeKeyValuePairsKeyName(String includedKvpKeyName) {
+        getFormatter().addIncludeKvpKeyName(includedKvpKeyName);
+    }
+
+
+    public List<String> getIncludeKeyValuePairKeyNames() {
+        return getFormatter().getIncludeKvpKeyNames();
+    }
+
+    public void addExcludeKeyValuePairsKeyName(String excludedKvpKeyName) {
+        getFormatter().addExcludeKvpKeyName(excludedKvpKeyName);
+    }
+
+    public void setExcludeKeyValuePairsKeyNames(List<String> excludeKvpKeyNames) {
+        getFormatter().setExcludeKvpKeyNames(excludeKvpKeyNames);
+    }
+
     public boolean isIncludeTags() {
         return getFormatter().isIncludeTags();
     }

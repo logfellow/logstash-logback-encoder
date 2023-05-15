@@ -30,11 +30,7 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
+import java.util.*;
 
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
@@ -62,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import org.slf4j.event.KeyValuePair;
 
 public class LogstashEncoderTest {
 
@@ -288,6 +285,111 @@ public class LogstashEncoderTest {
     public void nullMDCDoesNotCauseEverythingToBlowUp() {
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         event.setMDCPropertyMap(null);
+
+        encoder.start();
+        assertThatCode(() -> encoder.encode(event)).doesNotThrowAnyException();
+    }
+
+    @Test
+    public void kvpAllIncluded() throws Exception {
+        List<KeyValuePair> kvp = new ArrayList<>();
+        kvp.add(new KeyValuePair("thing_one", "One"));
+        kvp.add(new KeyValuePair("thing_two", "Three"));
+
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setKeyValuePairs(kvp);
+
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("thing_one").textValue()).isEqualTo("One");
+        assertThat(node.get("thing_two").textValue()).isEqualTo("Three");
+    }
+
+    @Test
+    public void kvpSomeIncluded() throws Exception {
+        List<KeyValuePair> kvp = new ArrayList<>();
+        kvp.add(new KeyValuePair("thing_one", "One"));
+        kvp.add(new KeyValuePair("thing_two", "Three"));
+
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setKeyValuePairs(kvp);
+
+        encoder.addIncludeKeyValuePairsKeyName("thing_one");
+
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("thing_one").textValue()).isEqualTo("One");
+        assertThat(node.get("thing_two")).isNull();
+    }
+
+    @Test
+    public void kvpSomeExcluded() throws Exception {
+        List<KeyValuePair> kvp = new ArrayList<>();
+        kvp.add(new KeyValuePair("thing_one", "One"));
+        kvp.add(new KeyValuePair("thing_two", "Three"));
+
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setKeyValuePairs(kvp);
+
+        encoder.addExcludeKeyValuePairsKeyName("thing_two");
+
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("thing_one").textValue()).isEqualTo("One");
+        assertThat(node.get("thing_two")).isNull();
+    }
+
+    @Test
+    public void kvpNoneIncluded() throws Exception {
+        List<KeyValuePair> kvp = new ArrayList<>();
+        kvp.add(new KeyValuePair("thing_one", "One"));
+        kvp.add(new KeyValuePair("thing_two", "Three"));
+
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setKeyValuePairs(kvp);
+
+        encoder.setIncludeKeyValuePairs(false);
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("thing_one")).isNull();
+        assertThat(node.get("thing_two")).isNull();
+    }
+
+    @Test
+    public void propertiesInKVPAreIncludedInSubObject() throws Exception {
+        List<KeyValuePair> kvp = new ArrayList<>();
+        kvp.add(new KeyValuePair("thing_one", "One"));
+        kvp.add(new KeyValuePair("thing_two", "Three"));
+
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setKeyValuePairs(kvp);
+
+        encoder.getFieldNames().setKeyValuePair("kvp");
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("kvp").get("thing_one").textValue()).isEqualTo("One");
+        assertThat(node.get("kvp").get("thing_two").textValue()).isEqualTo("Three");
+    }
+
+    @Test
+    public void nullKVPDoesNotCauseEverythingToBlowUp() {
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setKeyValuePairs(null);
 
         encoder.start();
         assertThatCode(() -> encoder.encode(event)).doesNotThrowAnyException();
@@ -596,6 +698,38 @@ public class LogstashEncoderTest {
         assertThat(node.get("appname").textValue()).isEqualTo("damnGodWebservice");
         assertThat(node.get("appendedName").textValue()).isEqualTo("appendedValue");
         assertThat(node.get("myMdcKey")).isNull();
+        assertThat(node.get("logger").textValue()).isEqualTo(LogstashEncoderTest.class.getName());
+        assertThat(node.get("roles")).isEqualTo(parse("[\"customerorder\", \"auth\"]"));
+        assertThat(node.get("buildinfo")).isEqualTo(parse(
+                "{ \"version\" : \"Version 0.1.0-SNAPSHOT\", \"lastcommit\" : \"75473700d5befa953c45f630c6d9105413c16fe1\"}"));
+    }
+
+    @Test
+    public void testEncoderConfigurationOnFluentApi() throws Exception {
+        Logger LOG = LoggerFactory.getLogger(LogstashEncoderTest.class);
+
+        File tempFile = new File(System.getProperty("java.io.tmpdir"), "test.log");
+        // Empty the log file
+        PrintWriter writer = new PrintWriter(tempFile);
+        writer.print("");
+        writer.close();
+        LOG.atInfo()
+                .addMarker(append("appendedName", "appendedValue").and(append("n1", 2)))
+                .addKeyValue("myKvpKey", "myKvpValue")
+                .log("Testing info logging.");
+
+        List<String> lines = Files.linesOf(tempFile, StandardCharsets.UTF_8);
+        JsonNode node = MAPPER.readTree(lines.get(0).getBytes(StandardCharsets.UTF_8));
+
+        /*
+         * The configuration suppresses the version field, make sure it doesn't appear.
+         */
+        assertThat(node.get("@version")).isNull();
+        assertThat(node.get(LogstashCommonFieldNames.IGNORE_FIELD_INDICATOR)).isNull();
+
+        assertThat(node.get("appname").textValue()).isEqualTo("damnGodWebservice");
+        assertThat(node.get("appendedName").textValue()).isEqualTo("appendedValue");
+        assertThat(node.get("myKvpKey").textValue()).isEqualTo("myKvpValue");
         assertThat(node.get("logger").textValue()).isEqualTo(LogstashEncoderTest.class.getName());
         assertThat(node.get("roles")).isEqualTo(parse("[\"customerorder\", \"auth\"]"));
         assertThat(node.get("buildinfo")).isEqualTo(parse(

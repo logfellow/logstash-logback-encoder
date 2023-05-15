@@ -73,6 +73,9 @@ public class LoggingEventJsonProviders extends JsonProviders<ILoggingEvent> {
     public void addMdc(MdcJsonProvider provider) {
         addProvider(provider);
     }
+    public void addKvp(KeyValuePairJsonProvider provider) {
+        addProvider(provider);
+    }
     public void addTags(TagsJsonProvider provider) {
         addProvider(provider);
     }
