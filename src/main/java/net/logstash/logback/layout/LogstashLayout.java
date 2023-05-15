@@ -101,6 +101,41 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().addMdcKeyFieldName(mdcKeyFieldName);
     }
 
+    public boolean isIncludeKeyValuePairs() {
+        return getFormatter().isIncludeKvp();
+    }
+
+    public void setIncludeKeyValuePairs(boolean includeKvp) {
+        getFormatter().setIncludeKvp(includeKvp);
+    }
+
+    public List<String> getIncludeKeyValuePairsKeyNames() {
+        return getFormatter().getIncludeKvpKeyNames();
+    }
+
+    public void addIncludeKeyValuePairsKeyName(String includedKvpKeyName) {
+        getFormatter().addIncludeKvpKeyName(includedKvpKeyName);
+    }
+
+    public void setIncludeKeyValuePairsKeyNames(List<String> includeKvpKeyNames) {
+        getFormatter().setIncludeKvpKeyNames(includeKvpKeyNames);
+    }
+
+    public List<String> getExcludeKeyValuePairsKeyNames() {
+        return getFormatter().getExcludeKvpKeyNames();
+    }
+
+    public void addExcludeKeyValuePairsKeyName(String excludedKvpKeyName) {
+        getFormatter().addExcludeKvpKeyName(excludedKvpKeyName);
+    }
+
+    public void setExcludeKeyValuePairsKeyNames(List<String> excludeKvpKeyNames) {
+        getFormatter().setExcludeKvpKeyNames(excludeKvpKeyNames);
+    }
+    public void addKeyValuePairsKeyFieldName(String kvpKeyFieldName) {
+        getFormatter().addKvpKeyFieldName(kvpKeyFieldName);
+    }
+
     public boolean isIncludeTags() {
         return getFormatter().isIncludeTags();
     }

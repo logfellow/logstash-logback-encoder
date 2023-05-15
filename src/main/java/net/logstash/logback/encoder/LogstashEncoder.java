@@ -136,6 +136,10 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setExcludeKvpKeyNames(excludeKvpKeyNames);
     }
 
+    public void addKeyValuePairsKeyFieldName(String kvpKeyFieldName) {
+        getFormatter().addKvpKeyFieldName(kvpKeyFieldName);
+    }
+
     public boolean isIncludeTags() {
         return getFormatter().isIncludeTags();
     }
