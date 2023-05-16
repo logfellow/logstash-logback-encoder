@@ -16,27 +16,32 @@
 package net.logstash.logback.composite.loggingevent;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.event.KeyValuePair;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class KeyValuePairJsonProviderTest {
 
     private KeyValuePairJsonProvider provider = new KeyValuePairJsonProvider();
 
-    @Mock
+    private ByteArrayOutputStream resultStream;
     private JsonGenerator generator;
 
     @Mock
@@ -45,104 +50,77 @@ public class KeyValuePairJsonProviderTest {
     private List<KeyValuePair> kvp;
 
     @BeforeEach
-    public void setup() {
+    public void setup() throws Exception {
         kvp = new ArrayList<>();
         kvp.add(new KeyValuePair("name1", "value1"));
-        kvp.add(new KeyValuePair("name2", "value2"));
-        kvp.add(new KeyValuePair("name3", "value3"));
+        kvp.add(new KeyValuePair("name2", 2023));
+        kvp.add(new KeyValuePair("name3", new TestValue()));
         when(event.getKeyValuePairs()).thenReturn(kvp);
+        resultStream = new ByteArrayOutputStream();
+        generator = new JsonFactory().createGenerator(resultStream);
+        generator.setCodec(new ObjectMapper());
     }
 
     @Test
     public void testUnwrapped() throws IOException {
-
-        provider.writeTo(generator, event);
-
-        verify(generator).writeFieldName("name1");
-        verify(generator).writeObject("value1");
-        verify(generator).writeFieldName("name2");
-        verify(generator).writeObject("value2");
-        verify(generator).writeFieldName("name3");
-        verify(generator).writeObject("value3");
+        assertThat(generateJson())
+                .isEqualTo("{\"name1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}");
     }
 
     @Test
     public void testWrapped() throws IOException {
         provider.setFieldName("kvp");
-
-        provider.writeTo(generator, event);
-
-        InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeObjectFieldStart("kvp");
-        inOrder.verify(generator).writeFieldName("name1");
-        inOrder.verify(generator).writeObject("value1");
-        inOrder.verify(generator).writeFieldName("name2");
-        inOrder.verify(generator).writeObject("value2");
-        inOrder.verify(generator).writeFieldName("name3");
-        inOrder.verify(generator).writeObject("value3");
-        inOrder.verify(generator).writeEndObject();
+        assertThat(generateJson())
+                .isEqualTo("{\"kvp\":{\"name1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}}");
     }
 
     @Test
     public void testWrappedUsingFieldNames() throws IOException {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setKeyValuePair("kvp");
-
         provider.setFieldNames(fieldNames);
-
-        provider.writeTo(generator, event);
-
-        InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeObjectFieldStart("kvp");
-        inOrder.verify(generator).writeFieldName("name1");
-        inOrder.verify(generator).writeObject("value1");
-        inOrder.verify(generator).writeFieldName("name2");
-        inOrder.verify(generator).writeObject("value2");
-        inOrder.verify(generator).writeFieldName("name3");
-        inOrder.verify(generator).writeObject("value3");
-        inOrder.verify(generator).writeEndObject();
+        assertThat(generateJson())
+                .isEqualTo("{\"kvp\":{\"name1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}}");
     }
 
     @Test
     public void testInclude() throws IOException {
-
         provider.setIncludeKvpKeyNames(Collections.singletonList("name1"));
-        provider.writeTo(generator, event);
 
-        verify(generator).writeFieldName("name1");
-        verify(generator).writeObject("value1");
-        verify(generator, never()).writeFieldName("name2");
-        verify(generator, never()).writeObject("value2");
-        verify(generator, never()).writeFieldName("name3");
-        verify(generator, never()).writeObject("value3");
+        assertThat(generateJson())
+                .isEqualTo("{\"name1\":\"value1\"}");
     }
 
     @Test
     public void testExclude() throws IOException {
-
         provider.setExcludeKvpKeyNames(Collections.singletonList("name1"));
-        provider.writeTo(generator, event);
 
-        verify(generator, never()).writeFieldName("name1");
-        verify(generator, never()).writeObject("value1");
-        verify(generator).writeFieldName("name2");
-        verify(generator).writeObject("value2");
-        verify(generator).writeFieldName("name3");
-        verify(generator).writeObject("value3");
+        assertThat(generateJson())
+                .isEqualTo("{\"name2\":2023,\"name3\":{\"a\":1}}");
     }
 
     @Test
-    public void testAlternateFieldName() throws IOException {
-        provider.addKvpKeyFieldName("name1=alternateName1");
+    public void testAlternativeFieldName() throws IOException {
+        provider.addKvpKeyFieldName("name1=alternativeName1");
 
-        provider.writeTo(generator, event);
-
-        verify(generator).writeFieldName("alternateName1");
-        verify(generator).writeObject("value1");
-        verify(generator).writeFieldName("name2");
-        verify(generator).writeObject("value2");
-        verify(generator).writeFieldName("name3");
-        verify(generator).writeObject("value3");
+        assertThat(generateJson())
+                .isEqualTo("{\"alternativeName1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}");
     }
 
+    private String generateJson() throws IOException {
+        generator.writeStartObject();
+        provider.writeTo(generator, event);
+        generator.writeEndObject();
+
+        generator.flush();
+        return resultStream.toString();
+    }
+
+    private class TestValue {
+        private final int a = 1;
+
+        public int getA() {
+            return a;
+        }
+    }
 }
