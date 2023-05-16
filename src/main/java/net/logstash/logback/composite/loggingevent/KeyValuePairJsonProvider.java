@@ -83,24 +83,24 @@ public class KeyValuePairJsonProvider extends AbstractFieldJsonProvider<ILogging
         if (kvp == null || kvp.isEmpty())
             return;
 
-        boolean hasWrittenStart = false;
+        String fieldName = getFieldName();
+        if (fieldName != null)
+            generator.writeObjectFieldStart(getFieldName());
+
         for (KeyValuePair kv : kvp) {
             if (kv.key != null && kv.value != null
                     && (includeKvpKeyNames.isEmpty() || includeKvpKeyNames.contains(kv.key))
                     && (excludeKvpKeyNames.isEmpty() || !excludeKvpKeyNames.contains(kv.key))) {
 
-                String fieldName = kvpKeyFieldNames.get(kv.key);
-                if (fieldName == null) {
-                    fieldName = kv.key;
+                String key = kvpKeyFieldNames.get(kv.key);
+                if (key == null) {
+                    key = kv.key;
                 }
-                if (!hasWrittenStart && getFieldName() != null) {
-                    generator.writeObjectFieldStart(getFieldName());
-                    hasWrittenStart = true;
-                }
-                StructuredArguments.keyValue(fieldName, kv.value).writeTo(generator);
+                StructuredArguments.keyValue(key, kv.value).writeTo(generator);
             }
         }
-        if (hasWrittenStart) {
+
+        if (fieldName != null) {
             generator.writeEndObject();
         }
     }
@@ -113,9 +113,11 @@ public class KeyValuePairJsonProvider extends AbstractFieldJsonProvider<ILogging
     public List<String> getIncludeKvpKeyNames() {
         return Collections.unmodifiableList(includeKvpKeyNames);
     }
+
     public void addIncludeKvpKeyName(String includedKvpKeyName) {
         this.includeKvpKeyNames.add(includedKvpKeyName);
     }
+
     public void setIncludeKvpKeyNames(List<String> includeKvpKeyNames) {
         this.includeKvpKeyNames = new ArrayList<String>(includeKvpKeyNames);
     }
@@ -123,9 +125,11 @@ public class KeyValuePairJsonProvider extends AbstractFieldJsonProvider<ILogging
     public List<String> getExcludeKvpKeyNames() {
         return Collections.unmodifiableList(excludeKvpKeyNames);
     }
+
     public void addExcludeKvpKeyName(String excludedKvpKeyName) {
         this.excludeKvpKeyNames.add(excludedKvpKeyName);
     }
+
     public void setExcludeKvpKeyNames(List<String> excludeKvpKeyNames) {
         this.excludeKvpKeyNames = new ArrayList<>(excludeKvpKeyNames);
     }
