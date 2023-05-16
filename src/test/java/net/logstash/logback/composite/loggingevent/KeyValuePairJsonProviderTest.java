@@ -33,17 +33,17 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class KeyValuePairJsonProviderTest {
-    
+
     private KeyValuePairJsonProvider provider = new KeyValuePairJsonProvider();
-    
+
     @Mock
     private JsonGenerator generator;
-    
+
     @Mock
     private ILoggingEvent event;
 
     private List<KeyValuePair> kvp;
-    
+
     @BeforeEach
     public void setup() {
         kvp = new ArrayList<>();
@@ -52,12 +52,12 @@ public class KeyValuePairJsonProviderTest {
         kvp.add(new KeyValuePair("name3", "value3"));
         when(event.getKeyValuePairs()).thenReturn(kvp);
     }
-    
+
     @Test
     public void testUnwrapped() throws IOException {
-        
+
         provider.writeTo(generator, event);
-        
+
         verify(generator).writeFieldName("name1");
         verify(generator).writeObject("value1");
         verify(generator).writeFieldName("name2");
@@ -69,9 +69,9 @@ public class KeyValuePairJsonProviderTest {
     @Test
     public void testWrapped() throws IOException {
         provider.setFieldName("kvp");
-        
+
         provider.writeTo(generator, event);
-        
+
         InOrder inOrder = inOrder(generator);
         inOrder.verify(generator).writeObjectFieldStart("kvp");
         inOrder.verify(generator).writeFieldName("name1");
@@ -89,9 +89,9 @@ public class KeyValuePairJsonProviderTest {
         fieldNames.setKeyValuePair("kvp");
 
         provider.setFieldNames(fieldNames);
-        
+
         provider.writeTo(generator, event);
-        
+
         InOrder inOrder = inOrder(generator);
         inOrder.verify(generator).writeObjectFieldStart("kvp");
         inOrder.verify(generator).writeFieldName("name1");
@@ -105,10 +105,10 @@ public class KeyValuePairJsonProviderTest {
 
     @Test
     public void testInclude() throws IOException {
-        
+
         provider.setIncludeKvpKeyNames(Collections.singletonList("name1"));
         provider.writeTo(generator, event);
-        
+
         verify(generator).writeFieldName("name1");
         verify(generator).writeObject("value1");
         verify(generator, never()).writeFieldName("name2");
@@ -119,10 +119,10 @@ public class KeyValuePairJsonProviderTest {
 
     @Test
     public void testExclude() throws IOException {
-        
+
         provider.setExcludeKvpKeyNames(Collections.singletonList("name1"));
         provider.writeTo(generator, event);
-        
+
         verify(generator, never()).writeFieldName("name1");
         verify(generator, never()).writeObject("value1");
         verify(generator).writeFieldName("name2");
