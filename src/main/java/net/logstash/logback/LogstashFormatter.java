@@ -221,14 +221,15 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     }
 
     public void setIncludeKvp(boolean includeKvp) {
-        if (isIncludeKvp() != includeKvp) {
-            if (includeKvp) {
-                kvpProvider = new KeyValuePairJsonProvider();
-                addProvider(kvpProvider);
-            } else {
-                getProviders().removeProvider(kvpProvider);
-                kvpProvider = null;
-            }
+        if (isIncludeKvp() == includeKvp)
+            return;
+
+        if (includeKvp) {
+            kvpProvider = new KeyValuePairJsonProvider();
+            addProvider(kvpProvider);
+        } else {
+            getProviders().removeProvider(kvpProvider);
+            kvpProvider = null;
         }
     }
 

@@ -80,29 +80,28 @@ public class KeyValuePairJsonProvider extends AbstractFieldJsonProvider<ILogging
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         List<KeyValuePair> kvp = event.getKeyValuePairs();
-        if (kvp != null && !kvp.isEmpty()) {
+        if (kvp == null || kvp.isEmpty())
+            return;
 
-            boolean hasWrittenStart = false;
+        boolean hasWrittenStart = false;
+        for (KeyValuePair kv : kvp) {
+            if (kv.key != null && kv.value != null
+                    && (includeKvpKeyNames.isEmpty() || includeKvpKeyNames.contains(kv.key))
+                    && (excludeKvpKeyNames.isEmpty() || !excludeKvpKeyNames.contains(kv.key))) {
 
-            for (KeyValuePair kv : kvp) {
-                if (kv.key != null && kv.value != null
-                        && (includeKvpKeyNames.isEmpty() || includeKvpKeyNames.contains(kv.key))
-                        && (excludeKvpKeyNames.isEmpty() || !excludeKvpKeyNames.contains(kv.key))) {
-
-                    String fieldName = kvpKeyFieldNames.get(kv.key);
-                    if (fieldName == null) {
-                        fieldName = kv.key;
-                    }
-                    if (!hasWrittenStart && getFieldName() != null) {
-                        generator.writeObjectFieldStart(getFieldName());
-                        hasWrittenStart = true;
-                    }
-                    StructuredArguments.keyValue(fieldName, kv.value).writeTo(generator);
+                String fieldName = kvpKeyFieldNames.get(kv.key);
+                if (fieldName == null) {
+                    fieldName = kv.key;
                 }
+                if (!hasWrittenStart && getFieldName() != null) {
+                    generator.writeObjectFieldStart(getFieldName());
+                    hasWrittenStart = true;
+                }
+                StructuredArguments.keyValue(fieldName, kv.value).writeTo(generator);
             }
-            if (hasWrittenStart) {
-                generator.writeEndObject();
-            }
+        }
+        if (hasWrittenStart) {
+            generator.writeEndObject();
         }
     }
 
