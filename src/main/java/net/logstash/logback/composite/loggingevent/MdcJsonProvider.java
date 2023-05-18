@@ -64,14 +64,14 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     /**
      * See {@link MdcJsonProvider}.
      */
-    private List<String> includeMdcKeyNames = new ArrayList<>();
+    protected List<String> includeMdcKeyNames = new ArrayList<>();
 
     /**
      * See {@link MdcJsonProvider}.
      */
-    private List<String> excludeMdcKeyNames = new ArrayList<>();
+    protected List<String> excludeMdcKeyNames = new ArrayList<>();
 
-    private final Map<String, String> mdcKeyFieldNames = new HashMap<>();
+    protected final Map<String, String> mdcKeyFieldNames = new HashMap<>();
 
     @Override
     public void start() {
@@ -101,8 +101,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
                         generator.writeObjectFieldStart(getFieldName());
                         hasWrittenStart = true;
                     }
-                    generator.writeFieldName(fieldName);
-                    generator.writeObject(entry.getValue());
+                    writeMdcEntry(generator, fieldName, entry.getKey(), entry.getValue());
                 }
             }
             if (hasWrittenStart) {
@@ -119,9 +118,11 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     public List<String> getIncludeMdcKeyNames() {
         return Collections.unmodifiableList(includeMdcKeyNames);
     }
+
     public void addIncludeMdcKeyName(String includedMdcKeyName) {
         this.includeMdcKeyNames.add(includedMdcKeyName);
     }
+
     public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
         this.includeMdcKeyNames = new ArrayList<String>(includeMdcKeyNames);
     }
@@ -129,9 +130,11 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     public List<String> getExcludeMdcKeyNames() {
         return Collections.unmodifiableList(excludeMdcKeyNames);
     }
+
     public void addExcludeMdcKeyName(String excludedMdcKeyName) {
         this.excludeMdcKeyNames.add(excludedMdcKeyName);
     }
+
     public void setExcludeMdcKeyNames(List<String> excludeMdcKeyNames) {
         this.excludeMdcKeyNames = new ArrayList<>(excludeMdcKeyNames);
     }
@@ -152,6 +155,19 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
             throw new IllegalArgumentException("mdcKeyFieldName (" + mdcKeyFieldName + ") must be in the form mdcKeyName=fieldName");
         }
         mdcKeyFieldNames.put(split[0], split[1]);
+    }
+
+    /**
+     * Writes the MDC entry with the given generator.
+     *
+     * @param generator the generator to write the entry to.
+     * @param fieldName the field name to use when writing the entry.
+     * @param mdcKey the key of the MDC map entry.
+     * @param mdcValue the value of the MDC map entry.
+     */
+    protected void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+        generator.writeFieldName(fieldName);
+        generator.writeObject(mdcValue);
     }
 
 }
