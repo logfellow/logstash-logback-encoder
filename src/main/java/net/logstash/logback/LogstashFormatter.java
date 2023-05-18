@@ -298,6 +298,11 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             mdcProvider.addMdcKeyFieldName(mdcKeyFieldName);
         }
     }
+    public void addMdcConvertValueType(String mdcConvertValueType) {
+        if (isIncludeMdc()) {
+            mdcProvider.addMdcConvertValueType(mdcConvertValueType);
+        }
+    }
 
     public boolean isIncludeContext() {
         return contextProvider != null;

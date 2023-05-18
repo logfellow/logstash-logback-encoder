@@ -307,6 +307,26 @@ public class LogstashEncoderTest {
     }
 
     @Test
+    public void mdcConvertValueTypes() throws Exception {
+        Map<String, String> mdcMap = new HashMap<>();
+        mdcMap.put("long", "4711");
+        mdcMap.put("double", "2.71828");
+
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setMDCPropertyMap(mdcMap);
+
+        encoder.addMdcConvertValueType("Long");
+        encoder.addMdcConvertValueType("Double");
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("long").longValue()).isEqualTo(4711L);
+        assertThat(node.get("double").doubleValue()).isEqualTo(2.71828);
+    }
+
+    @Test
     public void callerDataIsIncluded() throws Exception {
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         event.setMDCPropertyMap(Collections.emptyMap());

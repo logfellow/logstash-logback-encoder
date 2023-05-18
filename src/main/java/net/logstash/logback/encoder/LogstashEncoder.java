@@ -110,6 +110,10 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().addMdcKeyFieldName(mdcKeyFieldName);
     }
 
+    public void addMdcConvertValueType(String mdcConvertValueType) {
+        getFormatter().addMdcConvertValueType(mdcConvertValueType);
+    }
+
     public boolean isIncludeTags() {
         return getFormatter().isIncludeTags();
     }

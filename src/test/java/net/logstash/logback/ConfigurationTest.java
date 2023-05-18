@@ -178,7 +178,7 @@ public class ConfigurationTest {
         assertThat(mdcJsonProvider).isNotNull();
         assertThat(mdcJsonProvider.getIncludeMdcKeyNames()).containsExactly("included");
         assertThat(mdcJsonProvider.getMdcKeyFieldNames()).containsOnly(entry("key", "renamedKey"));
-        
+        assertThat(mdcJsonProvider.getMdcConvertValueTypes()).containsExactly("TYPE");
 
         GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsJsonProvider = getInstance(providers, GlobalCustomFieldsJsonProvider.class);
         assertThat(globalCustomFieldsJsonProvider).isNotNull();

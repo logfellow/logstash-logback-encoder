@@ -1028,10 +1028,58 @@ specify`<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`:
 </encoder>
 ```
 
-You can also replace the default MDC JSON provider with your own class extending from the
+You can also convert MDC field values (which are always Strings) into other object types in the JSON output.
+For example, whenever the MDC field value resembles a long number it will be converted into a Long object.  
+By default, no conversion is done.
+
+Currently, converters for the following value types are supported:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <mdcConvertValueType>Long</mdcConvertValueType>
+    <mdcConvertValueType>Double</mdcConvertValueType>
+</encoder>
+```
+
+To add your own converters for other types or applying the conversions only for specific fields
+you can consider to extend from the default `MdcJsonProvider` class. For example:
+
+```java
+public class MyCustomMdcJsonProvider extends MdcJsonProvider {
+	protected boolean writeConvertedFieldValue(JsonGenerator generator, String fieldName, String value)
+			throws IOException {
+		if (this.mdcConvertValueTypes.contains("LENGTH") && fieldName.contains("_length")) {
+			generator.writeNumber(value.length());
+			return true;
+		} else if (this.mdcConvertValueTypes.contains("BOOLEAN") && value.toLowerCase().matches("(true|false)")) {
+			generator.writeBoolean(Boolean.parseBoolean(value));
+			return true;
+		} else if (this.mdcConvertValueTypes.contains("JSON") && fieldName.startsWith("json_")) {
+			generator.writeObject(new ObjectMapper().createObjectNode() ... /* parse value into JsonNode */);
+			return true;
+		}
+
+		return super.writeConvertedFieldValue(generator, fieldName, value));
+	}
+}
+```
+
+You can replace the default MDC JSON provider with your own class extending from the
 [`MdcJsonProvider`](src/main/java/net/logstash/logback/composite/loggingevent/MdcJsonProvider.java) class.
 Configuring your class as a [Custom JSON Provider](#custom-json-provider) will then replace
 the default `MdcJsonProvider`.
+
+The configuration with above custom `MdcJsonProvider` could look like:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+	<provider class="mypackagenames.MyCustomMdcJsonProvider"/>
+	<mdcConvertValueType>Long</mdcConvertValueType>
+	<mdcConvertValueType>Length</mdcConvertValueType>
+	<mdcConvertValueType>Boolean</mdcConvertValueType>
+	<mdcConvertValueType>JSON</mdcConvertValueType>
+</encoder>
+```
 
 
 ### Context fields

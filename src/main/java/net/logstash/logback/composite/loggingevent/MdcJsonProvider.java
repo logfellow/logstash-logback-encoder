@@ -19,8 +19,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
@@ -58,8 +60,19 @@ import org.slf4j.MDC;
  * <p>If the fieldName is set, then the properties will be written
  * to that field as a subobject.
  * Otherwise, the properties are written inline.</p>
+ *
+ * <p>{@link #mdcConvertValueTypes} (empty per default) can be set to convert a MDC field value
+ * into a number in the JSON output if the value matches the format of a Double or Long value:</p>
+ *
+ * <ul>
+ * <li>Add {@link #MDC_CONVERT_VALUE_TYPE_DOUBLE} to attempt a conversion of Double values.</li>
+ * <li>Add {@link #MDC_CONVERT_VALUE_TYPE_LONG} to attempt a conversion of Long values.</li>
+ * </ul>
  */
 public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
+
+    protected static final String MDC_CONVERT_VALUE_TYPE_LONG = "LONG";
+    protected static final String MDC_CONVERT_VALUE_TYPE_DOUBLE = "DOUBLE";
 
     /**
      * See {@link MdcJsonProvider}.
@@ -72,6 +85,8 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     protected List<String> excludeMdcKeyNames = new ArrayList<>();
 
     protected final Map<String, String> mdcKeyFieldNames = new HashMap<>();
+
+    protected final Set<String> mdcConvertValueTypes = new HashSet<>();
 
     @Override
     public void start() {
@@ -102,7 +117,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
                         hasWrittenStart = true;
                     }
                     generator.writeFieldName(fieldName);
-                    writeFieldValue(generator, entry.getValue());
+                    this.writeFieldValue(generator, fieldName, entry.getValue());
                 }
             }
             if (hasWrittenStart) {
@@ -140,6 +155,13 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
         return mdcKeyFieldNames;
     }
 
+    public Set<String> getMdcConvertValueTypes() {
+        return mdcConvertValueTypes;
+    }
+    public void addMdcConvertValueType(String mdcConvertValueType) {
+        this.mdcConvertValueTypes.add(mdcConvertValueType.toUpperCase());
+    }
+
     /**
      * Adds the given mdcKeyFieldName entry in the form mdcKeyName=fieldName
      * to use an alternative field name for an MDC key.
@@ -154,8 +176,42 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
         mdcKeyFieldNames.put(split[0], split[1]);
     }
 
-    protected void writeFieldValue(JsonGenerator generator, String value) throws IOException {
-        generator.writeObject(value);
+    protected void writeFieldValue(JsonGenerator generator, String fieldName, String value) throws IOException {
+        if (this.mdcConvertValueTypes.isEmpty() || value == null || value.isEmpty()) {
+            generator.writeObject(value);
+        } else {
+            if (!writeConvertedFieldValue(generator, fieldName, value)) {
+                generator.writeObject(value);
+            }
+        }
+    }
+
+    /**
+     * Writes a converted field value using the provided generator.
+     *
+     * @param fieldName MDC field name (which may be altered by {@link #addMdcKeyFieldName(String)}
+     * @param value MDC field value
+     * @return true if the field has been converted and written with the generator;
+     *      false otherwise, in which case the String value is written as-is.
+     */
+    protected boolean writeConvertedFieldValue(JsonGenerator generator, String fieldName, String value) throws IOException {
+        if (this.mdcConvertValueTypes.contains(MDC_CONVERT_VALUE_TYPE_LONG)) {
+            try {
+                generator.writeNumber(Long.parseLong(value));
+                return true;
+            } catch (NumberFormatException ignore) {
+            }
+        }
+
+        if (this.mdcConvertValueTypes.contains(MDC_CONVERT_VALUE_TYPE_DOUBLE)) {
+            try {
+                generator.writeNumber(Double.parseDouble(value));
+                return true;
+            } catch (NumberFormatException ignore) {
+            }
+        }
+
+        return false;
     }
 
 }

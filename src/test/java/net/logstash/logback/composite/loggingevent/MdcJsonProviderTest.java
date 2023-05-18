@@ -18,6 +18,7 @@ package net.logstash.logback.composite.loggingevent;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -148,6 +149,55 @@ public class MdcJsonProviderTest {
         verify(generator).writeObject("value2");
         verify(generator).writeFieldName("name3");
         verify(generator).writeObject("value3");
+    }
+
+    @Test
+    public void testConvertValueTypes() throws IOException {
+        mdc = new LinkedHashMap<>();
+        mdc.put("long_negative", "-123");
+        mdc.put("long_positive", "4711");
+        mdc.put("double_negative", "-314.159e-2");
+        mdc.put("double_positive", "2.71828");
+        mdc.put("string_hex", "0xaffe");
+        mdc.put("empty", "");
+        mdc.put("key_null", null); // not logged
+        when(event.getMDCPropertyMap()).thenReturn(mdc);
+
+        provider.addMdcConvertValueType("long");
+        provider.addMdcConvertValueType("double");
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeFieldName("long_negative");
+        verify(generator).writeNumber(-123L);
+        verify(generator).writeFieldName("long_positive");
+        verify(generator).writeNumber(4711L);
+        verify(generator).writeFieldName("double_negative");
+        verify(generator).writeNumber(-314.159e-2);
+        verify(generator).writeFieldName("double_positive");
+        verify(generator).writeNumber(2.71828);
+        verify(generator).writeFieldName("string_hex");
+        verify(generator).writeObject("0xaffe");
+        verify(generator).writeFieldName("empty");
+        verify(generator).writeObject("");
+        verifyNoMoreInteractions(generator);
+    }
+
+    @Test
+    public void testConvertValueTypesOnlyLong() throws IOException {
+        mdc = new LinkedHashMap<>();
+        mdc.put("long_positive", "4711");
+        mdc.put("double_positive", "2.71828");
+        when(event.getMDCPropertyMap()).thenReturn(mdc);
+
+        provider.addMdcConvertValueType("long");
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeFieldName("long_positive");
+        verify(generator).writeNumber(4711L);
+        verify(generator).writeFieldName("double_positive");
+        verify(generator).writeObject("2.71828");
     }
 
 }
