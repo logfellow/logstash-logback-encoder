@@ -1028,6 +1028,12 @@ specify`<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`:
 </encoder>
 ```
 
+You can also replace the default MDC JSON provider with your own class extending from the
+[`MdcJsonProvider`](src/main/java/net/logstash/logback/composite/loggingevent/MdcJsonProvider.java) class.
+Configuring your class as a [Custom JSON Provider](#custom-json-provider) will then replace
+the default `MdcJsonProvider`.
+
+
 ### Context fields
 
 By default, each property of Logback's Context (`ch.qos.logback.core.Context`)

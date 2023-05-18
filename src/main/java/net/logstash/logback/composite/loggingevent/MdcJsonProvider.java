@@ -64,14 +64,14 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     /**
      * See {@link MdcJsonProvider}.
      */
-    private List<String> includeMdcKeyNames = new ArrayList<>();
+    protected List<String> includeMdcKeyNames = new ArrayList<>();
 
     /**
      * See {@link MdcJsonProvider}.
      */
-    private List<String> excludeMdcKeyNames = new ArrayList<>();
+    protected List<String> excludeMdcKeyNames = new ArrayList<>();
 
-    private final Map<String, String> mdcKeyFieldNames = new HashMap<>();
+    protected final Map<String, String> mdcKeyFieldNames = new HashMap<>();
 
     @Override
     public void start() {
@@ -102,7 +102,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
                         hasWrittenStart = true;
                     }
                     generator.writeFieldName(fieldName);
-                    generator.writeObject(entry.getValue());
+                    writeFieldValue(generator, entry.getValue());
                 }
             }
             if (hasWrittenStart) {
@@ -152,6 +152,10 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
             throw new IllegalArgumentException("mdcKeyFieldName (" + mdcKeyFieldName + ") must be in the form mdcKeyName=fieldName");
         }
         mdcKeyFieldNames.put(split[0], split[1]);
+    }
+
+    protected void writeFieldValue(JsonGenerator generator, String value) throws IOException {
+        generator.writeObject(value);
     }
 
 }
