@@ -21,6 +21,7 @@ import net.logstash.logback.LogstashFormatter;
 import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.JsonProviders;
+import net.logstash.logback.composite.loggingevent.mdc.MdcEntryWriter;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
@@ -99,6 +100,13 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
     }
     public void addMdcKeyFieldName(String mdcKeyFieldName) {
         getFormatter().addMdcKeyFieldName(mdcKeyFieldName);
+    }
+
+    public List<MdcEntryWriter> getMdcEntryWriters() {
+        return getFormatter().getMdcEntryWriters();
+    }
+    public void addMdcEntryWriter(MdcEntryWriter mdcEntryWriter) {
+        getFormatter().addMdcEntryWriter(mdcEntryWriter);
     }
 
     public boolean isIncludeKeyValuePairs() {

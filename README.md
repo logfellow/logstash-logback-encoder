@@ -1030,6 +1030,34 @@ specify `<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`:
 </encoder>
 ```
 
+You can also manipulate the MDC entry values written to the JSON output.
+By default, no manipulations are done and all MDC entry values are written as text.
+
+Currently, MDC entry writers for the following value types are supported:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter"/>
+    <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.DoubleMdcEntryWriter"/>
+    <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.BooleanMdcEntryWriter"/>
+</encoder>
+```
+
+To add your own MDC entry writer for other types or applying the manipulations only for specific fields
+you can consider writing your own `MdcEntryWriter`.
+
+You can also replace the default MDC JSON provider with your own class extending from the
+[`MdcJsonProvider`](src/main/java/net/logstash/logback/composite/loggingevent/MdcJsonProvider.java) class.
+Configuring your class as a [Custom JSON Provider](#custom-json-provider) will then replace
+the default `MdcJsonProvider`.
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <provider class="mypackagenames.MyCustomMdcJsonProvider"/>
+</encoder>
+```
+
+
 ### Key Value Pair Fields
 
 Slf4j 2's [fluent API](https://www.slf4j.org/manual.html#fluent) supports attaching key value pairs to the log event.
@@ -1068,17 +1096,6 @@ specify`<keyValuePairsKeyFieldName>keyName=fieldName</keyValuePairsKeyFieldName>
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
     <keyValueKeyFieldName>key1=alternateFieldNameForKey1</keyValueKeyFieldName>
-</encoder>
-```
-
-You can also replace the default MDC JSON provider with your own class extending from the
-[`MdcJsonProvider`](src/main/java/net/logstash/logback/composite/loggingevent/MdcJsonProvider.java) class.
-Configuring your class as a [Custom JSON Provider](#custom-json-provider) will then replace
-the default `MdcJsonProvider`.
-
-```xml
-<encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <provider class="mypackagenames.MyCustomMdcJsonProvider"/>
 </encoder>
 ```
 

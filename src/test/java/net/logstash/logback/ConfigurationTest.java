@@ -52,6 +52,7 @@ import net.logstash.logback.composite.loggingevent.RawMessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.SequenceJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
+import net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter;
 import net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder;
 import net.logstash.logback.marker.Markers;
 import net.logstash.logback.stacktrace.ShortenedThrowableConverter;
@@ -179,6 +180,8 @@ public class ConfigurationTest {
         assertThat(mdcJsonProvider).isNotNull();
         assertThat(mdcJsonProvider.getIncludeMdcKeyNames()).containsExactly("included");
         assertThat(mdcJsonProvider.getMdcKeyFieldNames()).containsOnly(entry("key", "renamedKey"));
+        assertThat(mdcJsonProvider.getMdcEntryWriters()).hasSize(1);
+        assertThat(mdcJsonProvider.getMdcEntryWriters()).element(0).isExactlyInstanceOf(LongMdcEntryWriter.class);
 
         KeyValuePairsJsonProvider keyValuePairsJsonProvider = getInstance(providers, KeyValuePairsJsonProvider.class);
         assertThat(keyValuePairsJsonProvider).isNotNull();

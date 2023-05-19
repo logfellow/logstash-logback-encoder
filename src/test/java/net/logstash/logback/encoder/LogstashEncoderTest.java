@@ -39,6 +39,9 @@ import java.util.TimeZone;
 
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
+import net.logstash.logback.composite.loggingevent.mdc.BooleanMdcEntryWriter;
+import net.logstash.logback.composite.loggingevent.mdc.DoubleMdcEntryWriter;
+import net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
@@ -293,6 +296,31 @@ public class LogstashEncoderTest {
 
         encoder.start();
         assertThatCode(() -> encoder.encode(event)).doesNotThrowAnyException();
+    }
+
+    @Test
+    public void mdcEntryWriters() throws Exception {
+        Map<String, String> mdcMap = new HashMap<>();
+        mdcMap.put("long", "4711");
+        mdcMap.put("double", "2.71828");
+        mdcMap.put("bool", "true");
+        mdcMap.put("default", "string");
+
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
+        event.setMDCPropertyMap(mdcMap);
+
+        encoder.addMdcEntryWriter(new LongMdcEntryWriter());
+        encoder.addMdcEntryWriter(new DoubleMdcEntryWriter());
+        encoder.addMdcEntryWriter(new BooleanMdcEntryWriter());
+        encoder.start();
+        byte[] encoded = encoder.encode(event);
+
+        JsonNode node = MAPPER.readTree(encoded);
+
+        assertThat(node.get("long").longValue()).isEqualTo(4711L);
+        assertThat(node.get("double").doubleValue()).isEqualTo(2.71828);
+        assertThat(node.get("bool").booleanValue()).isTrue();
+        assertThat(node.get("default").textValue()).isEqualTo("string");
     }
 
     @Test
