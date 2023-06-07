@@ -15,6 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +38,7 @@ import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -131,6 +133,27 @@ public class LoggingEventCompositeJsonFormatterTest {
         
             // Two instances created because the first was discarded because of the exception
             verify(decorator, times(2)).decorate(any(JsonGenerator.class));
+        }
+    }
+
+    /*
+     * When overriden, the writeObject method of the JsonGenerator passed to setJsonGeneratorDecorator is honored
+     */
+    @Test
+    public void testOverriddenJsonGeneratorWriteObjectIsHonored() throws IOException {
+        when(event.getArgumentArray()).thenReturn(new Object[] {StructuredArguments.keyValue("answer", 42)});
+        formatter.setJsonGeneratorDecorator(generator -> new JsonGeneratorDelegate(generator) {
+            @Override
+            public void writeObject(final Object pojo) throws IOException {
+                super.writeObject(String.format("is <%s>", pojo));
+            }
+        });
+        ((LoggingEventJsonProviders) formatter.getProviders()).addArguments(new ArgumentsJsonProvider());
+        formatter.start();
+
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            formatter.writeEvent(event, bos);
+            assertThat(bos).hasToString("{\"answer\":\"is <42>\"}");
         }
     }
 }
