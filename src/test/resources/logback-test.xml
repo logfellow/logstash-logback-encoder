@@ -50,6 +50,8 @@
             </throwableConverter>
             <includeMdcKeyName>included</includeMdcKeyName>
             <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
+            <includeKeyValueKeyName>included</includeKeyValueKeyName>
+            <keyValueKeyFieldName>key=renamedKey</keyValueKeyFieldName>
             <customFields>{"customName":"customValue"}</customFields>
             <provider class="net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider">
                 <omitEmptyFields>true</omitEmptyFields>
@@ -139,6 +141,10 @@
                     <includeMdcKeyName>included</includeMdcKeyName>
                     <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
                 </mdc>
+                <keyValuePairs>
+                    <includeKeyName>included</includeKeyName>
+                    <keyFieldName>key=renamedKey</keyFieldName>
+                </keyValuePairs>
                 <globalCustomFields>
                     <customFields>{"customName":"customValue"}</customFields>
                 </globalCustomFields>

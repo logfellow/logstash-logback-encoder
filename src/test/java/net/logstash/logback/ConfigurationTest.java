@@ -37,6 +37,7 @@ import net.logstash.logback.composite.UuidJsonProvider;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
 import net.logstash.logback.composite.loggingevent.ContextNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.KeyValuePairsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
@@ -87,7 +88,7 @@ public class ConfigurationTest {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
 
-        assertThat(providers).hasSize(19);
+        assertThat(providers).hasSize(20);
 
         verifyCommonProviders(providers);
 
@@ -99,7 +100,7 @@ public class ConfigurationTest {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
 
-        assertThat(providers).hasSize(23);
+        assertThat(providers).hasSize(24);
 
         verifyCommonProviders(providers);
 
@@ -178,7 +179,11 @@ public class ConfigurationTest {
         assertThat(mdcJsonProvider).isNotNull();
         assertThat(mdcJsonProvider.getIncludeMdcKeyNames()).containsExactly("included");
         assertThat(mdcJsonProvider.getMdcKeyFieldNames()).containsOnly(entry("key", "renamedKey"));
-        
+
+        KeyValuePairsJsonProvider keyValuePairsJsonProvider = getInstance(providers, KeyValuePairsJsonProvider.class);
+        assertThat(keyValuePairsJsonProvider).isNotNull();
+        assertThat(keyValuePairsJsonProvider.getIncludeKeyNames()).containsExactly("included");
+        assertThat(keyValuePairsJsonProvider.getKeyFieldNames()).containsOnly(entry("key", "renamedKey"));
 
         GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsJsonProvider = getInstance(providers, GlobalCustomFieldsJsonProvider.class);
         assertThat(globalCustomFieldsJsonProvider).isNotNull();

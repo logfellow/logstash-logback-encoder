@@ -41,6 +41,7 @@ The structure of the output, and the data it contains, is fully configurable.
 * [LoggingEvent Fields](#loggingevent-fields)
 	* [Standard Fields](#standard-fields)
 	* [MDC fields](#mdc-fields)
+	* [Key Value Pair fields](#key-value-pair-fields)
 	* [Context fields](#context-fields)
 	* [Caller Info Fields](#caller-info-fields)
 	* [Custom Fields](#custom-fields)
@@ -990,11 +991,12 @@ The field names can be customized (see [Customizing Standard Field Names](#custo
 
 ### MDC fields
 
-By default, each entry in the Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)
-will appear as a field in the LoggingEvent.
+By default, `LogstashEncoder`/`LogstashLayout` will write each
+[Mapped Diagnostic Context (MDC) (`org.slf4j.MDC`)](https://www.slf4j.org/api/org/slf4j/MDC.html)
+entry to the output.
 
-This can be fully disabled by specifying `<includeMdc>false</includeMdc>`,
-in the encoder/layout/appender configuration.
+To disable writing MDC entries, add `<includeMdc>false</includeMdc>`
+to the `LogstashEncoder`/`LogstashLayout` configuration.
 
 You can also configure specific entries in the MDC to be included or excluded as follows:
 
@@ -1020,11 +1022,52 @@ It is a configuration error to specify both included and excluded key names.
 
 By default, the MDC key is used as the field name in the output.
 To use an alternative field name in the output for an MDC entry,
-specify`<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`: 
+specify `<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`: 
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
     <mdcKeyFieldName>key1=alternateFieldNameForKey1</mdcKeyFieldName>
+</encoder>
+```
+
+### Key Value Pair Fields
+
+Slf4j 2's [fluent API](https://www.slf4j.org/manual.html#fluent) supports attaching key value pairs to the log event.
+
+`LogstashEncoder`/`LogstashLayout` will write each key value pair as a field in the output by default.
+
+To disable writing key value pairs, add `<includeKeyValuePairs>false</includeKeyValuePairs>`
+to the `LogstashEncoder`/`LogstashLayout` configuration.
+
+You can also configure specific key value pairs to be included or excluded as follows:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <includeKeyValueKeyName>key1ToInclude</includeKeyValueKeyName>
+    <includeKeyValueKeyName>key2ToInclude</includeKeyValueKeyName>
+</encoder>
+```
+
+or
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <excludeKeyValueKeyName>key1ToExclude</excludeKeyValueKeyName>
+    <excludeKeyValueKeyName>key2ToExclude</excludeKeyValueKeyName>
+</encoder>
+```
+
+When key names are specified for inclusion, then all other keys will be excluded.
+When key names are specified for exclusion, then all other keys will be included.
+It is a configuration error to specify both included and excluded key names.
+
+By default, the key is used as the field name in the output.
+To use an alternative field name in the output for an key value pair,
+specify`<keyValuePairsKeyFieldName>keyName=fieldName</keyValuePairsKeyFieldName>`: 
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <keyValueKeyFieldName>key1=alternateFieldNameForKey1</keyValueKeyFieldName>
 </encoder>
 ```
 
@@ -2590,6 +2633,24 @@ The provider name is the xml element name to use when configuring. Each provider
           <li><tt>excludeMdcKeyName</tt> - Name of keys to exclude (none)</li>
           <li><tt>mdcKeyFieldName</tt> - Strings in the form <tt>mdcKeyName=fieldName</tt>
               that specify an alternate field name to output for specific MDC key (none)</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td valign="top"><tt>keyValuePairs</tt></td>
+      <td>
+        <p>Outputs key value pairs added via slf4j's fluent api.
+           Will include all key value pairs by default.
+           When key names are specified for inclusion, then all other keys will be excluded.
+           When key names are specified for exclusion, then all other keys will be included.
+           It is a configuration error to specify both included and excluded key names.
+        </p>
+        <ul>
+          <li><tt>fieldName</tt> - Sub-object field name (no sub-object)</li>
+          <li><tt>includeKeyName</tt> - Name of keys to include (all)</li>
+          <li><tt>excludeKeyName</tt> - Name of keys to exclude (none)</li>
+          <li><tt>keyFieldName</tt> - Strings in the form <tt>keyName=fieldName</tt>
+              that specify an alternate field name to output for specific key (none)</li>
         </ul>
       </td>
     </tr>

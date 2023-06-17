@@ -110,6 +110,43 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().addMdcKeyFieldName(mdcKeyFieldName);
     }
 
+
+    public boolean isIncludeKeyValuePairs() {
+        return getFormatter().isIncludeKeyValuePairs();
+    }
+
+    public void setIncludeKeyValuePairs(boolean includeKeyValuePairs) {
+        getFormatter().setIncludeKeyValuePairs(includeKeyValuePairs);
+    }
+
+    public void addIncludeKeyValueKeyName(String includedKeyValueKeyName) {
+        getFormatter().addIncludeKeyValueKeyName(includedKeyValueKeyName);
+    }
+
+    public List<String> getIncludeKeyValueKeyNames() {
+        return getFormatter().getIncludeKeyValueKeyNames();
+    }
+
+    public void setIncludeKeyValueKeyNames(List<String> includeKeyValueKeyNames) {
+        getFormatter().setIncludeKeyValueKeyNames(includeKeyValueKeyNames);
+    }
+
+    public void addExcludeKeyValueKeyName(String excludedKeyValueKeyName) {
+        getFormatter().addExcludeKeyValueKeyName(excludedKeyValueKeyName);
+    }
+
+    public List<String> getExcludeKeyValueKeyNames() {
+        return getFormatter().getExcludeKeyValueKeyNames();
+    }
+
+    public void setExcludeKeyValueKeyNames(List<String> excludedKeyValueKeyNames) {
+        getFormatter().setExcludeKeyValueKeyNames(excludedKeyValueKeyNames);
+    }
+
+    public void addKeyValueKeyFieldName(String keyValueKeyFieldName) {
+        getFormatter().addKeyValueKeyFieldName(keyValueKeyFieldName);
+    }
+
     public boolean isIncludeTags() {
         return getFormatter().isIncludeTags();
     }

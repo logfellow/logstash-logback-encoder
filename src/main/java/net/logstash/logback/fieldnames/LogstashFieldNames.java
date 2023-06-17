@@ -42,6 +42,7 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
     private String rootStackTraceElementMethod = RootStackTraceElementJsonProvider.FIELD_METHOD_NAME;
     private String tags = TagsJsonProvider.FIELD_TAGS;
     private String mdc;
+    private String keyValuePair;
     private String arguments;
 
     public String getLogger() {
@@ -150,6 +151,15 @@ public class LogstashFieldNames extends LogstashCommonFieldNames {
         this.mdc = mdc;
     }
     
+
+    public String getKeyValuePair() {
+        return keyValuePair;
+    }
+
+    public void setKeyValuePair(String keyValuePair) {
+        this.keyValuePair = keyValuePair;
+    }
+
     /**
      * The name of the arguments object field.
      * <p>
