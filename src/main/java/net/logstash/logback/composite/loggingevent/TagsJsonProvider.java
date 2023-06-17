@@ -23,7 +23,6 @@ import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -32,8 +31,8 @@ import org.slf4j.Marker;
 /**
  * Writes {@link Marker} names as an array to the 'tags' field.
  * 
- * Does not write any special {@link LogstashMarker}s
- * (Those are handled by {@link LogstashMarkersJsonProvider}).
+ * <p>Does not write any special {@link LogstashMarker}s
+ * (Those are handled by {@link LogstashMarkersJsonProvider}).</p>
  */
 public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
@@ -43,21 +42,15 @@ public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> i
         setFieldName(FIELD_TAGS);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
         /*
          * Don't write the tags field unless we actually have a tag to write.
          */
         boolean hasWrittenStart = false;
-        
-        if (LogbackUtils.isVersion13()) {
-            hasWrittenStart = writeTagIfNecessary(generator, hasWrittenStart, event.getMarkerList());
-        }
-        else {
-            hasWrittenStart = writeTagIfNecessary(generator, hasWrittenStart, event.getMarker());
-        }
-        
+
+        hasWrittenStart = writeTagIfNecessary(generator, hasWrittenStart, event.getMarkerList());
+
         if (hasWrittenStart) {
             generator.writeEndArray();
         }

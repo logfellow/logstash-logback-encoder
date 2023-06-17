@@ -19,7 +19,6 @@ import java.time.Instant;
 
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 
@@ -27,12 +26,7 @@ public class LoggingEventFormattedTimestampJsonProvider extends AbstractFormatte
     
     @Override
     protected Instant getTimestampAsInstant(ILoggingEvent event) {
-        if (LogbackUtils.isVersion13()) {
-            return event.getInstant();
-        }
-        else {
-            return Instant.ofEpochMilli(event.getTimeStamp());
-        }
+        return event.getInstant();
     }
 
 }

@@ -23,7 +23,6 @@ import net.logstash.logback.composite.AbstractJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -35,15 +34,9 @@ import org.slf4j.Marker;
  */
 public class LogstashMarkersJsonProvider extends AbstractJsonProvider<ILoggingEvent> {
 
-    @SuppressWarnings("deprecation")
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
-        if (LogbackUtils.isVersion13()) {
-            writeLogstashMarkerIfNecessary(generator, event.getMarkerList());
-        }
-        else {
-            writeLogstashMarkerIfNecessary(generator, event.getMarker());
-        }
+        writeLogstashMarkerIfNecessary(generator, event.getMarkerList());
     }
     
     private void writeLogstashMarkerIfNecessary(JsonGenerator generator, List<Marker> markers) throws IOException {

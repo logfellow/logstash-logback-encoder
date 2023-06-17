@@ -762,17 +762,6 @@
         </profile>
         
         <!--
-            Profile used to run backward compatibility tests against logback 1.2
-        -->
-        <profile>
-            <id>compat-logback</id>
-            <properties>
-                <logback.version>1.2.11</logback.version>
-                <surefire.reportsSubDir>logback-${logback.version}</surefire.reportsSubDir>
-            </properties>
-        </profile>
-        
-        <!--
             Profile used to run backward compatibility tests against jackson 2.12
         -->
         <profile>

@@ -26,7 +26,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.TimeZone;
 
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -42,23 +41,16 @@ public class LoggingEventFormattedTimestampJsonProviderTest {
     @Mock
     private JsonGenerator generator;
 
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private ILoggingEvent event;
 
     private Instant now;
     
     @BeforeEach
     public void setup() {
-        // Logback has nano precision since version 1.3
-        if (LogbackUtils.isVersion13()) {
-            now = Instant.now();
-            when(event.getTimeStamp()).thenReturn(now.toEpochMilli());
-            when(event.getInstant()).thenReturn(now);
-        }
-        else {
-            now = Instant.ofEpochMilli(System.currentTimeMillis());
-            when(event.getTimeStamp()).thenReturn(now.toEpochMilli());
-        }
+        now = Instant.now();
+        when(event.getTimeStamp()).thenReturn(now.toEpochMilli());
+        when(event.getInstant()).thenReturn(now);
     }
     
     
