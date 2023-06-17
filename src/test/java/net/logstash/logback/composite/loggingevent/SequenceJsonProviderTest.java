@@ -28,12 +28,10 @@ import java.io.IOException;
 import java.util.function.Function;
 
 import net.logstash.logback.test.AbstractLogbackTest;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.SequenceNumberGenerator;
 import com.fasterxml.jackson.core.JsonGenerator;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -89,8 +87,6 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
     
     @Test
     public void testNoSequenceGeneratorInContext() throws IOException {
-        Assumptions.assumeTrue(LogbackUtils.isVersion13());
-        
         context.setSequenceNumberGenerator(null);
         provider.setContext(context);
         provider.start();
@@ -113,8 +109,6 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
     
     @Test
     public void testSequenceGeneratorInContext() throws IOException {
-        Assumptions.assumeTrue(LogbackUtils.isVersion13());
-        
         // Set a SequenceNumberGenerator to the context
         SequenceNumberGenerator seqGenerator = mock(SequenceNumberGenerator.class);
         context.setSequenceNumberGenerator(seqGenerator);
@@ -158,8 +152,6 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
         verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 456L);
         
         verify(sequenceProvider).apply(event);
-        if (LogbackUtils.isVersion13()) {
-            verify(event, never()).getSequenceNumber();
-        }
+        verify(event, never()).getSequenceNumber();
     }
 }

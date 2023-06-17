@@ -109,7 +109,7 @@ Maven style:
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
-    <version>1.3.5</version>
+    <version>1.3.7</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logback,
          such as implementations of Appender, Encoder, Layout, TurboFilter, etc
     <scope>runtime</scope>
@@ -123,14 +123,14 @@ from the maven repository exist on the runtime classpath.
 Specifically, the following need to be available on the runtime classpath:
 
 * jackson-databind / jackson-core / jackson-annotations >= 2.12.0
-* logback-core >= 1.2.0
-* logback-classic >= 1.2.0 (required for logging _LoggingEvents_)
-* logback-access >= 1.2.0 (required for logging _AccessEvents_)
+* logback-core >= 1.3.0
+* logback-classic >= 1.3.0 (required for logging _LoggingEvents_)
+* logback-access >= 1.3.0 (required for logging _AccessEvents_)
 * slf4j-api (usually comes as a transitive dependency of logback-classic)
 * java-uuid-generator (required if the `uuid` provider is used)
 
 Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
-Support for logback versions prior to 1.2.0 was removed in logstash-logback-encoder 7.0.
+Support for logback versions prior to 1.3.0 was removed in logstash-logback-encoder 7.4.
 
 If you are using logstash-logback-encoder in a project (such as spring-boot) that also declares dependencies on any of the above libraries, you might need to tell maven explicitly which versions to use to avoid conflicts.
 You can do so using maven's [dependencyManagement](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Management) feature.
@@ -138,7 +138,7 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 ```xml
 <properties>
-    <logback.version>1.3.0</logback.version>
+    <logback.version>1.3.7</logback.version>
 </properties>
 <dependencyManagement>
     <dependencies>
@@ -164,10 +164,10 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 ## Java Version Requirements
 
 | logstash-logback-encoder | Minimum Java Version supported |
-| ------------------------ | -------------------------------|
-| &gt;= 6.0                | 1.8                            |
-| 5.x                      | 1.7                            |
-| &lt;= 4.x                | 1.6                            |
+|--------------------------|--------------------------------|
+| &gt;= 6.0                | 8                              |
+| 5.x                      | 7                              |
+| &lt;= 4.x                | 6                              |
 
 
 ## Usage
@@ -1705,11 +1705,7 @@ The provider uses a standard Java DateTimeFormatter under the hood. However, spe
 * `[ISO_INSTANT]`
 
 
-Note that the precision of the timestamp depends on the Logback version being used:
-- versions before `1.3.0` have a timestamp with millisecond precision
-- nanosecond precision is available starting from Logback `1.3.0`
-The standard `[...]` formats will therefore output millis or nanos depending on which version of Logback is on the runtime classpath.
-
+With logback 1.3+ the timestamp will have millisecond precision.
 
 The formatter uses the default TimeZone of the host Java platform by default. You can change it like this:
 
@@ -2328,8 +2324,6 @@ When using the `LogstashEncoder`, `LogstashAccessEncoder` or a composite encoder
 
 Note that logback's xml configuration reader will [trim whitespace from xml element values](https://github.com/qos-ch/logback/blob/c2dcbfcfb4048d11d7e81cd9220efbaaccf931fa/logback-core/src/main/java/ch/qos/logback/core/joran/event/BodyEvent.java#L27-L37).  Therefore, if you want to end the prefix or suffix pattern with whitespace, first add the whitespace, and then add something like `%mdc{keyThatDoesNotExist}` after it.  For example `<pattern>your pattern %mdc{keyThatDoesNotExist}</pattern>`.  This will cause logback to output the whitespace as desired, and then a blank string for the MDC key that does not exist.
 
-> :warning: If you encounter the following warning: `A "net.logstash.logback.encoder.LogstashEncoder" object is not assignable to a "ch.qos.logback.core.Appender" variable.`, you are encountering a backwards incompatibilility introduced in logback 1.2.1.  Please vote for [LOGBACK-1326](https://jira.qos.ch/browse/LOGBACK-1326) and add a thumbs up to [PR#383](https://github.com/qos-ch/logback/pull/383) to try to get this addressed in logback.  In the meantime, the only solution is to downgrade logback-classic and logback-core to 1.2.0
-
 The line separator, which is written after the suffix, can be specified as:
 * `SYSTEM` (uses the system default)
 * `UNIX` (uses `\n`)
@@ -2446,10 +2440,8 @@ The provider name is the xml element name to use when configuring.
       <td>
         <p>Event sequence number.
         </p>
-        <p>With Logback 1.3 the sequence number is obtained from the event itself as long as the LoggerContext is configured with a `SequenceNumberGenerator` (which is not by default).
+        <p>With Logback 1.3+ the sequence number is obtained from the event itself as long as the LoggerContext is configured with a `SequenceNumberGenerator` (which is not by default).
 If no SequenceNumberGenerator is configured, the provider emits a warning and reverts to a locally generated incrementing number starting at 1.
-        </p>
-        <p>With Logback versions prior to 1.3 the sequence number is generated locally by the provider itself.
         </p>
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>sequence</tt>)</li>

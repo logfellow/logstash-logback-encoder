@@ -18,16 +18,13 @@ package net.logstash.logback.composite.loggingevent;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
 import net.logstash.logback.marker.LogstashMarker;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
-import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -47,12 +44,11 @@ public class LogstashMarkersJsonProviderTest {
 
     
     @Test
-    public void noMarkers() throws IOException {
+    public void noMarkers() {
         LoggingEvent event = createEvent();
         assertThatCode(() -> provider.writeTo(generator, event)).doesNotThrowAnyException();
     }
-    
-    
+
     /*
      * 
      */
@@ -83,8 +79,6 @@ public class LogstashMarkersJsonProviderTest {
     
     @Test
     public void multipleMarkers() throws IOException {
-        Assumptions.assumeTrue(LogbackUtils::isVersion13);
-        
         // event:
         //  * basic1 -> marker1
         //  * marker2
@@ -114,28 +108,18 @@ public class LogstashMarkersJsonProviderTest {
         return spy(new TestLogstashMarker(Integer.toString(this.markerCount++)));
     }
     
-    @SuppressWarnings("deprecation")
     private LoggingEvent createEvent(Marker... markers) {
         LoggingEvent event = spy(new LoggingEvent());
         
         if (markers != null && markers.length > 0) {
-            if (LogbackUtils.isVersion13()) {
-                for (Marker marker: markers) {
-                    event.addMarker(marker);
-                }
-            }
-            else {
-                if (markers.length > 1) {
-                    throw new IllegalStateException("Logback 1.2 supports only one Marker per event");
-                }
-                when(event.getMarker()).thenReturn(markers[0]);
+            for (Marker marker: markers) {
+                event.addMarker(marker);
             }
         }
         
         return event;
     }
     
-    @SuppressWarnings("serial")
     private static class TestLogstashMarker extends LogstashMarker {
         TestLogstashMarker(String name) {
             super(name);

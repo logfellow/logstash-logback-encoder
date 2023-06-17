@@ -20,8 +20,6 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 
-import net.logstash.logback.util.LogbackUtils;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.SequenceNumberGenerator;
@@ -31,13 +29,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * Outputs an incrementing sequence number.
  * Useful for determining if log events get lost along the transport chain.
  * 
- * <p>With Logback 1.3 the sequence number is obtained from {@link ILoggingEvent#getSequenceNumber()} provided the
+ * <p>With Logback 1.3+ the sequence number is obtained from {@link ILoggingEvent#getSequenceNumber()} provided the
  * LoggerContext is configured with a {@link SequenceNumberGenerator} (which is not by default).
  * If no SequenceNumberGenerator is configured, the provider issues a warning and reverts to a locally generated
  * incrementing number.
  *
- * <p>With Logback versions prior to 1.3 the sequence number is generated locally by the provider itself.
- * 
  * <p>If needed, a different strategy can be used by setting a custom provider with {@link #setSequenceProvider(Function)}.
  */
 public abstract class AbstractSequenceJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> {
@@ -100,36 +96,32 @@ public abstract class AbstractSequenceJsonProvider<Event extends DeferredProcess
         return sequenceProvider;
     }
 
-    
     /**
      * Create a default sequence provider depending on the current Logback version.
      * 
-     * <p>With Logback 1.3 the sequence number is obtained for {@link ILoggingEvent#getSequenceNumber()} provided the
+     * <p>With Logback 1.3+ the sequence number is obtained for {@link ILoggingEvent#getSequenceNumber()} provided the
      * LoggerContext is configured with a {@link SequenceNumberGenerator} (which is not by default).
      * If no SequenceNumberGenerator is configured, the provider issues a warning and reverts to a locally generated
      * incrementing number.
      *
-     * <p>With Logback versions prior to 1.3 the sequence number is generated locally by the provider itself.
-     * 
      * @return a sequence provider
      */
     protected Function<Event, Long> createSequenceProvider() {
-        if (LogbackUtils.isVersion13()) {
-            if (getContext() == null || getContext().getSequenceNumberGenerator() == null) {
-                this.addWarn("No <sequenceNumberGenerator> defined in Logback configuration - revert to using a local incrementing sequence number.");
-            }
-            else {
-                return createNativeSequenceNumberFieldAccessor();
-            }
+        if (getContext() == null || getContext().getSequenceNumberGenerator() == null) {
+            this.addWarn("No <sequenceNumberGenerator> defined in Logback configuration - revert to using a local incrementing sequence number.");
+
+            return new Function<Event, Long>() {
+                private final AtomicLong sequence = new AtomicLong(0L);
+
+                @Override
+                public Long apply(Event t) {
+                    return sequence.incrementAndGet();
+                }
+            };
         }
-        return new Function<Event, Long>() {
-            private final AtomicLong sequence = new AtomicLong(0L);
-            
-            @Override
-            public Long apply(Event t) {
-                return sequence.incrementAndGet();
-            }
-        };
+        else {
+            return createNativeSequenceNumberFieldAccessor();
+        }
     }
     
 

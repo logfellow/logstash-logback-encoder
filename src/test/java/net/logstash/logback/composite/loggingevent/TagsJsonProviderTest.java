@@ -17,13 +17,11 @@ package net.logstash.logback.composite.loggingevent;
 
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -64,8 +62,6 @@ public class TagsJsonProviderTest {
         
         marker4 = createBasicMarker("marker4");
 
-        // Logback 1.3: both markers are added to the event
-        // Logback 1.2: only marker1 is added to the event
         event = createEvent(marker1, marker4);
     }
     
@@ -79,9 +75,7 @@ public class TagsJsonProviderTest {
         inOrder.verify(generator).writeArrayFieldStart(TagsJsonProvider.FIELD_TAGS);
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
-        if (LogbackUtils.isVersion13()) {
-            inOrder.verify(generator).writeString("marker4");
-        }
+        inOrder.verify(generator).writeString("marker4");
         inOrder.verify(generator).writeEndArray();
         
         Mockito.verifyNoMoreInteractions(generator);
@@ -98,9 +92,7 @@ public class TagsJsonProviderTest {
         inOrder.verify(generator).writeArrayFieldStart("newFieldName");
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
-        if (LogbackUtils.isVersion13()) {
-            inOrder.verify(generator).writeString("marker4");
-        }
+        inOrder.verify(generator).writeString("marker4");
         inOrder.verify(generator).writeEndArray();
         
         Mockito.verifyNoMoreInteractions(generator);
@@ -119,9 +111,7 @@ public class TagsJsonProviderTest {
         inOrder.verify(generator).writeArrayFieldStart("newFieldName");
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
-        if (LogbackUtils.isVersion13()) {
-            inOrder.verify(generator).writeString("marker4");
-        }
+        inOrder.verify(generator).writeString("marker4");
         inOrder.verify(generator).writeEndArray();
         
         Mockito.verifyNoMoreInteractions(generator);
@@ -138,25 +128,18 @@ public class TagsJsonProviderTest {
         return spy(new TestLogstashMarker(name));
     }
     
-    @SuppressWarnings("deprecation")
     private LoggingEvent createEvent(Marker... markers) {
         LoggingEvent event = spy(new LoggingEvent());
         
         if (markers != null && markers.length > 0) {
-            if (LogbackUtils.isVersion13()) {
-                for (Marker marker: markers) {
-                    event.addMarker(marker);
-                }
-            }
-            else {
-                when(event.getMarker()).thenReturn(markers[0]);
+            for (Marker marker: markers) {
+                event.addMarker(marker);
             }
         }
         
         return event;
     }
     
-    @SuppressWarnings("serial")
     private static class TestLogstashMarker extends LogstashMarker {
         TestLogstashMarker(String name) {
             super(name);

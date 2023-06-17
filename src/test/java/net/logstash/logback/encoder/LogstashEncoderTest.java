@@ -39,10 +39,8 @@ import java.util.TimeZone;
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
 import net.logstash.logback.decorate.JsonFactoryDecorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
-import net.logstash.logback.util.LogbackUtils;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
@@ -75,12 +73,7 @@ public class LogstashEncoderTest {
 
     @BeforeEach
     public void setup() {
-        // Logback as nanos precision since version 1.3
-        if (LogbackUtils.isVersion13()) {
-            now = Instant.now();
-        } else {
-            now = Instant.ofEpochMilli(System.currentTimeMillis());
-        }
+        now = Instant.now();
     }
 
     @Test
@@ -137,13 +130,7 @@ public class LogstashEncoderTest {
             }
         });
 
-        encoder.setJsonGeneratorDecorator(new JsonGeneratorDecorator() {
-
-            @Override
-            public JsonGenerator decorate(JsonGenerator generator) {
-                return generator.useDefaultPrettyPrinter();
-            }
-        });
+        encoder.setJsonGeneratorDecorator(JsonGenerator::useDefaultPrettyPrinter);
 
         encoder.start();
 
@@ -721,21 +708,13 @@ public class LogstashEncoderTest {
         event.setMessage(message);
         event.setLevel(level);
 
-        if (LogbackUtils.isVersion13()) {
-            event.setInstant(now);
-        } else {
-            event.setTimeStamp(now.toEpochMilli());
-        }
+        event.setInstant(now);
 
         return spy(event);
     }
 
     private void addMarker(LoggingEvent event, Marker marker) {
-        if (LogbackUtils.isVersion13()) {
-            event.addMarker(marker);
-        } else {
-            when(event.getMarker()).thenReturn(marker);
-        }
+        event.addMarker(marker);
     }
 
     private static String buildMultiLineMessage(String lineSeparator) {
