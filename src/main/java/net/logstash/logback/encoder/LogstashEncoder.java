@@ -112,32 +112,39 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
 
 
     public boolean isIncludeKeyValuePairs() {
-        return getFormatter().isIncludeKvp();
+        return getFormatter().isIncludeKeyValuePairs();
     }
 
-    public void setIncludeKeyValuePairs(boolean includeKvp) {
-        getFormatter().setIncludeKvp(includeKvp);
+    public void setIncludeKeyValuePairs(boolean includeKeyValuePairs) {
+        getFormatter().setIncludeKeyValuePairs(includeKeyValuePairs);
     }
 
-    public void addIncludeKeyValuePairsKeyName(String includedKvpKeyName) {
-        getFormatter().addIncludeKvpKeyName(includedKvpKeyName);
+    public void addIncludeKeyValueKeyName(String includedKeyValueKeyName) {
+        getFormatter().addIncludeKeyValueKeyName(includedKeyValueKeyName);
     }
 
-
-    public List<String> getIncludeKeyValuePairKeyNames() {
-        return getFormatter().getIncludeKvpKeyNames();
+    public List<String> getIncludeKeyValueKeyNames() {
+        return getFormatter().getIncludeKeyValueKeyNames();
     }
 
-    public void addExcludeKeyValuePairsKeyName(String excludedKvpKeyName) {
-        getFormatter().addExcludeKvpKeyName(excludedKvpKeyName);
+    public void setIncludeKeyValueKeyNames(List<String> includeKeyValueKeyNames) {
+        getFormatter().setIncludeKeyValueKeyNames(includeKeyValueKeyNames);
     }
 
-    public void setExcludeKeyValuePairsKeyNames(List<String> excludeKvpKeyNames) {
-        getFormatter().setExcludeKvpKeyNames(excludeKvpKeyNames);
+    public void addExcludeKeyValueKeyName(String excludedKeyValueKeyName) {
+        getFormatter().addExcludeKeyValueKeyName(excludedKeyValueKeyName);
     }
 
-    public void addKeyValuePairsKeyFieldName(String kvpKeyFieldName) {
-        getFormatter().addKvpKeyFieldName(kvpKeyFieldName);
+    public List<String> getExcludeKeyValueKeyNames() {
+        return getFormatter().getExcludeKeyValueKeyNames();
+    }
+
+    public void setExcludeKeyValueKeyNames(List<String> excludedKeyValueKeyNames) {
+        getFormatter().setExcludeKeyValueKeyNames(excludedKeyValueKeyNames);
+    }
+
+    public void addKeyValueKeyFieldName(String keyValueKeyFieldName) {
+        getFormatter().addKeyValueKeyFieldName(keyValueKeyFieldName);
     }
 
     public boolean isIncludeTags() {

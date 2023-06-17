@@ -30,7 +30,12 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
 import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
@@ -317,7 +322,7 @@ public class LogstashEncoderTest {
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         event.setKeyValuePairs(kvp);
 
-        encoder.addIncludeKeyValuePairsKeyName("thing_one");
+        encoder.addIncludeKeyValueKeyName("thing_one");
 
         encoder.start();
         byte[] encoded = encoder.encode(event);
@@ -337,7 +342,7 @@ public class LogstashEncoderTest {
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         event.setKeyValuePairs(kvp);
 
-        encoder.addExcludeKeyValuePairsKeyName("thing_two");
+        encoder.addExcludeKeyValueKeyName("thing_two");
 
         encoder.start();
         byte[] encoded = encoder.encode(event);

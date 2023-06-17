@@ -15,17 +15,8 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import net.logstash.logback.fieldnames.LogstashFieldNames;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.event.KeyValuePair;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -33,13 +24,23 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
+import net.logstash.logback.fieldnames.LogstashFieldNames;
+
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.event.KeyValuePair;
 
 @ExtendWith(MockitoExtension.class)
-public class KeyValuePairJsonProviderTest {
+public class KeyValuePairsJsonProviderTest {
 
-    private KeyValuePairJsonProvider provider = new KeyValuePairJsonProvider();
+    private KeyValuePairsJsonProvider provider = new KeyValuePairsJsonProvider();
 
     private ByteArrayOutputStream resultStream;
     private JsonGenerator generator;
@@ -47,15 +48,15 @@ public class KeyValuePairJsonProviderTest {
     @Mock
     private ILoggingEvent event;
 
-    private List<KeyValuePair> kvp;
+    private List<KeyValuePair> keyValuePairs;
 
     @BeforeEach
     public void setup() throws Exception {
-        kvp = new ArrayList<>();
-        kvp.add(new KeyValuePair("name1", "value1"));
-        kvp.add(new KeyValuePair("name2", 2023));
-        kvp.add(new KeyValuePair("name3", new TestValue()));
-        when(event.getKeyValuePairs()).thenReturn(kvp);
+        keyValuePairs = new ArrayList<>();
+        keyValuePairs.add(new KeyValuePair("name1", "value1"));
+        keyValuePairs.add(new KeyValuePair("name2", 2023));
+        keyValuePairs.add(new KeyValuePair("name3", new TestValue()));
+        when(event.getKeyValuePairs()).thenReturn(keyValuePairs);
         resultStream = new ByteArrayOutputStream();
         generator = new JsonFactory().createGenerator(resultStream);
         generator.setCodec(new ObjectMapper());
@@ -85,7 +86,7 @@ public class KeyValuePairJsonProviderTest {
 
     @Test
     public void testInclude() throws IOException {
-        provider.setIncludeKvpKeyNames(Collections.singletonList("name1"));
+        provider.setIncludeKeyNames(Collections.singletonList("name1"));
 
         assertThat(generateJson())
                 .isEqualTo("{\"name1\":\"value1\"}");
@@ -93,7 +94,7 @@ public class KeyValuePairJsonProviderTest {
 
     @Test
     public void testExclude() throws IOException {
-        provider.setExcludeKvpKeyNames(Collections.singletonList("name1"));
+        provider.setExcludeKeyNames(Collections.singletonList("name1"));
 
         assertThat(generateJson())
                 .isEqualTo("{\"name2\":2023,\"name3\":{\"a\":1}}");
@@ -101,7 +102,7 @@ public class KeyValuePairJsonProviderTest {
 
     @Test
     public void testAlternativeFieldName() throws IOException {
-        provider.addKvpKeyFieldName("name1=alternativeName1");
+        provider.addKeyFieldName("name1=alternativeName1");
 
         assertThat(generateJson())
                 .isEqualTo("{\"alternativeName1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}");

@@ -24,15 +24,29 @@ import net.logstash.logback.composite.GlobalCustomFieldsJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.LogstashVersionJsonProvider;
-import net.logstash.logback.composite.loggingevent.*;
+import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
+import net.logstash.logback.composite.loggingevent.CallerDataJsonProvider;
+import net.logstash.logback.composite.loggingevent.KeyValuePairsJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogLevelJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonFormatter;
+import net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider;
+import net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders;
+import net.logstash.logback.composite.loggingevent.LoggingEventThreadNameJsonProvider;
+import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
+import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
+import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
+import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
+import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.slf4j.event.KeyValuePair;
 import org.slf4j.MDC;
+import org.slf4j.event.KeyValuePair;
 
 /**
  * A {@link LoggingEventCompositeJsonFormatter} that contains a common
@@ -77,9 +91,9 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     private MdcJsonProvider mdcProvider = new MdcJsonProvider();
     /**
      * When not null, {@link KeyValuePair} properties will be included according
-     * to the logic in {@link KeyValuePairJsonProvider}.
+     * to the logic in {@link KeyValuePairsJsonProvider}.
      */
-    private KeyValuePairJsonProvider kvpProvider = new KeyValuePairJsonProvider();
+    private KeyValuePairsJsonProvider keyValuePairsProvider = new KeyValuePairsJsonProvider();
     private GlobalCustomFieldsJsonProvider<ILoggingEvent> globalCustomFieldsProvider;
     /**
      * When not null, markers will be included according
@@ -116,7 +130,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         getProviders().addStackTrace(this.stackTraceProvider);
         getProviders().addContext(this.contextProvider);
         getProviders().addMdc(this.mdcProvider);
-        getProviders().addKvp(this.kvpProvider);
+        getProviders().addKeyValuePairs(this.keyValuePairsProvider);
         getProviders().addGlobalCustomFields(this.globalCustomFieldsProvider);
         getProviders().addTags(this.tagsProvider);
         getProviders().addLogstashMarkers(this.logstashMarkersProvider);
@@ -216,20 +230,19 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         }
     }
 
-    public boolean isIncludeKvp() {
-        return this.kvpProvider != null;
+    public boolean isIncludeKeyValuePairs() {
+        return this.keyValuePairsProvider != null;
     }
 
-    public void setIncludeKvp(boolean includeKvp) {
-        if (isIncludeKvp() == includeKvp)
-            return;
-
-        if (includeKvp) {
-            kvpProvider = new KeyValuePairJsonProvider();
-            addProvider(kvpProvider);
-        } else {
-            getProviders().removeProvider(kvpProvider);
-            kvpProvider = null;
+    public void setIncludeKeyValuePairs(boolean includeKeyValuePairs) {
+        if (isIncludeKeyValuePairs() != includeKeyValuePairs) {
+            if (includeKeyValuePairs) {
+                keyValuePairsProvider = new KeyValuePairsJsonProvider();
+                addProvider(keyValuePairsProvider);
+            } else {
+                getProviders().removeProvider(keyValuePairsProvider);
+                keyValuePairsProvider = null;
+            }
         }
     }
 
@@ -310,41 +323,41 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         }
     }
 
-    public List<String> getIncludeKvpKeyNames() {
-        return isIncludeKvp()
-                ? kvpProvider.getIncludeKvpKeyNames()
+    public List<String> getIncludeKeyValueKeyNames() {
+        return isIncludeKeyValuePairs()
+                ? keyValuePairsProvider.getIncludeKeyNames()
                 : Collections.emptyList();
     }
 
-    public void addIncludeKvpKeyName(String includedKvpKeyName) {
-        if (isIncludeKvp()) {
-            kvpProvider.addIncludeKvpKeyName(includedKvpKeyName);
+    public void addIncludeKeyValueKeyName(String includedKeyValueKeyName) {
+        if (isIncludeKeyValuePairs()) {
+            keyValuePairsProvider.addIncludeKeyName(includedKeyValueKeyName);
         }
     }
-    public void setIncludeKvpKeyNames(List<String> includeKvpKeyNames) {
-        if (isIncludeKvp()) {
-            kvpProvider.setIncludeKvpKeyNames(includeKvpKeyNames);
+    public void setIncludeKeyValueKeyNames(List<String> includeKeyValueKeyNames) {
+        if (isIncludeKeyValuePairs()) {
+            keyValuePairsProvider.setIncludeKeyNames(includeKeyValueKeyNames);
         }
     }
 
-    public List<String> getExcludeKvpKeyNames() {
-        return isIncludeKvp()
-                ? kvpProvider.getExcludeKvpKeyNames()
+    public List<String> getExcludeKeyValueKeyNames() {
+        return isIncludeKeyValuePairs()
+                ? keyValuePairsProvider.getExcludeKeyNames()
                 : Collections.emptyList();
     }
-    public void addExcludeKvpKeyName(String excludedKvpKeyName) {
-        if (isIncludeKvp()) {
-            kvpProvider.addExcludeKvpKeyName(excludedKvpKeyName);
+    public void addExcludeKeyValueKeyName(String excludedKeyValueKeyName) {
+        if (isIncludeKeyValuePairs()) {
+            keyValuePairsProvider.addExcludeKeyName(excludedKeyValueKeyName);
         }
     }
-    public void setExcludeKvpKeyNames(List<String> excludeKvpKeyNames) {
-        if (isIncludeKvp()) {
-            kvpProvider.setExcludeKvpKeyNames(excludeKvpKeyNames);
+    public void setExcludeKeyValueKeyNames(List<String> excludeKeyValueKeyNames) {
+        if (isIncludeKeyValuePairs()) {
+            keyValuePairsProvider.setExcludeKeyNames(excludeKeyValueKeyNames);
         }
     }
-    public void addKvpKeyFieldName(String kvpKeyFieldName) {
-        if (isIncludeKvp()) {
-            kvpProvider.addKvpKeyFieldName(kvpKeyFieldName);
+    public void addKeyValueKeyFieldName(String keyValueKeyFieldName) {
+        if (isIncludeKeyValuePairs()) {
+            keyValuePairsProvider.addKeyFieldName(keyValueKeyFieldName);
         }
     }
 
@@ -437,9 +450,9 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         } else if (provider instanceof MdcJsonProvider) {
             getProviders().removeProvider(this.mdcProvider);
             this.mdcProvider = (MdcJsonProvider) provider;
-        }  else if (provider instanceof KeyValuePairJsonProvider) {
-            getProviders().removeProvider(this.kvpProvider);
-            this.kvpProvider = (KeyValuePairJsonProvider) provider;
+        }  else if (provider instanceof KeyValuePairsJsonProvider) {
+            getProviders().removeProvider(this.keyValuePairsProvider);
+            this.keyValuePairsProvider = (KeyValuePairsJsonProvider) provider;
         }
         getProviders().addProvider(provider);
     }
