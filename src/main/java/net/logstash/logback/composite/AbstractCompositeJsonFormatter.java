@@ -302,7 +302,7 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
     }
 
     private JsonGenerator decorateGenerator(JsonGenerator generator) {
-        JsonGenerator decorated = jsonGeneratorDecorator.decorate(generator)
+        JsonGenerator decorated = jsonGeneratorDecorator.decorate(new SimpleObjectJsonGeneratorDelegate(generator))
                 /*
                  * Don't let the json generator close the underlying outputStream and let the
                  * encoder managed it.
@@ -323,7 +323,7 @@ public abstract class AbstractCompositeJsonFormatter<Event extends DeferredProce
              */
         }
 
-        return new SimpleObjectJsonGeneratorDelegate(decorated);
+        return decorated;
     }
     
     public JsonFactory getJsonFactory() {
