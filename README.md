@@ -3234,7 +3234,7 @@ If needed, the comma delimiter may be escaped by prefixing it with a backslash (
 
 ## Profiling
 
-<a href="https://www.yourkit.com/java/profiler/"><img src="http://www.yourkit.com/images/yklogo.png" alt="YourKit Logo" height="22"/></a>
+<a href="https://www.yourkit.com/java/profiler/"><img src="https://www.yourkit.com/images/yk_logo.svg" alt="YourKit Logo" height="22"/></a>
 
 Memory usage and performance of logstash-logback-encoder have been improved
 by addressing issues discovered with the help of the
