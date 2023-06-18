@@ -39,6 +39,7 @@ import net.logstash.logback.composite.loggingevent.MdcJsonProvider;
 import net.logstash.logback.composite.loggingevent.MessageJsonProvider;
 import net.logstash.logback.composite.loggingevent.StackTraceJsonProvider;
 import net.logstash.logback.composite.loggingevent.TagsJsonProvider;
+import net.logstash.logback.composite.loggingevent.mdc.MdcEntryWriter;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
@@ -320,6 +321,16 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     public void addMdcKeyFieldName(String mdcKeyFieldName) {
         if (isIncludeMdc()) {
             mdcProvider.addMdcKeyFieldName(mdcKeyFieldName);
+        }
+    }
+    public List<MdcEntryWriter> getMdcEntryWriters() {
+        return isIncludeMdc()
+                ? mdcProvider.getMdcEntryWriters()
+                : Collections.emptyList();
+    }
+    public void addMdcEntryWriter(MdcEntryWriter mdcEntryWriter) {
+        if (isIncludeMdc()) {
+            mdcProvider.addMdcEntryWriter(mdcEntryWriter);
         }
     }
 

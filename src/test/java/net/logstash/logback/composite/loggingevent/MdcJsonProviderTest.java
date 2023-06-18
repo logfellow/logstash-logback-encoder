@@ -18,6 +18,7 @@ package net.logstash.logback.composite.loggingevent;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -25,6 +26,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import net.logstash.logback.composite.loggingevent.mdc.BooleanMdcEntryWriter;
+import net.logstash.logback.composite.loggingevent.mdc.DoubleMdcEntryWriter;
+import net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -148,6 +152,39 @@ public class MdcJsonProviderTest {
         verify(generator).writeObject("value2");
         verify(generator).writeFieldName("name3");
         verify(generator).writeObject("value3");
+    }
+
+    @Test
+    public void testMdcEntryWriters() throws IOException {
+        mdc = new LinkedHashMap<>();
+        mdc.put("long", "4711");
+        mdc.put("double", "2.71828");
+        mdc.put("bool", "true");
+        mdc.put("string_bool", "trueblue");
+        mdc.put("string_hex", "0xBAD");
+        mdc.put("empty", "");
+        mdc.put("key_null", null); // not logged
+        when(event.getMDCPropertyMap()).thenReturn(mdc);
+
+        provider.addMdcEntryWriter(new LongMdcEntryWriter());
+        provider.addMdcEntryWriter(new DoubleMdcEntryWriter());
+        provider.addMdcEntryWriter(new BooleanMdcEntryWriter());
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeFieldName("long");
+        verify(generator).writeNumber(4711L);
+        verify(generator).writeFieldName("double");
+        verify(generator).writeNumber(2.71828);
+        verify(generator).writeFieldName("bool");
+        verify(generator).writeBoolean(true);
+        verify(generator).writeFieldName("string_bool");
+        verify(generator).writeObject("trueblue");
+        verify(generator).writeFieldName("string_hex");
+        verify(generator).writeObject("0xBAD");
+        verify(generator).writeFieldName("empty");
+        verify(generator).writeObject("");
+        verifyNoMoreInteractions(generator);
     }
 
 }
