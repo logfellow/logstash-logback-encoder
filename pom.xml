@@ -35,7 +35,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <servlet-api.version>4.0.1</servlet-api.version>
         <junit.version>5.9.2</junit.version>
-        <mockito.version>5.1.1</mockito.version>
+        <mockito.version>5.3.1</mockito.version>
 
         <!-- maven plugins -->
         <extra-enforcer-rules.version>1.6.1</extra-enforcer-rules.version>
