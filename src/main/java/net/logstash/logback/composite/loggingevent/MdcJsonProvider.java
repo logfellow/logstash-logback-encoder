@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
@@ -61,7 +62,10 @@ import org.slf4j.MDC;
  * Otherwise, the properties are written inline.</p>
  *
  * <p>The output of the MDC entry values can be manipulated by the provided
- * {@link #mdcEntryWriters}. By default, all MDC entry values are written as texts.
+ * {@link #mdcEntryWriters}. By default, all MDC entry values are written as texts.</p>
+ *
+ * <p>The {@link #mdcEntryWriters} can be skipped for MDC keys not matching the pattern
+ * {@link #mdcEntryWriterExcludeKeyPattern}. By default, no MDC keys are skipped.</p>
  */
 public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
@@ -81,6 +85,11 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
      * See {@link MdcJsonProvider}.
      */
     protected final List<MdcEntryWriter> mdcEntryWriters = new ArrayList<>();
+
+    /**
+     * See {@link MdcJsonProvider}.
+     */
+    protected Pattern mdcEntryWriterExcludeKeyPattern;
 
     @Override
     public void start() {
@@ -159,6 +168,13 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
         this.mdcEntryWriters.add(mdcEntryWriter);
     }
 
+    public Pattern getMdcEntryWriterExcludeKeyPattern() {
+        return mdcEntryWriterExcludeKeyPattern;
+    }
+    public void setMdcEntryWriterExcludeKeyPattern(String mdcEntryWriterExcludeKeyPattern) {
+        this.mdcEntryWriterExcludeKeyPattern = Pattern.compile(mdcEntryWriterExcludeKeyPattern);
+    }
+
     /**
      * Adds the given mdcKeyFieldName entry in the form mdcKeyName=fieldName
      * to use an alternative field name for an MDC key.
@@ -185,14 +201,21 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
      * @param mdcValue  the value of the MDC map entry.
      */
     private void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
-        for (MdcEntryWriter mdcEntryWriter : this.mdcEntryWriters) {
-            if (mdcEntryWriter.writeMdcEntry(generator, fieldName, mdcKey, mdcValue)) {
-                return;
+        if (shouldWrite(mdcKey)) {
+            for (MdcEntryWriter mdcEntryWriter : this.mdcEntryWriters) {
+                if (mdcEntryWriter.writeMdcEntry(generator, fieldName, mdcKey, mdcValue)) {
+                    return;
+                }
             }
         }
 
         generator.writeFieldName(fieldName);
         generator.writeObject(mdcValue);
+    }
+
+    private boolean shouldWrite(String mdcKey) {
+        return !this.mdcEntryWriters.isEmpty()
+                && (mdcEntryWriterExcludeKeyPattern == null || !mdcEntryWriterExcludeKeyPattern.matcher(mdcKey).matches());
     }
 
 }

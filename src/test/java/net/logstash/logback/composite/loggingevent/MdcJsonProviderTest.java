@@ -187,4 +187,29 @@ public class MdcJsonProviderTest {
         verifyNoMoreInteractions(generator);
     }
 
+    @Test
+    public void testMdcEntryWritersExcludeKeyPattern() throws IOException {
+        mdc = new LinkedHashMap<>();
+        mdc.put("long", "1");
+        mdc.put("skip_exact", "2");
+        mdc.put("skip_prefix.key", "3");
+        mdc.put("axe", "4");
+        when(event.getMDCPropertyMap()).thenReturn(mdc);
+
+        provider.addMdcEntryWriter(new LongMdcEntryWriter());
+        provider.setMdcEntryWriterExcludeKeyPattern("(skip_prefix\\..*|skip_exact|.x.)");
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeFieldName("long");
+        verify(generator).writeNumber(1L);
+        verify(generator).writeFieldName("skip_exact");
+        verify(generator).writeObject("2");
+        verify(generator).writeFieldName("skip_prefix.key");
+        verify(generator).writeObject("3");
+        verify(generator).writeFieldName("axe");
+        verify(generator).writeObject("4");
+        verifyNoMoreInteractions(generator);
+    }
+
 }

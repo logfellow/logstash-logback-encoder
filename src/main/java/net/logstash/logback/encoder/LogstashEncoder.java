@@ -119,6 +119,10 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().addMdcEntryWriter(mdcEntryWriter);
     }
 
+    public void setMdcEntryWriterExcludeKeyPattern(String mdcEntryWriterExcludeKeyPattern) {
+        getFormatter().setMdcEntryWriterExcludeKeyPattern(mdcEntryWriterExcludeKeyPattern);
+    }
+
     public boolean isIncludeKeyValuePairs() {
         return getFormatter().isIncludeKeyValuePairs();
     }

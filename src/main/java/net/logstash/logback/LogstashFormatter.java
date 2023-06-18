@@ -333,6 +333,11 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
             mdcProvider.addMdcEntryWriter(mdcEntryWriter);
         }
     }
+    public void setMdcEntryWriterExcludeKeyPattern(String mdcEntryWriterExcludeKeyPattern) {
+        if (isIncludeMdc()) {
+            mdcProvider.setMdcEntryWriterExcludeKeyPattern(mdcEntryWriterExcludeKeyPattern);
+        }
+    }
 
     public List<String> getIncludeKeyValueKeyNames() {
         return isIncludeKeyValuePairs()

@@ -305,6 +305,7 @@ public class LogstashEncoderTest {
         mdcMap.put("double", "2.71828");
         mdcMap.put("bool", "true");
         mdcMap.put("default", "string");
+        mdcMap.put("skip_long", "-4711");
 
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
         event.setMDCPropertyMap(mdcMap);
@@ -312,6 +313,7 @@ public class LogstashEncoderTest {
         encoder.addMdcEntryWriter(new LongMdcEntryWriter());
         encoder.addMdcEntryWriter(new DoubleMdcEntryWriter());
         encoder.addMdcEntryWriter(new BooleanMdcEntryWriter());
+        encoder.setMdcEntryWriterExcludeKeyPattern("skip_.*");
         encoder.start();
         byte[] encoded = encoder.encode(event);
 
@@ -321,6 +323,7 @@ public class LogstashEncoderTest {
         assertThat(node.get("double").doubleValue()).isEqualTo(2.71828);
         assertThat(node.get("bool").booleanValue()).isTrue();
         assertThat(node.get("default").textValue()).isEqualTo("string");
+        assertThat(node.get("skip_long").textValue()).isEqualTo("-4711");
     }
 
     @Test
