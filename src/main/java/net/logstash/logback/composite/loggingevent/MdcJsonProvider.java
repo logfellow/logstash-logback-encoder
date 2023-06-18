@@ -200,7 +200,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
      * @param mdcKey    the key of the MDC map entry.
      * @param mdcValue  the value of the MDC map entry.
      */
-    private void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    protected void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
         if (shouldWrite(mdcKey)) {
             for (MdcEntryWriter mdcEntryWriter : this.mdcEntryWriters) {
                 if (mdcEntryWriter.writeMdcEntry(generator, fieldName, mdcKey, mdcValue)) {
@@ -213,7 +213,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
         generator.writeObject(mdcValue);
     }
 
-    private boolean shouldWrite(String mdcKey) {
+    protected boolean shouldWrite(String mdcKey) {
         return !this.mdcEntryWriters.isEmpty()
                 && (mdcEntryWriterExcludeKeyPattern == null || !mdcEntryWriterExcludeKeyPattern.matcher(mdcKey).matches());
     }
