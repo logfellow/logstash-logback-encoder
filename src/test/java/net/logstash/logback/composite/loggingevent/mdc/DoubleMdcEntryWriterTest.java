@@ -44,6 +44,8 @@ class DoubleMdcEntryWriterTest {
             "4711",
             "0",
             "-0.0",
+            "2.71827f",
+            "2.71827d",
             "2.2250738585072014E-308",
             "1.7976931348623157E+308"
     })
@@ -59,7 +61,7 @@ class DoubleMdcEntryWriterTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "2.71827*3",
-            "2.71827d",
+            "2.71827g",
             "text",
             "NaN",
             "Infinity",

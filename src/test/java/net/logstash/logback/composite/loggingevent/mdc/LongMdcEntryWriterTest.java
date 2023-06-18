@@ -41,6 +41,7 @@ class LongMdcEntryWriterTest {
     @ValueSource(strings = {
             "4711",
             "-0815",
+            "+1234",
             "0",
             "-9223372036854775808",
             "9223372036854775807"
@@ -63,6 +64,7 @@ class LongMdcEntryWriterTest {
             "-9223372036854775808=9",
             "9223372036854775808",
             "text",
+            "-",
             ""
     })
     void invalid(String value) throws IOException {

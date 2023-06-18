@@ -16,17 +16,17 @@
 package net.logstash.logback.composite.loggingevent.mdc;
 
 import java.io.IOException;
-import java.util.regex.Pattern;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Writes long values (instead of String values) for any MDC values that can be parsed as a long (radix 10).
+ */
 public class LongMdcEntryWriter implements MdcEntryWriter {
-
-    protected static final Pattern PATTERN_LONG = Pattern.compile("[-+]?\\d+");
 
     @Override
     public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
-        if (canHandle(mdcValue)) {
+        if (shouldParse(mdcValue)) {
             try {
                 long parsedValue = Long.parseLong(mdcValue);
                 generator.writeFieldName(fieldName);
@@ -39,8 +39,29 @@ public class LongMdcEntryWriter implements MdcEntryWriter {
         return false;
     }
 
-    protected boolean canHandle(String value) {
-        return value != null && !value.isEmpty() && value.length() <= 20 && PATTERN_LONG.matcher(value).matches();
+    /**
+     * Returns true if an attempt at parsing the given value should be made.
+     * When true is returned, we can be reasonably confident that {@link Long#parseLong(String)}
+     * will succeed.  However, it is not guaranteed to succeed.
+     * This is mainly to avoid throwing/catching {@link NumberFormatException}
+     * in as many cases as possible.
+     */
+    private boolean shouldParse(String value) {
+        if (value == null || value.isEmpty() || value.length() > 20) {
+            return false;
+        }
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            if (c == '+' || c == '-') {
+                if (i != 0 || value.length() == 1) {
+                    return false;
+                }
+            }
+            else if (!Character.isDigit(c)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

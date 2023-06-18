@@ -19,6 +19,11 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Writes an entry from the {@link org.slf4j.MDC} to the {@link JsonGenerator}.
+ * Implementations can convert the value as appropriate,
+ * or chose to not write anything for the entry.
+ */
 public interface MdcEntryWriter {
 
     /**
@@ -28,7 +33,7 @@ public interface MdcEntryWriter {
      * @param fieldName the field name to use when writing the entry.
      * @param mdcKey    the key of the MDC map entry.
      * @param mdcValue  the value of the MDC map entry.
-     * @return Return true if the {@link MdcEntryWriter} handled the output of the entry, otherwise return false.
+     * @return true if this {@link MdcEntryWriter} handled the output of the entry, otherwise return false.
      */
     boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException;
 

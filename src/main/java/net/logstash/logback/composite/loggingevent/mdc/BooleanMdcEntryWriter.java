@@ -19,6 +19,9 @@ import java.io.IOException;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 
+/**
+ * Writes boolean values (instead of String values) for any MDC values that equal "true" or "false", ignoring case.
+ */
 public class BooleanMdcEntryWriter implements MdcEntryWriter {
 
     @Override

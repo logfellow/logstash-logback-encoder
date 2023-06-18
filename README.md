@@ -1037,17 +1037,34 @@ Currently, MDC entry writers for the following value types are supported:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <!--
+        Writes long values (instead of String values) for any MDC values
+        that can be parsed as a long (radix 10).
+        e.g. Writes 1234 instead of "1234"
+    -->
     <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter"/>
+
+    <!--
+        Writes double values (instead of String values) for any MDC values
+        that can be parsed as a double, except NaN and positive/negative Infinity.
+        e.g. 1234.5678 instead of "1234.5678"
+    -->
     <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.DoubleMdcEntryWriter"/>
+
+    <!--
+        Writes boolean values (instead of String values) for any MDC values
+        that equal "true" or "false", ignoring case.
+        e.g. Writes true instead of "true"
+    -->
     <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.BooleanMdcEntryWriter"/>
 </encoder>
 ```
 
-To add your own MDC entry writer for other types or applying the manipulations only for specific fields
-you can consider writing your own `MdcEntryWriter`.
+To add your own MDC entry writer for other types or apply the manipulations only for specific fields
+you can write your own implementation of [`MdcEntryWriter`](src/main/java/net/logstash/logback/composite/loggingevent/mdc/MdcEntryWriter.java).
 
-You can also replace the default MDC JSON provider with your own class extending from the
-[`MdcJsonProvider`](src/main/java/net/logstash/logback/composite/loggingevent/MdcJsonProvider.java) class.
+You can also replace the default MDC JSON provider with your own class extending from
+[`MdcJsonProvider`](src/main/java/net/logstash/logback/composite/loggingevent/MdcJsonProvider.java).
 Configuring your class as a [Custom JSON Provider](#custom-json-provider) will then replace
 the default `MdcJsonProvider`.
 

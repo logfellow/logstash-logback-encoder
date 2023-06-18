@@ -133,7 +133,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     }
 
     public void setIncludeMdcKeyNames(List<String> includeMdcKeyNames) {
-        this.includeMdcKeyNames = new ArrayList<String>(includeMdcKeyNames);
+        this.includeMdcKeyNames = new ArrayList<>(includeMdcKeyNames);
     }
 
     public List<String> getExcludeMdcKeyNames() {
@@ -184,7 +184,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
      * @param mdcKey    the key of the MDC map entry.
      * @param mdcValue  the value of the MDC map entry.
      */
-    protected void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    private void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
         for (MdcEntryWriter mdcEntryWriter : this.mdcEntryWriters) {
             if (mdcEntryWriter.writeMdcEntry(generator, fieldName, mdcKey, mdcValue)) {
                 return;
