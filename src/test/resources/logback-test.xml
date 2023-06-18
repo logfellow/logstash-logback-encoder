@@ -51,6 +51,7 @@
             <includeMdcKeyName>included</includeMdcKeyName>
             <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
             <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter"/>
+            <mdcEntryWriterExcludeKeyPattern>skip.*</mdcEntryWriterExcludeKeyPattern>
             <includeKeyValueKeyName>included</includeKeyValueKeyName>
             <keyValueKeyFieldName>key=renamedKey</keyValueKeyFieldName>
             <customFields>{"customName":"customValue"}</customFields>
@@ -142,6 +143,7 @@
                     <includeMdcKeyName>included</includeMdcKeyName>
                     <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
                     <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter"/>
+                    <mdcEntryWriterExcludeKeyPattern>skip.*</mdcEntryWriterExcludeKeyPattern>
                 </mdc>
                 <keyValuePairs>
                     <includeKeyName>included</includeKeyName>

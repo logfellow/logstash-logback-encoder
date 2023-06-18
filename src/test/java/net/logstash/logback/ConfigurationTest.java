@@ -182,6 +182,8 @@ public class ConfigurationTest {
         assertThat(mdcJsonProvider.getMdcKeyFieldNames()).containsOnly(entry("key", "renamedKey"));
         assertThat(mdcJsonProvider.getMdcEntryWriters()).hasSize(1);
         assertThat(mdcJsonProvider.getMdcEntryWriters()).element(0).isExactlyInstanceOf(LongMdcEntryWriter.class);
+        assertThat(mdcJsonProvider.getMdcEntryWriterExcludeKeyPattern()).isNotNull();
+        assertThat(mdcJsonProvider.getMdcEntryWriterExcludeKeyPattern().matcher("skipMe")).matches();
 
         KeyValuePairsJsonProvider keyValuePairsJsonProvider = getInstance(providers, KeyValuePairsJsonProvider.class);
         assertThat(keyValuePairsJsonProvider).isNotNull();

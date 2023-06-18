@@ -1063,6 +1063,16 @@ Currently, MDC entry writers for the following value types are supported:
 To add your own MDC entry writer for other types or apply the manipulations only for specific fields
 you can write your own implementation of [`MdcEntryWriter`](src/main/java/net/logstash/logback/composite/loggingevent/mdc/MdcEntryWriter.java).
 
+Writing MDC entries with the `MdcEntryWriters` can be skipped for MDC keys matching an exclude pattern
+(which is a regular expression with the syntax of `java.util.regex.Pattern`):
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <mdcEntryWriterExcludeKeyPattern>(skipExactKey|skipPrefix\\..*)</mdcEntryWriterExcludeKeyPattern>
+</encoder>
+```
+By default, all MDC entries are written as String values.
+
 You can also replace the default MDC JSON provider with your own class extending from
 [`MdcJsonProvider`](src/main/java/net/logstash/logback/composite/loggingevent/MdcJsonProvider.java).
 Configuring your class as a [Custom JSON Provider](#custom-json-provider) will then replace
