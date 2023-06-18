@@ -593,7 +593,7 @@
                             <include>src/test/java/**</include>
                         </includes>
                         <defaultProperties>
-                            <year>2022</year>
+                            <year>2023</year>
                         </defaultProperties>
                     </configuration>
                 </plugin>
