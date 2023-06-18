@@ -184,7 +184,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
      * @param mdcKey    the key of the MDC map entry.
      * @param mdcValue  the value of the MDC map entry.
      */
-    private void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    protected void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
         for (MdcEntryWriter mdcEntryWriter : this.mdcEntryWriters) {
             if (mdcEntryWriter.writeMdcEntry(generator, fieldName, mdcKey, mdcValue)) {
                 return;
