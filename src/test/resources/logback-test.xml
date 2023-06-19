@@ -51,6 +51,11 @@
             <includeMdcKeyName>included</includeMdcKeyName>
             <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
             <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter"/>
+            <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.RegexFilteringMdcEntryWriter">
+                <includeMdcKeyPattern>incl.*</includeMdcKeyPattern>
+                <excludeMdcKeyPattern>excl.*</excludeMdcKeyPattern>
+                <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.BooleanMdcEntryWriter"/>
+            </mdcEntryWriter>
             <includeKeyValueKeyName>included</includeKeyValueKeyName>
             <keyValueKeyFieldName>key=renamedKey</keyValueKeyFieldName>
             <customFields>{"customName":"customValue"}</customFields>
@@ -142,6 +147,11 @@
                     <includeMdcKeyName>included</includeMdcKeyName>
                     <mdcKeyFieldName>key=renamedKey</mdcKeyFieldName>
                     <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter"/>
+                    <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.RegexFilteringMdcEntryWriter">
+                        <includeMdcKeyPattern>incl.*</includeMdcKeyPattern>
+                        <excludeMdcKeyPattern>excl.*</excludeMdcKeyPattern>
+                        <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.BooleanMdcEntryWriter"/>
+                    </mdcEntryWriter>
                 </mdc>
                 <keyValuePairs>
                     <includeKeyName>included</includeKeyName>
