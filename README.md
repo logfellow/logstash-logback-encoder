@@ -1033,7 +1033,7 @@ specify `<mdcKeyFieldName>mdcKeyName=fieldName</mdcKeyFieldName>`:
 You can also manipulate the MDC entry values written to the JSON output.
 By default, no manipulations are done and all MDC entry values are written as text.
 
-Currently, MDC entry writers for the following value types are supported:
+Currently, the following MDC entry writers are supported:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
@@ -1057,6 +1057,23 @@ Currently, MDC entry writers for the following value types are supported:
         e.g. Writes true instead of "true"
     -->
     <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.BooleanMdcEntryWriter"/>
+
+    <!--
+        Composite MDC entry writer that delegates writing MDC entries to a list of `MdcEntryWriter`
+        if the key of an MDC entry does match a given include pattern and does not match a given
+        exclude pattern.
+                
+        Omitting the 'includeMdcKeyPattern' means to include all MDC keys.
+        Omitting the 'excludeMdcKeyPattern' means to exclude no MDC keys.
+        
+        The elements with the key patterns are optional. If provided, use a regular expression
+        with the syntax of `java.util.regex.Pattern`.
+    -->
+    <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.mdc.RegexFilteringMdcEntryWriter">
+        <includeMdcKeyPattern>keyPatternToInclude</includeMdcKeyPattern>
+        <excludeMdcKeyPattern>keyPatternToExclude</excludeMdcKeyPattern>
+        <mdcEntryWriter class="net.logstash.logback.composite.loggingevent.LongMdcEntryWriter"/>
+    </mdcEntryWriter>
 </encoder>
 ```
 
