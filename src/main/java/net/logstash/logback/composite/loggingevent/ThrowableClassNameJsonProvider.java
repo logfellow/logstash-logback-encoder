@@ -25,7 +25,7 @@ public class ThrowableClassNameJsonProvider extends AbstractThrowableClassNameJs
     }
 
     @Override
-    IThrowableProxy getThrowable(IThrowableProxy throwable) {
+    protected IThrowableProxy getThrowable(IThrowableProxy throwable) {
         return throwable;
     }
 }
