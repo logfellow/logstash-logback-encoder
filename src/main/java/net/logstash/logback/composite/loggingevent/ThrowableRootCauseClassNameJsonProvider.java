@@ -30,7 +30,7 @@ public class ThrowableRootCauseClassNameJsonProvider extends AbstractThrowableCl
     }
 
     @Override
-    IThrowableProxy getThrowable(IThrowableProxy throwable) {
+    protected IThrowableProxy getThrowable(IThrowableProxy throwable) {
         return throwable == null ? null : ThrowableSelectors.rootCause(throwable);
     }
 }
