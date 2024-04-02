@@ -41,7 +41,7 @@ import net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider;
 import net.logstash.logback.composite.accessevent.StatusCodeJsonProvider;
 import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
 import com.fasterxml.jackson.databind.JsonNode;

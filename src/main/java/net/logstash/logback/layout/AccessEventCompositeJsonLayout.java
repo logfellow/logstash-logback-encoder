@@ -20,7 +20,7 @@ import net.logstash.logback.composite.JsonProviders;
 import net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter;
 import net.logstash.logback.composite.accessevent.AccessEventJsonProviders;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 
 public class AccessEventCompositeJsonLayout extends CompositeJsonLayout<IAccessEvent> {

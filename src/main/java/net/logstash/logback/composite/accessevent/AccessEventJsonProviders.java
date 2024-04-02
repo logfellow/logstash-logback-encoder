@@ -17,7 +17,7 @@ package net.logstash.logback.composite.accessevent;
 
 import net.logstash.logback.composite.JsonProviders;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 
 /**
  * Used to make it make it more convenient to create well-known

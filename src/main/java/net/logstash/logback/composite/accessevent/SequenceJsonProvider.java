@@ -19,7 +19,7 @@ import java.util.function.Function;
 
 import net.logstash.logback.composite.AbstractSequenceJsonProvider;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 
 
 public class SequenceJsonProvider extends AbstractSequenceJsonProvider<IAccessEvent> {

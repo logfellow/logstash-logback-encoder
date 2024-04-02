@@ -15,7 +15,7 @@
  */
 package net.logstash.logback.appender;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.Layout;
 
 /**

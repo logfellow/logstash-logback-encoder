@@ -19,7 +19,7 @@ import net.logstash.logback.composite.AbstractPatternJsonProvider;
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.AccessEventJsonPatternParser;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import com.fasterxml.jackson.core.JsonFactory;
 
 /**

@@ -86,7 +86,7 @@ you may request to become a maintainer by filing an issue.
 Build from Source
 -----------------
 
-JDK 8 is required to build from source.
+JDK 11 is required to build from source.
 
 Use `mvnw` (\*nix) or `mvnw.cmd` (windows) to build.
 
