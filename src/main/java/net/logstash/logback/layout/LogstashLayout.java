@@ -277,6 +277,6 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
     
     @Override
     public void setProviders(JsonProviders<ILoggingEvent> jsonProviders) {
-        throw new IllegalArgumentException("Using the <providers> configuration property is not allowed. Use <provider> instead to registerd additional " + JsonProvider.class.getSimpleName() + ".");
+        throw new IllegalArgumentException("Using the <providers> configuration property is not allowed. Use <provider> instead to register additional " + JsonProvider.class.getSimpleName() + ".");
     }
 }
