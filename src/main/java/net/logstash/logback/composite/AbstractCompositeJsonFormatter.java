@@ -29,7 +29,7 @@ import net.logstash.logback.util.ProxyOutputStream;
 import net.logstash.logback.util.SimpleObjectJsonGeneratorDelegate;
 import net.logstash.logback.util.ThreadLocalHolder;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.CoreConstants;
 import ch.qos.logback.core.spi.ContextAware;

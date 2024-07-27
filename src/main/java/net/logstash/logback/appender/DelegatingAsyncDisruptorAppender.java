@@ -23,7 +23,7 @@ import java.util.concurrent.BlockingQueue;
 
 import net.logstash.logback.appender.listener.AppenderListener;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.AsyncAppenderBase;

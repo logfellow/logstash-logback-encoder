@@ -32,7 +32,7 @@ import java.util.function.Consumer;
 import net.logstash.logback.appender.listener.AppenderListener;
 import net.logstash.logback.status.LevelFilteringStatusListener;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.UnsynchronizedAppenderBase;

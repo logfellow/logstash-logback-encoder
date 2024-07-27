@@ -15,7 +15,7 @@
  */
 package net.logstash.logback.fieldnames;
 
-import ch.qos.logback.access.spi.AccessEvent;
+import ch.qos.logback.access.common.spi.AccessEvent;
 
 
 /**

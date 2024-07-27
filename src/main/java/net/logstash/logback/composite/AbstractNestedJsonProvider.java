@@ -18,7 +18,7 @@ package net.logstash.logback.composite;
 import java.io.IOException;
 import java.util.Objects;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.core.JsonFactory;

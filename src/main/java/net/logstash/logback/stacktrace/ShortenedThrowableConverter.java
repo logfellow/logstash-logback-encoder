@@ -29,7 +29,7 @@ import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.util.LogbackUtils;
 import net.logstash.logback.util.StringUtils;
 
-import ch.qos.logback.access.PatternLayout;
+import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.pattern.ThrowableProxyConverter;

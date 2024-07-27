@@ -22,7 +22,7 @@ import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternException;
 import net.logstash.logback.pattern.NodeWriter;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import com.fasterxml.jackson.core.JsonFactory;

@@ -18,7 +18,7 @@ package net.logstash.logback.appender.listener;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.Appender;
 
 /**

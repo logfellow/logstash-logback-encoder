@@ -18,7 +18,7 @@ package net.logstash.logback.composite.accessevent;
 import net.logstash.logback.composite.AbstractThreadNameJsonProvider;
 import net.logstash.logback.composite.JsonProvider;
 
-import ch.qos.logback.access.spi.IAccessEvent;
+import ch.qos.logback.access.common.spi.IAccessEvent;
 
 /**
  * {@link JsonProvider} producing a single JSON field with the {@link IAccessEvent#getThreadName()}.

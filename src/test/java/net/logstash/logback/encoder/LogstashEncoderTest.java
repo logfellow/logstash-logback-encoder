@@ -47,6 +47,7 @@ import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.fieldnames.ShortenedFieldNames;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.pattern.TargetLengthBasedClassNameAbbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
@@ -67,6 +68,7 @@ import org.slf4j.MDC;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.slf4j.event.KeyValuePair;
+import org.slf4j.helpers.NOPMDCAdapter;
 
 public class LogstashEncoderTest {
 
@@ -199,8 +201,7 @@ public class LogstashEncoderTest {
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
 
-        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(mdcMap);
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR, "My message", mdcMap);
 
         encoder.start();
         byte[] encoded = encoder.encode(event);
@@ -217,8 +218,7 @@ public class LogstashEncoderTest {
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
 
-        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(mdcMap);
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR, "My message", mdcMap);
 
         encoder.addIncludeMdcKeyName("thing_one");
 
@@ -237,9 +237,7 @@ public class LogstashEncoderTest {
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
 
-        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(mdcMap);
-
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR, "My message", mdcMap);
         encoder.addExcludeMdcKeyName("thing_two");
 
         encoder.start();
@@ -257,8 +255,7 @@ public class LogstashEncoderTest {
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
 
-        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(mdcMap);
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR, "My message", mdcMap);
 
         encoder.setIncludeMdc(false);
         encoder.start();
@@ -276,8 +273,7 @@ public class LogstashEncoderTest {
         mdcMap.put("thing_one", "One");
         mdcMap.put("thing_two", "Three");
 
-        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(mdcMap);
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR, "My message", mdcMap);
 
         encoder.getFieldNames().setMdc("mdc");
         encoder.start();
@@ -291,8 +287,10 @@ public class LogstashEncoderTest {
 
     @Test
     public void nullMDCDoesNotCauseEverythingToBlowUp() {
-        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(null);
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR, "My message", null);
+        LoggerContext lc = new LoggerContext();
+        lc.setMDCAdapter(new NOPMDCAdapter());
+        event.setLoggerContext(lc);
 
         encoder.start();
         assertThatCode(() -> encoder.encode(event)).doesNotThrowAnyException();
@@ -306,8 +304,7 @@ public class LogstashEncoderTest {
         mdcMap.put("bool", "true");
         mdcMap.put("default", "string");
 
-        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(mdcMap);
+        LoggingEvent event = mockBasicILoggingEvent(Level.ERROR, "My message", mdcMap);
 
         encoder.addMdcEntryWriter(new LongMdcEntryWriter());
         encoder.addMdcEntryWriter(new DoubleMdcEntryWriter());
@@ -431,7 +428,7 @@ public class LogstashEncoderTest {
     @Test
     public void callerDataIsIncluded() throws Exception {
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(Collections.emptyMap());
+
         StackTraceElement[] stackTraceElements = {
                 new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         event.setCallerData(stackTraceElements);
@@ -452,7 +449,7 @@ public class LogstashEncoderTest {
     @Test
     public void callerDataIsIncludedInSubObject() throws Exception {
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(Collections.emptyMap());
+
         StackTraceElement[] stackTraceElements = {
                 new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         event.setCallerData(stackTraceElements);
@@ -477,7 +474,7 @@ public class LogstashEncoderTest {
     @Test
     public void callerDataIsNotIncludedIfSwitchedOff() throws Exception {
         LoggingEvent event = mockBasicILoggingEvent(Level.ERROR);
-        event.setMDCPropertyMap(Collections.emptyMap());
+
         StackTraceElement[] stackTraceElements = {
                 new StackTraceElement("caller_class", "method_name", "file_name", 12345) };
         event.setCallerData(stackTraceElements);
@@ -852,7 +849,7 @@ public class LogstashEncoderTest {
         assertThatExceptionOfType(IllegalArgumentException.class)
             .isThrownBy(() -> encoder.setProviders(new LoggingEventJsonProviders()));
     }
-    
+
     private void assertJsonArray(JsonNode jsonNode, String... expected) {
         assertThat(jsonNode).isNotNull();
         assertThat(jsonNode.isArray()).isTrue();
@@ -869,11 +866,16 @@ public class LogstashEncoderTest {
     }
 
     private LoggingEvent mockBasicILoggingEvent(Level level, String message) {
+        return mockBasicILoggingEvent(level, message, Collections.emptyMap());
+    }
+
+    private LoggingEvent mockBasicILoggingEvent(Level level, String message, Map<String, String> mDCPropertyMap) {
         LoggingEvent event = new LoggingEvent();
         event.setLoggerName("LoggerName");
         event.setThreadName("ThreadName");
         event.setMessage(message);
         event.setLevel(level);
+        event.setMDCPropertyMap(mDCPropertyMap);
 
         event.setInstant(now);
 
