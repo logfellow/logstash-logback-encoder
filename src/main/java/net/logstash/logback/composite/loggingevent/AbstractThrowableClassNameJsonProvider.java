@@ -57,7 +57,7 @@ public abstract class AbstractThrowableClassNameJsonProvider extends AbstractFie
     /**
      * @return null if no appropriate throwable
      */
-    abstract IThrowableProxy getThrowable(IThrowableProxy throwable);
+    protected abstract IThrowableProxy getThrowable(IThrowableProxy throwable);
 
     public void setUseSimpleClassName(boolean useSimpleClassName) {
         this.useSimpleClassName = useSimpleClassName;
