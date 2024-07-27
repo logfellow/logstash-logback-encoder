@@ -25,8 +25,8 @@
         <!-- runtime dependencies -->
         <jackson.version>2.15.2</jackson.version>
         <java-uuid-generator.version>4.2.0</java-uuid-generator.version>
-        <logback.core.version>1.5.6</logback.core.version>
-        <logback.access.version>2.0.1</logback.access.version>
+        <logback-core.version>1.5.6</logback-core.version>
+        <logback-access.version>2.0.2</logback-access.version>
 
         <!-- shaded runtime dependencies -->
         <disruptor.version>3.4.4</disruptor.version>
@@ -34,7 +34,6 @@
         <!-- test dependencies -->
         <assertj.version>3.24.2</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
-        <servlet-api.version>4.0.1</servlet-api.version>
         <junit.version>5.9.2</junit.version>
         <mockito.version>5.1.1</mockito.version>
 
@@ -135,7 +134,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>${logback.core.version}</version>
+            <version>${logback-core.version}</version>
             <!--
                Required for logging regular ILoggingEvents with a Logger.
                Not needed if only logging IAccessEvents for access logs. 
@@ -143,19 +142,9 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback.access</groupId>
-            <artifactId>common</artifactId>
-            <version>${logback.access.version}</version>
-            <!--
-               Required for logging IAccessEvents for access logs. 
-               Not needed if only logging regular ILoggingEvents with a Logger.
-            -->
-            <optional>true</optional>
-        </dependency>
-        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>${logback.core.version}</version>
+            <version>${logback-core.version}</version>
             <!--
                "provided" since users of logstash-logback-encoder must also
                directly depend on logback-classic or logback-access,
@@ -164,10 +153,14 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>${servlet-api.version}</version>
-            <scope>test</scope>
+            <groupId>ch.qos.logback.access</groupId>
+            <artifactId>common</artifactId>
+            <version>${logback-access.version}</version>
+            <!--
+               Required for logging IAccessEvents for access logs.
+               Not needed if only logging regular ILoggingEvents with a Logger.
+            -->
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -535,9 +528,9 @@
                         <!-- Setup links to external api docs
                          -->
                         <links>   
-                            <link>https://javadoc.io/doc/ch.qos.logback/logback-core/${logback.core.version}</link>
-                            <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback.core.version}</link>
-                            <link>https://javadoc.io/doc/ch.qos.logback.access/common/${logback.access.version}</link>
+                            <link>https://javadoc.io/doc/ch.qos.logback/logback-core/${logback-core.version}</link>
+                            <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback-core.version}</link>
+                            <link>https://javadoc.io/doc/ch.qos.logback.access/common/${logback-access.version}</link>
                             
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/${jackson.version}</link>
                             <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/${jackson.version}</link>
