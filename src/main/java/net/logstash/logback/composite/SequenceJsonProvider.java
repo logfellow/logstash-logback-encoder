@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  * 
  * @deprecated use {@link net.logstash.logback.composite.loggingevent.SequenceJsonProvider} or {@link net.logstash.logback.composite.accessevent.SequenceJsonProvider} instead.
  */
+@Deprecated
 public class SequenceJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> {
 
     public static final String FIELD_SEQUENCE = "sequence";

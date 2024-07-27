@@ -18,6 +18,7 @@ package net.logstash.logback.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -249,7 +250,7 @@ public class ThreadLocalHolderTest {
      */
     @Test
     public void testRecycleThrowsException() {
-       PooledObject obj1 = spy(pool.acquire());
+       PooledObject obj1 = pool.acquire();
        when(obj1.recycle()).thenThrow(new RuntimeException());
 
        assertThatCode(() -> pool.release()).doesNotThrowAnyException();
@@ -262,7 +263,8 @@ public class ThreadLocalHolderTest {
      */
     @Test
     public void testDisposeThrowsException() {
-        PooledObject obj1 = spy(pool.acquire());
+        PooledObject obj1 = pool.acquire();
+        doReturn(false).when(obj1).recycle();
         doThrow(new RuntimeException()).when(obj1).dispose();
 
         assertThatCode(() -> pool.release()).doesNotThrowAnyException();

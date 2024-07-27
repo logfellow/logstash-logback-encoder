@@ -117,6 +117,8 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
     @BeforeEach
     public void setup() throws Exception {
         super.setup();
+
+        appender.setEncoder(encoder);
         
         when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);
@@ -554,7 +556,7 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
         long e1Tstamp = tstamps.get(e1);
         long e2Tstamp = tstamps.get(e2);
         
-        assertThat(e1Tstamp).isGreaterThan(now + appender.getInitialSendDelay().getMilliseconds());
+        assertThat(e1Tstamp).isGreaterThanOrEqualTo(now + appender.getInitialSendDelay().getMilliseconds());
         assertThat(e2Tstamp).isGreaterThanOrEqualTo(e1Tstamp);
     }
 

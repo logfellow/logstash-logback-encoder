@@ -21,6 +21,7 @@ import java.io.IOException;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import com.fasterxml.jackson.core.JsonGenerator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
@@ -42,7 +43,12 @@ public class AccessEventNestedJsonProviderTest {
     
     @Mock
     private AccessEventJsonProviders providers;
-    
+
+    @BeforeEach
+    void beforeEach() {
+        provider.setProviders(providers);
+    }
+
     @Test
     public void testWrite() throws IOException {
         
