@@ -117,6 +117,8 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
     @BeforeEach
     public void setup() throws Exception {
         super.setup();
+
+        appender.setEncoder(encoder);
         
         when(socketFactory.createSocket()).thenReturn(socket);
         when(socket.getOutputStream()).thenReturn(outputStream);

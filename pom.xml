@@ -23,8 +23,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <jackson.version>2.15.2</jackson.version>
-        <java-uuid-generator.version>4.2.0</java-uuid-generator.version>
+        <jackson.version>2.17.2</jackson.version>
+        <java-uuid-generator.version>5.1.0</java-uuid-generator.version>
         <logback-core.version>1.5.6</logback-core.version>
         <logback-access.version>2.0.2</logback-access.version>
 
@@ -32,33 +32,34 @@
         <disruptor.version>3.4.4</disruptor.version>
 
         <!-- test dependencies -->
-        <assertj.version>3.24.2</assertj.version>
-        <awaitility.version>4.2.0</awaitility.version>
-        <junit.version>5.9.2</junit.version>
-        <mockito.version>5.1.1</mockito.version>
+        <assertj.version>3.26.3</assertj.version>
+        <awaitility.version>4.2.1</awaitility.version>
+        <junit.version>5.10.3</junit.version>
+        <mockito.version>5.12.0</mockito.version>
 
         <!-- maven plugins -->
-        <extra-enforcer-rules.version>1.6.1</extra-enforcer-rules.version>
-        <license-maven-plugin.version>4.1</license-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
+        <extra-enforcer-rules.version>1.8.0</extra-enforcer-rules.version>
+        <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
+        <license-maven-plugin.version>4.5</license-maven-plugin.version>
         <maven-bundle-plugin.version>5.1.9</maven-bundle-plugin.version>
-        <maven-checkstyle-plugin.version>3.3.0</maven-checkstyle-plugin.version>
-        <maven-clean-plugin.version>3.2.0</maven-clean-plugin.version>
-        <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
-        <maven-enforcer-plugin.version>3.2.1</maven-enforcer-plugin.version>
-        <maven-flatten-plugin.version>1.5.0</maven-flatten-plugin.version>
+        <maven-checkstyle-plugin.version>3.4.0</maven-checkstyle-plugin.version>
+        <maven-clean-plugin.version>3.4.0</maven-clean-plugin.version>
+        <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
+        <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-        <maven-install-plugin.version>3.1.1</maven-install-plugin.version>
-        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
-        <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
-        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+        <maven-install-plugin.version>3.1.2</maven-install-plugin.version>
+        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+        <maven-javadoc-plugin.version>3.8.0</maven-javadoc-plugin.version>
+        <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
         <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-        <maven-shade-plugin.version>3.4.1</maven-shade-plugin.version>
+        <maven-shade-plugin.version>3.6.0</maven-shade-plugin.version>
         <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
-        <maven-surefire-plugin.version>3.1.0</maven-surefire-plugin.version>
+        <maven-surefire-plugin.version>3.3.1</maven-surefire-plugin.version>
         <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
-        <xml-maven-plugin.version>1.0.2</xml-maven-plugin.version>
+        <xml-maven-plugin.version>1.1.0</xml-maven-plugin.version>
 
-        <checkstyle.version>10.7.0</checkstyle.version>
+        <checkstyle.version>10.17.0</checkstyle.version>
 
         <!-- maven-javadoc-plugin configuration -->
         <maven.javadoc.failOnError>true</maven.javadoc.failOnError>
@@ -331,7 +332,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>${maven-flatten-plugin.version}</version>
+                <version>${flatten-maven-plugin.version}</version>
                 <configuration>
                     <flattenMode>ossrh</flattenMode>
                     <keepCommentsInPom>true</keepCommentsInPom>
@@ -735,7 +736,7 @@
                     <plugin>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>build-helper-maven-plugin</artifactId>
-                        <version>3.3.0</version>
+                        <version>${build-helper-maven-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>add-sample-sources</id>
