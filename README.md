@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-7.4).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-8.0).
 
 # Logstash Logback Encoder
 
@@ -99,7 +99,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>7.4</version>
+    <version>8.0</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logstash-logback-encoder,
          such as usage of StructuredArguments/Markers or implementations such as
          JsonProvider, AppenderListener, JsonFactoryDecorator, JsonGeneratorDecorator, etc
@@ -110,7 +110,7 @@ Maven style:
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
-    <version>1.3.7</version>
+    <version>1.5.6</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logback,
          such as implementations of Appender, Encoder, Layout, TurboFilter, etc
     <scope>runtime</scope>
@@ -123,10 +123,10 @@ then ensure the required dependencies (and appropriate versions) as specified in
 from the maven repository exist on the runtime classpath.
 Specifically, the following need to be available on the runtime classpath:
 
-* jackson-databind / jackson-core / jackson-annotations >= 2.12.0
-* logback-core >= 1.3.0
-* logback-classic >= 1.3.0 (required for logging _LoggingEvents_)
-* logback-access >= 1.3.0 (required for logging _AccessEvents_)
+* jackson-databind / jackson-core / jackson-annotations >= 2.17.0
+* logback-core >= 1.5.0
+* logback-classic >= 1.5.0 (required for logging _LoggingEvents_)
+* logback-access >= 2.0.0 (required for logging _AccessEvents_)
 * slf4j-api (usually comes as a transitive dependency of logback-classic)
 * java-uuid-generator (required if the `uuid` provider is used)
 
@@ -139,24 +139,25 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 ```xml
 <properties>
-    <logback.version>1.3.7</logback.version>
+    <logback-classic.version>1.5.6</logback-classic.version>
+    <logback-access.version>2.0.2</logback-access.version>
 </properties>
 <dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-core</artifactId>
-            <version>${logback.version}</version>
+            <version>${logback-classic.version}</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
+            <version>${logback-classic.version}</version>
         </dependency>
         <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-access</artifactId>
-            <version>${logback.version}</version>
+            <groupId>ch.qos.logback.access</groupId>
+            <artifactId>common</artifactId>
+            <version>${logback-access.version}</version>
         </dependency>
     </dependencies>
 </dependencyManagement>
@@ -166,7 +167,9 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 | logstash-logback-encoder | Minimum Java Version supported |
 |--------------------------|--------------------------------|
-| &gt;= 6.0                | 8                              |
+| 8.x                      | 11                             |
+| 7.x                      | 8                              |
+| 6.x                      | 8                              |
 | 5.x                      | 7                              |
 | &lt;= 4.x                | 6                              |
 
