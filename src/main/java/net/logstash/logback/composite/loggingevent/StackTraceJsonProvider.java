@@ -31,6 +31,12 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     public static final String FIELD_STACK_TRACE = "stack_trace";
 
     /**
+     * If true, stacktrace will be output as a json array of strings split by newlines
+     * If else, stacktrace will be output as a json string
+     */
+    private boolean outputThrowableAsArray = false;
+
+    /**
      * Used to format throwables as Strings.
      *
      * Uses an {@link ExtendedThrowableProxyConverter} from logstash by default.
@@ -43,6 +49,14 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
 
     public StackTraceJsonProvider() {
         setFieldName(FIELD_STACK_TRACE);
+    }
+
+    public boolean isOutputThrowableAsArray() {
+        return outputThrowableAsArray;
+    }
+
+    public void setOutputThrowableAsArray(boolean outputThrowableAsArray) {
+        this.outputThrowableAsArray = outputThrowableAsArray;
     }
 
     @Override
@@ -60,8 +74,15 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
-        if (throwableProxy != null) {
-            JsonWritingUtils.writeStringField(generator, getFieldName(), throwableConverter.convert(event));
+        if (throwableProxy == null) {
+            return;
+        }
+        String stacktrace = throwableConverter.convert(event);
+        if (outputThrowableAsArray) {
+            String[] lines = stacktrace.split("\n");
+            JsonWritingUtils.writeStringArrayField(generator, getFieldName(), lines);
+        } else {
+            JsonWritingUtils.writeStringField(generator, getFieldName(), stacktrace);
         }
     }
 

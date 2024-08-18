@@ -17,6 +17,7 @@ package net.logstash.logback.decorate;
 
 import ch.qos.logback.core.CoreConstants;
 import tools.jackson.core.PrettyPrinter;
+import tools.jackson.core.util.DefaultIndenter;
 import tools.jackson.core.util.DefaultPrettyPrinter;
 import tools.jackson.core.util.Separators;
 import tools.jackson.databind.ObjectMapper;
@@ -65,5 +66,18 @@ public class PrettyPrintingDecorator<M extends ObjectMapper, B extends MapperBui
     public void setSpacesInObjectEntries(boolean spacesInObjectEntries) {
         separators = separators.withObjectNameValueSpacing(spacesInObjectEntries ? Separators.Spacing.BOTH : Separators.Spacing.NONE);
         prettyPrinter = prettyPrinter.withSeparators(separators);
+    }
+
+    /**
+     * Sets whether arrays are indented with a new line.
+     *
+     * @param indentArraysWithNewLine whether arrays are indented with a new line.
+     */
+    public void setIndentArraysWithNewLine(boolean indentArraysWithNewLine) {
+        if (indentArraysWithNewLine) {
+            prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+        } else {
+            prettyPrinter.indentArraysWith(null);
+        }
     }
 }
