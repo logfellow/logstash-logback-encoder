@@ -124,9 +124,9 @@ from the maven repository exist on the runtime classpath.
 Specifically, the following need to be available on the runtime classpath:
 
 * jackson-databind / jackson-core / jackson-annotations >= 2.17.0
-* logback-core >= 1.5.0
-* logback-classic >= 1.5.0 (required for logging _LoggingEvents_)
-* logback-access >= 2.0.0 (required for logging _AccessEvents_)
+* logback-core >= 1.5.18
+* logback-classic >= 1.5.18 (required for logging _LoggingEvents_)
+* logback-access >= 2.0.6 (required for logging _AccessEvents_)
 * slf4j-api (usually comes as a transitive dependency of logback-classic)
 * java-uuid-generator (required if the `uuid` provider is used)
 

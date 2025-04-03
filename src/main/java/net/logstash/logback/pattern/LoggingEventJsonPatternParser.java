@@ -38,7 +38,7 @@ public class LoggingEventJsonPatternParser extends AbstractJsonPatternParser<ILo
     @Override
     protected PatternLayoutBase<ILoggingEvent> createLayout() {
         PatternLayoutBase<ILoggingEvent> layout = new PatternLayout();
-        layout.getInstanceConverterMap().put("property", EnhancedPropertyConverter.class.getName());
+        layout.getInstanceConverterMap().put("property", EnhancedPropertyConverter::new);
         return layout;
     }
 
