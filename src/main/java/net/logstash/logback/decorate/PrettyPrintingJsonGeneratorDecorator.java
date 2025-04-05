@@ -17,6 +17,7 @@ package net.logstash.logback.decorate;
 
 import ch.qos.logback.core.CoreConstants;
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 
 /**
@@ -60,6 +61,14 @@ public class PrettyPrintingJsonGeneratorDecorator implements JsonGeneratorDecora
             prettyPrinter = prettyPrinter.withSpacesInObjectEntries();
         } else {
             prettyPrinter = prettyPrinter.withoutSpacesInObjectEntries();
+        }
+    }
+
+    public void setIndentArraysWithNewLine(boolean indentArraysWithNewLine) {
+        if (indentArraysWithNewLine) {
+            prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+        } else {
+            prettyPrinter.indentArraysWith(null);
         }
     }
 }

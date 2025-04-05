@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Arrays;
 import java.util.Collections;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -93,5 +94,30 @@ class PrettyPrintingJsonGeneratorDecoratorTest {
         generator.flush();
         writer.flush();
         assertThat(writer.toString()).isEqualTo("{\n  \"key1\":\"value1\"\n}{\n  \"key2\":\"value2\"\n}");
+    }
+
+    @Test
+    void arrayElementsOnNewLine() throws IOException {
+        PrettyPrintingJsonGeneratorDecorator decorator = new PrettyPrintingJsonGeneratorDecorator();
+        decorator.setIndentArraysWithNewLine(true);
+
+        StringWriter writer = new StringWriter();
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonGenerator generator = decorator.decorate(objectMapper.createGenerator(writer));
+
+        generator.writeObject(Collections.singletonMap("key1", Arrays.asList("RuntimeException: foobar",
+                "\tat com.example.Foobar")));
+        generator.writeObject(Collections.singletonMap("key2", "value2"));
+
+        generator.flush();
+        writer.flush();
+        assertThat(writer.toString()).isEqualTo("{\n" +
+                "  \"key1\" : [\n" +
+                "    \"RuntimeException: foobar\",\n" +
+                "    \"\\tat com.example.Foobar\"\n" +
+                "  ]\n" +
+                "}{\n" +
+                "  \"key2\" : \"value2\"\n" +
+                "}");
     }
 }
