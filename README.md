@@ -1,6 +1,6 @@
 > !! This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-8.0).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-8.1).
 
 # Logstash Logback Encoder
 
@@ -99,7 +99,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>8.0</version>
+    <version>8.1</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logstash-logback-encoder,
          such as usage of StructuredArguments/Markers or implementations such as
          JsonProvider, AppenderListener, JsonFactoryDecorator, JsonGeneratorDecorator, etc
@@ -110,7 +110,7 @@ Maven style:
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
-    <version>1.5.6</version>
+    <version>1.5.18</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logback,
          such as implementations of Appender, Encoder, Layout, TurboFilter, etc
     <scope>runtime</scope>
