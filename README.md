@@ -139,8 +139,8 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 ```xml
 <properties>
-    <logback-classic.version>1.5.6</logback-classic.version>
-    <logback-access.version>2.0.2</logback-access.version>
+    <logback-classic.version>1.5.18</logback-classic.version>
+    <logback-access.version>2.0.6</logback-access.version>
 </properties>
 <dependencyManagement>
     <dependencies>
@@ -156,7 +156,7 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
         </dependency>
         <dependency>
             <groupId>ch.qos.logback.access</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>logback-access-common</artifactId>
             <version>${logback-access.version}</version>
         </dependency>
     </dependencies>
