@@ -34,7 +34,7 @@
         <!-- test dependencies -->
         <assertj.version>3.27.3</assertj.version>
         <awaitility.version>4.3.0</awaitility.version>
-        <junit.version>5.12.1</junit.version>
+        <junit.version>5.13.4</junit.version>
         <mockito.version>5.16.1</mockito.version>
 
         <!-- maven plugins -->
