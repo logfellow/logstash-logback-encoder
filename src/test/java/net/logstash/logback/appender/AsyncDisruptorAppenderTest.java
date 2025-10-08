@@ -240,7 +240,7 @@ public class AsyncDisruptorAppenderTest extends AbstractLogbackTest {
         appender.append(event1);
 
         assertThat(statusManager.getCopyOfStatusList()).hasSize(0);
-  }
+    }
  
     @SuppressWarnings("unchecked")
     @Test
