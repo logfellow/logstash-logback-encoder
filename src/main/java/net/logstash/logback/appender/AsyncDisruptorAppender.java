@@ -259,6 +259,11 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     private Duration shutdownGracePeriod = Duration.buildByMinutes(1);
 
     /**
+     * When false, no logging will occur for dropped events.
+     */
+    private boolean shouldLogDroppedEvents = true;
+
+    /**
      * Lock used to limit the number of concurrent threads retrying at the same time
      */
     private final ReentrantLock lock = new ReentrantLock();
@@ -500,7 +505,9 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 //
                 long consecutiveDropped = this.consecutiveDroppedCount.get();
                 if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
-                    addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+                    if (shouldLogDroppedEvents) {
+                        addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+                    }
                 }
                 
                 // Notify listeners
@@ -512,7 +519,9 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 //
                 long consecutiveDropped = this.consecutiveDroppedCount.incrementAndGet();
                 if ((consecutiveDropped % this.droppedWarnFrequency) == 1) {
-                    addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+                    if (shouldLogDroppedEvents) {
+                        addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
+                    }
                 }
                 
                 // Notify listeners
@@ -807,7 +816,14 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setAddDefaultStatusListener(boolean addDefaultStatusListener) {
         this.addDefaultStatusListener = addDefaultStatusListener;
     }
-    
+
+    public boolean shouldLogDroppedEvents() {
+        return this.shouldLogDroppedEvents;
+    }
+
+    public void setShouldLogDroppedEvents(boolean shouldLogDroppedEvents) {
+        this.shouldLogDroppedEvents = shouldLogDroppedEvents;
+    }
     
     private static boolean isPowerOfTwo(int x) {
         /* First x in the below expression is for the case when x is 0 */
