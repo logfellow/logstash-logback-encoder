@@ -42,7 +42,7 @@
         <extra-enforcer-rules.version>1.10.0</extra-enforcer-rules.version>
         <flatten-maven-plugin.version>1.7.0</flatten-maven-plugin.version>
         <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
-        <maven-bundle-plugin.version>5.1.9</maven-bundle-plugin.version>
+        <maven-bundle-plugin.version>6.0.0</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <maven-clean-plugin.version>3.4.1</maven-clean-plugin.version>
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
