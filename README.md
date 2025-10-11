@@ -167,6 +167,7 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 | logstash-logback-encoder | Minimum Java Version supported |
 |--------------------------|--------------------------------|
+| 9.x                      | 17                             |
 | 8.x                      | 11                             |
 | 7.x                      | 8                              |
 | 6.x                      | 8                              |

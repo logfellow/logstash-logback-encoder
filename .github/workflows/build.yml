@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [ '11', '17', '21' ]
+        java: [ '17', '21', '25' ]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -68,7 +68,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: "temurin"
-          java-version: 21
+          java-version: 25
 
       - name: Setup GPG
         run: .github/workflows/steps/setup-gpg.sh
