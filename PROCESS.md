@@ -31,14 +31,13 @@ In other words, older releases will not be hotfixed, and backports will not be p
 Releasing
 ---------
 
-To perform a release, push a commit ([like this one](https://github.com/logfellow/logstash-logback-encoder/commit/aa942e9fe59320fa1b39f1b54f8a742dd8fd9930))
-to the `main` branch that:
+To perform a release, first, prepare the `main` branch:
+1. Set the version in the [pom.xml](pom.xml) to `X.Y-SNAPSHOT`, where `X.Y` is the version to be released. 
+2. Bump the version references in the [README.md](README.md)
 
-1. Bumps the version references in the README.md
-2. Contains a commit message that starts with `[release]`
+Then trigger the https://github.com/logfellow/logstash-logback-encoder/actions/workflows/release.yml on the main branch.
     
-The [build workflow](.github/workflows/build.yml) sees `[release]` in the commit message
-and uses the `maven-release-plugin` to perform the release, which then:
+The [release workflow](.github/workflows/release.yml) triggers a maven release via the `maven-release-plugin`, which then:
 
 1. Strips the `-SNAPSHOT` from the pom version,
 2. Creates the git tag, and builds the artifacts
