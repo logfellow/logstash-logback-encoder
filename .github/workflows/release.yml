@@ -1,0 +1,49 @@
+name: release
+
+on:
+  - workflow_dispatch
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-24.04
+    needs: [build]
+    if: github.repository == 'logfellow/logstash-logback-encoder' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Setup JAVA
+        uses: actions/setup-java@v3
+        with:
+          distribution: "temurin"
+          java-version: 25
+
+      - name: Setup GPG
+        run: .github/workflows/steps/setup-gpg.sh
+        env:
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Setup GIT
+        run: |
+          .github/workflows/steps/setup-git.sh
+          git switch main
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml', '.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Release
+        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml --activate-profiles central-publish release:prepare release:perform
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
