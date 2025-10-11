@@ -44,11 +44,10 @@ and uses the `maven-release-plugin` to perform the release, which then:
 2. Creates the git tag, and builds the artifacts
 3. Uses the `maven-gpg-plugin` to sign the artifacts with [this GPG signing key](http://keyserver.ubuntu.com/pks/lookup?search=0x794038C5C4DF6A3F&fingerprint=on&op=index)
    using the [`GPG_KEY` and `GPG_PASSPHRASE` secrets](https://github.com/logfellow/logstash-logback-encoder/settings/secrets/actions)
-4. Uses the `nexus-staging-maven-plugin` to:
-   1. Deploy the artifact to a staging repository hosted at https://oss.sonatype.org/
-      using the [`OSSRH_USERNAME` and `OSSRH_PASSWORD` secrets](https://github.com/logfellow/logstash-logback-encoder/settings/secrets/actions)
-   2. Automatically [release](https://central.sonatype.org/pages/releasing-the-deployment.html) the staging repository if no errors occur.
-      * After the staging repository is released, the new artifacts will eventually propagate to maven central. 
+4. Uses the `central-publishing-maven-plugin` to:
+   1. Upload the artifact to https://central.sonatype.com/
+      using the [`CENTRAL_USERNAME` and `CENTRAL_PASSWORD` secrets](https://github.com/logfellow/logstash-logback-encoder/settings/secrets/actions)
+   2. Automatically [publish](https://central.sonatype.org/pages/releasing-the-deployment.html) to maven central if no errors occur.
 5. Bumps the version to the next `-SNAPSHOT` version.
 
 After releasing, create a [release](https://github.com/logfellow/logstash-logback-encoder/releases) for the tag
