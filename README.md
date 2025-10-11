@@ -110,7 +110,7 @@ Maven style:
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
-    <version>1.5.18</version>
+    <version>1.5.19</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logback,
          such as implementations of Appender, Encoder, Layout, TurboFilter, etc
     <scope>runtime</scope>
@@ -139,7 +139,7 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 ```xml
 <properties>
-    <logback-classic.version>1.5.18</logback-classic.version>
+    <logback-classic.version>1.5.19</logback-classic.version>
     <logback-access.version>2.0.6</logback-access.version>
 </properties>
 <dependencyManagement>
