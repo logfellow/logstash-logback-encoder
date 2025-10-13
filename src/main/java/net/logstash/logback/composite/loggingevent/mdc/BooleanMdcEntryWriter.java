@@ -15,9 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent.mdc;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes boolean values (instead of String values) for any MDC values that equal "true" or "false", ignoring case.
@@ -25,15 +23,13 @@ import com.fasterxml.jackson.core.JsonGenerator;
 public class BooleanMdcEntryWriter implements MdcEntryWriter {
 
     @Override
-    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) {
         if ("true".equalsIgnoreCase(mdcValue)) {
-            generator.writeFieldName(fieldName);
-            generator.writeBoolean(true);
+            generator.writeBooleanProperty(fieldName, true);
             return true;
         }
         if ("false".equalsIgnoreCase(mdcValue)) {
-            generator.writeFieldName(fieldName);
-            generator.writeBoolean(false);
+            generator.writeBooleanProperty(fieldName, false);
             return true;
         }
 

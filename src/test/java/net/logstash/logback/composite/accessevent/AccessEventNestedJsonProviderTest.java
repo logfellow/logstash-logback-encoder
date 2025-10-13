@@ -17,10 +17,7 @@ package net.logstash.logback.composite.accessevent;
 
 import static org.mockito.Mockito.inOrder;
 
-import java.io.IOException;
-
 import ch.qos.logback.access.common.spi.IAccessEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +25,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class AccessEventNestedJsonProviderTest {
@@ -50,7 +48,7 @@ public class AccessEventNestedJsonProviderTest {
     }
 
     @Test
-    public void testWrite() throws IOException {
+    public void testWrite() {
         
         provider.setFieldName("newFieldName");
         
@@ -58,8 +56,7 @@ public class AccessEventNestedJsonProviderTest {
         
         InOrder inOrder = inOrder(generator, providers);
         
-        inOrder.verify(generator).writeFieldName("newFieldName");
-        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeObjectPropertyStart("newFieldName");
         inOrder.verify(providers).writeTo(generator, event);
         inOrder.verify(generator).writeEndObject();
     }

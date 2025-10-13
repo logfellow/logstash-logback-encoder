@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,8 +26,8 @@ import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.event.KeyValuePair;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Includes key value pairs added from slf4j's fluent api in the output according to
@@ -82,7 +81,7 @@ public class KeyValuePairsJsonProvider extends AbstractFieldJsonProvider<ILoggin
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         List<KeyValuePair> keyValuePairs = event.getKeyValuePairs();
         if (keyValuePairs == null || keyValuePairs.isEmpty()) {
             return;
@@ -90,7 +89,7 @@ public class KeyValuePairsJsonProvider extends AbstractFieldJsonProvider<ILoggin
 
         String fieldName = getFieldName();
         if (fieldName != null) {
-            generator.writeObjectFieldStart(getFieldName());
+            generator.writeObjectPropertyStart(getFieldName());
         }
 
         for (KeyValuePair keyValuePair : keyValuePairs) {
@@ -102,8 +101,7 @@ public class KeyValuePairsJsonProvider extends AbstractFieldJsonProvider<ILoggin
                 if (key == null) {
                     key = keyValuePair.key;
                 }
-                generator.writeFieldName(key);
-                generator.writeObject(keyValuePair.value);
+                generator.writePOJOProperty(key, keyValuePair.value);
             }
         }
 

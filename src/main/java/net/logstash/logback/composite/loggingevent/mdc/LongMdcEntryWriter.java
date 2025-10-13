@@ -15,9 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent.mdc;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes long values (instead of String values) for any MDC values that can be parsed as a long (radix 10).
@@ -25,12 +23,11 @@ import com.fasterxml.jackson.core.JsonGenerator;
 public class LongMdcEntryWriter implements MdcEntryWriter {
 
     @Override
-    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) {
         if (shouldParse(mdcValue)) {
             try {
                 long parsedValue = Long.parseLong(mdcValue);
-                generator.writeFieldName(fieldName);
-                generator.writeNumber(parsedValue);
+                generator.writeNumberProperty(fieldName, parsedValue);
                 return true;
             } catch (NumberFormatException ignore) {
             }

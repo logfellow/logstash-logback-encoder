@@ -15,15 +15,13 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public class LogLevelJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
@@ -34,7 +32,7 @@ public class LogLevelJsonProvider extends AbstractFieldJsonProvider<ILoggingEven
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         JsonWritingUtils.writeStringField(generator, getFieldName(), event.getLevel().toString());
     }
     

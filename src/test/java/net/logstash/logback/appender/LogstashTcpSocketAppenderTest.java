@@ -88,16 +88,16 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
     @Mock
     private ILoggingEvent event1;
     
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private SocketFactory socketFactory;
 
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private Socket socket;
     
     @Mock
     private OutputStream outputStream;
     
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private Encoder<ILoggingEvent> encoder;
 
     @Mock
@@ -125,7 +125,7 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
         when(encoder.encode(event1)).thenReturn("event1".getBytes(StandardCharsets.UTF_8));
         
         appender.addListener(listener);
-        appender.addListener(new TcpAppenderListener<ILoggingEvent>() {
+        appender.addListener(new TcpAppenderListener<>() {
             @Override
             public void eventSent(Appender<ILoggingEvent> appender, Socket socket, ILoggingEvent event,
                     long durationInNanos) {
@@ -528,7 +528,7 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
         
         // Capture time events are sent
         final Map<ILoggingEvent, Long> tstamps = new HashMap<>();
-        appender.addListener(new TcpAppenderListener<ILoggingEvent>() {
+        appender.addListener(new TcpAppenderListener<>() {
             @Override
             public void eventSent(Appender<ILoggingEvent> appender, Socket socket, ILoggingEvent event, long durationInNanos) {
                 tstamps.put(event, System.currentTimeMillis());
@@ -565,7 +565,7 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
      * Assert that waiting for initialSendDelay is aborted immediately when the appender is stopped.
      */
     @Test
-    public void testStopWhileWaitingInitialSendDelay() throws Exception {
+    public void testStopWhileWaitingInitialSendDelay() {
         appender.addDestination("localhost:10000");
         appender.setInitialSendDelay(Duration.buildByMilliseconds(30000));
         appender.setShutdownGracePeriod(Duration.buildByMilliseconds(0));
@@ -922,7 +922,7 @@ public class LogstashTcpSocketAppenderTest extends AbstractLogbackTest {
     }
     
     private ArgumentMatcher<SocketAddress> hasHostAndPort(final String host, final int port) {
-        return new ArgumentMatcher<SocketAddress>() {
+        return new ArgumentMatcher<>() {
 
             @Override
             public boolean matches(SocketAddress argument) {

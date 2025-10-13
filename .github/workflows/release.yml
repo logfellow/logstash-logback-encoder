@@ -7,7 +7,6 @@ jobs:
   release:
     name: release
     runs-on: ubuntu-24.04
-    needs: [build]
     if: github.repository == 'logfellow/logstash-logback-encoder' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout Code

@@ -15,14 +15,12 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.JsonWritingUtils;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Logs an exception message for a given logging event. Which exception to be
@@ -36,7 +34,7 @@ public abstract class AbstractThrowableMessageJsonProvider extends AbstractField
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         IThrowableProxy throwable = getThrowable(event);
         if (throwable != null) {
             String throwableMessage = throwable.getMessage();

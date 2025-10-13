@@ -23,16 +23,16 @@ import java.io.IOException;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class LoggerNameJsonProviderTest {
     
-    private LoggerNameJsonProvider provider = new LoggerNameJsonProvider();
+    private final LoggerNameJsonProvider provider = new LoggerNameJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -41,12 +41,12 @@ public class LoggerNameJsonProviderTest {
     private ILoggingEvent event;
     
     @Test
-    public void testFullName() throws IOException {
+    public void testFullName() {
         when(event.getLoggerName()).thenReturn(getClass().getName());
         
         writeEvent();
         
-        verify(generator).writeStringField(LoggerNameJsonProvider.FIELD_LOGGER_NAME, getClass().getName());
+        verify(generator).writeStringProperty(LoggerNameJsonProvider.FIELD_LOGGER_NAME, getClass().getName());
     }
 
     @Test
@@ -57,11 +57,11 @@ public class LoggerNameJsonProviderTest {
         
         writeEvent();
         
-        verify(generator).writeStringField("newFieldName", getClass().getName());
+        verify(generator).writeStringProperty("newFieldName", getClass().getName());
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setLogger("newFieldName");
         
@@ -71,32 +71,32 @@ public class LoggerNameJsonProviderTest {
         
         writeEvent();
         
-        verify(generator).writeStringField("newFieldName", getClass().getName());
+        verify(generator).writeStringProperty("newFieldName", getClass().getName());
     }
 
     @Test
-    public void testShortName() throws IOException {
+    public void testShortName() {
         provider.setShortenedLoggerNameLength(5);
         
         when(event.getLoggerName()).thenReturn(getClass().getName());
         
         writeEvent();
         
-        verify(generator).writeStringField(LoggerNameJsonProvider.FIELD_LOGGER_NAME, "n.l.l.c.l.LoggerNameJsonProviderTest");
+        verify(generator).writeStringProperty(LoggerNameJsonProvider.FIELD_LOGGER_NAME, "n.l.l.c.l.LoggerNameJsonProviderTest");
     }
 
     @Test
-    public void testShortName_zeroLength() throws IOException {
+    public void testShortName_zeroLength() {
         provider.setShortenedLoggerNameLength(0);
         
         when(event.getLoggerName()).thenReturn(getClass().getName());
         
         writeEvent();
         
-        verify(generator).writeStringField(LoggerNameJsonProvider.FIELD_LOGGER_NAME, "LoggerNameJsonProviderTest");
+        verify(generator).writeStringProperty(LoggerNameJsonProvider.FIELD_LOGGER_NAME, "LoggerNameJsonProviderTest");
     }
     
-    protected void writeEvent() throws IOException {
+    protected void writeEvent() {
         if (!provider.isStarted()) {
             provider.start();
         }

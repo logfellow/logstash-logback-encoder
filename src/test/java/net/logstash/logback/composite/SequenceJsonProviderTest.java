@@ -20,17 +20,17 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 @Deprecated
 public class SequenceJsonProviderTest {
 
-    private SequenceJsonProvider<ILoggingEvent> provider = new SequenceJsonProvider<>();
+    private final SequenceJsonProvider<ILoggingEvent> provider = new SequenceJsonProvider<>();
 
     @Mock
     private JsonGenerator generator;
@@ -42,7 +42,7 @@ public class SequenceJsonProviderTest {
     public void testDefaultName() throws IOException {
         provider.writeTo(generator, event);
 
-        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
+        verify(generator).writeNumberProperty(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
 
     }
 
@@ -52,6 +52,6 @@ public class SequenceJsonProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeNumberField("newFieldName", 1L);
+        verify(generator).writeNumberProperty("newFieldName", 1L);
     }
 }

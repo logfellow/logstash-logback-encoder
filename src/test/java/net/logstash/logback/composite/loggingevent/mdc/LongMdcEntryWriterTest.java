@@ -20,14 +20,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 class LongMdcEntryWriterTest {
@@ -46,11 +44,11 @@ class LongMdcEntryWriterTest {
             "-9223372036854775808",
             "9223372036854775807"
     })
-    void valid(String value) throws IOException {
+    void valid(String value) {
         boolean result = mdcEntryWriter.writeMdcEntry(generator, "otherName", "name", value);
 
         assertThat(result).isTrue();
-        verify(generator).writeFieldName("otherName");
+        verify(generator).writeName("otherName");
         verify(generator).writeNumber(Long.parseLong(value));
         verifyNoMoreInteractions(generator);
     }
@@ -67,7 +65,7 @@ class LongMdcEntryWriterTest {
             "-",
             ""
     })
-    void invalid(String value) throws IOException {
+    void invalid(String value) {
         boolean result = mdcEntryWriter.writeMdcEntry(generator, "otherName", "name", value);
 
         assertThat(result).isFalse();

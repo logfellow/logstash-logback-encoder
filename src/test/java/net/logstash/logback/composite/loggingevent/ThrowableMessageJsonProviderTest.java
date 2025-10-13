@@ -24,16 +24,16 @@ import java.io.IOException;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class ThrowableMessageJsonProviderTest {
 
-    private ThrowableMessageJsonProvider provider = new ThrowableMessageJsonProvider();
+    private final ThrowableMessageJsonProvider provider = new ThrowableMessageJsonProvider();
 
     @Mock
     private JsonGenerator generator;
@@ -50,11 +50,11 @@ public class ThrowableMessageJsonProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField("newFieldName", "kaput");
+        verify(generator).writeStringProperty("newFieldName", "kaput");
     }
 
     @Test
-    public void testNoThrowable() throws IOException {
+    public void testNoThrowable() {
         when(event.getThrowableProxy()).thenReturn(null);
 
         provider.writeTo(generator, event);

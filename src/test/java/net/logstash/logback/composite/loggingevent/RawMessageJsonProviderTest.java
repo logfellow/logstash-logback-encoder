@@ -21,16 +21,16 @@ import static org.mockito.Mockito.when;
 import java.io.IOException;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class RawMessageJsonProviderTest {
     
-    private RawMessageJsonProvider provider = new RawMessageJsonProvider();
+    private final RawMessageJsonProvider provider = new RawMessageJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -45,7 +45,7 @@ public class RawMessageJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(RawMessageJsonProvider.FIELD_RAW_MESSAGE, "raw_message");
+        verify(generator).writeStringProperty(RawMessageJsonProvider.FIELD_RAW_MESSAGE, "raw_message");
     }
 
     @Test
@@ -56,7 +56,7 @@ public class RawMessageJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "raw_message");
+        verify(generator).writeStringProperty("newFieldName", "raw_message");
     }
 
 }

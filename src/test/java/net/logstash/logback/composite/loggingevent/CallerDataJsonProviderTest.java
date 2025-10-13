@@ -26,19 +26,19 @@ import java.io.IOException;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class CallerDataJsonProviderTest {
     
     private static final StackTraceElement CALLER_DATA = new StackTraceElement("declaringClass", "methodName", "fileName", 100);
 
-    private CallerDataJsonProvider provider = new CallerDataJsonProvider();
+    private final CallerDataJsonProvider provider = new CallerDataJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -51,7 +51,7 @@ public class CallerDataJsonProviderTest {
     }
     
     @Test
-    public void testUnwrapped() throws IOException {
+    public void testUnwrapped() {
         setupCallerData();
         
         provider.writeTo(generator, event);
@@ -61,14 +61,14 @@ public class CallerDataJsonProviderTest {
         
         InOrder inOrder = inOrder(generator);
         
-        inOrder.verify(generator).writeStringField(CallerDataJsonProvider.FIELD_CALLER_CLASS_NAME, CALLER_DATA.getClassName());
-        inOrder.verify(generator).writeStringField(CallerDataJsonProvider.FIELD_CALLER_METHOD_NAME, CALLER_DATA.getMethodName());
-        inOrder.verify(generator).writeStringField(CallerDataJsonProvider.FIELD_CALLER_FILE_NAME, CALLER_DATA.getFileName());
-        inOrder.verify(generator).writeNumberField(CallerDataJsonProvider.FIELD_CALLER_LINE_NUMBER, CALLER_DATA.getLineNumber());
+        inOrder.verify(generator).writeStringProperty(CallerDataJsonProvider.FIELD_CALLER_CLASS_NAME, CALLER_DATA.getClassName());
+        inOrder.verify(generator).writeStringProperty(CallerDataJsonProvider.FIELD_CALLER_METHOD_NAME, CALLER_DATA.getMethodName());
+        inOrder.verify(generator).writeStringProperty(CallerDataJsonProvider.FIELD_CALLER_FILE_NAME, CALLER_DATA.getFileName());
+        inOrder.verify(generator).writeNumberProperty(CallerDataJsonProvider.FIELD_CALLER_LINE_NUMBER, CALLER_DATA.getLineNumber());
     }
 
     @Test
-    public void testWrapped() throws IOException {
+    public void testWrapped() {
         setupCallerData();
         
         provider.setFieldName("caller");
@@ -77,16 +77,16 @@ public class CallerDataJsonProviderTest {
         
         InOrder inOrder = inOrder(generator);
         
-        inOrder.verify(generator).writeObjectFieldStart("caller");
-        inOrder.verify(generator).writeStringField(CallerDataJsonProvider.FIELD_CALLER_CLASS_NAME, CALLER_DATA.getClassName());
-        inOrder.verify(generator).writeStringField(CallerDataJsonProvider.FIELD_CALLER_METHOD_NAME, CALLER_DATA.getMethodName());
-        inOrder.verify(generator).writeStringField(CallerDataJsonProvider.FIELD_CALLER_FILE_NAME, CALLER_DATA.getFileName());
-        inOrder.verify(generator).writeNumberField(CallerDataJsonProvider.FIELD_CALLER_LINE_NUMBER, CALLER_DATA.getLineNumber());
+        inOrder.verify(generator).writeObjectPropertyStart("caller");
+        inOrder.verify(generator).writeStringProperty(CallerDataJsonProvider.FIELD_CALLER_CLASS_NAME, CALLER_DATA.getClassName());
+        inOrder.verify(generator).writeStringProperty(CallerDataJsonProvider.FIELD_CALLER_METHOD_NAME, CALLER_DATA.getMethodName());
+        inOrder.verify(generator).writeStringProperty(CallerDataJsonProvider.FIELD_CALLER_FILE_NAME, CALLER_DATA.getFileName());
+        inOrder.verify(generator).writeNumberProperty(CallerDataJsonProvider.FIELD_CALLER_LINE_NUMBER, CALLER_DATA.getLineNumber());
         inOrder.verify(generator).writeEndObject();
     }
 
     @Test
-    public void testNoCallerData() throws IOException {
+    public void testNoCallerData() {
         provider.writeTo(generator, event);
         
         verifyNoMoreInteractions(generator);
@@ -106,16 +106,16 @@ public class CallerDataJsonProviderTest {
         
         InOrder inOrder = inOrder(generator);
         
-        inOrder.verify(generator).writeObjectFieldStart("caller");
-        inOrder.verify(generator).writeStringField("class", CALLER_DATA.getClassName());
-        inOrder.verify(generator).writeStringField("method", CALLER_DATA.getMethodName());
-        inOrder.verify(generator).writeStringField("file", CALLER_DATA.getFileName());
-        inOrder.verify(generator).writeNumberField("line", CALLER_DATA.getLineNumber());
+        inOrder.verify(generator).writeObjectPropertyStart("caller");
+        inOrder.verify(generator).writeStringProperty("class", CALLER_DATA.getClassName());
+        inOrder.verify(generator).writeStringProperty("method", CALLER_DATA.getMethodName());
+        inOrder.verify(generator).writeStringProperty("file", CALLER_DATA.getFileName());
+        inOrder.verify(generator).writeNumberProperty("line", CALLER_DATA.getLineNumber());
         inOrder.verify(generator).writeEndObject();
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         setupCallerData();
 
         LogstashFieldNames fieldNames = new LogstashFieldNames();
@@ -131,16 +131,16 @@ public class CallerDataJsonProviderTest {
         
         InOrder inOrder = inOrder(generator);
         
-        inOrder.verify(generator).writeObjectFieldStart("caller");
-        inOrder.verify(generator).writeStringField("class", CALLER_DATA.getClassName());
-        inOrder.verify(generator).writeStringField("method", CALLER_DATA.getMethodName());
-        inOrder.verify(generator).writeStringField("file", CALLER_DATA.getFileName());
-        inOrder.verify(generator).writeNumberField("line", CALLER_DATA.getLineNumber());
+        inOrder.verify(generator).writeObjectPropertyStart("caller");
+        inOrder.verify(generator).writeStringProperty("class", CALLER_DATA.getClassName());
+        inOrder.verify(generator).writeStringProperty("method", CALLER_DATA.getMethodName());
+        inOrder.verify(generator).writeStringProperty("file", CALLER_DATA.getFileName());
+        inOrder.verify(generator).writeNumberProperty("line", CALLER_DATA.getLineNumber());
         inOrder.verify(generator).writeEndObject();
     }
 
     @Test
-    public void testPrepareForDeferredProcessing() throws IOException {
+    public void testPrepareForDeferredProcessing() {
         provider.prepareForDeferredProcessing(event);
         
         verify(event).getCallerData();

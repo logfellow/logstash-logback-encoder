@@ -16,28 +16,25 @@
 package net.logstash.logback.composite.loggingevent;
 
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class ThrowableRootCauseMessageJsonProviderTest {
 
-    private AbstractThrowableMessageJsonProvider provider = new ThrowableRootCauseMessageJsonProvider();
+    private final AbstractThrowableMessageJsonProvider provider = new ThrowableRootCauseMessageJsonProvider();
 
     @Mock
     private JsonGenerator generator;
@@ -46,7 +43,7 @@ public class ThrowableRootCauseMessageJsonProviderTest {
     private ILoggingEvent event;
 
     @Test
-    public void testNoThrowable() throws IOException {
+    public void testNoThrowable() {
         when(event.getThrowableProxy()).thenReturn(null);
 
         provider.writeTo(generator, event);
@@ -56,36 +53,39 @@ public class ThrowableRootCauseMessageJsonProviderTest {
     }
 
     @Test
-    public void testDefaultFieldName() throws IOException {
+    public void testDefaultFieldName() {
         when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(new Exception("kaput")));
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField("throwable_root_cause_message", "kaput");
+        verify(generator).writeName("throwable_root_cause_message");
+        verify(generator).writeString("kaput");
     }
 
     @Test
-    public void testCustomFieldName() throws IOException {
+    public void testCustomFieldName() {
         when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(new Exception("kaput")));
 
         provider.setFieldName("some_custom_field");
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField("some_custom_field", "kaput");
+        verify(generator).writeName("some_custom_field");
+        verify(generator).writeString("kaput");
     }
 
     @Test
-    public void testNestedException() throws IOException {
+    public void testNestedException() {
         Exception foo = new Exception("foo", new Exception("bar", new Exception("baz")));
         when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(foo));
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(anyString(), eq("baz"));
+        verify(generator).writeName(anyString());
+        verify(generator).writeString("baz");
     }
 
     @Test
-    public void testCircularReference() throws IOException {
+    public void testCircularReference() {
         IThrowableProxy foo = mock(IThrowableProxy.class, "foo");
         IThrowableProxy bar = mock(IThrowableProxy.class, "bar");
         IThrowableProxy baz = mock(IThrowableProxy.class, "baz");

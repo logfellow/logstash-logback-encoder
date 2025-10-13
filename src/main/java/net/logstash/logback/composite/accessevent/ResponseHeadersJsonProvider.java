@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.accessevent;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,7 +25,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public class ResponseHeadersJsonProvider extends AbstractFieldJsonProvider<IAccessEvent> implements FieldNamesAware<LogstashAccessFieldNames> {
 
@@ -38,7 +37,7 @@ public class ResponseHeadersJsonProvider extends AbstractFieldJsonProvider<IAcce
     private HeaderFilter filter;
 
     @Override
-    public void writeTo(JsonGenerator generator, IAccessEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, IAccessEvent event) {
         Map<String, String> headers;
         if (filter == null) {
             headers = event.getResponseHeaderMap();

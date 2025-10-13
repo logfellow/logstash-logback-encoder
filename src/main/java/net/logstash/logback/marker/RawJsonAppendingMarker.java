@@ -15,15 +15,14 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A {@link Marker} OR {@link StructuredArgument} that
@@ -40,7 +39,6 @@ import org.slf4j.Marker;
  * the raw string is written as the field value.
  * Note that using {@link RawJsonAppendingMarker} as a {@link StructuredArgument} is not very common.
  */
-@SuppressWarnings("serial")
 public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
 
     public static final String MARKER_NAME = SingleFieldAppendingMarker.MARKER_NAME_PREFIX + "RAW";
@@ -61,7 +59,7 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
     }
 
     @Override
-    protected void writeFieldValue(JsonGenerator generator) throws IOException {
+    protected void writeFieldValue(JsonGenerator generator) {
         generator.writeRawValue(rawJson);
     }
 
@@ -78,11 +76,10 @@ public class RawJsonAppendingMarker extends SingleFieldAppendingMarker {
         if (!super.equals(obj)) {
             return false;
         }
-        if (!(obj instanceof RawJsonAppendingMarker)) {
+        if (!(obj instanceof RawJsonAppendingMarker other)) {
             return false;
         }
 
-        RawJsonAppendingMarker other = (RawJsonAppendingMarker) obj;
         return Objects.equals(this.rawJson, other.rawJson);
     }
 

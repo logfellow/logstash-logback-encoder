@@ -15,23 +15,12 @@
  */
 package net.logstash.logback.decorate;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Decorates the {@link JsonGenerator} used for serializing json.
  * <p>
  * Allows you to customize the {@link JsonGenerator}.
  */
-public interface JsonGeneratorDecorator {
-
-    /**
-     * Decorates the given generator, and returns the decorated generator.
-     *
-     * <p>The returned decorator does not need to be the same object as the given generator.</p>
-     *
-     * @param generator the generator to decorate
-     * @return the decorated generator
-     */
-    JsonGenerator decorate(JsonGenerator generator);
-
+public interface JsonGeneratorDecorator extends Decorator<JsonGenerator> {
 }

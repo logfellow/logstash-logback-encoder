@@ -19,18 +19,16 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-
 import net.logstash.logback.marker.LogstashMarker;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class LogstashMarkersJsonProviderTest {
@@ -38,7 +36,7 @@ public class LogstashMarkersJsonProviderTest {
     @Mock
     private JsonGenerator generator;
     
-    private LogstashMarkersJsonProvider provider = new LogstashMarkersJsonProvider();
+    private final LogstashMarkersJsonProvider provider = new LogstashMarkersJsonProvider();
     private int markerCount;
     
 
@@ -53,7 +51,7 @@ public class LogstashMarkersJsonProviderTest {
      * 
      */
     @Test
-    public void singleMarker() throws IOException {
+    public void singleMarker() {
         
         // event:
         //  * basic1 -> marker1 -> marker11
@@ -78,7 +76,7 @@ public class LogstashMarkersJsonProviderTest {
     
     
     @Test
-    public void multipleMarkers() throws IOException {
+    public void multipleMarkers() {
         // event:
         //  * basic1 -> marker1
         //  * marker2
@@ -126,7 +124,7 @@ public class LogstashMarkersJsonProviderTest {
         }
 
         @Override
-        public void writeTo(JsonGenerator generator) throws IOException {
+        public void writeTo(JsonGenerator generator) {
             // noop
         }
     }

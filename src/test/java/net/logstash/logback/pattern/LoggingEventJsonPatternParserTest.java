@@ -26,11 +26,11 @@ import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternExcepti
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
-import com.fasterxml.jackson.core.JsonFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
@@ -38,10 +38,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParserTest<ILoggingEvent> {
 
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private ILoggingEvent event;
 
-    private Map<String, String> mdc = new HashMap<String, String>();
+    private final Map<String, String> mdc = new HashMap<>();
 
     @Override
     protected ILoggingEvent createEvent() {
@@ -54,8 +54,8 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
     }
 
     @Override
-    protected AbstractJsonPatternParser<ILoggingEvent> createParser(Context context, JsonFactory jsonFactory) {
-        return new LoggingEventJsonPatternParser(context, jsonFactory);
+    protected AbstractJsonPatternParser<ILoggingEvent> createParser(Context context, ObjectMapper objectMapper) {
+        return new LoggingEventJsonPatternParser(context, objectMapper);
     }
 
     @Test
@@ -153,7 +153,7 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
     
     
     @Test
-    public void propertyInvalid() throws JsonPatternException {
+    public void propertyInvalid() {
         assertThatThrownBy(() -> parser.parse(toJson("{ 'prop': '%property{}' }"))).isInstanceOf(JsonPatternException.class);
     }
 }

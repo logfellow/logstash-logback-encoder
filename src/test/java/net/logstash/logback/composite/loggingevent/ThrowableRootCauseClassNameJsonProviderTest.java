@@ -15,10 +15,8 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -28,16 +26,16 @@ import java.io.IOException;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class ThrowableRootCauseClassNameJsonProviderTest {
 
-    private AbstractThrowableClassNameJsonProvider provider = new ThrowableRootCauseClassNameJsonProvider();
+    private final AbstractThrowableClassNameJsonProvider provider = new ThrowableRootCauseClassNameJsonProvider();
 
     @Mock
     private JsonGenerator generator;
@@ -46,45 +44,45 @@ public class ThrowableRootCauseClassNameJsonProviderTest {
     private ILoggingEvent event;
 
     @Test
-    public void testFieldName() throws IOException {
+    public void testFieldName() {
         check(ThrowableRootCauseClassNameJsonProvider.FIELD_NAME);
     }
 
     @Test
-    public void testCustomFieldName() throws IOException {
+    public void testCustomFieldName() {
         provider.setFieldName("newFieldName");
         check("newFieldName");
     }
 
     @Test
-    public void testFieldNameWithoutNestedException() throws IOException {
+    public void testFieldNameWithoutNestedException() {
         IOException throwable = new IOException();
         check(ThrowableRootCauseClassNameJsonProvider.FIELD_NAME, throwable,
                 throwable.getClass().getSimpleName());
     }
 
-    private void check(String fieldName) throws IOException {
+    private void check(String fieldName) {
         check(fieldName, new IOException(new IllegalArgumentException(new IllegalStateException())),
                 IllegalStateException.class.getSimpleName());
     }
 
-    private void check(String fieldName, Throwable throwable, String expectedClassName) throws IOException {
+    private void check(String fieldName, Throwable throwable, String expectedClassName) {
         when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(throwable));
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(fieldName, expectedClassName);
+        verify(generator).writeStringProperty(fieldName, expectedClassName);
     }
 
     @Test
-    public void testNoThrowable() throws IOException {
+    public void testNoThrowable() {
         provider.writeTo(generator, event);
 
-        verify(generator, times(0)).writeStringField(anyString(), anyString());
+        verifyNoInteractions(generator);
     }
 
     @Test
-    public void testCircularReference() throws IOException {
+    public void testCircularReference() {
          IThrowableProxy baz = mock(IThrowableProxy.class, "baz");
          IThrowableProxy bar = mock(IThrowableProxy.class, "bar");
          IThrowableProxy foo = mock(IThrowableProxy.class, "foo");

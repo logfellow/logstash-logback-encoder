@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
 import java.util.regex.Pattern;
 
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
@@ -25,7 +24,7 @@ import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
     
@@ -38,7 +37,7 @@ public class MessageJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         if (messageSplitPattern != null) {
             String[] multiLineMessage = messageSplitPattern.split(event.getFormattedMessage());
             JsonWritingUtils.writeStringArrayField(generator, getFieldName(), multiLineMessage);

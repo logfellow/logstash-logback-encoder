@@ -24,20 +24,20 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class ResponseHeadersJsonProviderTest {
     
-    private ResponseHeadersJsonProvider provider = new ResponseHeadersJsonProvider();
+    private final ResponseHeadersJsonProvider provider = new ResponseHeadersJsonProvider();
     
-    private Map<String, String> headers = new LinkedHashMap<String, String>();
+    private final Map<String, String> headers = new LinkedHashMap<>();
 
     @Mock
     private JsonGenerator generator;
@@ -53,7 +53,7 @@ public class ResponseHeadersJsonProviderTest {
     }
     
     @Test
-    public void testNoFieldName() throws IOException {
+    public void testNoFieldName() {
         provider.setLowerCaseHeaderNames(false);
         provider.writeTo(generator, event);
         verifyNoMoreInteractions(generator);
@@ -66,28 +66,34 @@ public class ResponseHeadersJsonProviderTest {
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeObjectFieldStart("fieldName");
-        inOrder.verify(generator).writeStringField("headerA", "valueA");
-        inOrder.verify(generator).writeStringField("headerB", "valueB");
+        inOrder.verify(generator).writeName("fieldName");
+        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeName("headerA");
+        inOrder.verify(generator).writeString("valueA");
+        inOrder.verify(generator).writeName("headerB");
+        inOrder.verify(generator).writeString("valueB");
         inOrder.verify(generator).writeEndObject();
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
-    public void testFieldNameWithLowerCase() throws IOException {
+    public void testFieldNameWithLowerCase() {
         provider.setFieldName("fieldName");
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeObjectFieldStart("fieldName");
-        inOrder.verify(generator).writeStringField("headera", "valueA");
-        inOrder.verify(generator).writeStringField("headerb", "valueB");
+        inOrder.verify(generator).writeName("fieldName");
+        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeName("headera");
+        inOrder.verify(generator).writeString("valueA");
+        inOrder.verify(generator).writeName("headerb");
+        inOrder.verify(generator).writeString("valueB");
         inOrder.verify(generator).writeEndObject();
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
-    public void testFilter() throws IOException {
+    public void testFilter() {
         
         IncludeExcludeHeaderFilter filter = new IncludeExcludeHeaderFilter();
         filter.addInclude("headerb");
@@ -97,8 +103,10 @@ public class ResponseHeadersJsonProviderTest {
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeObjectFieldStart("fieldName");
-        inOrder.verify(generator).writeStringField("headerb", "valueB");
+        inOrder.verify(generator).writeName("fieldName");
+        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeName("headerb");
+        inOrder.verify(generator).writeString("valueB");
         inOrder.verify(generator).writeEndObject();
         inOrder.verifyNoMoreInteractions();
     }

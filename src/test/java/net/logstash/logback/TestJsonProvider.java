@@ -15,17 +15,15 @@
  */
 package net.logstash.logback;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.AbstractJsonProvider;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public class TestJsonProvider extends AbstractJsonProvider<ILoggingEvent> {
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
     }
 
 }

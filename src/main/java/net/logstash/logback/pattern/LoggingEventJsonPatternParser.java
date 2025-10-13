@@ -19,15 +19,15 @@ import ch.qos.logback.classic.PatternLayout;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
-import com.fasterxml.jackson.core.JsonFactory;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 public class LoggingEventJsonPatternParser extends AbstractJsonPatternParser<ILoggingEvent> {
 
-    public LoggingEventJsonPatternParser(final Context context, final JsonFactory jsonFactory) {
-        super(context, jsonFactory);
+    public LoggingEventJsonPatternParser(Context context, ObjectMapper objectMapper) {
+        super(context, objectMapper);
     }
 
     /**

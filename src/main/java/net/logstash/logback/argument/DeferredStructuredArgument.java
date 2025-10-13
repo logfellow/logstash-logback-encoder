@@ -15,15 +15,14 @@
  */
 package net.logstash.logback.argument;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.function.Supplier;
 
 import net.logstash.logback.marker.EmptyLogstashMarker;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Logger;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A {@link StructuredArgument} that defers the creation of another {@link StructuredArgument} until
@@ -66,7 +65,7 @@ public class DeferredStructuredArgument implements StructuredArgument {
     }
 
     @Override
-    public void writeTo(JsonGenerator generator) throws IOException {
+    public void writeTo(JsonGenerator generator) {
         getSuppliedValue().writeTo(generator);
     }
 

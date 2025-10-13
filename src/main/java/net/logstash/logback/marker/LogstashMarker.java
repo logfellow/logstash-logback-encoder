@@ -15,17 +15,14 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A {@link Marker} that is known and understood by the logstash logback encoder.
  * <p>
  * In particular these markers are used to write data into the logstash json event via {@link #writeTo(JsonGenerator)}.
  */
-@SuppressWarnings("serial")
 public abstract class LogstashMarker extends LogstashBasicMarker implements Iterable<Marker> {
 
     public static final String MARKER_NAME_PREFIX = "LS_";
@@ -73,9 +70,8 @@ public abstract class LogstashMarker extends LogstashBasicMarker implements Iter
      * Writes the data associated with this marker to the given {@link JsonGenerator}.
      *
      * @param generator the generator to which to write the output of this marker.
-     * @throws IOException if there was an error writing to the generator
      */
-    public abstract void writeTo(JsonGenerator generator) throws IOException;
+    public abstract void writeTo(JsonGenerator generator);
 
     @Override
     public void add(Marker reference) {

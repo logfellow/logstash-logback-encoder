@@ -34,9 +34,10 @@ jobs:
       - name: Build
         run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml verify
 
-      # Run tests against Jackson 2.12 to ensure runtime compatibility (do not recompile)
-      - name: Test Jackson 2.12.x
-        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Pcompat-jackson surefire:test
+#      Re-enable after upgrading Jackson to 3.1+
+#      # Run tests against Jackson 3.0.0 to ensure runtime compatibility (do not recompile)
+#      - name: Test Jackson 3.0.0
+#        run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml -Pcompat-jackson surefire:test
 
       - name: Upload Test Reports to Github
         uses: actions/upload-artifact@v4

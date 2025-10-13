@@ -21,7 +21,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -32,18 +31,18 @@ import net.logstash.logback.composite.loggingevent.mdc.LongMdcEntryWriter;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class MdcJsonProviderTest {
     
-    private MdcJsonProvider provider = new MdcJsonProvider();
+    private final MdcJsonProvider provider = new MdcJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -55,7 +54,7 @@ public class MdcJsonProviderTest {
     
     @BeforeEach
     public void setup() {
-        mdc = new LinkedHashMap<String, String>();
+        mdc = new LinkedHashMap<>();
         mdc.put("name1", "value1");
         mdc.put("name2", "value2");
         mdc.put("name3", "value3");
@@ -63,37 +62,31 @@ public class MdcJsonProviderTest {
     }
     
     @Test
-    public void testUnwrapped() throws IOException {
+    public void testUnwrapped() {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeFieldName("name1");
-        verify(generator).writeObject("value1");
-        verify(generator).writeFieldName("name2");
-        verify(generator).writeObject("value2");
-        verify(generator).writeFieldName("name3");
-        verify(generator).writeObject("value3");
+        verify(generator).writePOJOProperty("name1", "value1");
+        verify(generator).writePOJOProperty("name2", "value2");
+        verify(generator).writePOJOProperty("name3", "value3");
     }
 
     @Test
-    public void testWrapped() throws IOException {
+    public void testWrapped() {
         provider.setFieldName("mdc");
         
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeObjectFieldStart("mdc");
-        inOrder.verify(generator).writeFieldName("name1");
-        inOrder.verify(generator).writeObject("value1");
-        inOrder.verify(generator).writeFieldName("name2");
-        inOrder.verify(generator).writeObject("value2");
-        inOrder.verify(generator).writeFieldName("name3");
-        inOrder.verify(generator).writeObject("value3");
+        inOrder.verify(generator).writeObjectPropertyStart("mdc");
+        inOrder.verify(generator).writePOJOProperty("name1", "value1");
+        inOrder.verify(generator).writePOJOProperty("name2", "value2");
+        inOrder.verify(generator).writePOJOProperty("name3", "value3");
         inOrder.verify(generator).writeEndObject();
     }
 
     @Test
-    public void testWrappedUsingFieldNames() throws IOException {
+    public void testWrappedUsingFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setMdc("mdc");
 
@@ -102,60 +95,48 @@ public class MdcJsonProviderTest {
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
-        inOrder.verify(generator).writeObjectFieldStart("mdc");
-        inOrder.verify(generator).writeFieldName("name1");
-        inOrder.verify(generator).writeObject("value1");
-        inOrder.verify(generator).writeFieldName("name2");
-        inOrder.verify(generator).writeObject("value2");
-        inOrder.verify(generator).writeFieldName("name3");
-        inOrder.verify(generator).writeObject("value3");
+        inOrder.verify(generator).writeObjectPropertyStart("mdc");
+        inOrder.verify(generator).writePOJOProperty("name1", "value1");
+        inOrder.verify(generator).writePOJOProperty("name2", "value2");
+        inOrder.verify(generator).writePOJOProperty("name3", "value3");
         inOrder.verify(generator).writeEndObject();
     }
 
     @Test
-    public void testInclude() throws IOException {
+    public void testInclude() {
         
         provider.setIncludeMdcKeyNames(Collections.singletonList("name1"));
         provider.writeTo(generator, event);
         
-        verify(generator).writeFieldName("name1");
-        verify(generator).writeObject("value1");
-        verify(generator, never()).writeFieldName("name2");
-        verify(generator, never()).writeObject("value2");
-        verify(generator, never()).writeFieldName("name3");
-        verify(generator, never()).writeObject("value3");
+        verify(generator).writePOJOProperty("name1", "value1");
+        verify(generator, never()).writePOJOProperty("name2", "value2");
+        verify(generator, never()).writePOJOProperty("name3", "value3");
     }
 
     @Test
-    public void testExclude() throws IOException {
+    public void testExclude() {
         
         provider.setExcludeMdcKeyNames(Collections.singletonList("name1"));
         provider.writeTo(generator, event);
         
-        verify(generator, never()).writeFieldName("name1");
-        verify(generator, never()).writeObject("value1");
-        verify(generator).writeFieldName("name2");
-        verify(generator).writeObject("value2");
-        verify(generator).writeFieldName("name3");
-        verify(generator).writeObject("value3");
+        verify(generator, never()).writePOJOProperty("name1", "value1");
+        verify(generator).writePOJOProperty("name2", "value2");
+        verify(generator).writePOJOProperty("name3", "value3");
     }
 
     @Test
-    public void testAlternateFieldName() throws IOException {
+    public void testAlternateFieldName() {
         provider.addMdcKeyFieldName("name1=alternateName1");
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeFieldName("alternateName1");
-        verify(generator).writeObject("value1");
-        verify(generator).writeFieldName("name2");
-        verify(generator).writeObject("value2");
-        verify(generator).writeFieldName("name3");
-        verify(generator).writeObject("value3");
+        verify(generator).writePOJOProperty("alternateName1", "value1");
+        verify(generator).writePOJOProperty("name2", "value2");
+        verify(generator).writePOJOProperty("name3", "value3");
     }
 
     @Test
-    public void testMdcEntryWriters() throws IOException {
+    public void testMdcEntryWriters() {
         mdc = new LinkedHashMap<>();
         mdc.put("long", "4711");
         mdc.put("double", "2.71828");
@@ -172,18 +153,18 @@ public class MdcJsonProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeFieldName("long");
+        verify(generator).writeName("long");
         verify(generator).writeNumber(4711L);
-        verify(generator).writeFieldName("double");
+        verify(generator).writeName("double");
         verify(generator).writeNumber(2.71828);
-        verify(generator).writeFieldName("bool");
+        verify(generator).writeName("bool");
         verify(generator).writeBoolean(true);
-        verify(generator).writeFieldName("string_bool");
-        verify(generator).writeObject("trueblue");
-        verify(generator).writeFieldName("string_hex");
-        verify(generator).writeObject("0xBAD");
-        verify(generator).writeFieldName("empty");
-        verify(generator).writeObject("");
+        verify(generator).writeName("string_bool");
+        verify(generator).writePOJO("trueblue");
+        verify(generator).writeName("string_hex");
+        verify(generator).writePOJO("0xBAD");
+        verify(generator).writeName("empty");
+        verify(generator).writePOJO("");
         verifyNoMoreInteractions(generator);
     }
 

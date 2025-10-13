@@ -29,9 +29,9 @@ import net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 public class LogstashAccessEncoderTest {
     
@@ -39,7 +39,7 @@ public class LogstashAccessEncoderTest {
     private final LogstashAccessEncoder encoder = new LogstashAccessEncoder();
 
     @Test
-    public void basicsAreIncluded_logback12OrLater() throws Exception {
+    public void basicsAreIncluded_logback12OrLater() {
         
         final long timestamp = System.currentTimeMillis();
         
@@ -57,20 +57,20 @@ public class LogstashAccessEncoderTest {
     }
     
     protected void verifyBasics(final long timestamp, IAccessEvent event, JsonNode node) {
-        assertThat(node.get("timestamp").textValue()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
-        assertThat(node.get("@version").textValue()).isEqualTo("1");
-        assertThat(node.get("message").textValue()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
+        assertThat(node.get("timestamp").asString()).isEqualTo(DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId()).format(Instant.ofEpochMilli(timestamp)));
+        assertThat(node.get("@version").asString()).isEqualTo("1");
+        assertThat(node.get("message").asString()).isEqualTo(String.format("%s - %s [%s] \"%s\" %s %s", event.getRemoteHost(), event.getRemoteUser(),
                 DateTimeFormatter.ISO_OFFSET_DATE_TIME.withZone(TimeZone.getDefault().toZoneId())
                         .format(Instant.ofEpochMilli(event.getTimeStamp())), event.getRequestURL(), event.getStatusCode(),
                 event.getContentLength()));
         
-        assertThat(node.get("method").textValue()).isEqualTo(event.getMethod());
-        assertThat(node.get("protocol").textValue()).isEqualTo(event.getProtocol());
+        assertThat(node.get("method").asString()).isEqualTo(event.getMethod());
+        assertThat(node.get("protocol").asString()).isEqualTo(event.getProtocol());
         assertThat(node.get("status_code").asInt()).isEqualTo(event.getStatusCode());
-        assertThat(node.get("requested_url").textValue()).isEqualTo(event.getRequestURL());
-        assertThat(node.get("requested_uri").textValue()).isEqualTo(event.getRequestURI());
-        assertThat(node.get("remote_host").textValue()).isEqualTo(event.getRemoteHost());
-        assertThat(node.get("remote_user").textValue()).isEqualTo(event.getRemoteUser());
+        assertThat(node.get("requested_url").asString()).isEqualTo(event.getRequestURL());
+        assertThat(node.get("requested_uri").asString()).isEqualTo(event.getRequestURI());
+        assertThat(node.get("remote_host").asString()).isEqualTo(event.getRemoteHost());
+        assertThat(node.get("remote_user").asString()).isEqualTo(event.getRemoteUser());
         assertThat(node.get("content_length").asLong()).isEqualTo(event.getContentLength());
         assertThat(node.get("elapsed_time").asLong()).isEqualTo(event.getElapsedTime());
         assertThat(node.get("request_headers")).isNull();
@@ -78,7 +78,7 @@ public class LogstashAccessEncoderTest {
     }
     
     @Test
-    public void propertiesInContextAreIncluded() throws Exception {
+    public void propertiesInContextAreIncluded() {
         Map<String, String> propertyMap = new HashMap<>();
         propertyMap.put("thing_one", "One");
         propertyMap.put("thing_two", "Three");
@@ -94,12 +94,12 @@ public class LogstashAccessEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
         
-        assertThat(node.get("thing_one").textValue()).isEqualTo("One");
-        assertThat(node.get("thing_two").textValue()).isEqualTo("Three");
+        assertThat(node.get("thing_one").asString()).isEqualTo("One");
+        assertThat(node.get("thing_two").asString()).isEqualTo("Three");
     }
     
     @Test
-    public void requestAndResponseHeadersAreIncluded() throws Exception {
+    public void requestAndResponseHeadersAreIncluded() {
 
         IAccessEvent event = mockBasicILoggingEvent();
         
@@ -111,13 +111,13 @@ public class LogstashAccessEncoderTest {
         JsonNode node = MAPPER.readTree(encoded);
 
         assertThat(node.get("request_headers").size()).isEqualTo(2);
-        assertThat(node.get("request_headers").get("user-agent").textValue()).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
-        assertThat(node.get("request_headers").get("accept").textValue()).isEqualTo("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
+        assertThat(node.get("request_headers").get("user-agent").asString()).isEqualTo("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
+        assertThat(node.get("request_headers").get("accept").asString()).isEqualTo("text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
         assertThat(node.get("request_headers").get("unknown")).isNull();
         
         assertThat(node.get("response_headers").size()).isEqualTo(2);
-        assertThat(node.get("response_headers").get("content-type").textValue()).isEqualTo("text/html; charset=UTF-8");
-        assertThat(node.get("response_headers").get("content-length").textValue()).isEqualTo("42");
+        assertThat(node.get("response_headers").get("content-type").asString()).isEqualTo("text/html; charset=UTF-8");
+        assertThat(node.get("response_headers").get("content-length").asString()).isEqualTo("42");
         assertThat(node.get("response_headers").get("unknown")).isNull();
     }
     
@@ -129,7 +129,7 @@ public class LogstashAccessEncoderTest {
     }
     
     @Test
-    public void unixTimestampAsNumber() throws Exception {
+    public void unixTimestampAsNumber() {
         final long timestamp = System.currentTimeMillis();
         
         IAccessEvent event = mockBasicILoggingEvent();
@@ -145,7 +145,7 @@ public class LogstashAccessEncoderTest {
     }
     
     @Test
-    public void unixTimestampAsString() throws Exception {
+    public void unixTimestampAsString() {
         final long timestamp = System.currentTimeMillis();
         
         IAccessEvent event = mockBasicILoggingEvent();
@@ -157,11 +157,11 @@ public class LogstashAccessEncoderTest {
         
         JsonNode node = MAPPER.readTree(encoded);
         
-        assertThat(node.get("@timestamp").textValue()).isEqualTo(Long.toString(timestamp));
+        assertThat(node.get("@timestamp").asString()).isEqualTo(Long.toString(timestamp));
     }
     
     @Test
-    public void customMessagePattern() throws Exception {
+    public void customMessagePattern() {
 
         IAccessEvent event = mockBasicILoggingEvent();
 
@@ -175,14 +175,14 @@ public class LogstashAccessEncoderTest {
 
         JsonNode node = MAPPER.readTree(encoded);
 
-        assertThat(node.get("msg").textValue()).isEqualTo("https://123.123.123.123/my/uri 200 123");
+        assertThat(node.get("msg").asString()).isEqualTo("https://123.123.123.123/my/uri 200 123");
 
         encoder.stop();
 
         encoder.setMessagePattern(null);
         encoder.start();
 
-        assertThat(MAPPER.readTree(encoder.encode(event)).get("msg").textValue())
+        assertThat(MAPPER.readTree(encoder.encode(event)).get("msg").asString())
                 .startsWith("123.123.123.123 - remote-user ")
                 .endsWith("\"https://123.123.123.123/my/uri\" 200 123");
     }
@@ -199,14 +199,12 @@ public class LogstashAccessEncoderTest {
         when(event.getStatusCode()).thenReturn(200);
         when(event.getTimeStamp()).thenReturn(System.currentTimeMillis());
         when(event.getElapsedTime()).thenReturn(246L);
-        when(event.getRequestHeaderMap()).thenReturn(new HashMap<String, String>() {{
-            put("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36");
-            put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-        }});
-        when(event.getResponseHeaderMap()).thenReturn(new HashMap<String, String>() {{
-            put("Content-Type", "text/html; charset=UTF-8");
-            put("Content-Length", "42");
-        }});
+        when(event.getRequestHeaderMap()).thenReturn(Map.of(
+            "User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36",
+            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
+        when(event.getResponseHeaderMap()).thenReturn(Map.of(
+            "Content-Type", "text/html; charset=UTF-8",
+            "Content-Length", "42"));
         return event;
     }
     

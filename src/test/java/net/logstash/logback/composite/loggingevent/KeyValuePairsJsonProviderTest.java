@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,20 +26,19 @@ import java.util.List;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.event.KeyValuePair;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class KeyValuePairsJsonProviderTest {
 
-    private KeyValuePairsJsonProvider provider = new KeyValuePairsJsonProvider();
+    private final KeyValuePairsJsonProvider provider = new KeyValuePairsJsonProvider();
 
     private ByteArrayOutputStream resultStream;
     private JsonGenerator generator;
@@ -48,35 +46,32 @@ public class KeyValuePairsJsonProviderTest {
     @Mock
     private ILoggingEvent event;
 
-    private List<KeyValuePair> keyValuePairs;
-
     @BeforeEach
     public void setup() throws Exception {
-        keyValuePairs = new ArrayList<>();
+        List<KeyValuePair> keyValuePairs = new ArrayList<>();
         keyValuePairs.add(new KeyValuePair("name1", "value1"));
         keyValuePairs.add(new KeyValuePair("name2", 2023));
         keyValuePairs.add(new KeyValuePair("name3", new TestValue()));
         when(event.getKeyValuePairs()).thenReturn(keyValuePairs);
         resultStream = new ByteArrayOutputStream();
-        generator = new JsonFactory().createGenerator(resultStream);
-        generator.setCodec(new ObjectMapper());
+        generator = JsonMapper.builder().build().createGenerator(resultStream);
     }
 
     @Test
-    public void testUnwrapped() throws IOException {
+    public void testUnwrapped() {
         assertThat(generateJson())
                 .isEqualTo("{\"name1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}");
     }
 
     @Test
-    public void testWrapped() throws IOException {
+    public void testWrapped() {
         provider.setFieldName("kvp");
         assertThat(generateJson())
                 .isEqualTo("{\"kvp\":{\"name1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}}");
     }
 
     @Test
-    public void testWrappedUsingFieldNames() throws IOException {
+    public void testWrappedUsingFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setKeyValuePair("kvp");
         provider.setFieldNames(fieldNames);
@@ -85,7 +80,7 @@ public class KeyValuePairsJsonProviderTest {
     }
 
     @Test
-    public void testInclude() throws IOException {
+    public void testInclude() {
         provider.setIncludeKeyNames(Collections.singletonList("name1"));
 
         assertThat(generateJson())
@@ -93,7 +88,7 @@ public class KeyValuePairsJsonProviderTest {
     }
 
     @Test
-    public void testExclude() throws IOException {
+    public void testExclude() {
         provider.setExcludeKeyNames(Collections.singletonList("name1"));
 
         assertThat(generateJson())
@@ -101,14 +96,14 @@ public class KeyValuePairsJsonProviderTest {
     }
 
     @Test
-    public void testAlternativeFieldName() throws IOException {
+    public void testAlternativeFieldName() {
         provider.addKeyFieldName("name1=alternativeName1");
 
         assertThat(generateJson())
                 .isEqualTo("{\"alternativeName1\":\"value1\",\"name2\":2023,\"name3\":{\"a\":1}}");
     }
 
-    private String generateJson() throws IOException {
+    private String generateJson() {
         generator.writeStartObject();
         provider.writeTo(generator, event);
         generator.writeEndObject();
@@ -117,7 +112,7 @@ public class KeyValuePairsJsonProviderTest {
         return resultStream.toString();
     }
 
-    private class TestValue {
+    private static class TestValue {
         private final int a = 1;
 
         public int getA() {

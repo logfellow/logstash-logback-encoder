@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -23,7 +22,7 @@ import java.util.function.Function;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.spi.SequenceNumberGenerator;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Outputs an incrementing sequence number.
@@ -71,7 +70,7 @@ public abstract class AbstractSequenceJsonProvider<Event extends DeferredProcess
     
 
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         if (!isStarted()) {
             throw new IllegalStateException("Provider " + this.getClass().getName() + " is  not started");
         }
@@ -110,7 +109,7 @@ public abstract class AbstractSequenceJsonProvider<Event extends DeferredProcess
         if (getContext() == null || getContext().getSequenceNumberGenerator() == null) {
             this.addWarn("No <sequenceNumberGenerator> defined in Logback configuration - revert to using a local incrementing sequence number.");
 
-            return new Function<Event, Long>() {
+            return new Function<>() {
                 private final AtomicLong sequence = new AtomicLong(0L);
 
                 @Override

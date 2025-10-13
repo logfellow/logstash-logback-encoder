@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import net.logstash.logback.argument.StructuredArgument;
@@ -23,8 +22,8 @@ import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A {@link Marker} OR {@link StructuredArgument} that appends
@@ -46,7 +45,6 @@ import org.slf4j.Marker;
  * {@link #getFieldValue()} will be substituted in {1} in the {@link #messageFormatPattern}.
  * Subclasses must override {@link #getFieldValue()} to provide the field value to include.
  */
-@SuppressWarnings("serial")
 public abstract class SingleFieldAppendingMarker extends LogstashMarker implements StructuredArgument {
 
     public static final String MARKER_NAME_PREFIX = LogstashMarker.MARKER_NAME_PREFIX + "APPEND_";
@@ -80,7 +78,7 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
         return fieldName;
     }
 
-    public void writeTo(JsonGenerator generator) throws IOException {
+    public void writeTo(JsonGenerator generator) {
         writeFieldName(generator);
         writeFieldValue(generator);
     }
@@ -89,19 +87,17 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
      * Writes the field name to the generator.
      * 
      * @param generator the generator to write JSON
-     * @throws IOException if an I/O error occurs
      */
-    protected void writeFieldName(JsonGenerator generator) throws IOException {
-        generator.writeFieldName(getFieldName());
+    protected void writeFieldName(JsonGenerator generator) {
+        generator.writeName(getFieldName());
     }
 
     /**
      * Writes the field value to the generator.
      * 
      * @param generator the generator to write JSON
-     * @throws IOException if an I/O error occurs
      */
-    protected abstract void writeFieldValue(JsonGenerator generator) throws IOException;
+    protected abstract void writeFieldValue(JsonGenerator generator);
 
     @Override
     public String toStringSelf() {
@@ -139,11 +135,10 @@ public abstract class SingleFieldAppendingMarker extends LogstashMarker implemen
         if (!super.equals(obj)) {
             return false;
         }
-        if (!(obj instanceof SingleFieldAppendingMarker)) {
+        if (!(obj instanceof SingleFieldAppendingMarker other)) {
             return false;
         }
 
-        SingleFieldAppendingMarker other = (SingleFieldAppendingMarker) obj;
         return this.fieldName.equals(other.fieldName);
     }
 

@@ -16,7 +16,6 @@
 package net.logstash.logback.composite.loggingevent;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,12 +24,12 @@ import java.util.regex.Pattern;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class StackHashJsonProviderTest {
@@ -44,7 +43,7 @@ public class StackHashJsonProviderTest {
     @Mock
     private ThrowableProxy throwableProxy;
 
-    private static Pattern HEX_PATTERN = Pattern.compile("[0-9a-fA-F]{1,8}");
+    private static final Pattern HEX_PATTERN = Pattern.compile("[0-9a-fA-F]{1,8}");
 
     @Test
     public void testDefaultName() throws IOException {
@@ -58,8 +57,9 @@ public class StackHashJsonProviderTest {
         provider.writeTo(generator, event);
         // THEN
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        verify(generator).writeStringField(eq(StackHashJsonProvider.FIELD_NAME), hashCaptor.capture());
-        
+        verify(generator).writeName(StackHashJsonProvider.FIELD_NAME);
+        verify(generator).writeString(hashCaptor.capture());
+
         assertThat(hashCaptor.getValue()).matches(HEX_PATTERN);
     }
 
@@ -76,8 +76,9 @@ public class StackHashJsonProviderTest {
         provider.writeTo(generator, event);
         // THEN
         ArgumentCaptor<String> hashCaptor = ArgumentCaptor.forClass(String.class);
-        verify(generator).writeStringField(eq("newFieldName"), hashCaptor.capture());
-        
+        verify(generator).writeName("newFieldName");
+        verify(generator).writeString(hashCaptor.capture());
+
         assertThat(hashCaptor.getValue()).matches(HEX_PATTERN);
     }
 }

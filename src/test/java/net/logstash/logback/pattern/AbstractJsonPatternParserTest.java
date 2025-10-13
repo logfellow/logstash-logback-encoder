@@ -18,7 +18,6 @@ package net.logstash.logback.pattern;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
 
@@ -26,15 +25,15 @@ import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternExcepti
 import net.logstash.logback.test.AbstractLogbackTest;
 
 import ch.qos.logback.core.Context;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
@@ -42,7 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogbackTest {
 
-    private JsonFactory jsonFactory = new MappingJsonFactory();
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     private Event event;
 
@@ -54,18 +53,16 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
         super.setup();
         
         this.event = createEvent();
-        this.parser = createParser(context, jsonFactory);
+        this.parser = createParser(context, jsonMapper);
     }
 
     protected abstract Event createEvent();
 
-    protected abstract AbstractJsonPatternParser<Event> createParser(Context context, JsonFactory jsonFactory);
+    protected abstract AbstractJsonPatternParser<Event> createParser(Context context, ObjectMapper jsonMapper);
 
     private Map<String, Object> parseJson(final String text) {
-        try (JsonParser jsonParser = jsonFactory.createParser(text)) {
-            return jsonParser.readValueAs(new TypeReference<Map<String, Object>>() { });
-        } catch (IOException e) {
-            throw new IllegalStateException("Unexpected IOException while writing to the JsonGenerator");
+        try (JsonParser jsonParser = jsonMapper.createParser(text)) {
+            return jsonMapper.readValue(jsonParser, new TypeReference<>() { });
         }
     }
 
@@ -83,14 +80,11 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
         
         StringWriter buffer = new StringWriter();
         
-        try (JsonGenerator jsonGenerator = jsonFactory.createGenerator(buffer)) {
+        try (JsonGenerator jsonGenerator = jsonMapper.createGenerator(buffer)) {
             jsonGenerator.writeStartObject();
             root.write(jsonGenerator, event);
             jsonGenerator.writeEndObject();
             jsonGenerator.flush();
-            
-        } catch (IOException e) {
-            throw new IllegalStateException("Unexpected IOException while writing to the JsonGenerator", e);
         }
         
         return buffer.toString();

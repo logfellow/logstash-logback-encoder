@@ -15,10 +15,8 @@
  */
 package net.logstash.logback.pattern;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,17 +29,16 @@ import net.logstash.logback.util.StringUtils;
 
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonPointer;
-import com.fasterxml.jackson.core.filter.FilteringGeneratorDelegate;
-import com.fasterxml.jackson.core.filter.TokenFilter;
-import com.fasterxml.jackson.core.filter.TokenFilter.Inclusion;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonPointer;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.core.filter.FilteringGeneratorDelegate;
+import tools.jackson.core.filter.TokenFilter;
+import tools.jackson.core.filter.TokenFilter.Inclusion;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Parser that takes a JSON pattern, resolves all the conversion specifiers and returns an instance
@@ -60,7 +57,7 @@ public abstract class AbstractJsonPatternParser<Event> {
     public static final Pattern OPERATION_PATTERN = Pattern.compile("\\# (\\w+) (?: \\{ (.*) \\} )", Pattern.COMMENTS);
 
     private final Context context;
-    private final JsonFactory jsonFactory;
+    private final ObjectMapper objectMapper;
 
     private final Map<String, Operation<?>> operations = new HashMap<>();
 
@@ -71,9 +68,9 @@ public abstract class AbstractJsonPatternParser<Event> {
      */
     private boolean omitEmptyFields;
 
-    AbstractJsonPatternParser(final Context context, final JsonFactory jsonFactory) {
+    AbstractJsonPatternParser(final Context context, ObjectMapper objectMapper) {
         this.context = Objects.requireNonNull(context);
-        this.jsonFactory = Objects.requireNonNull(jsonFactory);
+        this.objectMapper = Objects.requireNonNull(objectMapper);
         addOperation("asLong", new AsLongOperation());
         addOperation("asDouble", new AsDoubleOperation());
         addOperation("asBoolean", new AsBooleanOperation());
@@ -123,11 +120,10 @@ public abstract class AbstractJsonPatternParser<Event> {
             if (StringUtils.isEmpty(value)) {
                 return null;
             }
-            return Boolean.valueOf(
-                       "true".equalsIgnoreCase(value)
+            return "true".equalsIgnoreCase(value)
                     || "1".equals(value)
                     || "yes".equalsIgnoreCase(value)
-                    || "y".equalsIgnoreCase(value));
+                    || "y".equalsIgnoreCase(value);
         }
     }
     
@@ -135,11 +131,9 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public JsonNode apply(final String value) {
             try {
-                return JsonReadingUtils.readFully(jsonFactory, value);
-            } catch (JsonParseException e) {
+                return JsonReadingUtils.readFully(objectMapper, value);
+            } catch (StreamReadException e) {
                 throw new IllegalArgumentException("Failed to convert '" + value + "' into a JSON object", e);
-            } catch (IOException e) {
-                throw new IllegalStateException("Unexpected IOException when reading JSON value (was '" + value + "')", e);
             }
         }
     }
@@ -148,11 +142,9 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public Object apply(final String value) {
             try {
-                return JsonReadingUtils.readFully(jsonFactory, value);
-            } catch (JsonParseException e) {
+                return JsonReadingUtils.readFully(objectMapper, value);
+            } catch (StreamReadException e) {
                 return value;
-            } catch (IOException e) {
-                throw new IllegalStateException("Unexpected IOException when reading JSON value (was '" + value + "')", e);
             }
         }
     }
@@ -298,9 +290,9 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
 
         final ObjectNode node;
-        try (JsonParser jsonParser = jsonFactory.createParser(pattern)) {
-            node = JsonReadingUtils.readFullyAsObjectNode(jsonFactory, pattern);
-        } catch (IOException e) {
+        try {
+            node = JsonReadingUtils.readFullyAsObjectNode(objectMapper, pattern);
+        } catch (StreamReadException e) {
             throw new JsonPatternException("pattern is not a valid JSON object", e);
         }
 
@@ -319,12 +311,12 @@ public abstract class AbstractJsonPatternParser<Event> {
      * @throws JsonPatternException denotes an invalid pattern
      */
     private NodeWriter<Event> parseNode(JsonPointer location, JsonNode node) throws JsonPatternException {
-        if (node.isTextual()) {
+        if (node.isString()) {
             try {
-                ValueGetter<Event, ?> getter = makeComputableValueGetter(node.asText());
+                ValueGetter<Event, ?> getter = makeComputableValueGetter(node.asString());
                 return new ValueWriter<>(getter);
             } catch (RuntimeException e) {
-                String msg = "Invalid JSON property '" + location + "' (was '" + node.asText() + "'): " + e.getMessage();
+                String msg = "Invalid JSON property '" + location + "' (was '" + node.asString() + "'): " + e.getMessage();
                 throw new JsonPatternException(msg, e);
             }
         }
@@ -369,14 +361,12 @@ public abstract class AbstractJsonPatternParser<Event> {
     private ObjectWriter<Event> parseObject(JsonPointer location, ObjectNode node) throws JsonPatternException {
         ObjectWriter<Event> writer = new ObjectWriter<>();
 
-        for (Iterator<Map.Entry<String, JsonNode>> nodeFields = node.fields(); nodeFields.hasNext();) {
-            Map.Entry<String, JsonNode> field = nodeFields.next();
+        for (Map.Entry<String, JsonNode> property : node.properties()) {
+            String propertyName = property.getKey();
+            JsonNode propertyValue = property.getValue();
 
-            String fieldName = field.getKey();
-            JsonNode fieldValue = field.getValue();
-
-            NodeWriter<Event> fieldWriter = parseNode(appendPath(location, fieldName), fieldValue);
-            writer.addField(fieldName, fieldWriter);
+            NodeWriter<Event> fieldWriter = parseNode(appendPath(location, propertyName), propertyValue);
+            writer.addField(propertyName, fieldWriter);
         }
         
         return writer;
@@ -407,13 +397,13 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
         
         @Override
-        public void write(JsonGenerator generator, Event event) throws IOException {
+        public void write(JsonGenerator generator, Event event) {
             generator.writeStartObject();
             writeFields(generator, event);
             generator.writeEndObject();
         }
         
-        protected void writeFields(JsonGenerator generator, Event event) throws IOException {
+        protected void writeFields(JsonGenerator generator, Event event) {
             for (Field<Event> field: this.fields) {
                 field.write(generator, event);
             }
@@ -428,8 +418,8 @@ public abstract class AbstractJsonPatternParser<Event> {
                 this.writer = writer;
             }
             
-            public void write(JsonGenerator generator, E event) throws IOException {
-                generator.writeFieldName(name);
+            public void write(JsonGenerator generator, E event) {
+                generator.writeName(name);
                 writer.write(generator, event);
             }
         }
@@ -443,7 +433,7 @@ public abstract class AbstractJsonPatternParser<Event> {
             this.items = items;
         }
 
-        public void write(JsonGenerator generator, Event event) throws IOException {
+        public void write(JsonGenerator generator, Event event) {
             generator.writeStartArray();
             for (NodeWriter<Event> item : items) {
                 item.write(generator, event);
@@ -460,8 +450,8 @@ public abstract class AbstractJsonPatternParser<Event> {
             this.getter = getter;
         }
 
-        public void write(JsonGenerator generator, Event event) throws IOException {
-            generator.writeObject(getValue(event));
+        public void write(JsonGenerator generator, Event event) {
+            generator.writePOJO(getValue(event));
         }
         
         private Object getValue(Event event) {
@@ -482,7 +472,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
         
         @Override
-        public void write(JsonGenerator generator, Event event) throws IOException {
+        public void write(JsonGenerator generator, Event event) {
             delegate.writeFields(generator, event);
         }
     }
@@ -497,13 +487,13 @@ public abstract class AbstractJsonPatternParser<Event> {
         }
         
         @Override
-        public void write(JsonGenerator generator, Event event) throws IOException {
+        public void write(JsonGenerator generator, Event event) {
             ReusableFilteringGenerator filteringGenerator = filteringGenerators.get();
             try {
                 filteringGenerator.connect(generator);
                 delegate.write(filteringGenerator, event);
                 
-            } catch (RuntimeException | IOException e) {
+            } catch (RuntimeException e) {
                 filteringGenerators.remove();
                 throw e;
                 
@@ -567,7 +557,6 @@ public abstract class AbstractJsonPatternParser<Event> {
     }
     
     
-    @SuppressWarnings("serial")
     public static class JsonPatternException extends Exception {
         public JsonPatternException(String message, Throwable cause) {
             super(message, cause);

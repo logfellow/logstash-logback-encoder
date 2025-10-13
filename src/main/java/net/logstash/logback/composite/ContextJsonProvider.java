@@ -15,15 +15,13 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
-
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes properties from the {@link Context} into the JSON event.
@@ -37,10 +35,10 @@ import com.fasterxml.jackson.core.JsonGenerator;
 public class ContextJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<LogstashCommonFieldNames> {
 
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         if (getContext() != null) {
             if (getFieldName() != null) {
-                generator.writeObjectFieldStart(getFieldName());
+                generator.writeObjectPropertyStart(getFieldName());
             }
             JsonWritingUtils.writeMapEntries(generator, context.getCopyOfPropertyMap());
 

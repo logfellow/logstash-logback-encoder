@@ -17,7 +17,6 @@ package net.logstash.logback.composite.loggingevent;
 
 import static net.logstash.logback.util.StringUtils.commaDelimitedListToStringArray;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -31,7 +30,7 @@ import net.logstash.logback.stacktrace.StackHasher;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A JSON provider that adds a {@code stack_hash} Json field on a log with a stack trace
@@ -103,7 +102,7 @@ public class StackHashJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         assertIsStarted();
         
         IThrowableProxy throwableProxy = event.getThrowableProxy();

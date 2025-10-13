@@ -21,7 +21,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -33,21 +32,21 @@ import java.io.OutputStream;
 import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.AbstractJsonProvider;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
-import net.logstash.logback.decorate.NullJsonGeneratorDecorator;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.exc.JacksonIOException;
+import tools.jackson.core.util.JsonGeneratorDelegate;
 
 @ExtendWith(MockitoExtension.class)
 public class LoggingEventCompositeJsonFormatterTest {
     
-    private LoggingEventCompositeJsonFormatter formatter = new LoggingEventCompositeJsonFormatter(mock(ContextAware.class));
+    private final LoggingEventCompositeJsonFormatter formatter = new LoggingEventCompositeJsonFormatter(mock(ContextAware.class));
     
     @Mock
     private ILoggingEvent event;
@@ -76,8 +75,9 @@ public class LoggingEventCompositeJsonFormatterTest {
      */
     @Test
     public void testReused() throws IOException {
-        JsonGeneratorDecorator decorator = spy(new NullJsonGeneratorDecorator());
-        formatter.setJsonGeneratorDecorator(decorator);
+        JsonGeneratorDecorator decorator = mock(JsonGeneratorDecorator.class);
+        when(decorator.decorate(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        formatter.addDecorator(decorator);
         formatter.start();
         
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
@@ -95,8 +95,9 @@ public class LoggingEventCompositeJsonFormatterTest {
      */
     @Test
     public void testNotReusedAfterIOException() throws IOException {
-        JsonGeneratorDecorator decorator = spy(new NullJsonGeneratorDecorator());
-        formatter.setJsonGeneratorDecorator(decorator);
+        JsonGeneratorDecorator decorator = mock(JsonGeneratorDecorator.class);
+        when(decorator.decorate(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        formatter.addDecorator(decorator);
         formatter.start();
         
         OutputStream bos = mock(OutputStream.class);
@@ -104,7 +105,7 @@ public class LoggingEventCompositeJsonFormatterTest {
             .doCallRealMethod()
             .when(bos).write(any(byte[].class), any(int.class), any(int.class));
         
-        assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(IOException.class);
+        assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(JacksonIOException.class);
         formatter.writeEvent(event, bos);
         
         // Two instances created because the first was discarded because of the exception
@@ -117,19 +118,20 @@ public class LoggingEventCompositeJsonFormatterTest {
      */
     @Test
     public void testNotReusedAfterEncoderException() throws IOException {
-        JsonGeneratorDecorator decorator = spy(new NullJsonGeneratorDecorator());
-        formatter.setJsonGeneratorDecorator(decorator);
-        formatter.getProviders().addProvider(new AbstractJsonProvider<ILoggingEvent>() {
+        JsonGeneratorDecorator decorator = mock(JsonGeneratorDecorator.class);
+        when(decorator.decorate(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        formatter.addDecorator(decorator);
+        formatter.getProviders().addProvider(new AbstractJsonProvider<>() {
             @Override
-            public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
-                throw new IOException("Exception thrown by JsonProvider");
+            public void writeTo(JsonGenerator generator, ILoggingEvent event) {
+                throw JacksonIOException.construct(new IOException("Exception thrown by JsonProvider"));
             }
         });
         formatter.start();
         
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
-            assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(IOException.class);
-            assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(IOException.class);
+            assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(JacksonIOException.class);
+            assertThatThrownBy(() -> formatter.writeEvent(event, bos)).isInstanceOf(JacksonIOException.class);
         
             // Two instances created because the first was discarded because of the exception
             verify(decorator, times(2)).decorate(any(JsonGenerator.class));
@@ -142,10 +144,11 @@ public class LoggingEventCompositeJsonFormatterTest {
     @Test
     public void testOverriddenJsonGeneratorWriteObjectIsHonored() throws IOException {
         when(event.getArgumentArray()).thenReturn(new Object[] {StructuredArguments.keyValue("answer", 42)});
-        formatter.setJsonGeneratorDecorator(generator -> new JsonGeneratorDelegate(generator) {
+
+        formatter.addJsonGeneratorDecorator(generator -> new JsonGeneratorDelegate(generator) {
             @Override
-            public void writeObject(final Object pojo) throws IOException {
-                super.writeObject(String.format("is <%s>", pojo));
+            public JsonGenerator writePOJO(final Object pojo) {
+                return super.writePOJO(String.format("is <%s>", pojo));
             }
         });
         ((LoggingEventJsonProviders) formatter.getProviders()).addArguments(new ArgumentsJsonProvider());

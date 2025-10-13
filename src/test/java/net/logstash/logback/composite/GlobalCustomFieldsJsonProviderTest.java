@@ -25,36 +25,35 @@ import net.logstash.logback.test.AbstractLogbackTest;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.status.Status;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.NumericNode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.JsonNodeFactory;
+import tools.jackson.databind.node.NumericNode;
 
 public class GlobalCustomFieldsJsonProviderTest extends AbstractLogbackTest {
     
     @InjectMocks
-    private GlobalCustomFieldsJsonProvider<ILoggingEvent> provider = new GlobalCustomFieldsJsonProvider<ILoggingEvent>();
+    private GlobalCustomFieldsJsonProvider<ILoggingEvent> provider = new GlobalCustomFieldsJsonProvider<>();
     
     @Mock
     private ILoggingEvent event;
     
-    private StringWriter writer = new StringWriter();
+    private final StringWriter writer = new StringWriter();
     private JsonGenerator generator;
     
     
     @BeforeEach
     public void setup() throws Exception {
         super.setup();
-              
-        JsonFactory factory = new MappingJsonFactory();
-        provider.setJsonFactory(factory);
-        generator = factory.createGenerator(writer);
+
+        JsonMapper jsonMapper = JsonMapper.builder().build();
+        provider.setObjectMapper(jsonMapper);
+        generator = jsonMapper.createGenerator(writer);
     }
     
     @AfterEach

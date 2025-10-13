@@ -15,15 +15,13 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
@@ -38,13 +36,13 @@ public class CallerDataJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     private String lineFieldName = FIELD_CALLER_LINE_NUMBER;
     
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         StackTraceElement callerData = extractCallerData(event);
         if (callerData == null) {
             return;
         }
         if (getFieldName() != null) {
-            generator.writeObjectFieldStart(getFieldName());
+            generator.writeObjectPropertyStart(getFieldName());
         }
         JsonWritingUtils.writeStringField(generator, classFieldName, callerData.getClassName());
         JsonWritingUtils.writeStringField(generator, methodFieldName, callerData.getMethodName());

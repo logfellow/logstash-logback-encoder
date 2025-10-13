@@ -18,12 +18,7 @@ package net.logstash.logback.composite.loggingevent;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonFactoryBuilder;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +26,8 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
 public class LoggingEventNestedJsonProviderTest {
@@ -53,7 +50,7 @@ public class LoggingEventNestedJsonProviderTest {
     }
     
     @Test
-    public void testWrite() throws IOException {
+    public void testWrite() {
         
         provider.setFieldName("newFieldName");
         
@@ -61,8 +58,7 @@ public class LoggingEventNestedJsonProviderTest {
         
         InOrder inOrder = inOrder(generator, providers);
         
-        inOrder.verify(generator).writeFieldName("newFieldName");
-        inOrder.verify(generator).writeStartObject();
+        inOrder.verify(generator).writeObjectPropertyStart("newFieldName");
         inOrder.verify(providers).writeTo(generator, event);
         inOrder.verify(generator).writeEndObject();
     }
@@ -81,12 +77,12 @@ public class LoggingEventNestedJsonProviderTest {
     }
     
     /*
-     * JsonFactory set on the enclosed JsonProviders as well
+     * ObjectMapper set on the enclosed JsonProviders as well
      */
     @Test
-    public void jsonFactoryOnProviders() {
-        JsonFactory jsonFactory = new JsonFactoryBuilder().build();
-        provider.setJsonFactory(jsonFactory);
-        verify(providers).setJsonFactory(jsonFactory);
+    public void objectMapperOnProviders() {
+        JsonMapper jsonMapper = JsonMapper.builder().build();
+        provider.setObjectMapper(jsonMapper);
+        verify(providers).setObjectMapper(jsonMapper);
     }
 }

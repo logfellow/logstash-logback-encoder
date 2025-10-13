@@ -17,8 +17,8 @@ package net.logstash.logback.mask;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.node.NullNode;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.node.NullNode;
 
 class RegexValueMaskerTest {
 

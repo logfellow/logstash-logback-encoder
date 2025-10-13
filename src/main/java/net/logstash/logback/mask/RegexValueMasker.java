@@ -19,7 +19,7 @@ import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.JsonStreamContext;
+import tools.jackson.core.TokenStreamContext;
 
 /**
  * Masks values based on a regular expression.
@@ -47,7 +47,7 @@ public class RegexValueMasker implements ValueMasker {
     }
 
     @Override
-    public Object mask(JsonStreamContext context, Object o) {
+    public Object mask(TokenStreamContext context, Object o) {
         if (o instanceof CharSequence) {
             Matcher matcher = pattern.matcher((CharSequence) o);
             if (mask instanceof String) {

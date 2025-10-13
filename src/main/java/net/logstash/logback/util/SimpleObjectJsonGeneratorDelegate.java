@@ -15,23 +15,20 @@
  */
 package net.logstash.logback.util;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.util.JsonGeneratorDelegate;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ArrayNode;
 
 /**
- * JsonGenerator with an optimized implementation of the {@link #writeObject(Object)} method that tries
+ * JsonGenerator with an optimized implementation of the {@link #writePOJO(Object)} method that tries
  * to call appropriate write method for the given untyped Object and delegates to the underlying generator
  * as fallback.
  */
@@ -39,140 +36,137 @@ public class SimpleObjectJsonGeneratorDelegate extends JsonGeneratorDelegate {
     public SimpleObjectJsonGeneratorDelegate(JsonGenerator delegate) {
         super(delegate, false);
     }
-    
+
     @Override
-    public void writeObject(Object value) throws IOException {
+    public JsonGenerator writePOJO(Object value) {
         if (value == null) {
             writeNull();
-            return;
+            return this;
         }
         if (value instanceof String) {
             writeString((String) value);
-            return;
+            return this;
         }
-        if (value instanceof Number) {
-            Number n = (Number) value;
+        if (value instanceof Number n) {
             if (n instanceof Integer) {
                 writeNumber(n.intValue());
-                return;
+                return this;
             }
             if (n instanceof Long) {
                 writeNumber(n.longValue());
-                return;
+                return this;
             }
             if (n instanceof Double) {
                 writeNumber(n.doubleValue());
-                return;
+                return this;
             }
             if (n instanceof Float) {
                 writeNumber(n.floatValue());
-                return;
+                return this;
             }
             if (n instanceof Short) {
                 writeNumber(n.shortValue());
-                return;
+                return this;
             }
             if (n instanceof Byte) {
                 writeNumber(n.byteValue());
-                return;
+                return this;
             }
             if (n instanceof BigInteger) {
                 writeNumber((BigInteger) n);
-                return;
+                return this;
             }
             if (n instanceof BigDecimal) {
                 writeNumber((BigDecimal) n);
-                return;
+                return this;
             }
             if (n instanceof AtomicInteger) {
                 writeNumber(((AtomicInteger) n).get());
-                return;
+                return this;
             }
             if (n instanceof AtomicLong) {
                 writeNumber(((AtomicLong) n).get());
-                return;
+                return this;
             }
         }
         if (value instanceof byte[]) {
             writeBinary((byte[]) value);
-            return;
+            return this;
         }
         if (value instanceof Boolean) {
             writeBoolean((Boolean) value);
-            return;
+            return this;
         }
         if (value instanceof AtomicBoolean) {
             writeBoolean(((AtomicBoolean) value).get());
-            return;
+            return this;
         }
-        if (value instanceof JsonNode) {
-            JsonNode node = (JsonNode) value;
-            
+        if (value instanceof JsonNode node) {
+
             switch (node.getNodeType()) {
                 case NULL:
                     writeNull();
-                    return;
+                    return this;
                     
                 case STRING:
-                    writeString(node.asText());
-                    return;
+                    writeString(node.asString());
+                    return this;
                     
                 case BOOLEAN:
                     writeBoolean(node.asBoolean());
-                    return;
+                    return this;
                     
                 case BINARY:
                     writeBinary(node.binaryValue());
-                    return;
+                    return this;
                     
                 case NUMBER:
                     if (node.isInt()) {
                         writeNumber(node.intValue());
-                        return;
+                        return this;
                     }
                     if (node.isLong()) {
                         writeNumber(node.longValue());
-                        return;
+                        return this;
                     }
                     if (node.isShort()) {
                         writeNumber(node.shortValue());
-                        return;
+                        return this;
                     }
                     if (node.isDouble()) {
                         writeNumber(node.doubleValue());
-                        return;
+                        return this;
                     }
                     if (node.isFloat()) {
                         writeNumber(node.floatValue());
-                        return;
+                        return this;
                     }
                     if (node.isBigDecimal()) {
                         writeNumber(node.decimalValue());
-                        return;
+                        return this;
                     }
                     if (node.isBigInteger()) {
                         writeNumber(node.bigIntegerValue());
-                        return;
+                        return this;
                     }
                     
                 case OBJECT:
                     writeStartObject(node);
-                    for (Iterator<Entry<String, JsonNode>> entries = ((ObjectNode) node).fields(); entries.hasNext();) {
-                        Entry<String, JsonNode> entry = entries.next();
-                        writeObjectField(entry.getKey(), entry.getValue());
+                    for (Entry<String, JsonNode> entry : node.properties()) {
+                        writePOJOProperty(entry.getKey(), entry.getValue());
                     }
                     writeEndObject();
-                    return;
+                    return this;
                     
                 case ARRAY:
                     ArrayNode arrayNode = (ArrayNode) node;
                     int size = arrayNode.size();
                     writeStartArray(arrayNode, size);
-                    for (Iterator<JsonNode> elements = arrayNode.elements(); elements.hasNext();) {
-                        writeObject(elements.next());
+                    for (JsonNode jsonNode : arrayNode.elements()) {
+                        writePOJO(jsonNode);
                     }
                     writeEndArray();
-                    return;
+                    return this;
                     
                 default:
                     // default case is handled below
@@ -183,6 +177,7 @@ public class SimpleObjectJsonGeneratorDelegate extends JsonGeneratorDelegate {
 
         // Default case if not handled by one of the specialized methods above
         //
-        delegate.writeObject(value);
+        delegate.writePOJO(value);
+        return this;
     }
 }

@@ -53,7 +53,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
     private static final int VERIFICATION_TIMEOUT = 1000 * 30;
 
-    private DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>>() { };
+    private final DelegatingAsyncDisruptorAppender<ILoggingEvent, AppenderListener<ILoggingEvent>> appender = new DelegatingAsyncDisruptorAppender<>() { };
 
     @Mock
     private ILoggingEvent event;
@@ -67,7 +67,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
     @BeforeEach
     public void setup() {
         outputStreamDelegate.setImmediateFlush(false);
-        outputStreamDelegate.setEncoder(new EchoEncoder<ILoggingEvent>());
+        outputStreamDelegate.setEncoder(new EchoEncoder<>());
         outputStreamDelegate.setOutputStream(outputStream);
 
         appender.setContext(new LoggerContext());
@@ -81,8 +81,8 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
     @Test
     public void appenderStartStop() {
-        Appender<ILoggingEvent> delegate1 = spy(new TestAppender<ILoggingEvent>());
-        Appender<ILoggingEvent> delegate2 = spy(new TestAppender<ILoggingEvent>());
+        Appender<ILoggingEvent> delegate1 = spy(new TestAppender<>());
+        Appender<ILoggingEvent> delegate2 = spy(new TestAppender<>());
 
         appender.addAppender(delegate1);
         appender.addAppender(delegate2);
@@ -119,9 +119,9 @@ public class DelegatingAsyncDisruptorAppenderTest {
      * Event is forwarded to appenders in the order they were registered.
      */
     @Test
-    public void handlerCalled() throws Exception {
-        Appender<ILoggingEvent> delegate1 = spy(new TestAppender<ILoggingEvent>());
-        Appender<ILoggingEvent> delegate2 = spy(new TestAppender<ILoggingEvent>());
+    public void handlerCalled() {
+        Appender<ILoggingEvent> delegate1 = spy(new TestAppender<>());
+        Appender<ILoggingEvent> delegate2 = spy(new TestAppender<>());
 
         appender.addAppender(delegate1);
         appender.addAppender(delegate2);
@@ -139,12 +139,12 @@ public class DelegatingAsyncDisruptorAppenderTest {
      * Event is forwarded to all appenders even after first threw an exception
      */
     @Test
-    public void handlerCalledAfterException() throws Exception {
-        Appender<ILoggingEvent> delegate1 = spy(new TestAppender<ILoggingEvent>());
+    public void handlerCalledAfterException() {
+        Appender<ILoggingEvent> delegate1 = spy(new TestAppender<>());
         LogbackException exception = new LogbackException("boum");
         doThrow(exception).when(delegate1).doAppend(event);
 
-        Appender<ILoggingEvent> delegate2 = spy(new TestAppender<ILoggingEvent>());
+        Appender<ILoggingEvent> delegate2 = spy(new TestAppender<>());
 
         appender.addAppender(delegate1);
         appender.addAppender(delegate2);
@@ -242,7 +242,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
      * Flush appenders implementing "Flushable" at end of batch
      */
     @Test
-    public void flushFlushable() throws Exception {
+    public void flushFlushable() {
         FlushableAppender flushableDelegate = spy(new FlushableAppender());
         
         appender.addAppender(flushableDelegate);
@@ -306,7 +306,7 @@ public class DelegatingAsyncDisruptorAppenderTest {
 
     private static class FlushableAppender extends TestAppender<ILoggingEvent> implements Flushable {
         @Override
-        public void flush() throws IOException {
+        public void flush() {
         }
     }
 }

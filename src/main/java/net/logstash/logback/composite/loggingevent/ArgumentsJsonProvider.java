@@ -15,15 +15,13 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
-
 import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Include the logging event's {@link ILoggingEvent#getArgumentArray()} in the JSON output.
@@ -49,7 +47,7 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
     private String nonStructuredArgumentsFieldPrefix = "arg";
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         
         if (!includeStructuredArguments && !includeNonStructuredArguments) {
             // Short-circuit if nothing is included
@@ -68,22 +66,21 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
 
             Object arg = args[argIndex];
 
-            if (arg instanceof StructuredArgument) {
+            if (arg instanceof StructuredArgument structuredArgument) {
                 if (includeStructuredArguments) {
                     if (!hasWrittenFieldName && getFieldName() != null) {
-                        generator.writeObjectFieldStart(getFieldName());
+                        generator.writeObjectPropertyStart(getFieldName());
                         hasWrittenFieldName = true;
                     }
-                    StructuredArgument structuredArgument = (StructuredArgument) arg;
                     structuredArgument.writeTo(generator);
                 }
             } else if (includeNonStructuredArguments) {
                 if (!hasWrittenFieldName && getFieldName() != null) {
-                    generator.writeObjectFieldStart(getFieldName());
+                    generator.writeObjectPropertyStart(getFieldName());
                     hasWrittenFieldName = true;
                 }
                 String fieldName = nonStructuredArgumentsFieldPrefix + argIndex;
-                generator.writeObjectField(fieldName, arg);
+                generator.writePOJOProperty(fieldName, arg);
             }
         }
 

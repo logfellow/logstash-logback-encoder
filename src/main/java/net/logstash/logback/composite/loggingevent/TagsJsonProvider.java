@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,8 +24,8 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes {@link Marker} names as an array to the 'tags' field.
@@ -43,7 +42,7 @@ public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> i
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         /*
          * Don't write the tags field unless we actually have a tag to write.
          */
@@ -56,7 +55,7 @@ public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> i
         }
     }
 
-    private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final List<Marker> markers) throws IOException {
+    private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final List<Marker> markers) {
         if (markers != null) {
             for (Marker marker: markers) {
                 hasWrittenStart |= writeTagIfNecessary(generator, hasWrittenStart, marker);
@@ -66,11 +65,11 @@ public class TagsJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> i
         return hasWrittenStart;
     }
     
-    private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) throws IOException {
+    private boolean writeTagIfNecessary(JsonGenerator generator, boolean hasWrittenStart, final Marker marker) {
         if (marker != null) {
             if (!LogstashMarkersJsonProvider.isLogstashMarker(marker)) {
                 if (!hasWrittenStart) {
-                    generator.writeArrayFieldStart(getFieldName());
+                    generator.writeArrayPropertyStart(getFieldName());
                     hasWrittenStart = true;
                 }
                 generator.writeString(marker.getName());

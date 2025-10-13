@@ -20,7 +20,6 @@ import net.logstash.logback.pattern.AbstractJsonPatternParser;
 import net.logstash.logback.pattern.AccessEventJsonPatternParser;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
-import com.fasterxml.jackson.core.JsonFactory;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
@@ -28,8 +27,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 public class AccessEventPatternJsonProvider extends AbstractPatternJsonProvider<IAccessEvent> {
 
     @Override
-    protected AbstractJsonPatternParser<IAccessEvent> createParser(JsonFactory jsonFactory) {
-        return new AccessEventJsonPatternParser(getContext(), jsonFactory);
+    protected AbstractJsonPatternParser<IAccessEvent> createParser() {
+        return new AccessEventJsonPatternParser(getContext(), objectMapper);
     }
 
 }

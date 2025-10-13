@@ -18,14 +18,11 @@ package net.logstash.logback.composite.loggingevent;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.spy;
 
-import java.io.IOException;
-
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 import net.logstash.logback.marker.LogstashMarker;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,44 +32,41 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class TagsJsonProviderTest {
     
-    private TagsJsonProvider provider = new TagsJsonProvider();
+    private final TagsJsonProvider provider = new TagsJsonProvider();
     
     @Mock
     private JsonGenerator generator;
     
     private ILoggingEvent event;
-    private Marker marker1;
-    private LogstashMarker marker2;
-    private Marker marker3;
-    private Marker marker4;
 
-    
     @BeforeEach
     public void setup() {
-        marker1 = createBasicMarker("marker1");
-        marker2 = createLogstashMarker("marker2");
-        marker3 = createBasicMarker("marker3");
+        Marker marker1 = createBasicMarker("marker1");
+        LogstashMarker marker2 = createLogstashMarker("marker2");
+        Marker marker3 = createBasicMarker("marker3");
         
         marker1.add(marker2);
         marker2.add(marker3);
-        
-        marker4 = createBasicMarker("marker4");
+
+        Marker marker4 = createBasicMarker("marker4");
 
         event = createEvent(marker1, marker4);
     }
     
     @Test
-    public void testDefaultName() throws IOException {
+    public void testDefaultName() {
         
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
         
-        inOrder.verify(generator).writeArrayFieldStart(TagsJsonProvider.FIELD_TAGS);
+        inOrder.verify(generator).writeName(TagsJsonProvider.FIELD_TAGS);
+        inOrder.verify(generator).writeStartArray();
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
         inOrder.verify(generator).writeString("marker4");
@@ -82,14 +76,15 @@ public class TagsJsonProviderTest {
     }
 
     @Test
-    public void testFieldName() throws IOException {
+    public void testFieldName() {
         provider.setFieldName("newFieldName");
         
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator);
         
-        inOrder.verify(generator).writeArrayFieldStart("newFieldName");
+        inOrder.verify(generator).writeName("newFieldName");
+        inOrder.verify(generator).writeStartArray();
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
         inOrder.verify(generator).writeString("marker4");
@@ -99,7 +94,7 @@ public class TagsJsonProviderTest {
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setTags("newFieldName");
         provider.setFieldNames(fieldNames);
@@ -108,7 +103,8 @@ public class TagsJsonProviderTest {
         
         InOrder inOrder = inOrder(generator);
         
-        inOrder.verify(generator).writeArrayFieldStart("newFieldName");
+        inOrder.verify(generator).writeName("newFieldName");
+        inOrder.verify(generator).writeStartArray();
         inOrder.verify(generator).writeString("marker1");
         inOrder.verify(generator).writeString("marker3");
         inOrder.verify(generator).writeString("marker4");
@@ -146,7 +142,7 @@ public class TagsJsonProviderTest {
         }
 
         @Override
-        public void writeTo(JsonGenerator generator) throws IOException {
+        public void writeTo(JsonGenerator generator) {
             // noop
         }
     }

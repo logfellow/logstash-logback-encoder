@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.time.Instant;
@@ -29,7 +28,7 @@ import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 import net.logstash.logback.util.TimeZoneUtils;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes the timestamp field as either:
@@ -94,7 +93,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
      * Writes the timestamp to the JsonGenerator
      */
     protected interface TimestampWriter {
-        void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) throws IOException;
+        void writeTo(JsonGenerator generator, String fieldName, Instant timestamp);
 
         String getTimestampAsString(Instant timestamp);
     }
@@ -106,7 +105,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
     protected static class NumberTimestampWriter implements TimestampWriter {
 
         @Override
-        public void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) throws IOException {
+        public void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) {
             JsonWritingUtils.writeNumberField(generator, fieldName, timestamp.toEpochMilli());
         }
 
@@ -128,7 +127,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
         }
         
         @Override
-        public void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) throws IOException {
+        public void writeTo(JsonGenerator generator, String fieldName, Instant timestamp) {
             JsonWritingUtils.writeStringField(generator, fieldName, getTimestampAsString(timestamp));
         }
 
@@ -138,7 +137,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
         }
         
         static StringFormatterWriter with(DateTimeFormatter formatter) {
-            return new StringFormatterWriter(tstamp -> formatter.format(tstamp));
+            return new StringFormatterWriter(formatter::format);
         }
         static StringFormatterWriter with(FastISOTimestampFormatter formatter) {
             return new StringFormatterWriter(formatter::format);
@@ -160,7 +159,7 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         timestampWriter.writeTo(generator, getFieldName(), getTimestampAsInstant(event));
     }
 
@@ -194,27 +193,27 @@ public abstract class AbstractFormattedTimestampJsonProvider<Event extends Defer
             // Use our fast FastISOTimestampFormatter if suitable...
             //
             ZoneId zone = timeZone.toZoneId();
-            if ("ISO_OFFSET_DATE_TIME".equals(constant)) {
-                return StringFormatterWriter.with(FastISOTimestampFormatter.isoOffsetDateTime(zone));
+            switch (constant) {
+                case "ISO_OFFSET_DATE_TIME" -> {
+                    return StringFormatterWriter.with(FastISOTimestampFormatter.isoOffsetDateTime(zone));
+                }
+                case "ISO_ZONED_DATE_TIME" -> {
+                    return StringFormatterWriter.with(FastISOTimestampFormatter.isoZonedDateTime(zone));
+                }
+                case "ISO_LOCAL_DATE_TIME" -> {
+                    return StringFormatterWriter.with(FastISOTimestampFormatter.isoLocalDateTime(zone));
+                }
+                case "ISO_DATE_TIME" -> {
+                    return StringFormatterWriter.with(FastISOTimestampFormatter.isoDateTime(zone));
+                }
+                case "ISO_INSTANT" -> {
+                    return StringFormatterWriter.with(FastISOTimestampFormatter.isoInstant(zone));
+                }
+                default -> {
+                    DateTimeFormatter formatter = getStandardDateTimeFormatter(constant).withZone(zone);
+                    return StringFormatterWriter.with(formatter);
+                }
             }
-            if ("ISO_ZONED_DATE_TIME".equals(constant)) {
-                return StringFormatterWriter.with(FastISOTimestampFormatter.isoZonedDateTime(zone));
-            }
-            if ("ISO_LOCAL_DATE_TIME".equals(constant)) {
-                return StringFormatterWriter.with(FastISOTimestampFormatter.isoLocalDateTime(zone));
-            }
-            if ("ISO_DATE_TIME".equals(constant)) {
-                return StringFormatterWriter.with(FastISOTimestampFormatter.isoDateTime(zone));
-            }
-            if ("ISO_INSTANT".equals(constant)) {
-                return StringFormatterWriter.with(FastISOTimestampFormatter.isoInstant(zone));
-            }
-
-            
-            // Otherwise try one of the default formatters...
-            //
-            DateTimeFormatter formatter = getStandardDateTimeFormatter(constant).withZone(zone);
-            return StringFormatterWriter.with(formatter);
         }
         
         

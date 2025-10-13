@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,8 +23,8 @@ import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Contains a collection of {@link JsonProvider}s to be used to write
@@ -39,7 +38,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
  *
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  */
-public class JsonProviders<Event extends DeferredProcessingAware> implements JsonFactoryAware {
+public class JsonProviders<Event extends DeferredProcessingAware> implements ObjectMapperAware {
     
     private final List<JsonProvider<Event>> jsonProviders = new ArrayList<>();
     
@@ -73,7 +72,7 @@ public class JsonProviders<Event extends DeferredProcessingAware> implements Jso
         }
     }
 
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         for (JsonProvider<Event> jsonProvider : jsonProviders) {
             jsonProvider.writeTo(generator, event);
         }
@@ -84,12 +83,12 @@ public class JsonProviders<Event extends DeferredProcessingAware> implements Jso
             jsonProvider.prepareForDeferredProcessing(event);
         }
     }
-    
+
     @Override
-    public void setJsonFactory(JsonFactory jsonFactory) {
+    public void setObjectMapper(ObjectMapper objectMapper) {
         for (JsonProvider<Event> jsonProvider : jsonProviders) {
-            if (jsonProvider instanceof JsonFactoryAware) {
-                ((JsonFactoryAware) jsonProvider).setJsonFactory(jsonFactory);
+            if (jsonProvider instanceof ObjectMapperAware) {
+                ((ObjectMapperAware) jsonProvider).setObjectMapper(objectMapper);
             }
         }
     }

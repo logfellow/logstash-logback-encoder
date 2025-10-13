@@ -15,24 +15,21 @@
  */
 package net.logstash.logback.composite;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.matches;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class UuidJsonProviderTest {
     public static final String UUID = "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$";
 
-    private UuidJsonProvider<ILoggingEvent> provider = new UuidJsonProvider<>();
+    private final UuidJsonProvider<ILoggingEvent> provider = new UuidJsonProvider<>();
 
     @Mock
     private JsonGenerator generator;
@@ -41,37 +38,41 @@ public class UuidJsonProviderTest {
     private ILoggingEvent event;
 
     @Test
-    public void testDefaultName() throws IOException {
+    public void testDefaultName() {
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq(UuidJsonProvider.FIELD_UUID), matches(UUID));
+        verify(generator).writeName(UuidJsonProvider.FIELD_UUID);
+        verify(generator).writeString(matches(UUID));
     }
 
     @Test
-    public void testFieldName() throws IOException {
+    public void testFieldName() {
         provider.setFieldName("newFieldName");
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq("newFieldName"), matches(UUID));
+        verify(generator).writeName("newFieldName");
+        verify(generator).writeString(matches(UUID));
     }
 
     @Test
-    public void testStrategy() throws IOException {
+    public void testStrategy() {
         provider.setStrategy(UuidJsonProvider.STRATEGY_TIME);
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq("uuid"), matches(UUID));
+        verify(generator).writeName("uuid");
+        verify(generator).writeString(matches(UUID));
     }
 
     @Test
-    public void testEthernet() throws IOException {
+    public void testEthernet() {
         provider.setStrategy(UuidJsonProvider.STRATEGY_TIME);
         provider.setEthernet("00:C0:F0:3D:5B:7C");
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(eq("uuid"), matches(UUID));
+        verify(generator).writeName("uuid");
+        verify(generator).writeString(matches(UUID));
     }
 }

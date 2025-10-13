@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import net.logstash.logback.abbreviator.DefaultTargetLengthAbbreviator;
@@ -28,7 +27,7 @@ import net.logstash.logback.util.LogbackUtils;
 import ch.qos.logback.classic.pattern.Abbreviator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
@@ -45,7 +44,7 @@ public class LoggerNameJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     }
     
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         if (!isStarted()) {
             throw new IllegalStateException("Generator is not started");
         }

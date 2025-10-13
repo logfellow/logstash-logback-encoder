@@ -17,21 +17,19 @@ package net.logstash.logback.composite;
 
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
-
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class LogstashVersionJsonProviderTest {
     
-    private LogstashVersionJsonProvider<ILoggingEvent> provider = new LogstashVersionJsonProvider<ILoggingEvent>();
+    private final LogstashVersionJsonProvider<ILoggingEvent> provider = new LogstashVersionJsonProvider<>();
     
     @Mock
     private JsonGenerator generator;
@@ -40,51 +38,51 @@ public class LogstashVersionJsonProviderTest {
     private ILoggingEvent event;
     
     @Test
-    public void testVersionAsNumeric() throws IOException {
+    public void testVersionAsNumeric() {
         provider.setWriteAsInteger(true);
 
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField(LogstashVersionJsonProvider.FIELD_VERSION, Long.parseLong(LogstashVersionJsonProvider.DEFAULT_VERSION));
+        verify(generator).writeNumberProperty(LogstashVersionJsonProvider.FIELD_VERSION, Long.parseLong(LogstashVersionJsonProvider.DEFAULT_VERSION));
     }
 
     @Test
-    public void testVersionAsString() throws IOException {
+    public void testVersionAsString() {
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(LogstashVersionJsonProvider.FIELD_VERSION, LogstashVersionJsonProvider.DEFAULT_VERSION);
+        verify(generator).writeStringProperty(LogstashVersionJsonProvider.FIELD_VERSION, LogstashVersionJsonProvider.DEFAULT_VERSION);
     }
 
     @Test
-    public void testNonDefaultVersionAsNumeric() throws IOException {
+    public void testNonDefaultVersionAsNumeric() {
         provider.setVersion("800");
         provider.setWriteAsInteger(true);
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField(LogstashVersionJsonProvider.FIELD_VERSION, 800L);
+        verify(generator).writeNumberProperty(LogstashVersionJsonProvider.FIELD_VERSION, 800L);
     }
 
     @Test
-    public void testNonDefaultVersionAsString() throws IOException {
+    public void testNonDefaultVersionAsString() {
         provider.setVersion("800");
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(LogstashVersionJsonProvider.FIELD_VERSION, "800");
+        verify(generator).writeStringProperty(LogstashVersionJsonProvider.FIELD_VERSION, "800");
     }
 
     @Test
-    public void testFieldName() throws IOException {
+    public void testFieldName() {
         provider.setFieldName("newFieldName");
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", LogstashVersionJsonProvider.DEFAULT_VERSION);
+        verify(generator).writeStringProperty("newFieldName", LogstashVersionJsonProvider.DEFAULT_VERSION);
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setVersion("newFieldName");
         
@@ -92,7 +90,7 @@ public class LogstashVersionJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", LogstashVersionJsonProvider.DEFAULT_VERSION);
+        verify(generator).writeStringProperty("newFieldName", LogstashVersionJsonProvider.DEFAULT_VERSION);
     }
 
 }
