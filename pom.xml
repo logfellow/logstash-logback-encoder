@@ -29,7 +29,7 @@
         <logback-access.version>2.0.6</logback-access.version>
 
         <!-- shaded runtime dependencies -->
-        <disruptor.version>3.4.4</disruptor.version>
+        <disruptor.version>4.0.0</disruptor.version>
 
         <!-- test dependencies -->
         <assertj.version>3.27.6</assertj.version>

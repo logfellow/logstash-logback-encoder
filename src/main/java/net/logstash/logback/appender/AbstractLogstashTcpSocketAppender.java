@@ -41,6 +41,7 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.SocketFactory;
@@ -68,7 +69,6 @@ import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.util.CloseUtil;
 import ch.qos.logback.core.util.Duration;
 import com.lmax.disruptor.EventHandler;
-import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.RingBuffer;
 
 /**
@@ -152,7 +152,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      *
      * The interpretation of this list is up to the current {@link #connectionStrategy}.
      */
-    private List<InetSocketAddress> destinations = new ArrayList<>(2);
+    private final List<InetSocketAddress> destinations = new ArrayList<>(2);
 
     /**
      * When connected, this is the index into {@link #destinations}
@@ -220,6 +220,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
 
     /**
      * Used to create client {@link Socket}s to which to communicate.
+     * <p>
      *
      * If set prior to startup, it will be used.
      * <p>
@@ -246,7 +247,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * then the {@link #keepAliveMessage} will be sent to the socket in
      * order to keep the connection alive.
      *
-     * When null (the default), no keepAlive messages will be sent.
+     * <p>When null (the default), no keepAlive messages will be sent.</p>
      */
     private Duration keepAliveDuration;
 
@@ -288,15 +289,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Event handler responsible for performing the TCP transmission.
      */
-    private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>>, LifecycleAware {
+    private class TcpSendingEventHandler implements EventHandler<LogEvent<Event>> {
 
         /**
          * Max number of consecutive failed connection attempts for which
          * logback status messages will be logged.
          *
-         * After this many failed attempts, reconnection will still
+         * <p>After this many failed attempts, reconnection will still
          * be attempted, but failures will not be logged again
-         * (until after the connection is successful, and then fails again.)
+         * (until after the connection is successful, and then fails again.)</p>
          */
         private static final int MAX_REPEAT_CONNECTION_ERROR_LOG = 5;
 
@@ -372,11 +373,11 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * after the calculated {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
          * from the last sent event using {@link TcpSendingEventHandler#scheduleKeepAlive(long)}.
          *
-         * When the keepAlive event is processed by the event handler,
+         * <p>When the keepAlive event is processed by the event handler,
          * if the {@link AbstractLogstashTcpSocketAppender#keepAliveDuration}
          * has elapsed since the last event was sent,
          * then the event handler will send the {@link AbstractLogstashTcpSocketAppender#keepAliveMessage}
-         * to the socket OutputStream.
+         * to the socket OutputStream.</p>
          *
          */
         private class KeepAliveRunnable implements Runnable {
@@ -418,8 +419,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * Keeps reading the {@link ReaderCallable#inputStream} until the
          * end of the stream is reached.
          *
-         * This helps pro-actively detect server-side socket disconnections,
-         * specifically in the case of Amazon's Elastic Load Balancers (ELB).
+         * <p>This helps proactively detect server-side socket disconnections,
+         * specifically in the case of Amazon's Elastic Load Balancers (ELB).</p>
          */
         private class ReaderCallable implements Callable<Void> {
 
@@ -710,8 +711,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
          * Repeatedly tries to open a socket until it is successful,
          * or the hander is stopped, or the handler thread is interrupted.
          *
-         * If the socket is non-null when this method returns,
-         * then it should be able to be used to send.
+         * <p>If the socket is non-null when this method returns,
+         * then it should be able to be used to send.</p>
          */
         private synchronized void openSocket() {
             int errorCount = 0;
@@ -946,7 +947,6 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Wrap exceptions thrown by {@link Encoder}
      */
-    @SuppressWarnings("serial")
     private static class EncoderException extends Exception {
         EncoderException(Throwable cause) {
             super(cause);
@@ -1278,8 +1278,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Convenience method for setting {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.
      *
-     * When the {@link #connectionStrategy} is a {@link PreferPrimaryDestinationConnectionStrategy},
-     * this will set its {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.
+     * <p>When the {@link #connectionStrategy} is a {@link PreferPrimaryDestinationConnectionStrategy},
+     * this will set its {@link PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)}.</p>
      *
      * @see PreferPrimaryDestinationConnectionStrategy#setSecondaryConnectionTTL(Duration)
      * @param secondaryConnectionTTL the TTL of a connection when connected to a secondary destination
@@ -1320,7 +1320,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
     /**
      * Set the connection timeout when establishing a connection to a remote destination.
      * 
-     * Use {@code 0} for an "infinite timeout" which often really means "use the OS defaults".
+     * <p>Use {@code 0} for an "infinite timeout" which often really means "use the OS defaults".</p>
      * 
      * @param connectionTimeout connection timeout
      */
@@ -1408,7 +1408,7 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * then the {@link #keepAliveMessage} will be sent to the socket in
      * order to keep the connection alive.
      *
-     * When {@code null}, zero or negative, no keepAlive messages will be sent.
+     * <p>When {@code null}, zero or negative, no keepAlive messages will be sent.</p>
      * 
      * @param keepAliveDuration duration between consecutive keep alive messages
      */
@@ -1424,15 +1424,15 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Message to send for keeping the connection alive
      * if {@link #keepAliveDuration} is non-null and strictly positive.
      *
-     * The following values have special meaning:
+     * <p>The following values have special meaning:</p>
      * <ul>
      * <li>{@code null} or empty string = no keep alive.</li>
      * <li>"{@code SYSTEM}" = operating system new line (default).</li>
      * <li>"{@code UNIX}" = unix line ending (\n).</li>
      * <li>"{@code WINDOWS}" = windows line ending (\r\n).</li>
      * </ul>
-     * <p>
-     * Any other value will be used as-is.
+     *
+     * <p>Any other value will be used as-is.</p>
      * 
      * @param keepAliveMessage the keep alive message
      */
@@ -1473,8 +1473,8 @@ public abstract class AbstractLogstashTcpSocketAppender<Event extends DeferredPr
      * Defaults to {@value #DEFAULT_THREAD_NAME_FORMAT}.
      * <p>
      *
-     * If you change the {@link #threadFactory}, then this
-     * value may not be honored.
+     * If you change the {@link #setThreadFactory(ThreadFactory) threadFactory},
+     * then this value may not be honored.
      * <p>
      *
      * The string is a format pattern understood by {@link Formatter#format(String, Object...)}.

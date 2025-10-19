@@ -45,11 +45,9 @@ import com.lmax.disruptor.EventFactory;
 import com.lmax.disruptor.EventHandler;
 import com.lmax.disruptor.EventTranslatorOneArg;
 import com.lmax.disruptor.ExceptionHandler;
-import com.lmax.disruptor.LifecycleAware;
 import com.lmax.disruptor.PhasedBackoffWaitStrategy;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.Sequence;
-import com.lmax.disruptor.SequenceReportingEventHandler;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.WaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -86,6 +84,7 @@ import com.lmax.disruptor.dsl.ProducerType;
  * needing to explicitly shut down the appender.
  * Note that in this case, it is possible for appended log events to not
  * be handled (if the child thread has not had a chance to process them yet).
+ * <p>
  *
  * By setting {@link #setDaemon(boolean)} to false, you can change this behavior.
  * When false, child threads created by this appender will not be daemon threads,
@@ -133,7 +132,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
     /**
      * The {@link WaitStrategy} to used by the RingBuffer
-     * when pulling events to be processed by {@link #eventHandler}.
+     * when pulling events to be processed by {@link #createEventHandler() event handler}.
      * <p>
      * By default, a {@link BlockingWaitStrategy} is used, which is the most
      * CPU conservative, but results in a higher latency.
@@ -214,7 +213,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Defines what happens when there is an exception during
      * {@link RingBuffer} processing.
      */
-    private ExceptionHandler<LogEvent<Event>> exceptionHandler = new LogEventExceptionHandler();
+    private final ExceptionHandler<LogEvent<Event>> exceptionHandler = new LogEventExceptionHandler();
 
     /**
      * Consecutive number of dropped events.
@@ -323,7 +322,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Defines what happens when there is an exception during
      * {@link RingBuffer} processing.
      *
-     * Currently, just logs to the logback context.
+     * <p>Currently, just logs to the logback context.</p>
      */
     private class LogEventExceptionHandler implements ExceptionHandler<LogEvent<Event>> {
 
@@ -347,7 +346,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * Clears the event after a delegate event handler has processed the event,
      * so that the event can be garbage collected.
      */
-    private static class EventClearingEventHandler<Event> implements SequenceReportingEventHandler<LogEvent<Event>>, LifecycleAware {
+    private static class EventClearingEventHandler<Event> implements EventHandler<LogEvent<Event>> {
 
         private final EventHandler<LogEvent<Event>> delegate;
         private Sequence sequenceCallback;
@@ -378,16 +377,13 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
 
         @Override
         public void onStart() {
-            if (delegate instanceof LifecycleAware) {
-                ((LifecycleAware) delegate).onStart();
-            }
+            delegate.onStart();
         }
 
         @Override
         public void onShutdown() {
-            if (delegate instanceof LifecycleAware) {
-                ((LifecycleAware) delegate).onShutdown();
-            }
+            delegate.onShutdown();
+
         }
 
         @Override
@@ -610,7 +606,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     }
 
     protected List<Object> getThreadNameFormatParams() {
-        return Arrays.<Object>asList(
+        return Arrays.asList(
             getName(),
             threadNumber.incrementAndGet());
     }
@@ -722,8 +718,8 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
      * The {@link ProducerType} to use to configure the Disruptor.
      * By default this is {@link ProducerType#MULTI}.
      * 
-     * Can be set to {@link ProducerType#SINGLE} for increase performance if (and only if) only
-     * one thread will ever be appending to this appender.
+     * <p>Can be set to {@link ProducerType#SINGLE} for increase performance if (and only if) only
+     * one thread will ever be appending to this appender.</p>
      * 
      * <p>WARNING: unexpected behavior may occur if this parameter is set to {@link ProducerType#SINGLE}
      * and multiple threads are appending to this appender.
