@@ -499,7 +499,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 // Log warning if we had drop before
                 //
                 long consecutiveDropped = this.consecutiveDroppedCount.get();
-                if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L)) {
+                if (consecutiveDropped != 0 && this.consecutiveDroppedCount.compareAndSet(consecutiveDropped, 0L) && this.droppedWarnFrequency != 0) {
                     addWarn("Dropped " + consecutiveDropped + " total events due to ring buffer at max capacity [" + this.ringBufferSize + "]");
                 }
                 
@@ -511,7 +511,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
                 // Log a warning status about the failure
                 //
                 long consecutiveDropped = this.consecutiveDroppedCount.incrementAndGet();
-                if ((consecutiveDropped % this.droppedWarnFrequency) == 1) {
+                if (this.droppedWarnFrequency != 0 && (consecutiveDropped % this.droppedWarnFrequency) == 1) {
                     addWarn("Dropped " + consecutiveDropped + " events (and counting...) due to ring buffer at max capacity [" + this.ringBufferSize + "]");
                 }
                 
@@ -807,8 +807,7 @@ public abstract class AsyncDisruptorAppender<Event extends DeferredProcessingAwa
     public void setAddDefaultStatusListener(boolean addDefaultStatusListener) {
         this.addDefaultStatusListener = addDefaultStatusListener;
     }
-    
-    
+
     private static boolean isPowerOfTwo(int x) {
         /* First x in the below expression is for the case when x is 0 */
         return x != 0 && ((x & (x - 1)) == 0);

@@ -200,8 +200,48 @@ public class AsyncDisruptorAppenderTest extends AbstractLogbackTest {
             eventHandlerWaiter.countDown();
         }
     }
-    
-    
+
+
+    @Test
+    public void testDisableLoggedDroppedEvents() throws Exception {
+        final CountDownLatch eventHandlerWaiter = new CountDownLatch(1);
+        TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
+
+        appender.setDroppedWarnFrequency(0); // disable logging dropped events
+        appender.setRingBufferSize(1);
+        appender.setAppendTimeout(toLogback(Duration.ZERO)); // no timeout - drop when full
+        appender.setEventHandler(eventHandler);
+        appender.start();
+
+        /*
+         * First event blocks the ring buffer until eventHandlerWaiter is released
+         */
+        appender.append(event1);
+        await().until(() -> eventHandlerWaiter.getCount() == 1); // wait until the handler is invoked before going any further
+
+        /*
+         * RingBuffer is full - second event is dropped and not logged
+         */
+        appender.append(event2);
+
+        /*
+         * Failed to append event...
+         */
+        verify(listener).eventAppendFailed(eq(appender), eq(event2), any());
+
+        /*
+         * Unblock the eventHandlerWaiter
+         */
+        eventHandlerWaiter.countDown();
+
+        /*
+         * Last event would have trigger another log event.
+         */
+        appender.append(event1);
+
+        assertThat(statusManager.getCopyOfStatusList()).hasSize(0);
+    }
+ 
     @SuppressWarnings("unchecked")
     @Test
     public void testEventHandlerThrowsException() throws Exception {
