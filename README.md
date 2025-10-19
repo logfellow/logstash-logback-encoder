@@ -66,6 +66,7 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Omit Common Frames](#omit-common-frames)
     * [Truncate after Regex](#truncate-after-regex)
     * [Exclude Frames per Regex](#exclude-frames-per-regex)
+    * [Exclude Messages From Stacktrace](#exclude-messages-from-stacktrace)
     * [Maximum Depth per Throwable](#maximum-depth-per-throwable)
     * [Maximum Trace Size (bytes)](#maximum-trace-size)
     * [Classname Shortening](#classname-shortening)
@@ -2124,6 +2125,38 @@ Alternatively, multiple exclusion patterns can be specified at once using the `<
 Using the `<exclusions>` configuration option can be useful when using an environment variable to specify the actual patterns at deployment time.
 
 
+### Exclude Messages From Stacktrace
+In the event you wish to exclude all messages from the stackrace, then use ShortenedThrowableConverter.SANITIZE in you log statement.
+This feature will exclude all messages in the entire stacktrace from appearing.
+
+**Example** 
+```
+Exception in thread "main" com.myproject.module.MyProjectFooBarException: Customer ssn of 12345678 was not registered
+    at com.myproject.module.MyProject.anotherMethod(MyProject.java:19)
+    at com.myproject.module.MyProject.someMethod(MyProject.java:12)
+    at com.myproject.module.MyProject.main(MyProject.java:8)
+Caused by: java.lang.ArithmeticException: Could not generate userId for Customer with phone number 111-111-1111
+    at org.apache.commons.lang3.math.Fraction.getFraction(Fraction.java:143)
+    at com.myproject.module.MyProject.anotherMethod(MyProject.java:17)
+    ... 2 more
+```
+
+If the above is logged utilizing the ShortenedThrowableConverter.SANITIZE marker, then all messages will be suppressed in the logging output.
+```java
+    log.error(SANITIZE, "An exception was thrown but I want to make sure no customer data is shown in stacktrace", e);
+```
+Will produce:
+```
+Exception in thread "main" com.myproject.module.MyProjectFooBarException:
+    at com.myproject.module.MyProject.anotherMethod(MyProject.java:19)
+    at com.myproject.module.MyProject.someMethod(MyProject.java:12)
+    at com.myproject.module.MyProject.main(MyProject.java:8)
+Caused by: java.lang.ArithmeticException: 
+    at org.apache.commons.lang3.math.Fraction.getFraction(Fraction.java:143)
+    at com.myproject.module.MyProject.anotherMethod(MyProject.java:17)
+    ... 2 more
+```
+This enables devs to still see the type of exception thrown and where it occurred, **without** exposing sensitive data.
 
 ### Maximum Depth per Throwable
 
