@@ -15,25 +15,24 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class ThrowableClassNameJsonProviderTest {
 
-    private ThrowableClassNameJsonProvider provider = new ThrowableClassNameJsonProvider();
+    private final ThrowableClassNameJsonProvider provider = new ThrowableClassNameJsonProvider();
 
     @Mock
     private JsonGenerator generator;
@@ -50,35 +49,35 @@ public class ThrowableClassNameJsonProviderTest {
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField("newFieldName", throwable.getClass().getSimpleName());
+        verify(generator).writeStringProperty("newFieldName", throwable.getClass().getSimpleName());
     }
 
     @Test
-    public void testFieldNameWithNestedException() throws IOException {
+    public void testFieldNameWithNestedException() {
         IOException throwable = new IOException(new IllegalArgumentException());
         when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(throwable));
 
         provider.writeTo(generator, event);
 
         verify(generator)
-                .writeStringField(ThrowableClassNameJsonProvider.FIELD_NAME, throwable.getClass().getSimpleName());
+                .writeStringProperty(ThrowableClassNameJsonProvider.FIELD_NAME, throwable.getClass().getSimpleName());
     }
 
     @Test
-    public void testNoThrowable() throws IOException {
+    public void testNoThrowable() {
         provider.writeTo(generator, event);
 
-        verify(generator, times(0)).writeStringField(anyString(), anyString());
+        verifyNoInteractions(generator);
     }
 
     @Test
-    public void testUseFullClassName() throws IOException {
+    public void testUseFullClassName() {
         provider.setUseSimpleClassName(false);
         IOException throwable = new IOException();
         when(event.getThrowableProxy()).thenReturn(new ThrowableProxy(throwable));
 
         provider.writeTo(generator, event);
 
-        verify(generator).writeStringField(ThrowableClassNameJsonProvider.FIELD_NAME, throwable.getClass().getName());
+        verify(generator).writeStringProperty(ThrowableClassNameJsonProvider.FIELD_NAME, throwable.getClass().getName());
     }
 }

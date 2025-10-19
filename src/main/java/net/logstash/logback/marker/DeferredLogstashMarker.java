@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -23,8 +22,8 @@ import java.util.function.Supplier;
 import net.logstash.logback.appender.AsyncDisruptorAppender;
 
 import ch.qos.logback.classic.AsyncAppender;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A {@link LogstashMarker} that defers the creation of another {@link LogstashMarker} until
@@ -39,7 +38,6 @@ import org.slf4j.Marker;
  * the supplier will be invoked when the first appender encodes the marker.
  * That same supplied value will be used when the next appender encodes the marker.</p>
  */
-@SuppressWarnings("serial")
 public class DeferredLogstashMarker extends LogstashMarker {
 
     public static final String DEFERRED_MARKER_NAME = "DEFERRED";
@@ -61,7 +59,7 @@ public class DeferredLogstashMarker extends LogstashMarker {
     }
 
     @Override
-    public void writeTo(JsonGenerator generator) throws IOException {
+    public void writeTo(JsonGenerator generator) {
         writeMarker(generator, getSuppliedValue());
     }
 
@@ -86,7 +84,7 @@ public class DeferredLogstashMarker extends LogstashMarker {
         return suppliedValue;
     }
 
-    private void writeMarker(JsonGenerator generator, Marker marker) throws IOException {
+    private void writeMarker(JsonGenerator generator, Marker marker) {
         if (marker == null) {
             return;
         }

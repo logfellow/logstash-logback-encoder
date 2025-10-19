@@ -20,14 +20,12 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 class DoubleMdcEntryWriterTest {
@@ -49,11 +47,11 @@ class DoubleMdcEntryWriterTest {
             "2.2250738585072014E-308",
             "1.7976931348623157E+308"
     })
-    void valid(String value) throws IOException {
+    void valid(String value) {
         boolean result = mdcEntryWriter.writeMdcEntry(generator, "otherName", "name", value);
 
         assertThat(result).isTrue();
-        verify(generator).writeFieldName("otherName");
+        verify(generator).writeName("otherName");
         verify(generator).writeNumber(Double.parseDouble(value));
         verifyNoMoreInteractions(generator);
     }
@@ -68,7 +66,7 @@ class DoubleMdcEntryWriterTest {
             "-Infinity",
             ""
     })
-    void invalid(String value) throws IOException {
+    void invalid(String value) {
         boolean result = mdcEntryWriter.writeMdcEntry(generator, "otherName", "name", value);
 
         assertThat(result).isFalse();

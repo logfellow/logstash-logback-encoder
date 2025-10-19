@@ -15,8 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
@@ -26,7 +24,7 @@ import ch.qos.logback.classic.pattern.ExtendedThrowableProxyConverter;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> implements FieldNamesAware<LogstashFieldNames> {
 
@@ -60,7 +58,7 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
         if (throwableProxy != null) {
             JsonWritingUtils.writeStringField(generator, getFieldName(), throwableConverter.convert(event));

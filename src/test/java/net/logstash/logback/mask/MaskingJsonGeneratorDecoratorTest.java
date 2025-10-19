@@ -34,25 +34,25 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.spi.LifeCycle;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 
 public class MaskingJsonGeneratorDecoratorTest {
 
-    private static final JsonFactory FACTORY = new MappingJsonFactory();
+    private static final ObjectMapper MAPPER = JsonMapper.builder().build();
 
     public static class TestFieldMasker implements FieldMasker {
 
         @Override
-        public Object mask(JsonStreamContext context) {
-            return context.hasCurrentName() && context.getCurrentName().equals("testfield")
+        public Object mask(TokenStreamContext context) {
+            return context.hasCurrentName() && context.currentName().equals("testfield")
                     ? "[maskedtestfield]"
                     : null;
         }
@@ -60,7 +60,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     public static class TestValueMasker implements ValueMasker {
 
         @Override
-        public Object mask(JsonStreamContext context, Object value) {
+        public Object mask(TokenStreamContext context, Object value) {
             return "testvalue".equals(value)
                     ? "[maskedtestvalue]"
                     : null;
@@ -99,7 +99,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void maskedAndUnmaskedField() throws IOException {
+    public void maskedAndUnmaskedField() {
         testMaskByPath(
                 "{'fieldA':'valueA','fieldB':'valueB','fieldC':'valueC'}",
                 "{'fieldA':'valueA','fieldB':'****',  'fieldC':'valueC'}",
@@ -123,7 +123,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void maskedSubstrings() throws IOException {
+    public void maskedSubstrings() {
         testMaskByValue(
                 "{'fieldA':'tomask1','fieldB':'tomask2','fieldC':' tomask1-tomask2 '}",
                 "{'fieldA':'****',   'fieldB':'****',   'fieldC':' ****-**** '      }",
@@ -131,7 +131,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void onlyMaskedField() throws IOException {
+    public void onlyMaskedField() {
         testMaskByPath(
                 "{'fieldA':'valueA'}",
                 "{'fieldA':'****'  }",
@@ -151,7 +151,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void escapedPath() throws IOException {
+    public void escapedPath() {
         testMaskByPath(
                 "{'fieldA':'valueA', 'field~/B':'valueB', 'fieldC':'valueC'}",
                 "{'fieldA':'valueA', 'field~/B':'****',   'fieldC':'valueC'}",
@@ -159,7 +159,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void maskEverything() throws IOException {
+    public void maskEverything() {
         testMaskByPath(
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]}, 'fieldB':'valueB'}",
                 "{'fieldA':'****',                                                                'fieldB':'****'}",
@@ -167,14 +167,14 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void maskNothing() throws IOException {
+    public void maskNothing() {
         testMaskByPath(
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}");
     }
 
     @Test
-    public void configuration() throws IOException {
+    public void configuration() {
         JsonGeneratorDecorator noMasks = configure("noMasks");
         test(
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB'}",
@@ -194,7 +194,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void maskAllStringValues() throws IOException {
+    public void maskAllStringValues() {
         testMaskByValue(
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB','fieldC':1}",
                 "{'fieldA':{'fieldAA':'****',   'fieldAB':{'fieldABA':'****'    },'fieldAC':[1]},'fieldB':'****',  'fieldC':1}",
@@ -202,7 +202,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void maskedSubObject() throws IOException {
+    public void maskedSubObject() {
         testMaskByPath(
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':{'fieldABA':'valueABA'},'fieldAC':[1]},'fieldB':'valueB','fieldC':{'fieldA':''    }}",
                 "{'fieldA':'****',                                                               'fieldB':'valueB','fieldC':{'fieldA':'****'}}",
@@ -234,7 +234,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void subObjectWithMaskedField() throws IOException {
+    public void subObjectWithMaskedField() {
         testMaskByPath(
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':12345678,'fieldAC':'valueAC'},'fieldAB':0}",
                 "{'fieldA':{'fieldAA':'valueAA','fieldAB':'****',  'fieldAC':'valueAC'},'fieldAB':'****'}",
@@ -263,7 +263,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void maskedArray() throws IOException {
+    public void maskedArray() {
         testMaskByPath(
                 "{'fieldA':['valueA0','valueA1'],'fieldB':'valueB'}",
                 "{'fieldA':'****',               'fieldB':'valueB'}",
@@ -279,7 +279,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void masedArrayByIndex() throws IOException {
+    public void masedArrayByIndex() {
         testMaskByPath(
                 "{ 'array':[{'foo':'bar' },{'a':'b'}] }",
                 "{ 'array':[{'foo':'****'},{'a':'b'}] }",
@@ -311,7 +311,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
     
     @Test
-    public void maskedArrayOfObjects() throws IOException {
+    public void maskedArrayOfObjects() {
         testMaskByPath(
                 "{'fieldA':[{'fieldA0A':'valueA0A'},{'fieldA1A':'valueA1A'}],'fieldB':'valueB'}",
                 "{'fieldA':'****',                                           'fieldB':'valueB'}",
@@ -327,7 +327,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void arrayOfObjectWithMaskedField() throws IOException {
+    public void arrayOfObjectWithMaskedField() {
         testMaskByPath(
                 "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':12345678,'fieldA0C':'valueA0C'}]}",
                 "{'fieldA':[{'fieldA0A':'valueA0A','fieldA0B':'****',  'fieldA0C':'valueA0C'}]}",
@@ -355,7 +355,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void arrayOfArrayOfObjectWithMaskedFields() throws IOException {
+    public void arrayOfArrayOfObjectWithMaskedFields() {
         testMaskByPath(
                 "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':true,  'fieldA00C':'valueA00C'}]]}",
                 "{'fieldA':[[{'fieldA00A':'valueA00A','fieldA00B':'****','fieldA00C':'valueA00C'}]]}",
@@ -398,7 +398,7 @@ public class MaskingJsonGeneratorDecoratorTest {
                 "foo/fieldA/0/0/fieldA00B");
     }
 
-    private void testMaskByPath(String unmasked, String masked, String... pathsToMask) throws IOException  {
+    private void testMaskByPath(String unmasked, String masked, String... pathsToMask) {
         MaskingJsonGeneratorDecorator decoratorByPath = new MaskingJsonGeneratorDecorator();
         Arrays.stream(pathsToMask).forEach(decoratorByPath::addPath);
         test(unmasked, masked, decoratorByPath);
@@ -429,7 +429,7 @@ public class MaskingJsonGeneratorDecoratorTest {
 
     }
 
-    private void testMaskByValue(String unmasked, String masked, String... valuesToMask) throws IOException  {
+    private void testMaskByValue(String unmasked, String masked, String... valuesToMask) {
         MaskingJsonGeneratorDecorator decoratorByValue = new MaskingJsonGeneratorDecorator();
         Arrays.stream(valuesToMask).forEach(decoratorByValue::addValue);
         test(unmasked, masked, decoratorByValue);
@@ -457,13 +457,13 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void testReplacementGroup() throws IOException {
+    public void testReplacementGroup() {
         MaskingJsonGeneratorDecorator decorator = new MaskingJsonGeneratorDecorator();
         decorator.addValueMask(new MaskingJsonGeneratorDecorator.ValueMask("(hello)? world", "$1 bob"));
         test("{'field':'hello world'}", "{'field':'hello bob'}", decorator);
     }
 
-    private void test(String unmasked, String masked, JsonGeneratorDecorator decorator) throws IOException {
+    private void test(String unmasked, String masked, JsonGeneratorDecorator decorator) {
         if (decorator instanceof LifeCycle) {
             ((LifeCycle) decorator).start();
         }
@@ -472,13 +472,13 @@ public class MaskingJsonGeneratorDecoratorTest {
         masked = toJson(masked);
         
         StringWriter maskedWriter = new StringWriter();
-        JsonGenerator maskingGenerator = decorator.decorate(FACTORY.createGenerator(maskedWriter));
+        JsonGenerator maskingGenerator = decorator.decorate(MAPPER.createGenerator(maskedWriter));
 
         /*
          * Read through the unmasked string, while writing to the maskedWriter
          * Note: replay read/parser events directly on the generator to simulate calls to the generator methods
          */
-        try (JsonParser parser = FACTORY.createParser(unmasked)) {
+        try (JsonParser parser = MAPPER.createParser(unmasked)) {
             while (parser.nextToken() != null) {
                 maskingGenerator.copyCurrentEvent(parser);
             }
@@ -489,8 +489,8 @@ public class MaskingJsonGeneratorDecoratorTest {
          * Input strings may be formatted with extra blanks for convenience in the test.
          * Better to convert them into ObjectNodes to compare their actual JSON structure irrespective of the "pretty printing".
          */
-        ObjectNode expected = JsonReadingUtils.readFullyAsObjectNode(FACTORY, masked);
-        ObjectNode actual   = JsonReadingUtils.readFullyAsObjectNode(FACTORY, maskedWriter.toString());
+        ObjectNode expected = JsonReadingUtils.readFullyAsObjectNode(MAPPER, masked);
+        ObjectNode actual   = JsonReadingUtils.readFullyAsObjectNode(MAPPER, maskedWriter.toString());
         assertThat(actual).isEqualTo(expected);
     }
     

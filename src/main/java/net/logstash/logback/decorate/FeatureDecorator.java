@@ -17,59 +17,54 @@ package net.logstash.logback.decorate;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
-
-import com.fasterxml.jackson.core.JsonFactory;
 
 /**
- * A generic decorator that allows enabling/disabling of Jackson features.
+ * A generic decorator that allows enabling/disabling of Jackson features by feature name.
  *
- * @param <T> Type of object being decorated (e.g. {@link JsonFactory})
- * @param <F> Feature enum type (e.g. {@link com.fasterxml.jackson.core.JsonFactory.Feature})
+ * @param <T> Type of object being decorated (e.g. {@link tools.jackson.core.json.JsonFactory})
+ * @param <F> Feature enum type (e.g. {@link tools.jackson.core.json.JsonWriteFeature})
  */
-public class FeatureDecorator<T, F extends Enum<F>> {
+public abstract class FeatureDecorator<T, F extends Enum<F>> implements Decorator<T> {
 
     /**
-     * Jackson feature enum type (e.g. {@link JsonFactory.Feature})
+     * Jackson feature enum type (e.g. {@link tools.jackson.core.json.JsonWriteFeature})
      */
     private final Class<F> enumType;
-    /**
-     * Function to enable a feature.
-     */
-    private final BiFunction<T, F, T> enableFunction;
-    /**
-     * Function to disable a feature.
-     */
-    private final BiFunction<T, F, T> disableFunction;
 
     /**
      * Features to enable
      */
     private final List<F> enables = new ArrayList<>();
+
     /**
      * Features to disable
      */
     private final List<F> disables = new ArrayList<>();
 
-    protected FeatureDecorator(
-            Class<F> enumType,
-            BiFunction<T, F, T> enableFunction,
-            BiFunction<T, F, T> disableFunction) {
+    protected FeatureDecorator(Class<F> enumType) {
         this.enumType = enumType;
-        this.enableFunction = enableFunction;
-        this.disableFunction = disableFunction;
     }
 
-    public T decorate(T target) {
-        T modifiedTarget = target;
+    public T decorate(T decoratable) {
+        T decorated = decoratable;
         for (F feature : enables) {
-            modifiedTarget = enableFunction.apply(modifiedTarget, feature);
+            decorated = configure(decorated, feature, true);
         }
         for (F feature : disables) {
-            modifiedTarget = disableFunction.apply(modifiedTarget, feature);
+            decorated = configure(decorated, feature, false);
         }
-        return modifiedTarget;
+        return decorated;
     }
+
+    /**
+     * Configures the given feature on the given decoratable.
+     *
+     * @param decoratable the object to configure
+     * @param feature the feature to enable or disable
+     * @param state true to enable the feature, false to disable the feature.
+     * @return the decorated object
+     */
+    protected abstract T configure(T decoratable, F feature, boolean state);
 
     /**
      * Enables the feature with the given name.
@@ -88,6 +83,7 @@ public class FeatureDecorator<T, F extends Enum<F>> {
     public void enable(F feature) {
         enables.add(feature);
     }
+
     /**
      * Disables the feature with the given name.
      * Reflectively called by logback when reading xml configuration.
@@ -96,6 +92,7 @@ public class FeatureDecorator<T, F extends Enum<F>> {
     public void addDisable(String feature) {
         disable(Enum.valueOf(enumType, feature));
     }
+
     /**
      * Disables the given feature.
      * Use this method for programmatic configuration.

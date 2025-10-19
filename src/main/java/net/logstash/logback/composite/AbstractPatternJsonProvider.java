@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import net.logstash.logback.pattern.AbstractJsonPatternParser;
@@ -25,42 +24,42 @@ import net.logstash.logback.pattern.NodeWriter;
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * Transforms an string containing patterns understood by PatternLayouts into JSON output.
  * Delegates most of the work to the {@link AbstractJsonPatternParser} that is to
  * parse the pattern specified.
- * Subclasses must implement {@link #createParser(JsonFactory)} method so it returns parser valid for a specified event class.
+ * Subclasses must implement {@link #createParser()} method so it returns parser valid for a specified event class.
  *
  * @param <Event> type of event ({@link ILoggingEvent} or {@link IAccessEvent}).
  *
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessingAware>
-        extends AbstractJsonProvider<Event> implements JsonFactoryAware {
+        extends AbstractJsonProvider<Event> implements ObjectMapperAware {
 
     private NodeWriter<Event> nodeWriter;
     
     private String pattern;
 
-    private JsonFactory jsonFactory;
+    protected ObjectMapper objectMapper;
 
     /**
-     * When {@code true}, fields whose values are considered empty ({@link AbstractJsonPatternParser#isEmptyValue(Object)}})
+     * When {@code true}, fields whose values are considered empty
      * will be omitted from JSON output.
      */
     private boolean omitEmptyFields;
 
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         if (nodeWriter != null) {
             nodeWriter.write(generator, event);
         }
     }
     
-    protected abstract AbstractJsonPatternParser<Event> createParser(JsonFactory jsonFactory);
+    protected abstract AbstractJsonPatternParser<Event> createParser();
     
     public String getPattern() {
         return pattern;
@@ -69,16 +68,16 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
     public void setPattern(final String pattern) {
         this.pattern = pattern;
     }
-    
+
     @Override
-    public void setJsonFactory(JsonFactory jsonFactory) {
-        this.jsonFactory = Objects.requireNonNull(jsonFactory);
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 
     @Override
     public void start() {
-        if (jsonFactory == null) {
-            throw new IllegalStateException("JsonFactory has not been set");
+        if (objectMapper == null) {
+            throw new IllegalStateException("objectMapper has not been set");
         }
         
         try {
@@ -99,7 +98,7 @@ public abstract class AbstractPatternJsonProvider<Event extends DeferredProcessi
      * @throws JsonPatternException thrown in case of invalid pattern
      */
     private NodeWriter<Event> initializeNodeWriter() throws JsonPatternException {
-        AbstractJsonPatternParser<Event> parser = createParser(this.jsonFactory);
+        AbstractJsonPatternParser<Event> parser = createParser();
         parser.setOmitEmptyFields(omitEmptyFields);
         return parser.parse(pattern);
     }

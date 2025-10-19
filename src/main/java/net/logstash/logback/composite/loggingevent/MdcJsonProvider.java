@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -28,8 +27,8 @@ import net.logstash.logback.composite.loggingevent.mdc.MdcEntryWriter;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.MDC;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Includes {@link MDC} properties in the JSON output according to
@@ -91,7 +90,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         Map<String, String> mdcProperties = event.getMDCPropertyMap();
         if (mdcProperties != null && !mdcProperties.isEmpty()) {
 
@@ -107,7 +106,7 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
                         fieldName = entry.getKey();
                     }
                     if (!hasWrittenStart && getFieldName() != null) {
-                        generator.writeObjectFieldStart(getFieldName());
+                        generator.writeObjectPropertyStart(getFieldName());
                         hasWrittenStart = true;
                     }
                     writeMdcEntry(generator, fieldName, entry.getKey(), entry.getValue());
@@ -184,15 +183,14 @@ public class MdcJsonProvider extends AbstractFieldJsonProvider<ILoggingEvent> im
      * @param mdcKey    the key of the MDC map entry.
      * @param mdcValue  the value of the MDC map entry.
      */
-    private void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    private void writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) {
         for (MdcEntryWriter mdcEntryWriter : this.mdcEntryWriters) {
             if (mdcEntryWriter.writeMdcEntry(generator, fieldName, mdcKey, mdcValue)) {
                 return;
             }
         }
 
-        generator.writeFieldName(fieldName);
-        generator.writeObject(mdcValue);
+        generator.writePOJOProperty(fieldName, mdcValue);
     }
 
 }

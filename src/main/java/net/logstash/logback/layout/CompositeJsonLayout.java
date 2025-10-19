@@ -23,8 +23,11 @@ import java.util.Objects;
 
 import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.dataformat.DataFormatFactory;
+import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
+import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
+import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
+import net.logstash.logback.decorate.Decorator;
 import net.logstash.logback.encoder.CompositeJsonEncoder;
 import net.logstash.logback.encoder.SeparatorParser;
 import net.logstash.logback.util.ReusableByteBuffer;
@@ -47,7 +50,7 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
      * Separator to use between events.
      *
      * <p>By default, this is null (for backwards compatibility), indicating no separator.
-     * Note that this default is different than the default of {@link CompositeJsonEncoder#lineSeparator}.
+     * Note that this default is different from the default of {@link CompositeJsonEncoder#lineSeparator}.
      * In a future major release, the default will likely change to be the same as {@link CompositeJsonEncoder#lineSeparator}.</p>
      */
     private String lineSeparator;
@@ -140,12 +143,11 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
     }
 
     private void startWrapped(Layout<Event> wrapped) {
-        if (wrapped instanceof PatternLayoutBase) {
+        if (wrapped instanceof PatternLayoutBase<Event> layout) {
             /*
              * Don't ensure exception output (for ILoggingEvents)
              * or line separation (for IAccessEvents)
              */
-            PatternLayoutBase<Event> layout = (PatternLayoutBase<Event>) wrapped;
             layout.setPostCompileProcessor(null);
             /*
              * The pattern will be re-parsed during start.
@@ -195,20 +197,36 @@ public abstract class CompositeJsonLayout<Event extends DeferredProcessingAware>
         this.immediateFlush = immediateFlush;
     }
 
-    public JsonFactoryDecorator getJsonFactoryDecorator() {
-        return formatter.getJsonFactoryDecorator();
+    public String getDataFormat() {
+        return formatter.getDataFormat();
     }
 
-    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
-        formatter.setJsonFactoryDecorator(jsonFactoryDecorator);
+    public void setDataFormat(String dataFormat) {
+        formatter.setDataFormat(dataFormat);
     }
 
-    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+    public DataFormatFactory getDataFormatFactory() {
+        return formatter.getDataFormatFactory();
+    }
+
+    public void setDataFormatFactory(DataFormatFactory dataFormatFactory) {
+        formatter.setDataFormatFactory(dataFormatFactory);
+    }
+
+    public void addDecorator(Decorator<?> decorator) {
+        formatter.addDecorator(decorator);
+    }
+
+    public CompositeTokenStreamFactoryBuilderDecorator getTokenStreamFactoryBuilderDecorator() {
+        return formatter.getTokenStreamFactoryBuilderDecorator();
+    }
+
+    public CompositeMapperBuilderDecorator getMapperBuilderDecorator() {
+        return formatter.getMapperBuilderDecorator();
+    }
+
+    public CompositeJsonGeneratorDecorator getJsonGeneratorDecorator() {
         return formatter.getJsonGeneratorDecorator();
-    }
-
-    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
-        formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
     public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {

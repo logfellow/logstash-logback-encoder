@@ -52,7 +52,7 @@ The structure of the output, and the data it contains, is fully configurable.
 	* [Header Fields](#header-fields)
 * [Customizing Jackson](#customizing-jackson)
 	* [Data Format](#data-format)
-	* [Customizing JSON Factory and Generator](#customizing-json-factory-and-generator)
+	* [Customizing TokenStreamFactory, ObjectMapper, and JsonGenerator](#customizing-tokenstreamfactory-objectmapper-and-jsongenerator)
 	* [Registering Jackson Modules](#registering-jackson-modules)
 	* [Customizing Character Escapes](#customizing-character-escapes)
 * [Masking](#masking)
@@ -99,7 +99,7 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>8.1</version>
+    <version>9.0</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logstash-logback-encoder,
          such as usage of StructuredArguments/Markers or implementations such as
          JsonProvider, AppenderListener, JsonFactoryDecorator, JsonGeneratorDecorator, etc
@@ -123,7 +123,7 @@ then ensure the required dependencies (and appropriate versions) as specified in
 from the maven repository exist on the runtime classpath.
 Specifically, the following need to be available on the runtime classpath:
 
-* jackson-databind / jackson-core / jackson-annotations >= 2.17.0
+* jackson-databind / jackson-core / jackson-annotations >= 3.0.0
 * logback-core >= 1.5.0
 * logback-classic >= 1.5.0 (required for logging _LoggingEvents_)
 * logback-access >= 2.0.0 (required for logging _AccessEvents_)
@@ -132,6 +132,7 @@ Specifically, the following need to be available on the runtime classpath:
 
 Older versions than the ones specified in the pom file _might_ work, but the versions in the pom file are what testing has been performed against.
 Support for logback versions prior to 1.3.0 was removed in logstash-logback-encoder 7.4.
+Support for jackson versions prior to 3.0.0 was removed in logstash-logback-encoder 9.0.
 
 If you are using logstash-logback-encoder in a project (such as spring-boot) that also declares dependencies on any of the above libraries, you might need to tell maven explicitly which versions to use to avoid conflicts.
 You can do so using maven's [dependencyManagement](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Management) feature.
@@ -184,15 +185,15 @@ To log using JSON format, you must configure logback to use either:
 
 The appenders, encoders, and layouts provided by the logstash-logback-encoder library are as follows:
 
-| Format        | Protocol   | Function | LoggingEvent | AccessEvent
-|---------------|------------|----------| ------------ | -----------
-| Logstash JSON | Syslog/UDP | Appender | [`LogstashUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashUdpSocketAppender.java) | [`LogstashAccessUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessUdpSocketAppender.java)
-| Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java) | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)
-| any           | any        | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java)
-| Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java) | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)
-| Logstash JSON | any        | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java) | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)
-| General JSON  | any        | Encoder  | [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java) | [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)
-| General JSON  | any        | Layout   | [`LoggingEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/layout/LoggingEventCompositeJsonLayout.java) | [`AccessEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonLayout.java)
+| Format        | Protocol   | Function | LoggingEvent                                                                                                                 | AccessEvent                                                                                                                |
+|---------------|------------|----------|------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| Logstash JSON | Syslog/UDP | Appender | [`LogstashUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashUdpSocketAppender.java)                   | [`LogstashAccessUdpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessUdpSocketAppender.java)     |
+| Logstash JSON | TCP        | Appender | [`LogstashTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashTcpSocketAppender.java)                   | [`LogstashAccessTcpSocketAppender`](/src/main/java/net/logstash/logback/appender/LogstashAccessTcpSocketAppender.java)     |
+| any           | any        | Appender | [`LoggingEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/LoggingEventAsyncDisruptorAppender.java) | [`AccessEventAsyncDisruptorAppender`](/src/main/java/net/logstash/logback/appender/AccessEventAsyncDisruptorAppender.java) |
+| Logstash JSON | any        | Encoder  | [`LogstashEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashEncoder.java)                                        | [`LogstashAccessEncoder`](/src/main/java/net/logstash/logback/encoder/LogstashAccessEncoder.java)                          |
+| Logstash JSON | any        | Layout   | [`LogstashLayout`](/src/main/java/net/logstash/logback/layout/LogstashLayout.java)                                           | [`LogstashAccessLayout`](/src/main/java/net/logstash/logback/layout/LogstashAccessLayout.java)                             |
+| General JSON  | any        | Encoder  | [`LoggingEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/LoggingEventCompositeJsonEncoder.java)      | [`AccessEventCompositeJsonEncoder`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonEncoder.java)      |
+| General JSON  | any        | Layout   | [`LoggingEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/layout/LoggingEventCompositeJsonLayout.java)         | [`AccessEventCompositeJsonLayout`](/src/main/java/net/logstash/logback/encoder/AccessEventCompositeJsonLayout.java)        |
 
 These encoders/layouts can generally be used by any logback appender (such as `RollingFileAppender`).
 
@@ -323,7 +324,7 @@ in your `logback-access.xml`, like this:
 
 The TCP appenders use an encoder, rather than a layout as the [UDP appenders](#udp-appenders) . 
 You can use a `Logstash*Encoder`, `*EventCompositeJsonEncoder`, or any other logback encoder.
-All of the output formatting options are configured at the encoder level.
+All the output formatting options are configured at the encoder level.
 
 Internally, the TCP appenders are asynchronous (using the [LMAX Disruptor RingBuffer](https://lmax-exchange.github.io/disruptor/)).
 All the encoding and TCP communication is delegated to a single writer thread.
@@ -332,7 +333,7 @@ There is no need to wrap the TCP appenders with another asynchronous appender
 
 All the configuration parameters (except for sub-appender) of the [async appenders](#async-appenders) are valid for TCP appenders. For example, `waitStrategyType` and `ringBufferSize`.
 
-By default the TCP appenders will never block the logging thread - if the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped. If desired, the appender can also be configured to block and wait for free space, see [RingBuffer Full](#ringbuffer-full) for more information.
+By default, the TCP appenders will never block the logging thread - if the RingBuffer is full (e.g. due to slow network, etc), then events will be dropped. If desired, the appender can also be configured to block and wait for free space, see [RingBuffer Full](#ringbuffer-full) for more information.
 
 The TCP appenders will automatically reconnect if the connection breaks. Multiple destinations can be configured to increase availability and reduce message lost. See [Multiple Destinations](#multiple-destinations) for more information.
 
@@ -347,7 +348,7 @@ input {
 }
 ```
 
-In order to guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+To guarantee that logged messages have had a chance to be processed by the TCP appender, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
 
 #### Keep-Alive
@@ -699,8 +700,9 @@ For example:
 </appender>
 ```
 
-> **Warning**
-> Since Logback 1.3 it is not allowed anymore to declare an `<appender>` inside another `<appender>`. The nested appender should instead be declared outside and `<appender-ref>` must be used to refer to it.
+> [!WARNING]
+> Logback 1.3 no longer allows declaring an `<appender>` inside another `<appender>`.
+> The nested appender should instead be declared outside and `<appender-ref>` must be used to refer to it.
 > 
 > See [LOGBACK-1674](https://jira.qos.ch/browse/LOGBACK-1674) for more information.
 
@@ -737,7 +739,7 @@ When the appender drops an event, it emits a warning status message every `dropp
 
 #### Graceful Shutdown
 
-In order to guarantees that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
+To guarantees that logged messages have had a chance to be processed by asynchronous appenders (including the TCP appender) and ensure background threads have been stopped, you'll need to [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when your application exits.
 
 When gracefully stopped, async appenders wait until all events in the buffer are processed and the buffer is empty.
 The maximum time to wait is configured by the `shutdownGracePeriod` parameter and is set to `1 minute` by default.
@@ -751,7 +753,8 @@ The `BlockingWaitStrategy` minimizes CPU utilization, but results in slower late
 If you need faster latency and throughput (at the expense of higher CPU utilization), consider
 a different [wait strategy](https://lmax-exchange.github.io/disruptor/docs/com/lmax/disruptor/WaitStrategy.html) offered by the disruptor.
 
-> !! Whichever wait strategy you choose, be sure to test and monitor CPU utilization, latency, and throughput to ensure it meets your needs.
+> [!IMPORTANT]
+> Whichever wait strategy you choose, be sure to test and monitor CPU utilization, latency, and throughput to ensure it meets your needs.
 > For example, in some configurations, `SleepingWaitStrategy` can consume 90% CPU utilization at rest.
 
 The wait strategy can be configured on the async appender using the `waitStrategyType` parameter, like this:
@@ -979,19 +982,17 @@ These fields will appear in every LoggingEvent unless otherwise noted.
 The field names listed here are the default field names.
 The field names can be customized (see [Customizing Standard Field Names](#customizing-standard-field-names)).
 
-| Field         | Description
-|---------------|------------
-| `@timestamp`  | Time of the log event (`ISO_OFFSET_DATE_TIME`) - see [Customizing Timestamp](#customizing-timestamp)
-| `@version`    | Logstash format version (e.g. `1`) - see [Customizing Version](#customizing-version)
-| `message`     | Formatted log message of the event - see [Customizing Message](#customizing-message)
-| `logger_name` | Name of the logger that logged the event
-| `thread_name` | Name of the thread that logged the event
-| `level`       | String name of the level of the event
-| `level_value` | Integer value of the level of the event
-| `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.
-| `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.) This can be fully disabled by specifying `<includeTags>false</includeTags>`, in the encoder/layout/appender configuration.
-
-
+| Field         | Description                                                                                                                                                                                                                                                                                                                                                                       |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `@timestamp`  | Time of the log event (`ISO_OFFSET_DATE_TIME`) - see [Customizing Timestamp](#customizing-timestamp)                                                                                                                                                                                                                                                                              |
+| `@version`    | Logstash format version (e.g. `1`) - see [Customizing Version](#customizing-version)                                                                                                                                                                                                                                                                                              |
+| `message`     | Formatted log message of the event - see [Customizing Message](#customizing-message)                                                                                                                                                                                                                                                                                              |
+| `logger_name` | Name of the logger that logged the event                                                                                                                                                                                                                                                                                                                                          |
+| `thread_name` | Name of the thread that logged the event                                                                                                                                                                                                                                                                                                                                          |
+| `level`       | String name of the level of the event                                                                                                                                                                                                                                                                                                                                             |
+| `level_value` | Integer value of the level of the event                                                                                                                                                                                                                                                                                                                                           |
+| `stack_trace` | (Only if a throwable was logged) The stacktrace of the throwable.  Stackframes are separated by line endings.                                                                                                                                                                                                                                                                     |
+| `tags`        | (Only if tags are found) The names of any markers not explicitly handled.  (e.g. markers from `MarkerFactory.getMarker` will be included as tags, but the markers from [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java) will not.) This can be fully disabled by specifying `<includeTags>false</includeTags>`, in the encoder/layout/appender configuration. |
 
 ### MDC fields
 
@@ -1165,14 +1166,12 @@ If the encoder is included inside an asynchronous appender, such as
 
 When switched on, the following fields will be included in the log event:
 
-| Field                | Description
-|----------------------|------------
-| `caller_class_name`  | Fully qualified class name of the class that logged the event
-| `caller_method_name` | Name of the method that logged the event
-| `caller_file_name`   | Name of the file that logged the event
-| `caller_line_number` | Line number of the file where the event was logged
-
-
+| Field                | Description                                                   |
+|----------------------|---------------------------------------------------------------|
+| `caller_class_name`  | Fully qualified class name of the class that logged the event |
+| `caller_method_name` | Name of the method that logged the event                      |
+| `caller_file_name`   | Name of the file that logged the event                        |
+| `caller_line_number` | Line number of the file where the event was logged            |
 
 ### Custom Fields
 
@@ -1203,13 +1202,15 @@ or in an AccessEvent like this :
 
 When logging a message, you can add additional fields to the JSON output by using
 
+* (recommended) slf4j's [fluent API](https://www.slf4j.org/manual.html#fluent) for attaching key value pairs to the log event.
+  see [Key Value Pair Fields](#key-value-pair-fields).
 * _structured arguments_ provided by
   [`StructuredArguments`](/src/main/java/net/logstash/logback/argument/StructuredArguments.java), OR
 * _markers_ provided by
   [`Markers`](/src/main/java/net/logstash/logback/marker/Markers.java)
 
-The difference between the two is that
-* `StructuredArguments` are included in a the log event's formatted message
+The difference between structured arguments and markers is that
+* `StructuredArguments` are included in the log event's formatted message
 (when the message has a parameter for the argument) _AND_ in the JSON output.
   * `StructuredArguments` will be included in the JSON output if using `LogstashEncoder/Layout`
     or if using [composite encoders/layouts](#composite-encoderlayout) with the `arguments` provider.
@@ -1398,21 +1399,20 @@ These fields will appear in every AccessEvent unless otherwise noted.
 The field names listed here are the default field names.
 The field names can be customized (see [Customizing Standard Field Names](#customizing-standard-field-names)).
 
-| Field         | Description
-|---------------|------------
-| `@timestamp`  | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).
-| `@version`    | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).
-| `message`     | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}`
-| `method` | HTTP method
-| `protocol` | HTTP protocol
-| `status_code` | HTTP status code
-| `requested_url` | Request URL
-| `requested_uri` | Request URI
-| `remote_host` | Remote host
-| `remote_user` | Remote user
-| `content_length` | Content length
-| `elapsed_time` | Elapsed time in millis
-
+| Field            | Description                                                                                                       |
+|------------------|-------------------------------------------------------------------------------------------------------------------|
+| `@timestamp`     | Time of the log event. (`yyyy-MM-dd'T'HH:mm:ss.SSSZZ`)  See [customizing timestamp](#customizing-timestamp).      |
+| `@version`       | Logstash format version (e.g. `1`)   See [customizing version](#customizing-version).                             |
+| `message`        | Message in the form `${remoteHost} - ${remoteUser} [${timestamp}] "${requestUrl}" ${statusCode} ${contentLength}` |
+| `method`         | HTTP method                                                                                                       |
+| `protocol`       | HTTP protocol                                                                                                     |
+| `status_code`    | HTTP status code                                                                                                  |
+| `requested_url`  | Request URL                                                                                                       |
+| `requested_uri`  | Request URI                                                                                                       |
+| `remote_host`    | Remote host                                                                                                       |
+| `remote_user`    | Remote user                                                                                                       |
+| `content_length` | Content length                                                                                                    |
+| `elapsed_time`   | Elapsed time in millis                                                                                            |
 
 ### Header Fields
 
@@ -1474,7 +1474,7 @@ Logstash-logback-encoder provides sensible defaults for Jackson, but gives you f
 
 For example, you can:
 * specify the [data format](#data-format)
-* customize the [`JsonFactory` and `JsonGenerator`](#customizing-json-factory-and-generator)
+* customize the [`TokenStreamFactoryBuilder`, `MapperBuilder`, and `JsonGenerator`](#customizing-tokenstreamfactory-objectmapper-and-jsongenerator)
 * register [jackson modules](#registering-jackson-modules)
 * configure [character escapes](#customizing-character-escapes) 
 
@@ -1484,61 +1484,73 @@ JSON is used by default, but other data formats supported by Jackson can be used
 * [text data formats](https://github.com/FasterXML/jackson-dataformats-text)
 * [binary data formats](https://github.com/FasterXML/jackson-dataformats-binary)
 
-> :warning: When using non-JSON data formats, you must include the appropriate jackson dataformat library on the runtime classpath,
-> typically via a  maven/gradle dependency  (e.g. for Smile, include `jackson-dataformat-smile`).
+> [!IMPORTANT]
+> When using non-JSON data formats, you must include the appropriate jackson dataformat library on the runtime classpath,
+> typically via a maven/gradle dependency  (e.g. for Smile, include `jackson-dataformat-smile`).
 
-[Decorators](#customizing-json-factory-and-generator) are provided for the following data formats:
-* `cbor` - [`CborJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/cbor/CborJsonFactoryDecorator.java)
-* `smile` - [`SmileJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/smile/SmileJsonFactoryDecorator.java)
-* `yaml` - [`YamlJsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlJsonFactoryDecorator.java)
+The following data formats are directly supported:
+* `cbor`
+* `json` (the default)
+* `smile`
+* `yaml`
 
-To use one these formats, specify the `<jsonFactoryDecorator>` like this:
+To use one these formats, specify the `<dataFormat>` like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
+  <dataFormat>smile</dataFormat>
 </encoder>
 ```
-Other data formats can be used by implementing a custom
-[`net.logstash.logback.decorate.JsonFactoryDecorator`](src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java).
+
+Other data formats can be used by implementing
+[`net.logstash.logback.dataformat.DataFormatFactory`](src/main/java/net/logstash/logback/decorate/DataFormatFactory.java),
+and configuring it like this:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+  <dataFormatFactory class="your.CustomDataFormatFactory"/>
+</encoder>
+```
 
 
-The following [decorators](#customizing-json-factory-and-generator)
-can be used to configure data-format-specific generator features:
-* [`SmileFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/smile/SmileFeatureJsonGeneratorDecorator.java)
-* [`CborFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/cbor/CborFeatureJsonGeneratorDecorator.java)
-* [`YamlFeatureJsonGeneratorDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlFeatureJsonGeneratorDecorator.java)
+The following [decorators](#customizing-tokenstreamfactory-objectmapper-and-jsongenerator)
+can be used to configure data-format-specific write features:
+* [`CborWriteFeatureDecorator`](src/main/java/net/logstash/logback/decorate/cbor/CborWriteFeatureDecorator.java)
+* [`JsonWriteFeatureDecorator`](src/main/java/net/logstash/logback/decorate/json/JsonWriteFeatureDecorator.java)
+* [`SmileWriteFeatureDecorator`](src/main/java/net/logstash/logback/decorate/smile/SmileWriteFeatureDecorator.java)
+* [`YamlWriteFeatureDecorator`](src/main/java/net/logstash/logback/decorate/yaml/YamlWriteFeatureDecorator.java)
 
 For example:
 
 ```xml
+
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <jsonFactoryDecorator class="net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"/>
-    <jsonGeneratorDecorator class="net.logstash.logback.decorate.smile.SmileFeatureJsonGeneratorDecorator">
+    <dataFormat>smile</dataFormat>
+    <decorator class="net.logstash.logback.decorate.smile.SmileWriteFeatureDecorator">
         <disable>WRITE_HEADER</disable>
-    </jsonGeneratorDecorator>
+    </decorator>
 </encoder>
 ``` 
 
-### Customizing JSON Factory and Generator
+### Customizing TokenStreamFactory, ObjectMapper, and JsonGenerator
 
-The `JsonFactory` and `JsonGenerator` used to write output can be customized by instances of:
-* [`JsonFactoryDecorator`](/src/main/java/net/logstash/logback/decorate/JsonFactoryDecorator.java)
-* [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java)
+The `ObjectMapper`, `TokenStreamFactory` and `JsonGenerator` used to write output can be customized by instances of
+* [`MapperBuilderDecorator`](/src/main/java/net/logstash/logback/decorate/MapperBuilderDecorator.java)
+* [`TokenStreamFactoryBuilderDecorator`](/src/main/java/net/logstash/logback/decorate/TokenStreamFactoryBuilderDecorator.java)
+* [`JsonGeneratorDecorator`](/src/main/java/net/logstash/logback/decorate/JsonGeneratorDecorator.java).
+
 
 For example, you could enable pretty printing by using the
-[PrettyPrintingJsonGeneratorDecorator](/src/main/java/net/logstash/logback/decorate/PrettyPrintingJsonGeneratorDecorator.java)
+[PrettyPrintingDecorator](/src/main/java/net/logstash/logback/decorate/PrettyPrintingDecorator.java)
 
 Or customize object mapping like this:
 
 ```java
-public class ISO8601DateDecorator implements JsonFactoryDecorator  {
+public class MixInDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>> implements MapperBuilderDecorator<M, B>  {
 
     @Override
-    public JsonFactory decorate(JsonFactory factory) {
-        ObjectMapper codec = (ObjectMapper) factory.getCodec();
-        codec.setDateFormat(new ISO8601DateFormat());
-        return factory;
+    public B decorate(B mapperBuilder) {
+        return mapperBuilder.addMixIn(MyTarget.class, MyMixin.class);
     }
 }
 ```
@@ -1546,23 +1558,39 @@ and then specify the decorators in the logback.xml file like this:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <jsonGeneratorDecorator class="net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"/>
-    <jsonFactoryDecorator class="your.package.ISO8601DateDecorator"/>
+  <decorator class="net.logstash.logback.decorate.PrettyPrintingDecorator"/>
+  <decorator class="your.package.MixInDecorator"/>
 </encoder>
 ```
 
-`JsonFactory` and `JsonGenerator` features can be enabled/disabled by using the
-`FeatureJsonFactoryDecorator` and `FeatureJsonGeneratorDecorator`, respectively.
+Jackson features can be enabled/disabled by using the following feature decorators:
+
+| Jackson Feature Enum         | Feature Decorator                                                  |
+|------------------------------|--------------------------------------------------------------------|
+| `TokenStreamFactory.Feature` | `net.logstash.logback.decorate.TokenStreamFactoryFeatureDecorator` |
+| `MapperFeature`              | `net.logstash.logback.decorate.MapperFeatureDecorator`             |
+| `SerializationFeature`       | `net.logstash.logback.decorate.SerializationFeatureDecorator`      |
+| `StreamWriteFeature`         | `net.logstash.logback.decorate.StreamWriteFeatureDecorator`        |
+| `JsonNodeFeature`            | `net.logstash.logback.decorate.JsonNodeFeatureDecorator`           |
+| `EnumFeature`                | `net.logstash.logback.decorate.EnumFeatureDecorator`               |
+| `DateTimeFeature`            | `net.logstash.logback.decorate.DateTimeFeatureDecorator`           |
+| `JsonWriteFeature`           | `net.logstash.logback.decorate.json.JsonWriteFeatureDecorator`     |
+| `SmileWriteFeature`          | `net.logstash.logback.decorate.smile.SmileWriteFeatureDecorator`   |
+| `YAMLWriteFeature`           | `net.logstash.logback.decorate.yaml.YamlWriteFeatureDecorator`     |
+| `CBORWriteFeature`           | `net.logstash.logback.decorate.cbor.CborWriteFeatureDecorator`     |
+
+
 For example:
 
 ```xml
+
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <jsonFactoryDecorator class="net.logstash.logback.decorate.FeatureJsonFactoryDecorator">
-        <disable>USE_THREAD_LOCAL_FOR_BUFFER_RECYCLING</disable>
-    </jsonFactoryDecorator>
-    <jsonGeneratorDecorator class="net.logstash.logback.decorate.FeatureJsonGeneratorDecorator">
+    <decorator class="net.logstash.logback.decorate.TokenStreamFactoryFeatureDecorator">
+        <disable>INTERN_PROPERTY_NAMES</disable>
+    </decorator>
+    <decorator class="net.logstash.logback.decorate.json.JsonWriteFeatureDecorator">
         <enable>WRITE_NUMBERS_AS_STRINGS</enable>
-    </jsonGeneratorDecorator>
+    </decorator>
 </encoder>
 ``` 
 
@@ -1572,33 +1600,33 @@ and sub-packages for other decorators.
 ### Registering Jackson Modules
 
 By default, Jackson modules are dynamically registered via
-[`ObjectMapper.findAndRegisterModules()`](https://fasterxml.github.io/jackson-databind/javadoc/2.9/com/fasterxml/jackson/databind/ObjectMapper.html#findAndRegisterModules--).
+`MapperBuilder.findAndAddModules()`.
 
-Therefore, you just need to add jackson modules (e.g. jackson-datatype-jdk8) to the classpath,
+Therefore, you just need to add jackson modules (e.g. jackson-datatypes-collections) to the classpath,
 and they will be dynamically registered.
 
 To disable automatic discovery, set `<findAndRegisterJacksonModules>false</findAndRegisterJacksonModules>` on the encoder/layout.
 
 If you have a module that Jackson is not able to dynamically discover,
-you can register it manually via a [`JsonFactoryDecorator`](#customizing-json-factory-and-generator).
+you can register it manually via a [`MapperBuilderDecorator`](#customizing-tokenstreamfactory-objectmapper-and-jsongenerator).
 
 ### Customizing Character Escapes
 
 By default, when a string is written as a JSON string value, any character not allowed in a JSON string will be escaped.
 For example, the newline character (ASCII 10) will be escaped as `\n`.
 
-To customize these escape sequences, use the `net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator`.
+To customize these escape sequences, use the `net.logstash.logback.decorate.json.CharacterEscapesDecorator`.
 
 For example, if you want to use something other than `\n` as the escape sequence for the newline character, you can do the following:
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <jsonFactoryDecorator class="net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator">
+    <decorator class="net.logstash.logback.decorate.json.CharacterEscapesDecorator">
         <escape>
             <targetCharacterCode>10</targetCharacterCode>
             <escapeSequence>\u2028</escapeSequence>
         </escape>
-    </jsonFactoryDecorator>
+    </decorator>
 </encoder>
 ```
 
@@ -1619,7 +1647,7 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+    <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
     
         <!-- The default mask string can optionally be specified by <defaultMask>.
              When the default mask string is not specified, **** is used.
@@ -1657,7 +1685,7 @@ Paths of fields to mask can be specified in several ways, as shown in the follow
         -->
         <fieldMasker class="your.custom.FieldMaskerA"/>
         <fieldMasker class="your.custom.FieldMaskerB"/>
-    </jsonGeneratorDecorator>
+    </decorator>
 </encoder>
 ```
 
@@ -1678,7 +1706,7 @@ Specific values to be masked can be specified in several ways, as seen in the fo
 
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-    <jsonGeneratorDecorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
+    <decorator class="net.logstash.logback.mask.MaskingJsonGeneratorDecorator">
     
         <!-- The default mask string can optionally be specified by <defaultMask>.
              When the default mask string is not specified, **** is used.
@@ -1714,7 +1742,7 @@ Specific values to be masked can be specified in several ways, as seen in the fo
         -->
         <valueMasker class="your.custom.ValueMaskerA"/>
         <valueMasker class="your.custom.ValueMaskerB"/>
-    </jsonGeneratorDecorator>
+    </decorator>
 </encoder>
 ```
 
@@ -1904,13 +1932,13 @@ Use `-1` to disable shortening entirely.
 
 The next table provides examples of the abbreviation algorithm in action.
 
-|LENGTH|LOGGER NAME                 |SHORTENED                  |
-|------|----------------------------|---------------------------|
-|0     | `org.company.stack.Sample` | `Sample`                  |
-|5     | `org.company.stack.Sample` | `o.c.s.Sample`            |
-|16    | `org.company.stack.Sample` | `o.c.stack.Sample`        |
-|22    | `org.company.stack.Sample` | `o.company.stack.Sample`  |
-|25    | `org.company.stack.Sample` | `org.company.stack.Sample`|
+| LENGTH | LOGGER NAME                | SHORTENED                  |
+|--------|----------------------------|----------------------------|
+| 0      | `org.company.stack.Sample` | `Sample`                   |
+| 5      | `org.company.stack.Sample` | `o.c.s.Sample`             |
+| 16     | `org.company.stack.Sample` | `o.c.stack.Sample`         |
+| 22     | `org.company.stack.Sample` | `o.company.stack.Sample`   |
+| 25     | `org.company.stack.Sample` | `org.company.stack.Sample` |
 
 
 
@@ -1931,7 +1959,7 @@ This converter can even be used within a `PatternLayout` to format stacktraces i
 
 ### Omit Common Frames
 
-Nested stacktraces often contain redudant frames that can safely be omitted without loosing any valuable information.
+Nested stacktraces often contain redundant frames that can safely be omitted without loosing any valuable information.
 
 The following example shows a standard stack trace of an exception with a single root cause:
 
@@ -2300,9 +2328,7 @@ Multiple evaluators can be registered and are evaluated in the order in which th
 
 ### Stack Hashes
 
-**To Be Documented**
-
-Computing and inlining hexadecimal hashes for each exception stack using the `inlineHash` or `stackHash` provider ([more info](stack-hash.md)).
+Compute and inline hexadecimal hashes for each exception stack with the `inlineHash` or `stackHash` provider ([more info](stack-hash.md)).
 
 
 

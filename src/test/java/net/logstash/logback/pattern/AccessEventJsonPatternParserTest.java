@@ -19,11 +19,11 @@ import static org.mockito.BDDMockito.given;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
-import com.fasterxml.jackson.core.JsonFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
@@ -31,7 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserTest<IAccessEvent> {
 
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private IAccessEvent event;
 
     @Override
@@ -42,8 +42,8 @@ public class AccessEventJsonPatternParserTest extends AbstractJsonPatternParserT
     }
 
     @Override
-    protected AbstractJsonPatternParser<IAccessEvent> createParser(Context context, JsonFactory jsonFactory) {
-        return new AccessEventJsonPatternParser(context, jsonFactory);
+    protected AbstractJsonPatternParser<IAccessEvent> createParser(Context context, ObjectMapper objectMapper) {
+        return new AccessEventJsonPatternParser(context, objectMapper);
     }
 
     @Test

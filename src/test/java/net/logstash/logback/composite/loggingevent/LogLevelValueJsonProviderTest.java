@@ -24,16 +24,16 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class LogLevelValueJsonProviderTest {
     
-    private LogLevelValueJsonProvider provider = new LogLevelValueJsonProvider();
+    private final LogLevelValueJsonProvider provider = new LogLevelValueJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -48,7 +48,7 @@ public class LogLevelValueJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField(LogLevelValueJsonProvider.FIELD_LEVEL_VALUE, Level.WARN.toInt());
+        verify(generator).writeNumberProperty(LogLevelValueJsonProvider.FIELD_LEVEL_VALUE, Level.WARN.toInt());
     }
 
     @Test
@@ -59,11 +59,11 @@ public class LogLevelValueJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField("newFieldName", Level.WARN.toInt());
+        verify(generator).writeNumberProperty("newFieldName", Level.WARN.toInt());
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setLevelValue("newFieldName");
         
@@ -73,7 +73,7 @@ public class LogLevelValueJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField("newFieldName", Level.WARN.toInt());
+        verify(generator).writeNumberProperty("newFieldName", Level.WARN.toInt());
     }
 
 }

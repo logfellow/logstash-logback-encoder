@@ -15,18 +15,17 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Objects;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
-public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> implements JsonFactoryAware {
+public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAware> extends AbstractJsonProvider<Event> implements ObjectMapperAware {
     
     /**
      * The un-parsed custom fields string to use to initialize customFields
@@ -40,24 +39,23 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     private ObjectNode customFieldsNode;
     
     /**
-     * The factory used to convert the JSON string into a valid {@link ObjectNode} when custom
+     * The ObjectMapper used to convert the JSON string into a valid {@link ObjectNode} when custom
      * fields are set as text instead of a pre-parsed Jackson ObjectNode.
      */
-    private JsonFactory jsonFactory;
+    private ObjectMapper objectMapper;
 
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         writeFieldsOfNode(generator, customFieldsNode);
     }
 
     /**
      * Writes the fields of the given node into the generator.
      */
-    private void writeFieldsOfNode(JsonGenerator generator, JsonNode node) throws IOException {
+    private void writeFieldsOfNode(JsonGenerator generator, JsonNode node) {
         if (node != null) {
-            for (Iterator<Entry<String, JsonNode>> fields = node.fields(); fields.hasNext();) {
-                Entry<String, JsonNode> field = fields.next();
-                generator.writeFieldName(field.getKey());
+            for (Entry<String, JsonNode> field : node.properties()) {
+                generator.writeName(field.getKey());
                 generator.writeTree(field.getValue());
             }
         }
@@ -79,13 +77,13 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
         if (customFieldsNode != null || customFields == null) {
             return;
         }
-        if (jsonFactory == null) {
-            throw new IllegalStateException("JsonFactory has not been set");
+        if (objectMapper == null) {
+            throw new IllegalStateException("objectMapper has not been set");
         }
         
         try {
-            this.customFieldsNode = JsonReadingUtils.readFullyAsObjectNode(this.jsonFactory, this.customFields);
-        } catch (IOException e) {
+            this.customFieldsNode = JsonReadingUtils.readFullyAsObjectNode(this.objectMapper, this.customFields);
+        } catch (StreamReadException e) {
             addError("[customFields] is not a valid JSON object", e);
         }
     }
@@ -146,7 +144,7 @@ public class GlobalCustomFieldsJsonProvider<Event extends DeferredProcessingAwar
     
     
     @Override
-    public void setJsonFactory(JsonFactory jsonFactory) {
-        this.jsonFactory = Objects.requireNonNull(jsonFactory);
+    public void setObjectMapper(ObjectMapper objectMapper) {
+        this.objectMapper = Objects.requireNonNull(objectMapper);
     }
 }

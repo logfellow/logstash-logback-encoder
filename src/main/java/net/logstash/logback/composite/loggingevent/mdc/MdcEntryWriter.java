@@ -15,9 +15,7 @@
  */
 package net.logstash.logback.composite.loggingevent.mdc;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes an entry from the {@link org.slf4j.MDC} to the {@link JsonGenerator}.
@@ -35,6 +33,6 @@ public interface MdcEntryWriter {
      * @param mdcValue  the value of the MDC map entry.
      * @return true if this {@link MdcEntryWriter} handled the output of the entry, otherwise return false.
      */
-    boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException;
+    boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue);
 
 }

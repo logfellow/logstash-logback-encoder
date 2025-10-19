@@ -15,12 +15,10 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
-
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 public abstract class AbstractThreadNameJsonProvider<Event extends DeferredProcessingAware> extends AbstractFieldJsonProvider<Event> implements FieldNamesAware<LogstashCommonFieldNames> {
 
@@ -31,7 +29,7 @@ public abstract class AbstractThreadNameJsonProvider<Event extends DeferredProce
     }
     
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         JsonWritingUtils.writeStringField(generator, getFieldName(), getThreadName(event));
     }
     

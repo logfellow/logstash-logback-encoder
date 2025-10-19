@@ -31,16 +31,16 @@ import net.logstash.logback.test.AbstractLogbackTest;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.SequenceNumberGenerator;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class SequenceJsonProviderTest extends AbstractLogbackTest {
 
-    private SequenceJsonProvider provider = new SequenceJsonProvider();
+    private final SequenceJsonProvider provider = new SequenceJsonProvider();
 
     @Mock
     private JsonGenerator generator;
@@ -51,7 +51,7 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
 
     @Test
     public void testNoContext() {
-        assertThatThrownBy(() -> provider.start()).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(provider::start).isInstanceOf(IllegalStateException.class);
     }
 
     
@@ -69,24 +69,24 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
+        verify(generator).writeNumberProperty(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
     }
     
     
     @Test
-    public void testCustomFieldName() throws IOException {
+    public void testCustomFieldName() {
         provider.setContext(context);
         provider.setFieldName("newFieldName");
         provider.start();
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeNumberField("newFieldName", 1L);
+        verify(generator).writeNumberProperty("newFieldName", 1L);
     }
     
     
     @Test
-    public void testNoSequenceGeneratorInContext() throws IOException {
+    public void testNoSequenceGeneratorInContext() {
         context.setSequenceNumberGenerator(null);
         provider.setContext(context);
         provider.start();
@@ -98,17 +98,19 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
         
         // assert the local generator produces the expected output
         provider.writeTo(generator, event);
-        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 1L);
-        
+        verify(generator).writeName(SequenceJsonProvider.FIELD_SEQUENCE);
+        verify(generator).writeNumber(1L);
+
         provider.writeTo(generator, event);
-        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 2L);
-        
+        verify(generator, times(2)).writeName(SequenceJsonProvider.FIELD_SEQUENCE);
+        verify(generator).writeNumber(2L);
+
         verify(event, never()).getSequenceNumber();
     }
     
     
     @Test
-    public void testSequenceGeneratorInContext() throws IOException {
+    public void testSequenceGeneratorInContext() {
         // Set a SequenceNumberGenerator to the context
         SequenceNumberGenerator seqGenerator = mock(SequenceNumberGenerator.class);
         context.setSequenceNumberGenerator(seqGenerator);
@@ -124,7 +126,7 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
         
         // assert expected output
         provider.writeTo(generator, event);
-        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 123L);
+        verify(generator).writeNumberProperty(SequenceJsonProvider.FIELD_SEQUENCE, 123L);
         
         verify(event, times(1)).getSequenceNumber();
     }
@@ -149,7 +151,7 @@ public class SequenceJsonProviderTest extends AbstractLogbackTest {
         
         // assert expected output
         provider.writeTo(generator, event);
-        verify(generator).writeNumberField(SequenceJsonProvider.FIELD_SEQUENCE, 456L);
+        verify(generator).writeNumberProperty(SequenceJsonProvider.FIELD_SEQUENCE, 456L);
         
         verify(sequenceProvider).apply(event);
         verify(event, never()).getSequenceNumber();

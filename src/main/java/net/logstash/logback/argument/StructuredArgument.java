@@ -15,12 +15,10 @@
  */
 package net.logstash.logback.argument;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Logger;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A wrapper for an argument passed to a log method (e.g. {@link Logger#info(String, Object...)})
@@ -32,9 +30,8 @@ public interface StructuredArgument {
      * Writes the data associated with this argument to the given {@link JsonGenerator}.
      * 
      * @param generator the {@link JsonGenerator} to produce JSON content
-     * @throws IOException if an I/O error occurs
      */
-    void writeTo(JsonGenerator generator) throws IOException;
+    void writeTo(JsonGenerator generator);
     
     /**
      * Writes the data associated with this argument to a {@link String} to be

@@ -18,19 +18,17 @@ package net.logstash.logback.layout;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.AbstractJsonProvider;
 
 import ch.qos.logback.core.Layout;
 import ch.qos.logback.core.LayoutBase;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class CompositeJsonLayoutTest {
@@ -41,10 +39,10 @@ public class CompositeJsonLayoutTest {
     static class TesterCompositeJsonLayout extends CompositeJsonLayout<DeferredProcessingAware> {
         @Override
         protected AbstractCompositeJsonFormatter<DeferredProcessingAware> createFormatter() {
-            AbstractCompositeJsonFormatter<DeferredProcessingAware> formatter = new AbstractCompositeJsonFormatter<DeferredProcessingAware>(this) { };
-            formatter.getProviders().addProvider(new AbstractJsonProvider<DeferredProcessingAware>() {
+            AbstractCompositeJsonFormatter<DeferredProcessingAware> formatter = new AbstractCompositeJsonFormatter<>(this) { };
+            formatter.getProviders().addProvider(new AbstractJsonProvider<>() {
                 @Override
-                public void writeTo(JsonGenerator generator, DeferredProcessingAware event) throws IOException {
+                public void writeTo(JsonGenerator generator, DeferredProcessingAware event) {
                     generator.writeRaw("event");
                 }
                 @Override
@@ -56,20 +54,20 @@ public class CompositeJsonLayoutTest {
         }
     }
 
-    private Layout<DeferredProcessingAware> prefixLayout = new LayoutBase<DeferredProcessingAware>() {
+    private final Layout<DeferredProcessingAware> prefixLayout = new LayoutBase<>() {
         @Override
         public String doLayout(DeferredProcessingAware event) {
             return "prefix:";
         }
     };
 
-    private Layout<DeferredProcessingAware> suffixLayout = new LayoutBase<DeferredProcessingAware>() {
+    private final Layout<DeferredProcessingAware> suffixLayout = new LayoutBase<>() {
         public String doLayout(DeferredProcessingAware event) {
             return ":suffix";
-        };
+        }
     };
 
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private DeferredProcessingAware event;
     
 

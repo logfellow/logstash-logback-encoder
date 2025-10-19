@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import com.fasterxml.jackson.core.JsonStreamContext;
+import tools.jackson.core.TokenStreamContext;
 
 /**
  * Masks values of specific JSON field names within a JSON stream.
@@ -39,8 +39,8 @@ public class FieldNameBasedFieldMasker implements FieldMasker {
     }
 
     @Override
-    public Object mask(JsonStreamContext context) {
-        return context.hasCurrentName() && fieldNamesToMask.contains(context.getCurrentName())
+    public Object mask(TokenStreamContext context) {
+        return context.hasCurrentName() && fieldNamesToMask.contains(context.currentName())
                 ? mask
                 : null;
     }

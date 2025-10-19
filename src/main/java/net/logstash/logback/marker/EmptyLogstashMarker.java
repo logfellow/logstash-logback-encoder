@@ -15,12 +15,10 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
-
 import net.logstash.logback.argument.StructuredArgument;
 
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * An empty marker that does nothing itself, but can be used as a base marker when you want to conditionally chain other markers with {@link #and(Marker)}.
@@ -36,7 +34,6 @@ import org.slf4j.Marker;
  *     }
  * </pre>
  */
-@SuppressWarnings("serial")
 public class EmptyLogstashMarker extends LogstashMarker implements StructuredArgument {
 
     public static final String EMPTY_MARKER_NAME = "EMPTY";
@@ -46,7 +43,7 @@ public class EmptyLogstashMarker extends LogstashMarker implements StructuredArg
     }
 
     @Override
-    public void writeTo(JsonGenerator generator) throws IOException {
+    public void writeTo(JsonGenerator generator) {
         // no-op
     }
 

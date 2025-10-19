@@ -15,13 +15,11 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.exc.StreamReadException;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 /**
  * Utilities for reading/parsing JSON string.
@@ -41,31 +39,30 @@ public class JsonReadingUtils {
     /**
      * Fully read the supplied JSON string into the equivalent {@link JsonNode}.
      * 
-     * Throws a {@link JsonParseException} if the string is not fully read after a first valid JsonNode is found.
+     * Throws a {@link StreamReadException} if the string is not fully read after a first valid JsonNode is found.
      * This may happen for input like <em>10 foobar</em> that would otherwise return a NumericNode with value
      * {@code 10} leaving <em>foobar</em> unread.
      * 
-     * @param jsonFactory the {@link JsonFactory} from which to obtain a {@link JsonParser} to read the JSON string.
+     * @param objectMapper the {@link ObjectMapper} from which to obtain a {@link JsonParser} to read the JSON string.
      * @param json the JSON string to read
      * @return the {@link JsonNode} corresponding to the input string or {@code null} if the string is null or empty.
-     * @throws IOException if there is either an underlying I/O problem or decoding issue
      */
-    public static JsonNode readFully(JsonFactory jsonFactory, String json) throws IOException {
+    public static JsonNode readFully(ObjectMapper objectMapper, String json) {
         if (json == null) {
             return null;
         }
         
         final String trimmedJson = json.trim();
-        try (JsonParser parser = jsonFactory.createParser(trimmedJson)) {
+        try (JsonParser parser = objectMapper.createParser(trimmedJson)) {
             final JsonNode tree = parser.readValueAsTree();
             
-            if (parser.getCurrentLocation().getCharOffset() < trimmedJson.length()) {
+            if (parser.currentLocation().getCharOffset() < trimmedJson.length()) {
                 /*
                  * If the full trimmed string was not read, then the full trimmed string contains a json value plus other text.
                  * For example, trimmedValue = '10 foobar', or 'true foobar', or '{"foo","bar"} baz'.
                  * In these cases readTree will only read the first part, and will not read the remaining text.
                  */
-                throw new JsonParseException(parser, "unexpected character");
+                throw new StreamReadException(parser, "unexpected character");
             }
             
             return tree;
@@ -74,22 +71,22 @@ public class JsonReadingUtils {
 
     
     /**
-     * Fully read a JSON string into an {@link ObjectNode}, throwing a {@link JsonParseException} if the supplied string
+     * Fully read a JSON string into an {@link ObjectNode}, throwing a {@link StreamReadException} if the supplied string
      * is not a valid JSON object representation.
      * 
-     * @param jsonFactory the {@link JsonFactory} from which to obtain a {@link JsonParser} to read the JSON string.
+     * @param objectMapper the {@link ObjectMapper} from which to obtain a {@link JsonParser} to read the JSON string.
      * @param json the JSON string to read
      * @return the {@link JsonNode} corresponding to the input string or {@code null} if the string is null or empty.
-     * @throws IOException if there is either an underlying I/O problem or decoding issue
-     * 
-     * @see JsonReadingUtils#readFully(JsonFactory, String)
+     *
+     * @see JsonReadingUtils#readFully(ObjectMapper, String)
      */
-    public static ObjectNode readFullyAsObjectNode(JsonFactory jsonFactory, String json) throws IOException {
-        final JsonNode node = readFully(jsonFactory, json);
+    public static ObjectNode readFullyAsObjectNode(ObjectMapper objectMapper, String json) {
+        final JsonNode node = readFully(objectMapper, json);
         
         if (node != null && !(node instanceof ObjectNode)) {
-            throw new JsonParseException(null, "expected a JSON object representation");
+            throw new StreamReadException(null, "expected a JSON object representation");
         }
         
-        return (ObjectNode) node;    }
+        return (ObjectNode) node;
+    }
 }

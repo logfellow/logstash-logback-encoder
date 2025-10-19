@@ -15,11 +15,10 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Outputs an incrementing sequence number.
@@ -39,7 +38,7 @@ public class SequenceJsonProvider<Event extends DeferredProcessingAware> extends
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, Event iLoggingEvent) throws IOException {
+    public void writeTo(JsonGenerator generator, Event iLoggingEvent) {
         JsonWritingUtils.writeNumberField(generator, getFieldName(), sequenceNumber.incrementAndGet());
     }
 

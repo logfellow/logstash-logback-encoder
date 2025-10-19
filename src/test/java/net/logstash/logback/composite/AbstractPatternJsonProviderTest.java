@@ -30,11 +30,11 @@ import net.logstash.logback.test.AbstractLogbackTest;
 
 import ch.qos.logback.core.spi.DeferredProcessingAware;
 import ch.qos.logback.core.status.Status;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
 
 
 public class AbstractPatternJsonProviderTest extends AbstractLogbackTest {
@@ -43,7 +43,7 @@ public class AbstractPatternJsonProviderTest extends AbstractLogbackTest {
     private DeferredProcessingAware event;
 
     @Mock
-    private JsonFactory jsonFactory;
+    private ObjectMapper objectMapper;
     
     @Mock
     private AbstractJsonPatternParser<DeferredProcessingAware> parser;
@@ -55,14 +55,14 @@ public class AbstractPatternJsonProviderTest extends AbstractLogbackTest {
     public void setup() throws Exception {
         super.setup();
         
-        provider = new AbstractPatternJsonProvider<DeferredProcessingAware>() {
+        provider = new AbstractPatternJsonProvider<>() {
             @Override
-            protected AbstractJsonPatternParser<DeferredProcessingAware> createParser(JsonFactory jsonFactory) {
+            protected AbstractJsonPatternParser<DeferredProcessingAware> createParser() {
                 return parser;
             }
         };
         provider.setContext(context);
-        provider.setJsonFactory(jsonFactory);
+        provider.setObjectMapper(objectMapper);
     }
 
     
@@ -129,6 +129,6 @@ public class AbstractPatternJsonProviderTest extends AbstractLogbackTest {
                 && status.getOrigin() == provider);
 
         // Provider output "nothing" after a configuration error
-        verifyNoInteractions(jsonFactory);
+        verifyNoInteractions(objectMapper);
     }
 }

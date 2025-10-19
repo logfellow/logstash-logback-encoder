@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,13 +24,11 @@ import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.util.NameTransformer;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.ValueSerializer;
+import tools.jackson.databind.util.NameTransformer;
 
 /**
  * A {@link Marker} OR {@link StructuredArgument} that
@@ -76,7 +73,6 @@ import org.slf4j.Marker;
  *
  * Note that if the object cannot be unwrapped, then nothing will be written.
  */
-@SuppressWarnings("serial")
 public class ObjectFieldsAppendingMarker extends LogstashMarker implements StructuredArgument {
 
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "OBJECT_FIELDS";
@@ -89,7 +85,7 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
      *
      * Since apps will typically serialize the same types of objects repeatedly, they shouldn't grow too much.
      */
-    private static final Map<ObjectMapper, SerializerHelper> serializerHelper = new ConcurrentHashMap<>();
+    private static final Map<ValueSerializer<Object>, ValueSerializer<Object>> unwrappingSerializerCache = new ConcurrentHashMap<>();
 
     public ObjectFieldsAppendingMarker(Object object) {
         super(MARKER_NAME);
@@ -97,10 +93,21 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
     }
 
     @Override
-    public void writeTo(JsonGenerator generator) throws IOException {
-        if (this.object != null) {
-            SerializerHelper helper = getSerializerHelper(generator);
-            helper.serialize(generator, this.object);
+    public void writeTo(JsonGenerator generator) {
+        if (this.object != null && generator.objectWriteContext() instanceof SerializationContext serializationContext) {
+
+            ValueSerializer<Object> valueSerializer = serializationContext.findValueSerializer(this.object.getClass());
+
+            ValueSerializer<Object> unwrappingSerializer = unwrappingSerializerCache.computeIfAbsent(valueSerializer,
+                    vs -> vs.unwrappingSerializer(NameTransformer.NOP));
+
+            /*
+             * Make sure the serializer accepts to serialize in an "unwrapped" fashion.
+             * This may not be the case for serializer for Number types for instance.
+             */
+            if (unwrappingSerializer.isUnwrappingSerializer()) {
+                unwrappingSerializer.serialize(this.object, generator, serializationContext);
+            }
         }
     }
     
@@ -119,11 +126,10 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
         if (!super.equals(obj)) {
             return false;
         }
-        if (!(obj instanceof ObjectFieldsAppendingMarker)) {
+        if (!(obj instanceof ObjectFieldsAppendingMarker other)) {
             return false;
         }
 
-        ObjectFieldsAppendingMarker other = (ObjectFieldsAppendingMarker) obj;
         return Objects.equals(this.object, other.object);
     }
 
@@ -138,59 +144,4 @@ public class ObjectFieldsAppendingMarker extends LogstashMarker implements Struc
     }
     
     
-    /**
-     * Get a {@link SerializerHelper} suitable for use with the given {@link JsonGenerator}.
-     * 
-     * @param gen the {@link JsonGenerator} for which an helper should be returned
-     * @return a {@link SerializerHelper}
-     */
-    private static SerializerHelper getSerializerHelper(JsonGenerator gen) {
-        ObjectMapper mapper = (ObjectMapper) gen.getCodec();
-        return serializerHelper.computeIfAbsent(mapper, SerializerHelper::new);
-    }
-    
-    private static class SerializerHelper {
-        private final SerializerProvider serializers;
-        private final ConcurrentHashMap<Class<?>, JsonSerializer<Object>> cache = new ConcurrentHashMap<>();
-        
-        SerializerHelper(ObjectMapper mapper) {
-            this.serializers = mapper.getSerializerProviderInstance();
-        }
-        
-        /**
-         * Serialize the given value using the supplied generator
-         * 
-         * @param gen the {@link JsonGenerator} to use to serialize the value
-         * @param value the value to serialize
-         * @throws IOException thrown when the underlying {@link JsonGenerator} could not be created
-         *                     or when it has problems to serialize the given value
-         */
-        public void serialize(JsonGenerator gen, Object value) throws IOException {
-            if (value != null) {
-                JsonSerializer<Object> unwrappingSerializer = getUnwrappingSerializer(value.getClass());
-                
-                /*
-                 * Make sure the serializer accepts to serialize in an "unwrapped" fashion.
-                 * This may not be the case for serializer for Number types for instance.
-                 */
-                if (unwrappingSerializer.isUnwrappingSerializer()) {
-                    unwrappingSerializer.serialize(value, gen, serializers);
-                }
-            }
-        }
-        
-        private JsonSerializer<Object> getUnwrappingSerializer(Class<?> type) throws JsonMappingException {
-            JsonSerializer<Object> serializer = cache.get(type);
-            if (serializer == null) {
-                serializer = createUnwrappingSerializer(type);
-                cache.put(type, serializer);
-            }
-            return serializer;
-        }
-        
-        private JsonSerializer<Object> createUnwrappingSerializer(Class<?> type) throws JsonMappingException {
-            JsonSerializer<Object> serializer = serializers.findValueSerializer(type);
-            return serializer.unwrappingSerializer(NameTransformer.NOP);
-        }
-    }
 }

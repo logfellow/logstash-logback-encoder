@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -25,8 +24,8 @@ import net.logstash.logback.marker.LogstashMarker;
 import net.logstash.logback.marker.Markers;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A {@link JsonProvider} that processes {@link LogstashMarker}s
@@ -35,11 +34,11 @@ import org.slf4j.Marker;
 public class LogstashMarkersJsonProvider extends AbstractJsonProvider<ILoggingEvent> {
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         writeLogstashMarkerIfNecessary(generator, event.getMarkerList());
     }
     
-    private void writeLogstashMarkerIfNecessary(JsonGenerator generator, List<Marker> markers) throws IOException {
+    private void writeLogstashMarkerIfNecessary(JsonGenerator generator, List<Marker> markers) {
         if (markers != null) {
             for (Marker marker: markers) {
                 writeLogstashMarkerIfNecessary(generator, marker);
@@ -47,7 +46,7 @@ public class LogstashMarkersJsonProvider extends AbstractJsonProvider<ILoggingEv
         }
     }
     
-    private void writeLogstashMarkerIfNecessary(JsonGenerator generator, Marker marker) throws IOException {
+    private void writeLogstashMarkerIfNecessary(JsonGenerator generator, Marker marker) {
         if (marker != null) {
             if (isLogstashMarker(marker)) {
                 ((LogstashMarker) marker).writeTo(generator);

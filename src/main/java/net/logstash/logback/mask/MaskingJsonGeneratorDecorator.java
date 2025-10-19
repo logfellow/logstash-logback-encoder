@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 import net.logstash.logback.decorate.JsonGeneratorDecorator;
 
 import ch.qos.logback.core.spi.LifeCycle;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A {@link JsonGeneratorDecorator} that wraps a {@link JsonGenerator} with a {@link MaskingJsonGenerator},
@@ -271,22 +271,22 @@ public class MaskingJsonGeneratorDecorator implements JsonGeneratorDecorator, Li
                     })
                 );
 
-        return Collections.unmodifiableList(Stream.concat(
+        return Stream.concat(
                 fieldNamesByMask.entrySet().stream()
                         .map(entry -> new FieldNameBasedFieldMasker(entry.getValue(), entry.getKey())),
                 Stream.concat(
                         pathFieldMaskers.stream(),
                         fieldMaskers.stream()))
-                .collect(Collectors.toList()));
+                .collect(Collectors.toUnmodifiableList());
     }
 
     private List<ValueMasker> getEffectiveValueMaskers() {
-        return Collections.unmodifiableList(Stream.concat(
+        return Stream.concat(
                         Stream.concat(Stream.of(valuesWithDefaultMask), valueMaskSuppliers.stream().map(Supplier::get))
                                 .flatMap(valueMask -> valueMask.values.stream()
                                         .map(value -> new RegexValueMasker(value, valueMask.mask))),
                         valueMaskers.stream())
-                .collect(Collectors.toList()));
+                .collect(Collectors.toUnmodifiableList());
 
     }
 

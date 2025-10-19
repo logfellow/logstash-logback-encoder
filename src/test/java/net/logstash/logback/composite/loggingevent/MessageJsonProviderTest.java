@@ -25,16 +25,16 @@ import java.io.IOException;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class MessageJsonProviderTest {
     
-    private MessageJsonProvider provider = new MessageJsonProvider();
+    private final MessageJsonProvider provider = new MessageJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -49,7 +49,7 @@ public class MessageJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(MessageJsonProvider.FIELD_MESSAGE, "message");
+        verify(generator).writeStringProperty(MessageJsonProvider.FIELD_MESSAGE, "message");
     }
 
     @Test
@@ -60,11 +60,11 @@ public class MessageJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "message");
+        verify(generator).writeStringProperty("newFieldName", "message");
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setMessage("newFieldName");
         
@@ -74,11 +74,11 @@ public class MessageJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "message");
+        verify(generator).writeStringProperty("newFieldName", "message");
     }
 
     @Test
-    public void testMessageSplitDisabledByDefault() throws Exception {
+    public void testMessageSplitDisabledByDefault() {
         assertThat(provider.getMessageSplitRegex()).isNull();
 
         mockEventMessage("###");
@@ -88,7 +88,7 @@ public class MessageJsonProviderTest {
     }
 
     @Test
-    public void testMessageSplitDisabledForNullRegex() throws Exception {
+    public void testMessageSplitDisabledForNullRegex() {
         provider.setMessageSplitRegex(null);
         assertThat(provider.getMessageSplitRegex()).isNull();
 
@@ -99,7 +99,7 @@ public class MessageJsonProviderTest {
     }
 
     @Test
-    public void testMessageSplitDisabledForEmptyRegex() throws Exception {
+    public void testMessageSplitDisabledForEmptyRegex() {
         provider.setMessageSplitRegex("");
         assertThat(provider.getMessageSplitRegex()).isNull();
 
@@ -110,7 +110,7 @@ public class MessageJsonProviderTest {
     }
 
     @Test
-    public void testMessageSplitWithSystemSeparator() throws IOException {
+    public void testMessageSplitWithSystemSeparator() {
         provider.setMessageSplitRegex("SYSTEM");
         assertThat(provider.getMessageSplitRegex()).isEqualTo(System.lineSeparator());
 
@@ -121,7 +121,7 @@ public class MessageJsonProviderTest {
     }
 
     @Test
-    public void testMessageSplitWithUnixSeparator() throws IOException {
+    public void testMessageSplitWithUnixSeparator() {
         provider.setMessageSplitRegex("UNIX");
         assertThat(provider.getMessageSplitRegex()).isEqualTo("\n");
 
@@ -132,7 +132,7 @@ public class MessageJsonProviderTest {
     }
 
     @Test
-    public void testMessageSplitWithWindowsSeparator() throws IOException {
+    public void testMessageSplitWithWindowsSeparator() {
         provider.setMessageSplitRegex("WINDOWS");
         assertThat(provider.getMessageSplitRegex()).isEqualTo("\r\n");
 
@@ -143,7 +143,7 @@ public class MessageJsonProviderTest {
     }
 
     @Test
-    public void testMessageSplitWithCustomRegex() throws IOException {
+    public void testMessageSplitWithCustomRegex() {
         provider.setMessageSplitRegex("#+");
         assertThat(provider.getMessageSplitRegex()).isEqualTo("#+");
 
@@ -155,9 +155,8 @@ public class MessageJsonProviderTest {
 
     @Test
     public void testMessageSplitWithInvalidRegex() {
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> {
-            provider.setMessageSplitRegex("++");
-        });
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() ->
+                provider.setMessageSplitRegex("++"));
     }
 
     private void mockEventMessage(String lineSeparator) {
@@ -165,13 +164,13 @@ public class MessageJsonProviderTest {
         when(event.getFormattedMessage()).thenReturn(message);
     }
 
-    private void verifySingleLineMessageGenerated(String lineSeparator) throws IOException {
+    private void verifySingleLineMessageGenerated(String lineSeparator) {
         String message = buildMultiLineMessage(lineSeparator);
-        verify(generator).writeStringField(MessageJsonProvider.FIELD_MESSAGE, message);
+        verify(generator).writeStringProperty(MessageJsonProvider.FIELD_MESSAGE, message);
     }
 
-    private void verifyMultiLineMessageGenerated() throws IOException {
-        verify(generator).writeArrayFieldStart(MessageJsonProvider.FIELD_MESSAGE);
+    private void verifyMultiLineMessageGenerated() {
+        verify(generator).writeArrayPropertyStart(MessageJsonProvider.FIELD_MESSAGE);
         verify(generator).writeString("line1");
         verify(generator).writeString("line2");
         verify(generator).writeString("line3");

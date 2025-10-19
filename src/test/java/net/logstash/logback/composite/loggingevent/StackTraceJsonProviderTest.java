@@ -25,17 +25,17 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class StackTraceJsonProviderTest {
     
-    private StackTraceJsonProvider provider = new StackTraceJsonProvider();
+    private final StackTraceJsonProvider provider = new StackTraceJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -62,7 +62,7 @@ public class StackTraceJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(StackTraceJsonProvider.FIELD_STACK_TRACE, "stack");
+        verify(generator).writeStringProperty(StackTraceJsonProvider.FIELD_STACK_TRACE, "stack");
     }
 
     @Test
@@ -73,11 +73,11 @@ public class StackTraceJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "stack");
+        verify(generator).writeStringProperty("newFieldName", "stack");
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setStackTrace("newFieldName");
         
@@ -87,7 +87,7 @@ public class StackTraceJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "stack");
+        verify(generator).writeStringProperty("newFieldName", "stack");
     }
 
 }

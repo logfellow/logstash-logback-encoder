@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
 import java.util.Objects;
 
 import net.logstash.logback.argument.StructuredArgument;
@@ -23,9 +22,9 @@ import net.logstash.logback.argument.StructuredArguments;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * A {@link Marker} OR {@link StructuredArgument} that
@@ -67,7 +66,6 @@ import org.slf4j.Marker;
  * }
  * </pre>
  */
-@SuppressWarnings("serial")
 public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
 
     public static final String MARKER_NAME = SingleFieldAppendingMarker.MARKER_NAME_PREFIX + "OBJECT";
@@ -89,8 +87,8 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
     }
 
     @Override
-    protected void writeFieldValue(JsonGenerator generator) throws IOException {
-        generator.writeObject(fieldValue);
+    protected void writeFieldValue(JsonGenerator generator) {
+        generator.writePOJO(fieldValue);
     }
 
     @Override
@@ -106,11 +104,10 @@ public class ObjectAppendingMarker extends SingleFieldAppendingMarker {
         if (!super.equals(obj)) {
             return false;
         }
-        if (!(obj instanceof ObjectAppendingMarker)) {
+        if (!(obj instanceof ObjectAppendingMarker other)) {
             return false;
         }
 
-        ObjectAppendingMarker other = (ObjectAppendingMarker) obj;
         return Objects.equals(this.fieldValue, other.fieldValue);
     }
 

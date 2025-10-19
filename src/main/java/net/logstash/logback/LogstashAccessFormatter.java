@@ -44,7 +44,7 @@ import net.logstash.logback.fieldnames.LogstashAccessFieldNames;
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.spi.ContextAware;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 
 /**
  * A {@link AccessEventCompositeJsonFormatter} that contains a common
@@ -119,12 +119,11 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
             //
             //    { "fieldName": "messagePattern" }
             //
-            String accessEventPattern = new StringBuilder("{\"")
-                    .append(this.fieldNames.getMessage())
-                    .append("\": \"")
-                    .append(escapeJson(this.messagePattern))
-                    .append("\"}")
-                    .toString();
+            String accessEventPattern = "{\""
+                    + this.fieldNames.getMessage()
+                    + "\": \""
+                    + escapeJson(this.messagePattern)
+                    + "\"}";
             
             AccessEventPatternJsonProvider messagePatternProvider = new AccessEventPatternJsonProvider();
             messagePatternProvider.setPattern(accessEventPattern);
@@ -184,7 +183,7 @@ public class LogstashAccessFormatter extends AccessEventCompositeJsonFormatter {
     }
 
     public void setCustomFieldsFromString(String customFields) {
-        if (customFields == null || customFields.length() == 0) {
+        if (customFields == null || customFields.isEmpty()) {
             getProviders().removeProvider(globalCustomFieldsProvider);
             globalCustomFieldsProvider = null;
         } else {

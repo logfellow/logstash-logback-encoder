@@ -15,7 +15,6 @@
  */
 package net.logstash.logback.marker;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -23,9 +22,9 @@ import net.logstash.logback.argument.StructuredArgument;
 import net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider;
 import net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Marker;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * A {@link Marker} OR {@link StructuredArgument} that appends entries
@@ -67,7 +66,6 @@ import org.slf4j.Marker;
  * }
  * </pre>
  */
-@SuppressWarnings("serial")
 public class MapEntriesAppendingMarker extends LogstashMarker implements StructuredArgument {
 
     public static final String MARKER_NAME = LogstashMarker.MARKER_NAME_PREFIX + "MAP_FIELDS";
@@ -83,11 +81,10 @@ public class MapEntriesAppendingMarker extends LogstashMarker implements Structu
     }
 
     @Override
-    public void writeTo(JsonGenerator generator) throws IOException {
+    public void writeTo(JsonGenerator generator) {
         if (map != null) {
             for (Map.Entry<?, ?> entry : map.entrySet()) {
-                generator.writeFieldName(String.valueOf(entry.getKey()));
-                generator.writeObject(entry.getValue());
+                generator.writePOJOProperty(String.valueOf(entry.getKey()), entry.getValue());
             }
         }
     }
@@ -105,11 +102,10 @@ public class MapEntriesAppendingMarker extends LogstashMarker implements Structu
         if (!super.equals(obj)) {
             return false;
         }
-        if (!(obj instanceof MapEntriesAppendingMarker)) {
+        if (!(obj instanceof MapEntriesAppendingMarker other)) {
             return false;
         }
 
-        MapEntriesAppendingMarker other = (MapEntriesAppendingMarker) obj;
         return Objects.equals(this.map, other.map);
     }
 

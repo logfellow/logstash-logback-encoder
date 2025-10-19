@@ -21,18 +21,20 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.function.Supplier;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import org.junit.jupiter.api.Test;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.json.JsonWriteFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 public class DeferredLogstashMarkerTest {
 
-    private static final JsonFactory FACTORY = new MappingJsonFactory().enable(JsonGenerator.Feature.ESCAPE_NON_ASCII);
+    private static final ObjectMapper MAPPER = JsonMapper.builder()
+            .enable(JsonWriteFeature.ESCAPE_NON_ASCII)
+            .build();
 
     public static class MyClass {
         private String myField;
@@ -51,7 +53,7 @@ public class DeferredLogstashMarkerTest {
     }
 
     @Test
-    public void testWriteTo() throws IOException {
+    public void testWriteTo() {
 
         @SuppressWarnings("unchecked")
         Supplier<MyClass> supplier = mock(Supplier.class);
@@ -59,7 +61,7 @@ public class DeferredLogstashMarkerTest {
         when(supplier.get()).thenReturn(new MyClass("value"));
 
         StringWriter writer = new StringWriter();
-        JsonGenerator generator = FACTORY.createGenerator(writer);
+        JsonGenerator generator = MAPPER.createGenerator(writer);
 
         LogstashMarker marker = Markers.defer(() -> Markers.append("myObject", supplier.get()));
 
@@ -93,7 +95,6 @@ public class DeferredLogstashMarkerTest {
         LogstashMarker marker = Markers.defer(() -> Markers.append("myObject", myObject));
 
         assertThat(marker)
-            .isEqualTo(marker)
             .isNotEqualTo(Markers.defer(() -> Markers.append("myObject", myObject)));
 
     }

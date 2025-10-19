@@ -15,13 +15,12 @@
  */
 package net.logstash.logback.composite.loggingevent.mdc;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes MDC entries by delegating to other instances of {@link MdcEntryWriter} if MDC key matches the given include
@@ -41,7 +40,7 @@ public class RegexFilteringMdcEntryWriter implements MdcEntryWriter {
     private final List<MdcEntryWriter> mdcEntryWriters = new ArrayList<>();
 
     @Override
-    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) {
         if (shouldWrite(mdcKey)) {
             for (MdcEntryWriter mdcEntryWriter : this.mdcEntryWriters) {
                 if (mdcEntryWriter.writeMdcEntry(generator, fieldName, mdcKey, mdcValue)) {

@@ -15,14 +15,12 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
-
 import net.logstash.logback.fieldnames.LogstashCommonFieldNames;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes a version field as a string value (by default) or a numeric value (if {@link #isWriteAsInteger()} is true).
@@ -53,7 +51,7 @@ public class LogstashVersionJsonProvider<Event extends DeferredProcessingAware> 
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         if (writeAsInteger) {
             JsonWritingUtils.writeNumberField(generator, getFieldName(), versionAsInteger);
         } else {

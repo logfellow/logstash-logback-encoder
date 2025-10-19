@@ -22,16 +22,16 @@ import java.io.IOException;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.LoggerContextVO;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class ContextNameJsonProviderTest {
     
-    private ContextNameJsonProvider provider = new ContextNameJsonProvider();
+    private final ContextNameJsonProvider provider = new ContextNameJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -50,7 +50,7 @@ public class ContextNameJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(ContextNameJsonProvider.FIELD_CONTEXT_NAME, "testcontext");
+        verify(generator).writeStringProperty(ContextNameJsonProvider.FIELD_CONTEXT_NAME, "testcontext");
     }
 
     @Test
@@ -62,7 +62,7 @@ public class ContextNameJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "testcontext");
+        verify(generator).writeStringProperty("newFieldName", "testcontext");
     }
 
 }

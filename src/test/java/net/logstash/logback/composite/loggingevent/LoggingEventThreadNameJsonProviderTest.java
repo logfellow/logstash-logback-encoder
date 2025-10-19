@@ -23,16 +23,16 @@ import java.io.IOException;
 import net.logstash.logback.fieldnames.LogstashFieldNames;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 public class LoggingEventThreadNameJsonProviderTest {
     
-    private LoggingEventThreadNameJsonProvider provider = new LoggingEventThreadNameJsonProvider();
+    private final LoggingEventThreadNameJsonProvider provider = new LoggingEventThreadNameJsonProvider();
     
     @Mock
     private JsonGenerator generator;
@@ -47,7 +47,7 @@ public class LoggingEventThreadNameJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField(LoggingEventThreadNameJsonProvider.FIELD_THREAD_NAME, "threadName");
+        verify(generator).writeStringProperty(LoggingEventThreadNameJsonProvider.FIELD_THREAD_NAME, "threadName");
     }
 
     @Test
@@ -58,11 +58,11 @@ public class LoggingEventThreadNameJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "threadName");
+        verify(generator).writeStringProperty("newFieldName", "threadName");
     }
 
     @Test
-    public void testFieldNames() throws IOException {
+    public void testFieldNames() {
         LogstashFieldNames fieldNames = new LogstashFieldNames();
         fieldNames.setThread("newFieldName");
         
@@ -72,7 +72,7 @@ public class LoggingEventThreadNameJsonProviderTest {
         
         provider.writeTo(generator, event);
         
-        verify(generator).writeStringField("newFieldName", "threadName");
+        verify(generator).writeStringProperty("newFieldName", "threadName");
     }
 
 }

@@ -15,14 +15,12 @@
  */
 package net.logstash.logback.composite;
 
-import java.io.IOException;
-
 import ch.qos.logback.core.spi.DeferredProcessingAware;
-import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.uuid.EthernetAddress;
 import com.fasterxml.uuid.Generators;
 import com.fasterxml.uuid.NoArgGenerator;
 import com.fasterxml.uuid.impl.TimeBasedGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Outputs random UUID as field value.
@@ -64,7 +62,7 @@ public class UuidJsonProvider<Event extends DeferredProcessingAware> extends Abs
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, Event event) throws IOException {
+    public void writeTo(JsonGenerator generator, Event event) {
         JsonWritingUtils.writeStringField(generator, getFieldName(), uuids.generate().toString());
     }
 

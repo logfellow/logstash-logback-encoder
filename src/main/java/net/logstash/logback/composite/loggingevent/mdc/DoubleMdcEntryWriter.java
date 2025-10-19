@@ -15,10 +15,9 @@
  */
 package net.logstash.logback.composite.loggingevent.mdc;
 
-import java.io.IOException;
 import java.util.regex.Pattern;
 
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * Writes double values (instead of String values) for any MDC values that can be parsed as a double,
@@ -29,12 +28,11 @@ public class DoubleMdcEntryWriter implements MdcEntryWriter {
     private static final Pattern DOUBLE_PATTERN = doublePattern();
 
     @Override
-    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) throws IOException {
+    public boolean writeMdcEntry(JsonGenerator generator, String fieldName, String mdcKey, String mdcValue) {
         if (shouldParse(mdcValue)) {
             try {
                 double parsedValue = Double.parseDouble(mdcValue);
-                generator.writeFieldName(fieldName);
-                generator.writeNumber(parsedValue);
+                generator.writeNumberProperty(fieldName, parsedValue);
                 return true;
             } catch (NumberFormatException ignore) {
             }

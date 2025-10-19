@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <jackson.version>2.20.0</jackson.version>
+        <jackson.version>3.0.0</jackson.version>
         <java-uuid-generator.version>5.1.1</java-uuid-generator.version>
         <logback-core.version>1.5.19</logback-core.version>
         <logback-access.version>2.0.6</logback-access.version>
@@ -64,7 +64,10 @@
 
         <!-- maven-javadoc-plugin configuration -->
         <maven.javadoc.failOnError>true</maven.javadoc.failOnError>
-        <maven.javadoc.failOnWarnings>true</maven.javadoc.failOnWarnings>
+        <!-- A warning is emitted when javadoc is missing on a public/protected method.
+             Disable failure in this case until the code is fully documented.
+        -->
+        <maven.javadoc.failOnWarnings>false</maven.javadoc.failOnWarnings>
 
         <!-- the server id the maven-release-plugin uses to obtain credentials to use when pushing tags/commits -->
         <project.scm.id>github</project.scm.id>
@@ -116,7 +119,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>com.fasterxml.jackson</groupId>
+                <groupId>tools.jackson</groupId>
                 <artifactId>jackson-bom</artifactId>
                 <version>${jackson.version}</version>
                 <type>pom</type>
@@ -165,11 +168,11 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <groupId>tools.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-cbor</artifactId>
             <!--
                 Only needed if net.logstash.logback.decorate.cbor is used.
@@ -177,7 +180,7 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <groupId>tools.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-smile</artifactId>
             <!--
                 Only needed if net.logstash.logback.decorate.smile is used.
@@ -185,7 +188,7 @@
             <optional>true</optional>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.dataformat</groupId>
+            <groupId>tools.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
             <!--
                 Only needed if net.logstash.logback.decorate.yaml is used.
@@ -270,7 +273,7 @@
                                      higher than the minimum JDK version we support.
                                  -->
                                 <enforceBytecodeVersion>
-                                    <maxJdkVersion>11</maxJdkVersion>
+                                    <maxJdkVersion>17</maxJdkVersion>
                                     <ignoreClasses>
                                         <ignoreClass>META-INF/versions/*</ignoreClass>
                                     </ignoreClasses>
@@ -548,8 +551,8 @@
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback-core.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback.access/logback-access-common/${logback-access.version}</link>
                             
-                            <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-core/${jackson.version}</link>
-                            <link>https://javadoc.io/doc/com.fasterxml.jackson.core/jackson-databind/${jackson.version}</link>
+                            <link>https://javadoc.io/doc/tools.jackson.core/jackson-core/${jackson.version}</link>
+                            <link>https://javadoc.io/doc/tools.jackson.core/jackson-databind/${jackson.version}</link>
                         </links>
                         
                         <!-- Explicitly set version. This should help to get rid of the following
@@ -683,19 +686,6 @@
         </profile>
         
         <profile>
-            <id>java15</id>
-            <activation>
-                <jdk>[1.15,)</jdk>
-            </activation>
-            <properties>
-                <!-- A warning is emitted when javadoc is missing on a public/protected method.
-                     Temporarily disable failure in this case until the code is fully documented.
-                -->
-                <maven.javadoc.failOnWarnings>false</maven.javadoc.failOnWarnings>
-            </properties>
-        </profile>
-
-        <profile>
             <id>github</id>
             <activation>
                 <property>
@@ -777,15 +767,19 @@
         </profile>
         
         <!--
-            Profile used to run backward compatibility tests against jackson 2.12
+            Profile used to run backward compatibility tests against Jackson 3.0.0
+
+            Re-enable after upgrading Jackson to 3.1+
         -->
+        <!--
         <profile>
             <id>compat-jackson</id>
             <properties>
-                <jackson.version>2.12.7</jackson.version>
+                <jackson.version>3.0.0</jackson.version>
                 <surefire.reportsSubDir>jackson-${jackson.version}</surefire.reportsSubDir>
             </properties>
         </profile>
+        -->
     </profiles>
 
 </project>

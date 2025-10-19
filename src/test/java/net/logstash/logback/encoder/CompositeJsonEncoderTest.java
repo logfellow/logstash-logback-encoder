@@ -42,13 +42,14 @@ import ch.qos.logback.core.encoder.EncoderBase;
 import ch.qos.logback.core.encoder.LayoutWrappingEncoder;
 import ch.qos.logback.core.status.OnConsoleStatusListener;
 import ch.qos.logback.core.status.StatusManager;
-import com.fasterxml.jackson.core.JsonEncoding;
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonEncoding;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.exc.JacksonIOException;
 
 @SuppressWarnings("unchecked")
 @ExtendWith(MockitoExtension.class)
@@ -58,9 +59,9 @@ public class CompositeJsonEncoderTest {
     
     private AbstractCompositeJsonFormatter<ILoggingEvent> formatter;
     
-    private LoggerContext context = new LoggerContext();
+    private final LoggerContext context = new LoggerContext();
     
-    private StatusManager statusManager = new BasicStatusManager();
+    private final StatusManager statusManager = new BasicStatusManager();
     
     @Mock
     private ILoggingEvent event;
@@ -186,7 +187,7 @@ public class CompositeJsonEncoderTest {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         assertThatNoException().isThrownBy(() -> encoder.encode(event, bos));
         
-        assertThat(new String(bos.toByteArray())).isEqualTo("{}");
+        assertThat(bos.toString()).isEqualTo("{}");
     }
     
     
@@ -195,10 +196,10 @@ public class CompositeJsonEncoderTest {
      */
     @Test
     public void testLineEndings() {
-        // Use a brand new default instance to get rid of configuration done by the #setup() method
+        // Use a new default instance to get rid of configuration done by the #setup() method
         TestCompositeJsonEncoder encoder = new TestCompositeJsonEncoder();
         
-        assertThat(encoder.getLineSeparator()).isEqualTo(System.getProperty("line.separator"));
+        assertThat(encoder.getLineSeparator()).isEqualTo(System.lineSeparator());
         
         encoder.setLineSeparator("UNIX");
         assertThat(encoder.getLineSeparator()).isEqualTo("\n");
@@ -213,7 +214,7 @@ public class CompositeJsonEncoderTest {
         assertThat(encoder.getLineSeparator()).isEqualTo("foo");
         
         encoder.setLineSeparator("SYSTEM");
-        assertThat(encoder.getLineSeparator()).isEqualTo(System.getProperty("line.separator"));
+        assertThat(encoder.getLineSeparator()).isEqualTo(System.lineSeparator());
         
         encoder.setLineSeparator("");
         assertThat(encoder.getLineSeparator()).isNull();
@@ -221,10 +222,10 @@ public class CompositeJsonEncoderTest {
 
     
     /*
-     * Failure to encode event should log an warning status
+     * Failure to encode event should log a warning status
      */
     @Test
-    public void testIOException() throws IOException {
+    public void testIOException() {
         encoder.exceptionToThrow = new IOException();
         encoder.start();
         
@@ -247,7 +248,7 @@ public class CompositeJsonEncoderTest {
         OutputStream stream = mock(OutputStream.class);
         doThrow(exception).when(stream).write(any(byte[].class), any(int.class), any(int.class));
         
-        assertThatCode(() -> encoder.encode(event, stream)).isInstanceOf(IOException.class);
+        assertThatCode(() -> encoder.encode(event, stream)).isInstanceOf(JacksonIOException.class);
         
         assertThat(statusManager.getCopyOfStatusList())
             .noneMatch(s -> s.getMessage().startsWith("Error encountered while encoding log event."));

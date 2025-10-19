@@ -19,15 +19,15 @@ import ch.qos.logback.access.common.PatternLayout;
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import ch.qos.logback.core.Context;
 import ch.qos.logback.core.pattern.PatternLayoutBase;
-import com.fasterxml.jackson.core.JsonFactory;
+import tools.jackson.databind.ObjectMapper;
 
 /**
  * @author <a href="mailto:dimas@dataart.com">Dmitry Andrianov</a>
  */
 public class AccessEventJsonPatternParser extends AbstractJsonPatternParser<IAccessEvent> {
 
-    public AccessEventJsonPatternParser(final Context context, final JsonFactory jsonFactory) {
-        super(context, jsonFactory);
+    public AccessEventJsonPatternParser(Context context, ObjectMapper objectMapper) {
+        super(context, objectMapper);
         
         addOperation("nullNA", new NullNaValueOperation());
     }

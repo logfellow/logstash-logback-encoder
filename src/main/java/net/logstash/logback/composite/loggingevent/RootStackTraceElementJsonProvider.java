@@ -15,8 +15,6 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
-import java.io.IOException;
-
 import net.logstash.logback.composite.AbstractFieldJsonProvider;
 import net.logstash.logback.composite.FieldNamesAware;
 import net.logstash.logback.composite.JsonWritingUtils;
@@ -25,7 +23,7 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
 import ch.qos.logback.classic.spi.ThrowableProxy;
-import com.fasterxml.jackson.core.JsonGenerator;
+import tools.jackson.core.JsonGenerator;
 
 /**
  * A JSON provider that, for any log event with a stack trace,
@@ -48,13 +46,13 @@ public class RootStackTraceElementJsonProvider extends AbstractFieldJsonProvider
     }
 
     @Override
-    public void writeTo(JsonGenerator generator, ILoggingEvent event) throws IOException {
+    public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
-        if (throwableProxy != null && throwableProxy instanceof ThrowableProxy) {
+        if (throwableProxy instanceof ThrowableProxy) {
             if (throwableProxy.getStackTraceElementProxyArray().length > 0) {
                 StackTraceElement stackTraceElement = throwableProxy.getStackTraceElementProxyArray()[0].getStackTraceElement();
 
-                generator.writeObjectFieldStart(getFieldName());
+                generator.writeObjectPropertyStart(getFieldName());
                 JsonWritingUtils.writeStringField(generator, classFieldName, stackTraceElement.getClassName());
                 JsonWritingUtils.writeStringField(generator, methodFieldName, stackTraceElement.getMethodName());
                 generator.writeEndObject();

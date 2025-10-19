@@ -15,8 +15,8 @@
  */
 package net.logstash.logback.mask;
 
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.databind.node.NullNode;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.databind.node.NullNode;
 
 /**
  * Masks JSON fields within a JSON stream.
@@ -50,5 +50,5 @@ public interface FieldMasker {
      *         To write a JSON null value as the masked value, return {@link NullNode#instance}.
      *         To write {@value MaskingJsonGenerator#MASK}, the return {@link MaskingJsonGenerator#MASK MaskingJsonGenerator.MASK}
      */
-    Object mask(JsonStreamContext context);
+    Object mask(TokenStreamContext context);
 }

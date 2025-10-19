@@ -22,15 +22,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.core.JsonGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
 
 @ExtendWith(MockitoExtension.class)
 class RegexFilteringMdcEntryWriterTest {
@@ -43,7 +41,7 @@ class RegexFilteringMdcEntryWriterTest {
     private MdcEntryWriter mockedMdcEntryWriter;
 
     @Test
-    void noIncludeAndNoExcludePattern() throws IOException {
+    void noIncludeAndNoExcludePattern() {
         mockMdcEntryWriter();
 
         boolean result = mdcEntryWriter.writeMdcEntry(generator, "field", "key", "value");
@@ -54,7 +52,7 @@ class RegexFilteringMdcEntryWriterTest {
     }
 
     @Test
-    void noMdcEntryWriter() throws IOException {
+    void noMdcEntryWriter() {
         boolean result = mdcEntryWriter.writeMdcEntry(generator, "field", "key", "value");
 
         assertThat(result).isFalse();
@@ -68,7 +66,7 @@ class RegexFilteringMdcEntryWriterTest {
             "exclude,excl.*,false",
             "other,excl.*,false"
     })
-    void includeAndExcludePattern(String mdcKey, String excludePattern, boolean entryWritten) throws IOException {
+    void includeAndExcludePattern(String mdcKey, String excludePattern, boolean entryWritten) {
         if (entryWritten) {
             mockMdcEntryWriter();
         }
@@ -84,7 +82,7 @@ class RegexFilteringMdcEntryWriterTest {
         verifyNoMoreInteractions(mockedMdcEntryWriter);
     }
 
-    private void mockMdcEntryWriter() throws IOException {
+    private void mockMdcEntryWriter() {
         when(mockedMdcEntryWriter.writeMdcEntry(eq(generator), anyString(), anyString(), anyString())).thenReturn(true);
         mdcEntryWriter.addMdcEntryWriter(mockedMdcEntryWriter);
     }

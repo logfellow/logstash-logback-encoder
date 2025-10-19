@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -65,13 +64,13 @@ import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.OutputStreamAppender;
 import ch.qos.logback.core.encoder.Encoder;
 import ch.qos.logback.core.read.ListAppender;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
+import tools.jackson.core.JsonParser;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.json.JsonMapper;
 
 public class ConfigurationTest {
 
@@ -79,7 +78,7 @@ public class ConfigurationTest {
 
     private final ListAppender<ILoggingEvent> listAppender = (ListAppender<ILoggingEvent>) LOGGER.getAppender("listAppender");
 
-    private final JsonFactory jsonFactory = new MappingJsonFactory();
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     @BeforeEach
     public void setup() {
@@ -87,7 +86,7 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void testLogstashEncoderAppender() throws IOException {
+    public void testLogstashEncoderAppender() {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("logstashEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
 
@@ -99,7 +98,7 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void testLoggingEventCompositeJsonEncoderAppender() throws IOException {
+    public void testLoggingEventCompositeJsonEncoderAppender() {
         LoggingEventCompositeJsonEncoder encoder = getEncoder("loggingEventCompositeJsonEncoderAppender");
         List<JsonProvider<ILoggingEvent>> providers = encoder.getProviders().getProviders();
 
@@ -113,7 +112,7 @@ public class ConfigurationTest {
     }
 
     @Test
-    public void testAppenderHasListener() throws IOException, NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
+    public void testAppenderHasListener() throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException {
         LoggingEventAsyncDisruptorAppender appender = getAppender("asyncAppender");
         Field listenersField = AsyncDisruptorAppender.class.getDeclaredField("listeners");
         listenersField.setAccessible(true);
@@ -241,15 +240,13 @@ public class ConfigurationTest {
         return null;
     }
 
-    private void verifyOutput(LoggingEventCompositeJsonEncoder encoder) throws IOException {
+    private void verifyOutput(LoggingEventCompositeJsonEncoder encoder) {
         LOGGER.info(Markers.append("markerFieldName", "markerFieldValue"), "message {} {} {} {}",
-                new Object[] {
-                    "arg",
-                    StructuredArguments.keyValue("k1", "v1"),
-                    StructuredArguments.keyValue("k2", "v2", "{0}=[{1}]"),
-                    StructuredArguments.value("k3", "v3"),
-                    new Throwable()
-                });
+                "arg",
+                StructuredArguments.keyValue("k1", "v1"),
+                StructuredArguments.keyValue("k2", "v2", "{0}=[{1}]"),
+                StructuredArguments.value("k3", "v3"),
+                new Throwable());
 
         byte[] encoded = encoder.encode(listAppender.list.get(0));
         
@@ -297,8 +294,9 @@ public class ConfigurationTest {
         return (T) this.<OutputStreamAppender<ILoggingEvent>>getAppender(appenderName).getEncoder();
     }
 
-    private Map<String, Object> parseJson(final String text) throws IOException {
-        return jsonFactory.createParser(text).readValueAs(new TypeReference<Map<String, Object>>() {
-        });
+    private Map<String, Object> parseJson(final String text) {
+        try (JsonParser parser = jsonMapper.createParser(text)) {
+            return jsonMapper.readValue(parser, new TypeReference<>() { });
+        }
     }
 }

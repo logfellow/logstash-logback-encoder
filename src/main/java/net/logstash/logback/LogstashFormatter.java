@@ -45,9 +45,9 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.spi.ContextAware;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.MDC;
 import org.slf4j.event.KeyValuePair;
+import tools.jackson.databind.JsonNode;
 
 /**
  * A {@link LoggingEventCompositeJsonFormatter} that contains a common
@@ -176,7 +176,7 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
     }
 
     public void setCustomFieldsFromString(String customFields) {
-        if (customFields == null || customFields.length() == 0) {
+        if (customFields == null || customFields.isEmpty()) {
             getProviders().removeProvider(globalCustomFieldsProvider);
             globalCustomFieldsProvider = null;
         } else {

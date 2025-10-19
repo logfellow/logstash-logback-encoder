@@ -18,7 +18,6 @@ package net.logstash.logback.composite.loggingevent;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -26,34 +25,32 @@ import java.util.Map;
 import net.logstash.logback.argument.StructuredArguments;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.MappingJsonFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 
 @ExtendWith(MockitoExtension.class)
 public class ArgumentsJsonProviderTest {
 
-    private ArgumentsJsonProvider provider = new ArgumentsJsonProvider();
+    private final ArgumentsJsonProvider provider = new ArgumentsJsonProvider();
 
-    private JsonFactory factory = new MappingJsonFactory();
+    private final ObjectMapper objectMapper = JsonMapper.builder().build();
 
-    private StringWriter writer = new StringWriter();
+    private final StringWriter writer = new StringWriter();
 
     private JsonGenerator generator;
 
     @Mock
     private ILoggingEvent event;
 
-    private Object[] arguments;
-    
     private static class Foo {
-        private String k6 = "v6";
+        private final String k6 = "v6";
         
         @SuppressWarnings("unused")
         public String getK6() {
@@ -62,14 +59,14 @@ public class ArgumentsJsonProviderTest {
     }
 
     @BeforeEach
-    public void setup() throws IOException {
+    public void setup() {
         
-        generator = factory.createGenerator(writer);
+        generator = objectMapper.createGenerator(writer);
         
-        Map<String, String> map = new LinkedHashMap<String, String>();
+        Map<String, String> map = new LinkedHashMap<>();
         map.put("k4", "v4");
         map.put("k5", "v5");
-        arguments = new Object[] {
+        Object[] arguments = new Object[]{
                 StructuredArguments.keyValue("k0", "v0"),
                 StructuredArguments.keyValue("k1", "v1", "{0}=[{1}]"),
                 StructuredArguments.value("k2", "v2"),
@@ -83,7 +80,7 @@ public class ArgumentsJsonProviderTest {
     }
 
     @Test
-    public void testUnwrapped() throws IOException {
+    public void testUnwrapped() {
         generator.writeStartObject();
         provider.writeTo(generator, event);
         generator.writeEndObject();
@@ -104,7 +101,7 @@ public class ArgumentsJsonProviderTest {
     }
 
     @Test
-    public void testWrapped() throws IOException {
+    public void testWrapped() {
         provider.setFieldName("args");
 
         generator.writeStartObject();
@@ -130,7 +127,7 @@ public class ArgumentsJsonProviderTest {
 
 
     @Test
-    public void testIncludeNonStructuredArguments() throws IOException {
+    public void testIncludeNonStructuredArguments() {
         provider.setIncludeNonStructuredArguments(true);
 
         generator.writeStartObject();
@@ -154,7 +151,7 @@ public class ArgumentsJsonProviderTest {
     }
 
     @Test
-    public void testIncludeNonStructuredArgumentsAndCustomPrefix() throws IOException {
+    public void testIncludeNonStructuredArgumentsAndCustomPrefix() {
         provider.setIncludeNonStructuredArguments(true);
         provider.setNonStructuredArgumentsFieldPrefix("prefix");
 

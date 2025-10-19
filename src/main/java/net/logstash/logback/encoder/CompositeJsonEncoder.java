@@ -22,8 +22,11 @@ import java.util.Objects;
 
 import net.logstash.logback.composite.AbstractCompositeJsonFormatter;
 import net.logstash.logback.composite.JsonProviders;
-import net.logstash.logback.decorate.JsonFactoryDecorator;
-import net.logstash.logback.decorate.JsonGeneratorDecorator;
+import net.logstash.logback.dataformat.DataFormatFactory;
+import net.logstash.logback.decorate.CompositeJsonGeneratorDecorator;
+import net.logstash.logback.decorate.CompositeMapperBuilderDecorator;
+import net.logstash.logback.decorate.CompositeTokenStreamFactoryBuilderDecorator;
+import net.logstash.logback.decorate.Decorator;
 import net.logstash.logback.util.ReusableByteBuffer;
 import net.logstash.logback.util.ThreadLocalReusableByteBuffer;
 
@@ -139,22 +142,20 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private void startWrapped(Encoder<Event> wrapped) {
-        if (wrapped instanceof LayoutWrappingEncoder) {
+        if (wrapped instanceof LayoutWrappingEncoder<Event> layoutWrappedEncoder) {
             /*
              * Convenience hack to ensure the same charset is used in most cases.
              *
              * The charset for other encoders must be configured
              * on the wrapped encoder configuration.
              */
-            LayoutWrappingEncoder<Event> layoutWrappedEncoder = (LayoutWrappingEncoder<Event>) wrapped;
             layoutWrappedEncoder.setCharset(charset);
 
-            if (layoutWrappedEncoder.getLayout() instanceof PatternLayoutBase) {
+            if (layoutWrappedEncoder.getLayout() instanceof PatternLayoutBase layout) {
                 /*
                  * Don't ensure exception output (for ILoggingEvents)
                  * or line separation (for IAccessEvents)
                  */
-                PatternLayoutBase layout = (PatternLayoutBase) layoutWrappedEncoder.getLayout();
                 layout.setPostCompileProcessor(null);
                 /*
                  * The pattern will be re-parsed during start.
@@ -206,15 +207,35 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
         formatter.setProviders(jsonProviders);
     }
 
-    public JsonFactoryDecorator getJsonFactoryDecorator() {
-        return formatter.getJsonFactoryDecorator();
+    public String getDataFormat() {
+        return formatter.getDataFormat();
     }
 
-    public void setJsonFactoryDecorator(JsonFactoryDecorator jsonFactoryDecorator) {
-        formatter.setJsonFactoryDecorator(jsonFactoryDecorator);
+    public void setDataFormat(String dataFormat) {
+        formatter.setDataFormat(dataFormat);
     }
 
-    public JsonGeneratorDecorator getJsonGeneratorDecorator() {
+    public DataFormatFactory getDataFormatFactory() {
+        return formatter.getDataFormatFactory();
+    }
+
+    public void setDataFormatFactory(DataFormatFactory dataFormatFactory) {
+        formatter.setDataFormatFactory(dataFormatFactory);
+    }
+
+    public void addDecorator(Decorator<?> decorator) {
+        formatter.addDecorator(decorator);
+    }
+
+    public CompositeTokenStreamFactoryBuilderDecorator getTokenStreamFactoryBuilderDecorator() {
+        return formatter.getTokenStreamFactoryBuilderDecorator();
+    }
+
+    public CompositeMapperBuilderDecorator getMapperBuilderDecorator() {
+        return formatter.getMapperBuilderDecorator();
+    }
+
+    public CompositeJsonGeneratorDecorator getJsonGeneratorDecorator() {
         return formatter.getJsonGeneratorDecorator();
     }
 
@@ -224,7 +245,7 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     /**
      * The character encoding to use (default = "{@code UTF-8}").
-     * Must an encoding supported by {@link com.fasterxml.jackson.core.JsonEncoding}
+     * Must an encoding supported by {@link tools.jackson.core.JsonEncoding}
      * 
      * @param encodingName encoding name
      */
@@ -234,10 +255,6 @@ public abstract class CompositeJsonEncoder<Event extends DeferredProcessingAware
 
     public void setFindAndRegisterJacksonModules(boolean findAndRegisterJacksonModules) {
         formatter.setFindAndRegisterJacksonModules(findAndRegisterJacksonModules);
-    }
-
-    public void setJsonGeneratorDecorator(JsonGeneratorDecorator jsonGeneratorDecorator) {
-        formatter.setJsonGeneratorDecorator(jsonGeneratorDecorator);
     }
 
     public String getLineSeparator() {

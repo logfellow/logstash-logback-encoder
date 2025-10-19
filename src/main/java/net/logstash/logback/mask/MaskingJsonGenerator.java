@@ -24,11 +24,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
 
-import com.fasterxml.jackson.core.Base64Variant;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonStreamContext;
-import com.fasterxml.jackson.core.SerializableString;
-import com.fasterxml.jackson.core.util.JsonGeneratorDelegate;
+import tools.jackson.core.Base64Variant;
+import tools.jackson.core.JsonGenerator;
+import tools.jackson.core.SerializableString;
+import tools.jackson.core.TokenStreamContext;
+import tools.jackson.core.exc.JacksonIOException;
+import tools.jackson.core.util.JsonGeneratorDelegate;
 
 
 /**
@@ -88,11 +89,6 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
      */
     private int maskDepth = 0;
 
-    @FunctionalInterface
-    private interface ThrowingRunnable<E extends Exception> {
-        void run() throws E;
-    }
-
     /**
      * @param delegate the generator to which to write potentially masked JSON
      * @param fieldMaskers {@link FieldMasker}s to mask fields
@@ -108,7 +104,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     }
 
     @Override
-    public void writeArray(int[] array, int offset, int length) throws IOException {
+    public JsonGenerator writeArray(int[] array, int offset, int length) {
         /*
          * Delegate to writeArrayStart, writeNumber, and writeArrayEnd
          * so that masking can be performed.
@@ -123,10 +119,11 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
             writeNumber(array[i]);
         }
         writeEndArray();
+        return this;
     }
 
     @Override
-    public void writeArray(long[] array, int offset, int length) throws IOException {
+    public JsonGenerator writeArray(long[] array, int offset, int length) {
         /*
          * Delegate to writeArrayStart, writeNumber, and writeArrayEnd
          * so that masking can be performed.
@@ -141,10 +138,11 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
             writeNumber(array[i]);
         }
         writeEndArray();
+        return this;
     }
 
     @Override
-    public void writeArray(double[] array, int offset, int length) throws IOException {
+    public JsonGenerator writeArray(double[] array, int offset, int length) {
         /*
          * Delegate to writeArrayStart, writeNumber, and writeArrayEnd
          * so that masking can be performed.
@@ -159,24 +157,25 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
             writeNumber(array[i]);
         }
         writeEndArray();
+        return this;
     }
 
     @Override
-    public void writeFieldName(SerializableString name) throws IOException {
-        writeFieldName(() -> super.writeFieldName(name));
+    public JsonGenerator writeName(SerializableString name) {
+        return writeName(() -> super.writeName(name));
     }
 
     @Override
-    public void writeFieldName(String name) throws IOException {
-        writeFieldName(() -> super.writeFieldName(name));
+    public JsonGenerator writeName(String name) {
+        return writeName(() -> super.writeName(name));
     }
 
     @Override
-    public void writeFieldId(long id) throws IOException {
-        writeFieldName(() -> super.writeFieldId(id));
+    public JsonGenerator writePropertyId(long id) {
+        return writeName(() -> super.writePropertyId(id));
     }
 
-    private void writeFieldName(ThrowingRunnable<IOException> doWriteFieldName) throws IOException {
+    private JsonGenerator writeName(Runnable doWriteFieldName) {
 
         if (maskingInProgress()) {
             /*
@@ -205,37 +204,41 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
                  * Write the masked value.
                  * No other values will be written when masking is in progress.
                  */
-                delegate.writeObject(maskedValue);
+                delegate.writePOJO(maskedValue);
 
                 incrementMaskDepth();
 
             }
         }
+        return this;
     }
 
     @Override
-    public void writeBinary(Base64Variant b64variant, byte[] data, int offset, int len) throws IOException {
+    public JsonGenerator writeBinary(Base64Variant b64variant, byte[] data, int offset, int len) {
         if (!maskingInProgress()) {
             super.writeBinary(b64variant, data, offset, len);
         }
+        return this;
     }
 
     @Override
-    public void writeBinary(byte[] data) throws IOException {
+    public JsonGenerator writeBinary(byte[] data) {
         if (!maskingInProgress()) {
             super.writeBinary(data);
         }
+        return this;
     }
 
     @Override
-    public void writeBinary(byte[] data, int offset, int len) throws IOException {
+    public JsonGenerator writeBinary(byte[] data, int offset, int len) {
         if (!maskingInProgress()) {
             super.writeBinary(data, offset, len);
         }
+        return this;
     }
 
     @Override
-    public int writeBinary(Base64Variant b64variant, InputStream data, int dataLength) throws IOException {
+    public int writeBinary(Base64Variant b64variant, InputStream data, int dataLength) {
         if (!maskingInProgress()) {
             return super.writeBinary(b64variant, data, dataLength);
         } else {
@@ -244,7 +247,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     }
 
     @Override
-    public int writeBinary(InputStream data, int dataLength) throws IOException {
+    public int writeBinary(InputStream data, int dataLength) {
         if (!maskingInProgress()) {
             return super.writeBinary(data, dataLength);
         } else {
@@ -252,262 +255,285 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
         }
     }
 
-    private int readAndDiscard(InputStream data) throws IOException {
-        int bytesRead = 0;
-        while (data.read() != -1) {
-            bytesRead++;
+    private int readAndDiscard(InputStream data) {
+        try {
+            int bytesRead = 0;
+            while (data.read() != -1) {
+                bytesRead++;
+            }
+            return bytesRead;
+        } catch (IOException e) {
+            throw JacksonIOException.construct(e, this);
         }
-        return bytesRead;
     }
 
     @Override
-    public void writeBoolean(boolean state) throws IOException {
+    public JsonGenerator writeBoolean(boolean state) {
         if (!maskingInProgress()) {
             super.writeBoolean(state);
         }
+        return this;
     }
 
     @Override
-    public void writeEmbeddedObject(Object object) throws IOException {
+    public JsonGenerator writeEmbeddedObject(Object object) {
         if (!maskingInProgress()) {
             super.writeEmbeddedObject(object);
         }
+        return this;
     }
 
     @Override
-    public void writeNull() throws IOException {
+    public JsonGenerator writeNull() {
         if (!maskingInProgress()) {
             super.writeNull();
         }
+        return this;
     }
 
     @Override
-    public void writeNumber(BigDecimal v) throws IOException {
-        writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
+    public JsonGenerator writeNumber(BigDecimal v) {
+        return writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
     }
 
     @Override
-    public void writeNumber(BigInteger v) throws IOException {
-        writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
+    public JsonGenerator writeNumber(BigInteger v) {
+        return writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
     }
 
     @Override
-    public void writeNumber(double v) throws IOException {
-        writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
+    public JsonGenerator writeNumber(double v) {
+        return writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
     }
 
     @Override
-    public void writeNumber(float v) throws IOException {
-        writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
+    public JsonGenerator writeNumber(float v) {
+        return writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
     }
 
     @Override
-    public void writeNumber(int v) throws IOException {
-        writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
+    public JsonGenerator writeNumber(int v) {
+        return writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
     }
 
     @Override
-    public void writeNumber(short v) throws IOException {
-        writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
+    public JsonGenerator writeNumber(short v) {
+        return writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
     }
 
     @Override
-    public void writeNumber(long v) throws IOException {
-        writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
+    public JsonGenerator writeNumber(long v) {
+        return writePotentiallyMaskedValue(v, () -> super.writeNumber(v));
     }
 
     @Override
-    public void writeNumber(String encodedValue) throws IOException {
-        writePotentiallyMaskedValue(encodedValue, () -> super.writeNumber(encodedValue));
+    public JsonGenerator writeNumber(String encodedValue) {
+        return writePotentiallyMaskedValue(encodedValue, () -> super.writeNumber(encodedValue));
     }
 
     @Override
-    public void writeObjectId(Object id) throws IOException {
+    public JsonGenerator writeObjectId(Object id) {
         if (!maskingInProgress()) {
             super.writeObjectId(id);
         }
+        return this;
     }
 
     @Override
-    public void writeObjectRef(Object id) throws IOException {
+    public JsonGenerator writeObjectRef(Object id) {
         if (!maskingInProgress()) {
             super.writeObjectRef(id);
         }
+        return this;
     }
 
     @Override
-    public void writeOmittedField(String fieldName) throws IOException {
+    public JsonGenerator writeOmittedProperty(String fieldName) {
         if (!maskingInProgress()) {
-            super.writeOmittedField(fieldName);
+            super.writeOmittedProperty(fieldName);
         }
+        return this;
     }
 
     @Override
-    public void writeRaw(char c) throws IOException {
+    public JsonGenerator writeRaw(char c) {
         if (!maskingInProgress()) {
             super.writeRaw(c);
         }
+        return this;
     }
 
     @Override
-    public void writeRaw(char[] text, int offset, int len) throws IOException {
+    public JsonGenerator writeRaw(char[] text, int offset, int len) {
         if (!maskingInProgress()) {
             super.writeRaw(text, offset, len);
         }
+        return this;
     }
 
     @Override
-    public void writeRaw(String text) throws IOException {
+    public JsonGenerator writeRaw(String text) {
         if (!maskingInProgress()) {
             super.writeRaw(text);
         }
+        return this;
     }
 
     @Override
-    public void writeRaw(String text, int offset, int len) throws IOException {
+    public JsonGenerator writeRaw(String text, int offset, int len) {
         if (!maskingInProgress()) {
             super.writeRaw(text, offset, len);
         }
+        return this;
     }
 
     @Override
-    public void writeRaw(SerializableString raw) throws IOException {
+    public JsonGenerator writeRaw(SerializableString raw) {
         if (!maskingInProgress()) {
             super.writeRaw(raw);
         }
+        return this;
     }
 
     @Override
-    public void writeRawValue(String text) throws IOException {
+    public JsonGenerator writeRawValue(String text) {
         if (!maskingInProgress()) {
             super.writeRawValue(text);
         }
+        return this;
     }
 
     @Override
-    public void writeRawValue(String text, int offset, int len) throws IOException {
+    public JsonGenerator writeRawValue(String text, int offset, int len) {
         if (!maskingInProgress()) {
             super.writeRawValue(text, offset, len);
         }
+        return this;
     }
 
     @Override
-    public void writeRawValue(char[] text, int offset, int len) throws IOException {
+    public JsonGenerator writeRawValue(char[] text, int offset, int len) {
         if (!maskingInProgress()) {
             super.writeRawValue(text, offset, len);
         }
+        return this;
     }
 
     @Override
-    public void writeRawUTF8String(byte[] text, int offset, int length) throws IOException {
+    public JsonGenerator writeRawUTF8String(byte[] text, int offset, int length) {
         if (!maskingInProgress()) {
             super.writeRawUTF8String(text, offset, length);
         }
+        return this;
     }
 
     @Override
-    public void writeStartArray(int size) throws IOException {
-        if (!maskingInProgress()) {
-            super.writeStartArray(size);
-        }
-    }
-
-    @Override
-    public void writeStartArray() throws IOException {
+    public JsonGenerator writeStartArray() {
         if (!maskingInProgress()) {
             super.writeStartArray();
         }
+        return this;
     }
+
     @Override
-    public void writeStartArray(Object forValue) throws IOException {
+    public JsonGenerator writeStartArray(Object forValue) {
         if (!maskingInProgress()) {
             super.writeStartArray(forValue);
         }
+        return this;
     }
 
     @Override
-    public void writeStartArray(Object forValue, int size) throws IOException {
+    public JsonGenerator writeStartArray(Object forValue, int size) {
         if (!maskingInProgress()) {
             super.writeStartArray(forValue, size);
         }
+        return this;
     }
 
     @Override
-    public void writeStartObject() throws IOException {
+    public JsonGenerator writeStartObject() {
         if (!maskingInProgress()) {
             super.writeStartObject();
         } else {
             incrementMaskDepth();
         }
+        return this;
     }
 
     @Override
-    public void writeStartObject(Object forValue) throws IOException {
+    public JsonGenerator writeStartObject(Object forValue) {
         if (!maskingInProgress()) {
             super.writeStartObject(forValue);
         } else {
             incrementMaskDepth();
         }
+        return this;
     }
 
     @Override
-    public void writeStartObject(Object forValue, int size) throws IOException {
+    public JsonGenerator writeStartObject(Object forValue, int size) {
         if (!maskingInProgress()) {
             super.writeStartObject(forValue, size);
         } else {
             incrementMaskDepth();
         }
+        return this;
     }
 
     @Override
-    public void writeString(char[] text, int offset, int len) throws IOException {
-        writePotentiallyMaskedValue(new String(text, offset, len), () -> super.writeString(text, offset, len));
+    public JsonGenerator writeString(char[] text, int offset, int len) {
+        return writePotentiallyMaskedValue(new String(text, offset, len), () -> super.writeString(text, offset, len));
     }
 
     @Override
-    public void writeString(String text) throws IOException {
-        writePotentiallyMaskedValue(text, () -> super.writeString(text));
+    public JsonGenerator writeString(String text) {
+        return writePotentiallyMaskedValue(text, () -> super.writeString(text));
     }
 
     @Override
-    public void writeString(SerializableString text) throws IOException {
-        writePotentiallyMaskedValue(text.getValue(), () -> super.writeString(text));
+    public JsonGenerator writeString(SerializableString text) {
+        return writePotentiallyMaskedValue(text.getValue(), () -> super.writeString(text));
     }
 
     @Override
-    public void writeString(Reader reader, int len) throws IOException {
+    public JsonGenerator writeString(Reader reader, int len) {
         if (!maskingInProgress()) {
             super.writeString(reader, len);
         }
+        return this;
     }
 
     @Override
-    public void writeUTF8String(byte[] text, int offset, int length) throws IOException {
-        writePotentiallyMaskedValue(new String(text, offset, length, StandardCharsets.UTF_8), () -> super.writeUTF8String(text, offset, length));
+    public JsonGenerator writeUTF8String(byte[] text, int offset, int length) {
+        return writePotentiallyMaskedValue(new String(text, offset, length, StandardCharsets.UTF_8), () -> super.writeUTF8String(text, offset, length));
     }
 
     @Override
-    public void writeTypeId(Object id) throws IOException {
+    public JsonGenerator writeTypeId(Object id) {
         if (!maskingInProgress()) {
             super.writeTypeId(id);
         }
+        return this;
     }
 
     @Override
-    public void writeEndArray() throws IOException {
+    public JsonGenerator writeEndArray() {
         if (!maskingInProgress()) {
             super.writeEndArray();
         }
+        return this;
     }
 
     @Override
-    public void writeEndObject() throws IOException {
+    public JsonGenerator writeEndObject() {
         if (maskingInProgress()) {
             decrementMaskDepth();
         }
         if (!maskingInProgress()) {
             super.writeEndObject();
         }
+        return this;
     }
 
     /**
@@ -515,7 +541,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
      *         otherwise returns null.
      */
     private Object getMaskedValueForCurrentPath() {
-        JsonStreamContext context = getOutputContext();
+        TokenStreamContext context = streamWriteContext();
         for (FieldMasker fieldMasker : fieldMaskers) {
             Object maskedValue = fieldMasker.mask(context);
             if (maskedValue != null) {
@@ -530,7 +556,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
      *         otherwise returns null.
      */
     private Object getMaskedValueForCurrentPathAndValue(Object originalValue) {
-        JsonStreamContext context = getOutputContext();
+        TokenStreamContext context = streamWriteContext();
         Object localValue = originalValue;
         for (ValueMasker valueMasker : valueMaskers) {
             Object maskedValue = valueMasker.mask(context, localValue);
@@ -544,15 +570,16 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
         return null;
     }
 
-    private void writePotentiallyMaskedValue(Object value, ThrowingRunnable<IOException> doWriteUnmaskedValue) throws IOException {
+    private JsonGenerator writePotentiallyMaskedValue(Object value, Runnable doWriteUnmaskedValue) {
         if (!maskingInProgress()) {
             Object maskedValue = getMaskedValueForCurrentPathAndValue(value);
             if (maskedValue != null) {
-                delegate.writeObject(maskedValue);
+                delegate.writePOJO(maskedValue);
             } else {
                 doWriteUnmaskedValue.run();
             }
         }
+        return this;
     }
 
     private void incrementMaskDepth() {
