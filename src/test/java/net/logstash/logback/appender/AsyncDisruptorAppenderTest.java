@@ -207,7 +207,7 @@ public class AsyncDisruptorAppenderTest extends AbstractLogbackTest {
         final CountDownLatch eventHandlerWaiter = new CountDownLatch(1);
         TestEventHandler eventHandler = new TestEventHandler(eventHandlerWaiter);
 
-        appender.setShouldLogDroppedEvents(false);
+        appender.setDroppedWarnFrequency(0); // disable logging dropped events
         appender.setRingBufferSize(1);
         appender.setAppendTimeout(toLogback(Duration.ZERO)); // no timeout - drop when full
         appender.setEventHandler(eventHandler);
