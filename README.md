@@ -38,6 +38,7 @@ The structure of the output, and the data it contains, is fully configurable.
 		* [Wait Strategy](#wait-strategy)
 	* [Appender Listeners](#appender-listeners)
 	* [Encoders / Layouts](#encoders--layouts)
+    * [Threads and ThreadLocals](#threads-and-threadlocals)
 * [LoggingEvent Fields](#loggingevent-fields)
 	* [Standard Fields](#standard-fields)
 	* [MDC fields](#mdc-fields)
@@ -87,7 +88,7 @@ The structure of the output, and the data it contains, is fully configurable.
 		* [AccessEvent patterns](#accessevent-patterns)
 	* [Custom JSON Provider](#custom-json-provider)
 * [Status Listeners](#status-listeners)
-* [Joran/XML Configuration](#joran-xml-configuration)
+* [Joran/XML Configuration](#joranxml-configuration)
 	* [Duration Property](#duration-property)
 	* [Comma separated list of values](#comma-separated-list-of-values)
 
@@ -963,7 +964,42 @@ input {
 }
 ```
 
+### Threads and ThreadLocals
 
+Asynchronous appenders use a separate set of threads to process logging events.
+
+The encoders/layouts use ThreadLocals internally to improve performance.
+
+In environments that support application reloading (e.g. web containers)
+and in applications with many threads logging events (e.g. virtual threads),
+it is recommended to:
+1. use an asynchronous appender (such as `LogstashTcpSocketAppender`, `LoggingEventAsyncDisruptorAppender`, or [`AsyncAppender`](https://logback.qos.ch/manual/appenders.html#AsyncAppender)), and
+2. [cleanly shut down logback](http://logback.qos.ch/manual/configuration.html#stopContext) when the application is stopped/reloaded.
+
+
+Using an asynchronous appender ensures that a limited number of threads use the encoder/layout,
+and therefore limits the number of ThreadLocal value instances
+and minimizes resource contention.
+
+Cleanly shutting down logback stops the threads used by the asynchronous appender,
+and makes their ThreadLocal values eligible for garbage collection.
+
+Failure to use an asynchronous appender may result in errors like the following when stopping/reloading an application in Tomcat:
+
+```
+The web application [webapp] created a ThreadLocal with key of type [java.lang.ThreadLocal.SuppliedThreadLocal]
+(value [java.lang.ThreadLocal$SuppliedThreadLocal@6f75b07c]) and a value of type
+[net.logstash.logback.util.ThreadLocalHolder.Holder] (value [net.logstash.logback.util.ThreadLocalHolder$Holder@7d940c3e])
+but failed to remove it when the web application was stopped.
+Threads are going to be renewed over time to try and avoid a probable memory leak.
+```
+
+Failure to cleanly shutdown logback may result in errors like the following when stopping/reloading an application in Tomcat:
+
+```
+The web application [webapp] appears to have started a thread named [logback-appender-ASYNC-2] but has failed to stop it.
+This is very likely to create a memory leak.
+```
 
 ## LoggingEvent Fields
 
