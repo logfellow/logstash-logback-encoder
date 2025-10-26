@@ -44,7 +44,7 @@ import ch.qos.logback.core.boolex.EventEvaluator;
 import ch.qos.logback.core.joran.spi.DefaultClass;
 import ch.qos.logback.core.status.ErrorStatus;
 import org.slf4j.Marker;
-import org.slf4j.MarkerFactory;
+import org.slf4j.helpers.BasicMarkerFactory;
 
 /**
  * A {@link ThrowableHandlingConverter} (similar to logback's {@link ThrowableProxyConverter})
@@ -118,7 +118,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public static final int SHORT_CLASS_NAME_LENGTH = 10;
     public static final int DEFAULT_CLASS_NAME_LENGTH = FULL_CLASS_NAME_LENGTH;
 
-    public static final Marker OMIT_THROWABLE_MESSAGE = MarkerFactory.getMarker("OMIT_THROWABLE_MESSAGE");
+    // Using MarkerFactory.getMarker here can create a circular dependency during static initialization.
+    // Therefore, using new BasicMarkerFactory().getMarker(...) instead.
+    public static final Marker OMIT_THROWABLE_MESSAGE = new BasicMarkerFactory().getMarker("OMIT_THROWABLE_MESSAGE");
 
     private static final String ELLIPSIS = "...";
     private static final int BUFFER_INITIAL_CAPACITY = 4096;
