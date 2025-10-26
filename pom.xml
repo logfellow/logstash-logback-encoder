@@ -768,10 +768,7 @@
         
         <!--
             Profile used to run backward compatibility tests against Jackson 3.0.0
-
-            Re-enable after upgrading Jackson to 3.1+
         -->
-        <!--
         <profile>
             <id>compat-jackson</id>
             <properties>
@@ -779,7 +776,6 @@
                 <surefire.reportsSubDir>jackson-${jackson.version}</surefire.reportsSubDir>
             </properties>
         </profile>
-        -->
     </profiles>
 
 </project>
