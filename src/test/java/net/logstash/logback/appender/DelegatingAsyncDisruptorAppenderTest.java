@@ -16,6 +16,7 @@
 package net.logstash.logback.appender;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
@@ -29,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Flushable;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.Duration;
 
 import net.logstash.logback.appender.listener.AppenderListener;
 
@@ -215,7 +217,11 @@ public class DelegatingAsyncDisruptorAppenderTest {
         outputStreamDelegate.setOutputStream(null);
         appender.doAppend(event);
 
-        assertThat(appender.getStatusManager().getCount()).isZero();
+        verify(outputStreamDelegate, timeout(VERIFICATION_TIMEOUT)).doAppend(event);
+
+        await()
+                .timeout(Duration.ofMillis(VERIFICATION_TIMEOUT))
+                .untilAsserted(() -> assertThat(appender.getStatusManager().getCount()).isEqualTo(1));
     }
 
 
