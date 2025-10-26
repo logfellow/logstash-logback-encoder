@@ -1,7 +1,7 @@
 > [!IMPORTANT]
 > This document applies to the next version under development.
 >
-> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-8.1).
+> &nbsp; &nbsp; See [here for documentation on the latest released version](https://github.com/logfellow/logstash-logback-encoder/tree/logstash-logback-encoder-9.0).
 
 # Logstash Logback Encoder
 
