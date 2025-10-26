@@ -31,7 +31,7 @@ jobs:
         java-version: 17
 
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
 
@@ -39,4 +39,4 @@ jobs:
       run: ./mvnw --batch-mode --no-transfer-progress --show-version --settings .github/maven/settings.xml package
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
