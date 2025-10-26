@@ -94,11 +94,11 @@ public class StackTraceJsonProviderTest {
     }
 
     @Test
-    public void testOutputAsArray() {
+    public void testWriteAsArray() {
         String stacktrace = Throwables.getStackTrace(new RuntimeException("testing exception handling"));
         when(converter.convert(event)).thenReturn(stacktrace);
 
-        provider.setOutputThrowableAsArray(true);
+        provider.setWriteAsArray(true);
 
         when(event.getThrowableProxy()).thenReturn(ThrowableProxy);
 

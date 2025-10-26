@@ -203,12 +203,12 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setThrowableConverter(throwableConverter);
     }
 
-    public boolean isOutputThrowableAsArray() {
-        return getFormatter().isOutputThrowableAsArray();
+    public boolean isWriteStackTraceAsArray() {
+        return getFormatter().isWriteStackTraceAsArray();
     }
 
-    public void setOutputThrowableAsArray(boolean outputAsArray) {
-        this.getFormatter().setOutputThrowableAsArray(outputAsArray);
+    public void setWriteStackTraceAsArray(boolean writeStackTraceAsArray) {
+        this.getFormatter().setWriteStackTraceAsArray(writeStackTraceAsArray);
     }
 
     public String getTimeZone() {
