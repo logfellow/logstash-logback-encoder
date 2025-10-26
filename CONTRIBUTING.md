@@ -22,8 +22,9 @@ How to Contribute
 
 ### Discuss
 
-If you have a question, check Stack Overflow using the
-[logstash-logback-encoder](https://stackoverflow.com/questions/tagged/logstash-logback-encoder) tag.
+If you have a question, check either
+* Stack Overflow using the [logstash-logback-encoder](https://stackoverflow.com/questions/tagged/logstash-logback-encoder) tag, OR
+* logstash-logback-encoder [Discussions](https://github.com/logfellow/logstash-logback-encoder/discussions)
 
 If you believe there is an issue, search through
 [existing issues](https://github.com/logfellow/logstash-logback-encoder/issues) trying a
@@ -86,7 +87,7 @@ you may request to become a maintainer by filing an issue.
 Build from Source
 -----------------
 
-JDK 11 is required to build from source.
+JDK 17 is required to build from source.
 
 Use `mvnw` (\*nix) or `mvnw.cmd` (windows) to build.
 
