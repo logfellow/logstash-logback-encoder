@@ -396,6 +396,14 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         this.stackTraceProvider.setThrowableConverter(throwableConverter);
     }
 
+    public boolean isWriteStackTraceAsArray() {
+        return this.stackTraceProvider.isWriteAsArray();
+    }
+
+    public void setWriteStackTraceAsArray(boolean writeStackTraceAsArray) {
+        this.stackTraceProvider.setWriteAsArray(writeStackTraceAsArray);
+    }
+
     public String getVersion() {
         return this.versionProvider.getVersion();
     }

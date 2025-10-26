@@ -15,6 +15,8 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +27,7 @@ import net.logstash.logback.fieldnames.LogstashFieldNames;
 import ch.qos.logback.classic.pattern.ThrowableHandlingConverter;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.IThrowableProxy;
+import org.assertj.core.util.Throwables;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,6 +91,24 @@ public class StackTraceJsonProviderTest {
         provider.writeTo(generator, event);
         
         verify(generator).writeStringProperty("newFieldName", "stack");
+    }
+
+    @Test
+    public void testWriteAsArray() {
+        String stacktrace = Throwables.getStackTrace(new RuntimeException("testing exception handling"));
+        when(converter.convert(event)).thenReturn(stacktrace);
+
+        provider.setWriteAsArray(true);
+
+        when(event.getThrowableProxy()).thenReturn(ThrowableProxy);
+
+        provider.writeTo(generator, event);
+
+        verify(generator).writeName("stack_trace");
+        verify(generator).writeStartArray();
+        verify(generator).writeString("java.lang.RuntimeException: testing exception handling");
+        verify(generator, atLeastOnce()).writeString(anyString());
+        verify(generator).writeEndArray();
     }
 
 }

@@ -1634,6 +1634,19 @@ For example:
 See the [net.logstash.logback.decorate](/src/main/java/net/logstash/logback/decorate) package
 and sub-packages for other decorators.
 
+If you prefer pretty printing for easier interactive viewing of (error) logs, you
+may also prefer to write the stacktrace as an array of strings where each string
+is a stacktrace line:
+
+```xml
+<encoder class="net.logstash.logback.encoder.LogstashEncoder">
+    <decorator class="net.logstash.logback.decorate.PrettyPrintingDecorator">
+		<indentArraysWithNewLine>true</indentArraysWithNewLine>
+    </decorator>
+	<writeStackTraceAsArray>true</writeStackTraceAsArray>
+</encoder>
+```
+
 ### Registering Jackson Modules
 
 By default, Jackson modules are dynamically registered via
@@ -2871,6 +2884,7 @@ The provider name is the xml element name to use when configuring. Each provider
         <ul>
           <li><tt>fieldName</tt> - Output field name (<tt>stack_trace</tt>)</li>
           <li><tt>throwableConverter</tt> - The <tt>ThrowableHandlingConverter</tt> to use to format the stacktrace (<tt>stack_trace</tt>)</li>
+          <li><tt>writeAsArray</tt> - write the stacktrace as an array of strings where each string is a stacktrace line</li>
         </ul>
       </td>
     </tr>

@@ -17,6 +17,7 @@ package net.logstash.logback.decorate;
 
 import ch.qos.logback.core.CoreConstants;
 import tools.jackson.core.PrettyPrinter;
+import tools.jackson.core.util.DefaultIndenter;
 import tools.jackson.core.util.DefaultPrettyPrinter;
 import tools.jackson.core.util.Separators;
 import tools.jackson.databind.ObjectMapper;
@@ -28,10 +29,13 @@ import tools.jackson.databind.cfg.MapperBuilder;
  */
 public class PrettyPrintingDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>> implements MapperBuilderDecorator<M, B> {
 
+    private static final DefaultPrettyPrinter.FixedSpaceIndenter DEFAULT_ARRAY_INDENTER = DefaultPrettyPrinter.FixedSpaceIndenter.instance();
+
     private Separators separators = PrettyPrinter.DEFAULT_SEPARATORS
             .withRootSeparator(CoreConstants.EMPTY_STRING);
 
-    private DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter(separators);
+    private DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter(separators)
+            .withArrayIndenter(DEFAULT_ARRAY_INDENTER);
 
     @Override
     public B decorate(B mapperBuilder) {
@@ -65,5 +69,18 @@ public class PrettyPrintingDecorator<M extends ObjectMapper, B extends MapperBui
     public void setSpacesInObjectEntries(boolean spacesInObjectEntries) {
         separators = separators.withObjectNameValueSpacing(spacesInObjectEntries ? Separators.Spacing.BOTH : Separators.Spacing.NONE);
         prettyPrinter = prettyPrinter.withSeparators(separators);
+    }
+
+    /**
+     * Sets whether arrays are indented with a new line.
+     *
+     * @param indentArraysWithNewLine whether arrays are indented with a new line.
+     */
+    public void setIndentArraysWithNewLine(boolean indentArraysWithNewLine) {
+        if (indentArraysWithNewLine) {
+            prettyPrinter = prettyPrinter.withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+        } else {
+            prettyPrinter = prettyPrinter.withArrayIndenter(DEFAULT_ARRAY_INDENTER);
+        }
     }
 }

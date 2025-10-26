@@ -41,6 +41,12 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
      */
     private ThrowableHandlingConverter throwableConverter = new ExtendedThrowableProxyConverter();
 
+    /**
+     * If true, stacktrace will be output as a json array of strings split by newlines
+     * If else, stacktrace will be output as a json string
+     */
+    private boolean writeAsArray;
+
     public StackTraceJsonProvider() {
         setFieldName(FIELD_STACK_TRACE);
     }
@@ -60,8 +66,15 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     @Override
     public void writeTo(JsonGenerator generator, ILoggingEvent event) {
         IThrowableProxy throwableProxy = event.getThrowableProxy();
-        if (throwableProxy != null) {
-            JsonWritingUtils.writeStringField(generator, getFieldName(), throwableConverter.convert(event));
+        if (throwableProxy == null) {
+            return;
+        }
+        String stacktrace = throwableConverter.convert(event);
+        if (writeAsArray) {
+            String[] lines = stacktrace.split("\n");
+            JsonWritingUtils.writeStringArrayField(generator, getFieldName(), lines);
+        } else {
+            JsonWritingUtils.writeStringField(generator, getFieldName(), stacktrace);
         }
     }
 
@@ -73,7 +86,17 @@ public class StackTraceJsonProvider extends AbstractFieldJsonProvider<ILoggingEv
     public ThrowableHandlingConverter getThrowableConverter() {
         return throwableConverter;
     }
+
     public void setThrowableConverter(ThrowableHandlingConverter throwableConverter) {
         this.throwableConverter = throwableConverter;
     }
+
+    public boolean isWriteAsArray() {
+        return writeAsArray;
+    }
+
+    public void setWriteAsArray(boolean writeAsArray) {
+        this.writeAsArray = writeAsArray;
+    }
+
 }
