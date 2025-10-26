@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <jackson.version>3.0.0</jackson.version>
+        <jackson.version>3.0.1</jackson.version>
         <java-uuid-generator.version>5.1.1</java-uuid-generator.version>
         <logback-core.version>1.5.19</logback-core.version>
         <logback-access.version>2.0.6</logback-access.version>
@@ -768,10 +768,7 @@
         
         <!--
             Profile used to run backward compatibility tests against Jackson 3.0.0
-
-            Re-enable after upgrading Jackson to 3.1+
         -->
-        <!--
         <profile>
             <id>compat-jackson</id>
             <properties>
@@ -779,7 +776,6 @@
                 <surefire.reportsSubDir>jackson-${jackson.version}</surefire.reportsSubDir>
             </properties>
         </profile>
-        -->
     </profiles>
 
 </project>
