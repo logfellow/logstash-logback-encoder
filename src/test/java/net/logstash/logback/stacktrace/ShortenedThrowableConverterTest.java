@@ -813,6 +813,33 @@ public class ShortenedThrowableConverterTest {
         }
     }
 
+    @Test
+    public void testOmitThrowableMessage() {
+
+        try {
+            StackTraceElementGenerator.generateSingle();
+            fail("Exception must have been thrown");
+        } catch (RuntimeException e) {
+
+            /*
+             * First get the stacktrace with the message
+             */
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.start();
+
+            String stacktraceWithMessage = convert(converter, e);
+            assertThat(stacktraceWithMessage).contains("message");
+
+            /*
+             * Now omit the message
+             */
+            ILoggingEvent event = createEvent(e);
+            when(event.getMarkerList()).thenReturn(List.of(ShortenedThrowableConverter.OMIT_THROWABLE_MESSAGE));
+            String stacktraceWithoutMessage = convert(converter, event);
+            assertThat(stacktraceWithoutMessage).doesNotContain("message");
+        }
+    }
+
     
     // --------------------------------------------------------------------------------------------
     

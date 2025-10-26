@@ -66,9 +66,9 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Omit Common Frames](#omit-common-frames)
     * [Truncate after Regex](#truncate-after-regex)
     * [Exclude Frames per Regex](#exclude-frames-per-regex)
-    * [Exclude Messages From Stacktrace](#exclude-messages-from-stacktrace)
+    * [Omit Throwable Messages](#omit-throwable-messages)
     * [Maximum Depth per Throwable](#maximum-depth-per-throwable)
-    * [Maximum Trace Size (bytes)](#maximum-trace-size)
+    * [Maximum Trace Size (bytes)](#maximum-trace-size-bytes)
     * [Classname Shortening](#classname-shortening)
     * [Custom Line Separator](#custom-line-separator)
     * [Root Cause First](#root-cause-first)
@@ -2125,11 +2125,13 @@ Alternatively, multiple exclusion patterns can be specified at once using the `<
 Using the `<exclusions>` configuration option can be useful when using an environment variable to specify the actual patterns at deployment time.
 
 
-### Exclude Messages From Stacktrace
-In the event you wish to exclude all messages from the stackrace, then use ShortenedThrowableConverter.SANITIZE in you log statement.
-This feature will exclude all messages in the entire stacktrace from appearing.
+### Omit Throwable Messages
 
-**Example** 
+To omit throwable messages from stacktraces, add the `ShortenedThrowableConverter.OMIT_THROWABLE_MESSAGE` marker
+to log statements.
+
+Consider the following stacktrace (without omitting messages):
+
 ```
 Exception in thread "main" com.myproject.module.MyProjectFooBarException: Customer ssn of 12345678 was not registered
     at com.myproject.module.MyProject.anotherMethod(MyProject.java:19)
@@ -2141,11 +2143,17 @@ Caused by: java.lang.ArithmeticException: Could not generate userId for Customer
     ... 2 more
 ```
 
-If the above is logged utilizing the ShortenedThrowableConverter.SANITIZE marker, then all messages will be suppressed in the logging output.
+If the `ShortenedThrowableConverter.OMIT_THROWABLE_MESSAGE` marker is used when logging the above throwable,
+then the `ShortenedThrowableConverter` will omit all messages in the stacktrace.
+
+For example, the following code:
+
 ```java
-    log.error(SANITIZE, "An exception was thrown but I want to make sure no customer data is shown in stacktrace", e);
+    logger.error(OMIT_THROWABLE_MESSAGE, "An exception was thrown but I want to make sure no customer data is shown in stacktrace", e);
 ```
-Will produce:
+
+will produce:
+
 ```
 Exception in thread "main" com.myproject.module.MyProjectFooBarException:
     at com.myproject.module.MyProject.anotherMethod(MyProject.java:19)
@@ -2156,6 +2164,7 @@ Caused by: java.lang.ArithmeticException:
     at com.myproject.module.MyProject.anotherMethod(MyProject.java:17)
     ... 2 more
 ```
+
 This enables devs to still see the type of exception thrown and where it occurred, **without** exposing sensitive data.
 
 ### Maximum Depth per Throwable
@@ -2876,7 +2885,7 @@ The provider name is the xml element name to use when configuring. Each provider
 
 
 
-### Providers for AccessEvents  
+### Providers for AccessEvents
 
 The [common providers mentioned above](#providers-common-to-loggingevents-and-accessevents), and the providers listed in the table below, are available for _AccessEvents_.
 The provider name is the xml element name to use when configuring. Each provider's configuration properties are shown, with default configuration values in parenthesis.

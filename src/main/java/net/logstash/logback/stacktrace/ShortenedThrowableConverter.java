@@ -118,6 +118,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     public static final int SHORT_CLASS_NAME_LENGTH = 10;
     public static final int DEFAULT_CLASS_NAME_LENGTH = FULL_CLASS_NAME_LENGTH;
 
+    public static final Marker OMIT_THROWABLE_MESSAGE = MarkerFactory.getMarker("OMIT_THROWABLE_MESSAGE");
+
     private static final String ELLIPSIS = "...";
     private static final int BUFFER_INITIAL_CAPACITY = 4096;
 
@@ -132,8 +134,6 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private static final int OPTION_INDEX_MAX_DEPTH = 0;
     private static final int OPTION_INDEX_SHORTENED_CLASS_NAME = 1;
     private static final int OPTION_INDEX_MAX_LENGTH = 2;
-
-    public static final Marker SANITIZE = MarkerFactory.getMarker("SANITIZE");
 
     /**
      * String sequence to use to delimit lines instead of {@link CoreConstants#LINE_SEPARATOR}
@@ -422,7 +422,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             String prefix,
             int indent,
             IThrowableProxy throwableProxy,
-            Deque<String> stackHashes, ILoggingEvent event) {
+            Deque<String> stackHashes,
+            ILoggingEvent event) {
 
         if (throwableProxy == null || builder.length() > this.maxLength) {
             return;
@@ -451,7 +452,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             String prefix,
             int indent,
             IThrowableProxy throwableProxy,
-            Deque<String> stackHashes, ILoggingEvent event) {
+            Deque<String> stackHashes,
+            ILoggingEvent event) {
 
         if (throwableProxy == null || builder.length() > this.maxLength) {
             return;
@@ -699,7 +701,7 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
 
     protected String getMessage(IThrowableProxy throwableProxy, ILoggingEvent event) {
-        if (event.getMarkerList()!= null && event.getMarkerList().contains(SANITIZE)){
+        if (event.getMarkerList() != null && event.getMarkerList().contains(OMIT_THROWABLE_MESSAGE)) {
             return "";
         }
         return throwableProxy.getMessage();
