@@ -60,7 +60,7 @@
         <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
         <xml-maven-plugin.version>1.2.0</xml-maven-plugin.version>
 
-        <checkstyle.version>12.0.1</checkstyle.version>
+        <checkstyle.version>12.1.0</checkstyle.version>
 
         <!-- maven-javadoc-plugin configuration -->
         <maven.javadoc.failOnError>true</maven.javadoc.failOnError>
