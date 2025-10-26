@@ -29,10 +29,13 @@ import tools.jackson.databind.cfg.MapperBuilder;
  */
 public class PrettyPrintingDecorator<M extends ObjectMapper, B extends MapperBuilder<M, B>> implements MapperBuilderDecorator<M, B> {
 
+    private static final DefaultPrettyPrinter.FixedSpaceIndenter DEFAULT_ARRAY_INDENTER = DefaultPrettyPrinter.FixedSpaceIndenter.instance();
+
     private Separators separators = PrettyPrinter.DEFAULT_SEPARATORS
             .withRootSeparator(CoreConstants.EMPTY_STRING);
 
-    private DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter(separators);
+    private DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter(separators)
+            .withArrayIndenter(DEFAULT_ARRAY_INDENTER);
 
     @Override
     public B decorate(B mapperBuilder) {
@@ -75,9 +78,9 @@ public class PrettyPrintingDecorator<M extends ObjectMapper, B extends MapperBui
      */
     public void setIndentArraysWithNewLine(boolean indentArraysWithNewLine) {
         if (indentArraysWithNewLine) {
-            prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
+            prettyPrinter = prettyPrinter.withArrayIndenter(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
         } else {
-            prettyPrinter.indentArraysWith(null);
+            prettyPrinter = prettyPrinter.withArrayIndenter(DEFAULT_ARRAY_INDENTER);
         }
     }
 }
