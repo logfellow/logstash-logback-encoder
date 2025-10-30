@@ -1,0 +1,2711 @@
+[
+    {
+        "name": "net.logstash.logback.CachingAbbreviator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.CachingAbbreviator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.stacktrace.ShortenedThrowableConverter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.stacktrace.ShortenedThrowableConverter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.stacktrace.StackElementFilter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.stacktrace.StackElementFilter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.stacktrace.StackHasher",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.stacktrace.StackHasher"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.RegexValueMasker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.RegexValueMasker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.ValueMasker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.ValueMasker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.FieldMasker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.FieldMasker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.PathBasedFieldMasker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.PathBasedFieldMasker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$ValueMask",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$ValueMask"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$ValueMaskSupplier",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$ValueMaskSupplier"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$PathMask",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$PathMask"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$PathMaskSupplier",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.MaskingJsonGeneratorDecorator$PathMaskSupplier"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.FieldNameBasedFieldMasker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.FieldNameBasedFieldMasker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.MaskingJsonGenerator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.MaskingJsonGenerator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.mask.MaskingJsonGenerator$ThrowingRunnable",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.mask.MaskingJsonGenerator$ThrowingRunnable"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.LogstashMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.LogstashMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.ObjectFieldsAppendingMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.ObjectFieldsAppendingMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.ObjectFieldsAppendingMarker$SerializerHelper",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.ObjectFieldsAppendingMarker$SerializerHelper"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.MapEntriesAppendingMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.MapEntriesAppendingMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.EmptyLogstashMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.EmptyLogstashMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.ObjectAppendingMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.ObjectAppendingMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.DeferredLogstashMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.DeferredLogstashMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.MessageFormatCache",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.MessageFormatCache"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.RawJsonAppendingMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.RawJsonAppendingMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.LogstashBasicMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.LogstashBasicMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.SingleFieldAppendingMarker",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.SingleFieldAppendingMarker"
+        }
+      },
+      {
+        "name": "net.logstash.logback.marker.Markers",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.marker.Markers"
+        }
+      },
+      {
+        "name": "net.logstash.logback.argument.DeferredStructuredArgument",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.argument.DeferredStructuredArgument"
+        }
+      },
+      {
+        "name": "net.logstash.logback.argument.StructuredArgument",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.argument.StructuredArgument"
+        }
+      },
+      {
+        "name": "net.logstash.logback.argument.StructuredArguments",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.argument.StructuredArguments"
+        }
+      },
+      {
+        "name": "net.logstash.logback.layout.LogstashLayout",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.layout.LogstashLayout"
+        }
+      },
+      {
+        "name": "net.logstash.logback.layout.CompositeJsonLayout",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.layout.CompositeJsonLayout"
+        }
+      },
+      {
+        "name": "net.logstash.logback.layout.LoggingEventCompositeJsonLayout",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.layout.LoggingEventCompositeJsonLayout"
+        }
+      },
+      {
+        "name": "net.logstash.logback.layout.LogstashAccessLayout",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.layout.LogstashAccessLayout"
+        }
+      },
+      {
+        "name": "net.logstash.logback.layout.AccessEventCompositeJsonLayout",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.layout.AccessEventCompositeJsonLayout"
+        }
+      },
+      {
+        "name": "net.logstash.logback.NullAbbreviator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.NullAbbreviator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.JsonProviders",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.JsonProviders"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider$StringFormatterWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider$StringFormatterWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider$NumberTimestampWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider$NumberTimestampWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider$TimestampWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractFormattedTimestampJsonProvider$TimestampWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.FastISOTimestampFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.FastISOTimestampFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.FastISOTimestampFormatter$TimestampPeriod",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.FastISOTimestampFormatter$TimestampPeriod"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.FastISOTimestampFormatter$ZoneOffsetState",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.FastISOTimestampFormatter$ZoneOffsetState"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.CompositeJsonFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.CompositeJsonFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.SequenceJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.SequenceJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LoggingEventThreadNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LoggingEventThreadNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.CallerDataJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.CallerDataJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ThrowableClassNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ThrowableClassNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LoggingEventJsonProviders"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.MessageJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.MessageJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ThreadNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ThrowableRootCauseClassNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ThrowableRootCauseClassNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LoggingEventFormattedTimestampJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.AbstractThrowableMessageJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.AbstractThrowableMessageJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.StackHashJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.StackHashJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ThrowableMessageJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ThrowableMessageJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.SequenceJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.SequenceJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.MdcJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.MdcJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.RootStackTraceElementJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.RootStackTraceElementJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LogLevelValueJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ContextNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ContextNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LoggingEventPatternJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.RawMessageJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.RawMessageJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LoggingEventCompositeJsonFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ArgumentsJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ThrowableRootCauseMessageJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ThrowableRootCauseMessageJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.UuidProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.UuidProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.AbstractThrowableClassNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.AbstractThrowableClassNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.TagsJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.TagsJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LoggingEventNestedJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LoggingEventNestedJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.StackTraceJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.StackTraceJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LogLevelJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LogLevelJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.LoggerNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.loggingevent.ThrowableSelectors",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.loggingevent.ThrowableSelectors"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.ContextJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.ContextJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.FormattedTimestampJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.FormattedTimestampJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractThreadNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractThreadNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.JsonWritingUtils",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.JsonWritingUtils"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.AccessEventCompositeJsonFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.ElapsedTimeJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.RequestedUrlJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.RequestedUrlJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.MethodJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.MethodJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.StatusCodeJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.StatusCodeJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.AccessEventPatternJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.AccessEventPatternJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.ProtocolJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.ProtocolJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.AccessEventThreadNameJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.AccessEventThreadNameJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.AccessMessageJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.AccessMessageJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.AccessEventJsonProviders",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.AccessEventJsonProviders"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.ResponseHeadersJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.RemoteUserJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.RemoteUserJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.HeaderFilter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.HeaderFilter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.AccessEventFormattedTimestampJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.AccessEventFormattedTimestampJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.RemoteHostJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.RemoteHostJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.ContentLengthJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.ContentLengthJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.AccessEventNestedJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.AccessEventNestedJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.IncludeExcludeHeaderFilter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.RequestedUriJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.RequestedUriJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.accessevent.RequestHeadersJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.accessevent.RequestHeadersJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.FieldNamesAware",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.FieldNamesAware"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.LogstashVersionJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.LogstashVersionJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.JsonReadingUtils",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.JsonReadingUtils"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.GlobalCustomFieldsJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.GlobalCustomFieldsJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractCompositeJsonFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractCompositeJsonFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractCompositeJsonFormatter$DisconnectedOutputStream",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractCompositeJsonFormatter$DisconnectedOutputStream"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractCompositeJsonFormatter$JsonFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractCompositeJsonFormatter$JsonFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractFieldJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractFieldJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.UuidJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.UuidJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractPatternJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractPatternJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.JsonFactoryAware",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.JsonFactoryAware"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.AbstractNestedJsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.AbstractNestedJsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.composite.JsonProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.composite.JsonProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.status.DelegatingStatusListener",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.status.DelegatingStatusListener"
+        }
+      },
+      {
+        "name": "net.logstash.logback.status.LevelFilteringStatusListener",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.status.LevelFilteringStatusListener"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.destination.DelegateDestinationConnectionStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.destination.DelegateDestinationConnectionStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.destination.RoundRobinDestinationConnectionStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.destination.DestinationConnectionStrategyWithTtl",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.destination.DestinationConnectionStrategyWithTtl"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.destination.RandomDestinationConnectionStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.destination.DestinationConnectionStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.destination.DestinationConnectionStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.destination.DestinationParser",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.destination.DestinationParser"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.destination.PreferPrimaryDestinationConnectionStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.destination.PreferPrimaryDestinationConnectionStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.LogstashAccessUdpSocketAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.LogstashAccessUdpSocketAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.LogstashTcpSocketAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.LogstashTcpSocketAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender$UnconnectedConfigurableSSLSocketFactory",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender$UnconnectedConfigurableSSLSocketFactory"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender$EncoderException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender$EncoderException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender$TcpSendingEventHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AbstractLogstashTcpSocketAppender$TcpSendingEventHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AbstractLogstashUdpSocketAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AbstractLogstashUdpSocketAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.LogstashAccessTcpSocketAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.LogstashAccessTcpSocketAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.RingBufferFullException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.RingBufferFullException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.AccessEventTcpAppenderListenerImpl",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.AccessEventTcpAppenderListenerImpl"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.FailureSummaryLoggingAppenderListener"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.LoggingEventAppenderListenerImpl",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.LoggingEventAppenderListenerImpl"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.LoggingEventTcpAppenderListenerImpl",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.LoggingEventTcpAppenderListenerImpl"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.TcpAppenderListener",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.TcpAppenderListener"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.AccessEventAppenderListenerImpl",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.AccessEventAppenderListenerImpl"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.AppenderListener",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.AppenderListener"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$FailingState",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$FailingState"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$State",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$State"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$FailureSummary",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$FailureSummary"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$CallbackType",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.listener.FailureSummaryAppenderListener$CallbackType"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.WaitStrategyFactory",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.WaitStrategyFactory"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.LoggingEventAsyncDisruptorAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AccessEventAsyncDisruptorAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AccessEventAsyncDisruptorAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.DelegatingAsyncDisruptorAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.DelegatingAsyncDisruptorAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.DelegatingAsyncDisruptorAppender$DelegatingEventHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.DelegatingAsyncDisruptorAppender$DelegatingEventHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.LogstashUdpSocketAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.LogstashUdpSocketAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AsyncDisruptorAppender",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AsyncDisruptorAppender"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AsyncDisruptorAppender$EventClearingEventHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AsyncDisruptorAppender$EventClearingEventHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEventExceptionHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEventExceptionHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEventTranslator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEventTranslator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AsyncDisruptorAppender$WorkerThreadFactory",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AsyncDisruptorAppender$WorkerThreadFactory"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEventFactory",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEventFactory"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEvent",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.AsyncDisruptorAppender$LogEvent"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.ShutdownInProgressException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.ShutdownInProgressException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.appender.NotConnectedException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.appender.NotConnectedException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.fieldnames.Pre50LogstashAccessFieldNames",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.fieldnames.Pre50LogstashAccessFieldNames"
+        }
+      },
+      {
+        "name": "net.logstash.logback.fieldnames.ShortenedFieldNames",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.fieldnames.ShortenedFieldNames"
+        }
+      },
+      {
+        "name": "net.logstash.logback.fieldnames.LogstashAccessFieldNames",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.fieldnames.LogstashAccessFieldNames"
+        }
+      },
+      {
+        "name": "net.logstash.logback.fieldnames.LogstashFieldNames",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.fieldnames.LogstashFieldNames"
+        }
+      },
+      {
+        "name": "net.logstash.logback.fieldnames.LogstashCommonFieldNames",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.fieldnames.LogstashCommonFieldNames"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AccessEventJsonPatternParser",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AccessEventJsonPatternParser"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AccessEventJsonPatternParser$NullNaValueOperation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AccessEventJsonPatternParser$NullNaValueOperation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.NodeWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.NodeWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.LoggingEventJsonPatternParser",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.LoggingEventJsonPatternParser"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.EnhancedPropertyConverter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.EnhancedPropertyConverter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$JsonPatternException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$JsonPatternException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$NullExcludingTokenFilter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$NullExcludingTokenFilter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$ReusableFilteringGenerator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$ReusableFilteringGenerator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$OmitEmptyFieldWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$OmitEmptyFieldWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$RootWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$RootWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$ValueWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$ValueWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$ArrayWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$ArrayWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$ObjectWriter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$ObjectWriter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$LayoutValueGetter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$LayoutValueGetter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsNullIfEmptyOperation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsNullIfEmptyOperation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$TryJsonOperation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$TryJsonOperation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsJsonOperation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsJsonOperation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsBooleanOperation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsBooleanOperation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsDoubleOperation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsDoubleOperation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsLongOperation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$AsLongOperation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.AbstractJsonPatternParser$Operation",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.AbstractJsonPatternParser$Operation"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.ValueGetter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.ValueGetter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.PatternLayoutAdapter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.PatternLayoutAdapter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.pattern.PatternLayoutAdapter$HeadConverterCapture",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.pattern.PatternLayoutAdapter$HeadConverterCapture"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.SimpleObjectJsonGeneratorDelegate",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.SimpleObjectJsonGeneratorDelegate"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.ProxyOutputStream",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.ProxyOutputStream"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.ThreadLocalReusableByteBuffer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.ThreadLocalReusableByteBuffer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.TimeZoneUtils",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.TimeZoneUtils"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.StringUtils",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.StringUtils"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.ReusableByteBuffer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.ReusableByteBuffer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.ThreadLocalHolder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.ThreadLocalHolder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.ThreadLocalHolder$HolderRef",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.ThreadLocalHolder$HolderRef"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.ThreadLocalHolder$Holder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.ThreadLocalHolder$Holder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.util.ThreadLocalHolder$Lifecycle",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.util.ThreadLocalHolder$Lifecycle"
+        }
+      },
+      {
+        "name": "net.logstash.logback.LogstashFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.LogstashFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.FeatureDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.FeatureDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.JsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.JsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.PrettyPrintingJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.NullJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.NullJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.FeatureJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.FeatureJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.CompositeJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.CompositeJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator$Escape",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator$Escape"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator$CustomizedCharacterEscapes",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.CharacterEscapesJsonFactoryDecorator$CustomizedCharacterEscapes"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.FeatureJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.FeatureJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.NullJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.NullJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.CompositeJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.CompositeJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.smile.SmileFeatureJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.smile.SmileFeatureJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.smile.SmileJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.EscapeNonAsciiJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.EscapeNonAsciiJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.cbor.CborFeatureJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.cbor.CborFeatureJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.cbor.CborJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.cbor.CborJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.yaml.YamlFeatureJsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.yaml.YamlFeatureJsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.yaml.YamlJsonFactoryDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.yaml.YamlJsonFactoryDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.decorate.JsonGeneratorDecorator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.decorate.JsonGeneratorDecorator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.LogstashAccessFormatter",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.LogstashAccessFormatter"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.CompositeJsonEncoder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.CompositeJsonEncoder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.SeparatorParser",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.SeparatorParser"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.StreamingEncoder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.StreamingEncoder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.LogstashAccessEncoder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.LogstashAccessEncoder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.LogstashEncoder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.LogstashEncoder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.AccessEventCompositeJsonEncoder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.AccessEventCompositeJsonEncoder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.SequenceGroups",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.SequenceGroups"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.SingleProducerSequencerFields",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.SingleProducerSequencerFields"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.SleepingWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.SleepingWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.MultiProducerSequencer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.MultiProducerSequencer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.BusySpinWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.BusySpinWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.LhsPadding",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.LhsPadding"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.ExceptionHandlers",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.ExceptionHandlers"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.ExceptionHandlers$DefaultExceptionHandlerHolder",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.ExceptionHandlers$DefaultExceptionHandlerHolder"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.util.ThreadHints",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.util.ThreadHints"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.util.Util",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.util.Util"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.RhsPadding",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.RhsPadding"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventFactory",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventFactory"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.ExceptionHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.ExceptionHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.Value",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.Value"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.AlertException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.AlertException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.DataProvider",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.DataProvider"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.Sequence",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.Sequence"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.Sequencer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.Sequencer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.WorkHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.WorkHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.ProcessingSequenceBarrier",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.ProcessingSequenceBarrier"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.TimeoutException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.TimeoutException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorThreeArg",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorThreeArg"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.Sequenced",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.Sequenced"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.PhasedBackoffWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.PhasedBackoffWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.SequenceReportingEventHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.SequenceReportingEventHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventSequencer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventSequencer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventReleaseAware",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventReleaseAware"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.BatchStartAware",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.BatchStartAware"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.BlockingWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.BlockingWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.TimeoutBlockingWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.TimeoutBlockingWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorTwoArg",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorTwoArg"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.WorkProcessor",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.WorkProcessor"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorVararg",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorVararg"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.RingBufferPad",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.RingBufferPad"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.LifecycleAware",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.LifecycleAware"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslator",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslator"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.LiteBlockingWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.LiteBlockingWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.TimeoutHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.TimeoutHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.SingleProducerSequencerPad",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.SingleProducerSequencerPad"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.RingBuffer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.RingBuffer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.RingBufferFields",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.RingBufferFields"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventSink",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventSink"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.SingleProducerSequencer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.SingleProducerSequencer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.FatalExceptionHandler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.FatalExceptionHandler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.YieldingWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.YieldingWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.InsufficientCapacityException",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.InsufficientCapacityException"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventPoller",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventPoller"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventPoller$PollState",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventPoller$PollState"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventPoller$Handler",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventPoller$Handler"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ConsumerRepository",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ConsumerRepository"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ExceptionHandlerWrapper",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ExceptionHandlerWrapper"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.Disruptor",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.Disruptor"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.BasicExecutor",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.BasicExecutor"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ExceptionHandlerSetting",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ExceptionHandlerSetting"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.WorkerPoolInfo",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.WorkerPoolInfo"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.EventProcessorFactory",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.EventProcessorFactory"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ProducerType",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ProducerType"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ConsumerInfo",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.ConsumerInfo"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.EventProcessorInfo",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.EventProcessorInfo"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.EventHandlerGroup",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.dsl.EventHandlerGroup"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.SequenceBarrier",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.SequenceBarrier"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.WorkerPool",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.WorkerPool"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.LiteTimeoutBlockingWaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.LiteTimeoutBlockingWaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.Cursored",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.Cursored"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.FixedSequenceGroup",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.FixedSequenceGroup"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventReleaser",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventReleaser"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventProcessor",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventProcessor"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorOneArg",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.EventTranslatorOneArg"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.WaitStrategy",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.WaitStrategy"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.AbstractSequencer",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.AbstractSequencer"
+        }
+      },
+      {
+        "name": "net.logstash.logback.encoder.com.lmax.disruptor.BatchEventProcessor",
+        "allDeclaredFields": true,
+        "allDeclaredMethods": true,
+        "allDeclaredConstructors": true,
+        "condition": {
+          "typeReachable": "net.logstash.logback.encoder.com.lmax.disruptor.BatchEventProcessor"
+        }
+      }
+]
