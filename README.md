@@ -92,7 +92,8 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Joran/XML Configuration](#joranxml-configuration)
 	* [Duration Property](#duration-property)
 	* [Comma separated list of values](#comma-separated-list-of-values)
-
+* [Clouds](#clouds)
+    * [GCP](#gcp)
 
 ## Including it in your project
 
@@ -3417,6 +3418,11 @@ If needed, the comma delimiter may be escaped by prefixing it with a backslash (
 <property>foo\,bar</property>
 ```
 
+## Clouds
+
+### GCP
+
+[This blog post](https://github.com/vorburger/vorburger.ch-Notes/blob/develop/java/logback-cloudlogging.md) describes how to configure `logback.xml` for correctly mapping fields for _Google Cloud Structured Logging_ with this library.
 
 ## Profiling
 
