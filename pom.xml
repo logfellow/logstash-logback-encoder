@@ -550,7 +550,6 @@
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-core/${logback-core.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback-core.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback.access/logback-access-common/${logback-access.version}</link>
-
                             <link>https://javadoc.io/doc/tools.jackson.core/jackson-core/${jackson.version}</link>
                             <link>https://javadoc.io/doc/tools.jackson.core/jackson-databind/${jackson.version}</link>
                         </links>
