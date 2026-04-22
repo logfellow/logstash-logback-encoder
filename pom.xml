@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <jackson.version>3.1.0</jackson.version>
+        <jackson.version>3.1.2</jackson.version>
         <java-uuid-generator.version>5.1.1</java-uuid-generator.version>
         <logback-core.version>1.5.20</logback-core.version>
         <logback-access.version>2.0.6</logback-access.version>
@@ -551,15 +551,8 @@
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback-core.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback.access/logback-access-common/${logback-access.version}</link>
 
-                            <!--
-                            Disabled for security update to jackson 3.1.0.
-                            Blocks the build, since javadoc can not be downloaded.
-                            https://github.com/FasterXML/jackson-core/issues/1561
-                            needs to be reenabled when javadoc is available.
-                            
                             <link>https://javadoc.io/doc/tools.jackson.core/jackson-core/${jackson.version}</link>
                             <link>https://javadoc.io/doc/tools.jackson.core/jackson-databind/${jackson.version}</link>
-                            -->
                         </links>
                         
                         <!-- Explicitly set version. This should help to get rid of the following
