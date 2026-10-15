@@ -96,7 +96,7 @@ public abstract class AbstractJsonPatternParser<Event> {
         @Override
         public Long apply(String value) {
             try {
-                return Long.parseLong(value);
+                return Long.parseLong(StringUtils.trim(value));
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException("Failed to convert '" + value + "' into a Long numeric value");
             }

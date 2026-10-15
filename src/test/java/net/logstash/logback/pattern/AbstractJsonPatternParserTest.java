@@ -17,9 +17,11 @@ package net.logstash.logback.pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import java.io.StringWriter;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import net.logstash.logback.pattern.AbstractJsonPatternParser.JsonPatternException;
 import net.logstash.logback.test.AbstractLogbackTest;
@@ -28,6 +30,9 @@ import ch.qos.logback.core.Context;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.JsonParser;
@@ -168,28 +173,53 @@ public abstract class AbstractJsonPatternParserTest<Event> extends AbstractLogba
         verifyFields(pattern, expected);
     }
 
-    @Test
-    public void asLongShouldTransformTextValueToLong() throws JsonPatternException {
+    @ParameterizedTest
+    @MethodSource("longValues")
+    public void asLongShouldTransformTextValueToLong(String value, Long expected) throws JsonPatternException {
+        String pattern = jsonMapper.writeValueAsString(Map.of("key", "#asLong{" + value + "}"));
 
-        String pattern = toJson(
-                "{ 'key': '#asLong{555}' }");
-
-        String expected = toJson(
-                "{ 'key': 555 }");
-
-        verifyFields(pattern, expected);
+        verifyFields(pattern, toJson("{ 'key': " + expected + " }"));
     }
 
-    @Test
-    public void asDoubleShouldTransformTextValueToDouble() throws JsonPatternException {
+    private static Stream<Arguments> longValues() {
+        return Stream.of(
+                arguments("555", 555L),
+                arguments(" 555", 555L),
+                arguments("555 ", 555L),
+                arguments("\t555\t", 555L),
+                arguments(" +555 ", 555L),
+                arguments(" -555 ", -555L),
+                arguments(" 9223372036854775807 ", Long.MAX_VALUE),
+                arguments(" -9223372036854775808 ", Long.MIN_VALUE),
+                arguments(" 9223372036854775808 ", null),
+                arguments(" -9223372036854775809 ", null),
+                arguments("", null),
+                arguments(" \t", null),
+                arguments(" abc ", null),
+                arguments(" 5 55 ", null),
+                arguments(" 5.5 ", null));
+    }
 
-        String pattern = toJson(
-                "{ 'key': '#asDouble{0.5}' }");
+    @ParameterizedTest
+    @MethodSource("doubleValues")
+    public void asDoubleShouldTransformTextValueToDouble(String value, Double expected) throws JsonPatternException {
+        String pattern = jsonMapper.writeValueAsString(Map.of("key", "#asDouble{" + value + "}"));
 
-        String expected = toJson(
-                "{ 'key': 0.5 }");
+        verifyFields(pattern, toJson("{ 'key': " + expected + " }"));
+    }
 
-        verifyFields(pattern, expected);
+    private static Stream<Arguments> doubleValues() {
+        return Stream.of(
+                arguments("0.5", 0.5),
+                arguments(" 0.5", 0.5),
+                arguments("0.5 ", 0.5),
+                arguments("\t0.5\t", 0.5),
+                arguments(" +0.5 ", 0.5),
+                arguments(" -0.5 ", -0.5),
+                arguments("", null),
+                arguments(" \t", null),
+                arguments(" abc ", null),
+                arguments(" 0 .5 ", null));
     }
 
     @Test
