@@ -145,6 +145,38 @@ public class ShortenedThrowableConverterTest {
     }
     
     @Test
+    public void testMaxLengthShorterThanTruncationSuffix() {
+        for (String separator : Arrays.asList("\n", "\r\n", "[newline]", "")) {
+            String suffix = "..." + separator;
+            for (int maxLength = 1; maxLength <= suffix.length(); maxLength++) {
+                ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+                converter.setLineSeparator(separator);
+                converter.setMaxLength(maxLength);
+                converter.start();
+
+                assertThat(convert(converter, new RuntimeException("message")))
+                    .isEqualTo(suffix.substring(0, maxLength));
+            }
+        }
+    }
+
+    @Test
+    public void testEmptyLineSeparator() {
+        RuntimeException throwable = new RuntimeException("message");
+        ShortenedThrowableConverter reference = new ShortenedThrowableConverter();
+        reference.setLineSeparator("|");
+        reference.start();
+        String expected = convert(reference, throwable).replace("|", "");
+
+        for (String separator : Arrays.asList(null, "")) {
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setLineSeparator(separator);
+            converter.start();
+            assertThat(convert(converter, throwable)).isEqualTo(expected);
+        }
+    }
+
+    @Test
     public void testMaxLength_invalidLength() {
         ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
 
