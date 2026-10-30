@@ -28,6 +28,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Context;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.databind.ObjectMapper;
@@ -86,6 +88,21 @@ public class LoggingEventJsonPatternParserTest extends AbstractJsonPatternParser
                   "{                             "
                 + "    'mdc.key1': 'value1'      "
                 + "}                             ");
+
+        verifyFields(pattern, expected);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {" 42 ", "\t+42\r\n"})
+    public void shouldConvertPaddedMdcNumbers(String value) throws JsonPatternException {
+        mdc.put("count", value);
+        mdc.put("blank", " \t\r\n");
+
+        String pattern = toJson("{ 'long': '#asLong{%mdc{count}}', 'double': '#asDouble{%mdc{count}}',"
+                + " 'blankLong': '#asLong{%mdc{blank}}', 'blankDouble': '#asDouble{%mdc{blank}}',"
+                + " 'missingLong': '#asLong{%mdc{missing}}', 'missingDouble': '#asDouble{%mdc{missing}}' }");
+        String expected = toJson("{ 'long': 42, 'double': 42.0, 'blankLong': null, 'blankDouble': null,"
+                + " 'missingLong': null, 'missingDouble': null }");
 
         verifyFields(pattern, expected);
     }
