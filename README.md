@@ -457,7 +457,7 @@ The <tt>secondaryConnectionTTL</tt> value does not affect connections to the
 <em>primary</em> destination.
 <br/><br/>
 The <tt>minConnectionTimeBeforePrimary</tt> (10 seconds by default) specifies
-the minimum amount of time that a sucessfully established connection
+the minimum amount of time that a successfully established connection
 must remain open before the next connection attempt will try the primary.
 i.e. If a connection stays open less than this amount of time,
 then the next connection attempt will attempt the next destination (instead of the primary).
