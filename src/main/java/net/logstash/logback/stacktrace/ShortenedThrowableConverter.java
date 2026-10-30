@@ -354,8 +354,9 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             appendRootCauseLast(builder, null, ThrowableProxyUtil.REGULAR_EXCEPTION_INDENT, throwableProxy, stackHashes, event);
         }
         if (builder.length() > this.maxLength) {
-            builder.setLength(this.maxLength - ELLIPSIS.length() - getLineSeparator().length());
+            builder.setLength(Math.max(0, this.maxLength - ELLIPSIS.length() - getLineSeparator().length()));
             builder.append(ELLIPSIS).append(getLineSeparator());
+            builder.setLength(this.maxLength);
         }
         return builder.toString();
     }
@@ -378,7 +379,8 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
      * @param lineSeparator the line separator
      */
     public void setLineSeparator(String lineSeparator) {
-        this.lineSeparator = SeparatorParser.parseSeparator(lineSeparator);
+        String parsedSeparator = SeparatorParser.parseSeparator(lineSeparator);
+        this.lineSeparator = parsedSeparator == null ? "" : parsedSeparator;
     }
 
     public String getLineSeparator() {
