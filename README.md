@@ -22,41 +22,41 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Including it in your project](#including-it-in-your-project)
 * [Java Version Requirements](#java-version-requirements)
 * [Usage](#usage)
-	* [UDP Appenders](#udp-appenders)
-	* [TCP Appenders](#tcp-appenders)
-		* [Keep-alive](#keep-alive)
-		* [Multiple Destinations](#multiple-destinations)
-		* [Reconnection Delay](#reconnection-delay)
-		* [Connection Timeout](#connection-timeout)
-		* [Write Buffer Size](#write-buffer-size)
-		* [Write Timeout](#write-timeout)
-		* [Initial Send Delay](#initial-send-delay)
-		* [SSL](#ssl)
-	* [Async Appenders](#async-appenders)
-		* [RingBuffer Size](#ringbuffer-size)
-		* [RingBuffer Full](#ringbuffer-full)
-		* [Graceful Shutdown](#graceful-shutdown)
-		* [Wait Strategy](#wait-strategy)
-	* [Appender Listeners](#appender-listeners)
-	* [Encoders / Layouts](#encoders--layouts)
+  * [UDP Appenders](#udp-appenders)
+  * [TCP Appenders](#tcp-appenders)
+    * [Keep-alive](#keep-alive)
+    * [Multiple Destinations](#multiple-destinations)
+    * [Reconnection Delay](#reconnection-delay)
+    * [Connection Timeout](#connection-timeout)
+    * [Write Buffer Size](#write-buffer-size)
+    * [Write Timeout](#write-timeout)
+    * [Initial Send Delay](#initial-send-delay)
+    * [SSL](#ssl)
+  * [Async Appenders](#async-appenders)
+    * [RingBuffer Size](#ringbuffer-size)
+    * [RingBuffer Full](#ringbuffer-full)
+    * [Graceful Shutdown](#graceful-shutdown)
+    * [Wait Strategy](#wait-strategy)
+  * [Appender Listeners](#appender-listeners)
+  * [Encoders / Layouts](#encoders--layouts)
     * [Threads and ThreadLocals](#threads-and-threadlocals)
 * [LoggingEvent Fields](#loggingevent-fields)
-	* [Standard Fields](#standard-fields)
-	* [MDC fields](#mdc-fields)
-	* [Key Value Pair fields](#key-value-pair-fields)
-	* [Context fields](#context-fields)
-	* [Caller Info Fields](#caller-info-fields)
-	* [Custom Fields](#custom-fields)
-		* [Global Custom Fields](#global-custom-fields)
-		* [Event-specific Custom Fields](#event-specific-custom-fields)
+  * [Standard Fields](#standard-fields)
+  * [MDC fields](#mdc-fields)
+  * [Key Value Pair fields](#key-value-pair-fields)
+  * [Context fields](#context-fields)
+  * [Caller Info Fields](#caller-info-fields)
+  * [Custom Fields](#custom-fields)
+    * [Global Custom Fields](#global-custom-fields)
+    * [Event-specific Custom Fields](#event-specific-custom-fields)
 * [AccessEvent Fields](#accessevent-fields)
-	* [Standard Fields](#standard-fields-1)
-	* [Header Fields](#header-fields)
+  * [Standard Fields](#standard-fields-1)
+  * [Header Fields](#header-fields)
 * [Customizing Jackson](#customizing-jackson)
-	* [Data Format](#data-format)
-	* [Customizing TokenStreamFactory, ObjectMapper, and JsonGenerator](#customizing-tokenstreamfactory-objectmapper-and-jsongenerator)
-	* [Registering Jackson Modules](#registering-jackson-modules)
-	* [Customizing Character Escapes](#customizing-character-escapes)
+  * [Data Format](#data-format)
+  * [Customizing TokenStreamFactory, ObjectMapper, and JsonGenerator](#customizing-tokenstreamfactory-objectmapper-and-jsongenerator)
+  * [Registering Jackson Modules](#registering-jackson-modules)
+  * [Customizing Character Escapes](#customizing-character-escapes)
 * [Masking](#masking)
 * [Customizing Standard Field Names](#customizing-standard-field-names)
 * [Customizing Version](#customizing-version)
@@ -80,18 +80,18 @@ The structure of the output, and the data it contains, is fully configurable.
 * [Registering Additional Providers](#registering-additional-providers)
 * [Prefix/Suffix/Separator](#prefixsuffixseparator)
 * [Composite Encoder/Layout](#composite-encoderlayout)
-	* [Providers common to LoggingEvents and AccessEvents](#providers-common-to-loggingevents-and-accessevents)
-	* [Providers for LoggingEvents](#providers-for-loggingevents)
-	* [Providers for AccessEvents](#providers-for-accessevents)
-	* [Nested JSON Provider](#nested-json-provider)
-	* [Pattern JSON Provider](#pattern-json-provider)
-		* [LoggingEvent patterns](#loggingevent-patterns)
-		* [AccessEvent patterns](#accessevent-patterns)
-	* [Custom JSON Provider](#custom-json-provider)
+  * [Providers common to LoggingEvents and AccessEvents](#providers-common-to-loggingevents-and-accessevents)
+  * [Providers for LoggingEvents](#providers-for-loggingevents)
+  * [Providers for AccessEvents](#providers-for-accessevents)
+  * [Nested JSON Provider](#nested-json-provider)
+  * [Pattern JSON Provider](#pattern-json-provider)
+    * [LoggingEvent patterns](#loggingevent-patterns)
+    * [AccessEvent patterns](#accessevent-patterns)
+  * [Custom JSON Provider](#custom-json-provider)
 * [Status Listeners](#status-listeners)
 * [Joran/XML Configuration](#joranxml-configuration)
-	* [Duration Property](#duration-property)
-	* [Comma separated list of values](#comma-separated-list-of-values)
+  * [Duration Property](#duration-property)
+  * [Comma separated list of values](#comma-separated-list-of-values)
 
 
 ## Including it in your project
@@ -102,18 +102,31 @@ Maven style:
 <dependency>
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>9.0</version>
+    <version>${logstash-logback-encoder.version}</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logstash-logback-encoder,
          such as usage of StructuredArguments/Markers or implementations such as
          JsonProvider, AppenderListener, JsonFactoryDecorator, JsonGeneratorDecorator, etc
     <scope>runtime</scope>
     -->
 </dependency>
+
+<!-- Your project must directly depend on jackson-databind. For example: -->
+<dependency>
+    <groupId>tools.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>${jackson-databind.version}</version>
+    <!-- Use runtime scope if the project does not have any compile-time usage of jackson.
+         For example, if the project only uses logstash-logback-encoder's appenders/encoders/layouts,
+         and does not use any jackson classes directly, then you can use runtime scope.
+    <scope>runtime</scope>
+    -->
+</dependency>
+
 <!-- Your project must also directly depend on either logback-classic or logback-access. For example: -->
 <dependency>
     <groupId>ch.qos.logback</groupId>
     <artifactId>logback-classic</artifactId>
-    <version>1.5.20</version>
+    <version>${logback-classic.version}</version>
     <!-- Use runtime scope if the project does not have any compile-time usage of logback,
          such as implementations of Appender, Encoder, Layout, TurboFilter, etc
     <scope>runtime</scope>
@@ -126,7 +139,7 @@ then ensure the required dependencies (and appropriate versions) as specified in
 from the maven repository exist on the runtime classpath.
 Specifically, the following need to be available on the runtime classpath:
 
-* jackson-databind / jackson-core / jackson-annotations >= 3.0.0
+* jackson-databind / jackson-core >= 3.0.0
 * logback-core >= 1.5.0
 * logback-classic >= 1.5.0 (required for logging _LoggingEvents_)
 * logback-access >= 2.0.0 (required for logging _AccessEvents_)
@@ -137,12 +150,13 @@ Older versions than the ones specified in the pom file _might_ work, but the ver
 Support for logback versions prior to 1.3.0 was removed in logstash-logback-encoder 7.4.
 Support for jackson versions prior to 3.0.0 was removed in logstash-logback-encoder 9.0.
 
-If you are using logstash-logback-encoder in a project (such as spring-boot) that also declares dependencies on any of the above libraries, you might need to tell maven explicitly which versions to use to avoid conflicts.
+If you are using logstash-logback-encoder in a project that also declares dependencies on any of the above libraries, you might need to tell maven explicitly which versions to use to avoid conflicts.
 You can do so using maven's [dependencyManagement](https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html#Dependency_Management) feature.
 For example, to ensure that maven doesn't pick different versions of logback-core, logback-classic, and logback-access, add this to your project's pom.xml
 
 ```xml
 <properties>
+    <jackson.version>3.2.4</jackson.version>
     <logback-classic.version>1.5.20</logback-classic.version>
     <logback-access.version>2.0.6</logback-access.version>
 </properties>
@@ -163,6 +177,13 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
             <artifactId>logback-access-common</artifactId>
             <version>${logback-access.version}</version>
         </dependency>
+        <dependency>
+            <groupId>tools.jackson</groupId>
+            <artifactId>jackson-bom</artifactId>
+            <version>${jackson.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
     </dependencies>
 </dependencyManagement>
 ```
@@ -171,6 +192,7 @@ For example, to ensure that maven doesn't pick different versions of logback-cor
 
 | logstash-logback-encoder | Minimum Java Version supported |
 |--------------------------|--------------------------------|
+| 10.x                     | 17                             |
 | 9.x                      | 17                             |
 | 8.x                      | 11                             |
 | 7.x                      | 8                              |
@@ -1642,9 +1664,9 @@ is a stacktrace line:
 ```xml
 <encoder class="net.logstash.logback.encoder.LogstashEncoder">
     <decorator class="net.logstash.logback.decorate.PrettyPrintingDecorator">
-		<indentArraysWithNewLine>true</indentArraysWithNewLine>
+        <indentArraysWithNewLine>true</indentArraysWithNewLine>
     </decorator>
-	<writeStackTraceAsArray>true</writeStackTraceAsArray>
+    <writeStackTraceAsArray>true</writeStackTraceAsArray>
 </encoder>
 ```
 
@@ -2452,8 +2474,8 @@ The remaining options can appear in any order and are interpreted as follows:
 - keyword `omitCommonFrames` - indicating that common frames should be omitted
 - keyword `keepCommonFrames` - indicating that common frames should be preserved
 - any other string:
-	- first evaluated as the name of a registered Evaluator that will determine if the stacktrace is ignored,
-	- if no evaluator is found with that name, the string is interpreted as a regex pattern for stack trace elements to exclude
+  - first evaluated as the name of a registered Evaluator that will determine if the stacktrace is ignored,
+  - if no evaluator is found with that name, the string is interpreted as a regex pattern for stack trace elements to exclude
 
 For example,
 

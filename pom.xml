@@ -4,7 +4,7 @@
 
     <groupId>net.logstash.logback</groupId>
     <artifactId>logstash-logback-encoder</artifactId>
-    <version>9.1-SNAPSHOT</version>
+    <version>10.0-SNAPSHOT</version>
 
     <name>Logstash Logback Encoder</name>
     <description>Provides logback encoders, layouts, and appenders to log in JSON and other formats supported by Jackson</description>
@@ -23,44 +23,44 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- runtime dependencies -->
-        <jackson.version>3.0.1</jackson.version>
+        <jackson.version>3.2.4</jackson.version>
         <java-uuid-generator.version>5.1.1</java-uuid-generator.version>
-        <logback-core.version>1.5.20</logback-core.version>
-        <logback-access.version>2.0.6</logback-access.version>
+        <logback-core.version>1.6.6</logback-core.version>
+        <logback-access.version>2.0.15</logback-access.version>
 
         <!-- shaded runtime dependencies -->
         <disruptor.version>4.0.0</disruptor.version>
 
         <!-- test dependencies -->
-        <assertj.version>3.27.6</assertj.version>
+        <assertj.version>3.27.7</assertj.version>
         <awaitility.version>4.3.0</awaitility.version>
-        <junit.version>6.0.0</junit.version>
-        <mockito.version>5.20.0</mockito.version>
+        <junit.version>6.1.3</junit.version>
+        <mockito.version>5.24.0</mockito.version>
 
         <!-- maven plugins -->
-        <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
-        <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.6.2</build-helper-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
         <extra-enforcer-rules.version>1.11.0</extra-enforcer-rules.version>
-        <flatten-maven-plugin.version>1.7.3</flatten-maven-plugin.version>
-        <jacoco-maven-plugin.version>0.8.14</jacoco-maven-plugin.version>
-        <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
-        <maven-bundle-plugin.version>6.0.0</maven-bundle-plugin.version>
+        <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.16</jacoco-maven-plugin.version>
+        <license-maven-plugin.version>5.1.2</license-maven-plugin.version>
+        <maven-bundle-plugin.version>6.2.0</maven-bundle-plugin.version>
         <maven-checkstyle-plugin.version>3.6.0</maven-checkstyle-plugin.version>
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
-        <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
-        <maven-enforcer-plugin.version>3.6.2</maven-enforcer-plugin.version>
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-enforcer-plugin.version>3.7.0</maven-enforcer-plugin.version>
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
-        <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
-        <maven-jar-plugin.version>3.4.2</maven-jar-plugin.version>
+        <maven-install-plugin.version>3.2.0</maven-install-plugin.version>
+        <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-        <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
-        <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
-        <maven-shade-plugin.version>3.6.1</maven-shade-plugin.version>
-        <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
-        <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
-        <xml-maven-plugin.version>1.2.0</xml-maven-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <maven-shade-plugin.version>3.6.2</maven-shade-plugin.version>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+        <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
+        <xml-maven-plugin.version>1.2.2</xml-maven-plugin.version>
 
-        <checkstyle.version>12.1.0</checkstyle.version>
+        <checkstyle.version>12.3.1</checkstyle.version>
 
         <!-- maven-javadoc-plugin configuration -->
         <maven.javadoc.failOnError>true</maven.javadoc.failOnError>
@@ -170,6 +170,11 @@
         <dependency>
             <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <!--
+               "provided" since users of logstash-logback-encoder must also
+               directly depend on jackson-databind to specify the version to use.
+            -->
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>tools.jackson.dataformat</groupId>
@@ -266,7 +271,7 @@
                                     <version>[11,)</version>
                                 </requireJavaVersion>
                                 <requireMavenVersion>
-                                    <version>[3.5.0,)</version>
+                                    <version>[3.6.3,)</version>
                                 </requireMavenVersion>
                                 
                                 <!-- Verify that there are no classes in dependencies having bytecode versions
@@ -352,7 +357,24 @@
                 <artifactId>flatten-maven-plugin</artifactId>
                 <version>${flatten-maven-plugin.version}</version>
                 <configuration>
-                    <flattenMode>ossrh</flattenMode>
+                    <pomElements>
+                        <name>keep</name>
+                        <description>keep</description>
+                        <url>keep</url>
+                        <scm>keep</scm>
+                        <developers>keep</developers>
+                        <!--
+                            Do not include dependencies in published pom.
+                            Require users to depend on various dependencies directly to specify the version to use.
+                            Prevents logstash-logback-encoder from having to release new versions to "keep up"
+                            with the latest versions of various dependencies.
+
+                            jackson-databind is required
+                            logback-classic or logback-access is required
+                            others are optional depending on functionality used
+                        -->
+                        <dependencies>remove</dependencies>
+                    </pomElements>
                     <keepCommentsInPom>true</keepCommentsInPom>
                     <updatePomFile>true</updatePomFile>
                     <flattenedPomFilename>flattened-pom.xml</flattenedPomFilename>
@@ -546,10 +568,12 @@
                         
                         <!-- Setup links to external api docs
                          -->
-                        <links>   
+                        <links>
+                            <!-- Re-add when these are available
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-core/${logback-core.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback/logback-classic/${logback-core.version}</link>
                             <link>https://javadoc.io/doc/ch.qos.logback.access/logback-access-common/${logback-access.version}</link>
+                            -->
                             
                             <link>https://javadoc.io/doc/tools.jackson.core/jackson-core/${jackson.version}</link>
                             <link>https://javadoc.io/doc/tools.jackson.core/jackson-databind/${jackson.version}</link>
