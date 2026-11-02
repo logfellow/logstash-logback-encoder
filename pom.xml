@@ -24,7 +24,7 @@
 
         <!-- runtime dependencies -->
         <jackson.version>3.2.4</jackson.version>
-        <java-uuid-generator.version>5.1.1</java-uuid-generator.version>
+        <java-uuid-generator.version>5.2.0</java-uuid-generator.version>
         <logback-core.version>1.6.6</logback-core.version>
         <logback-access.version>2.0.15</logback-access.version>
 
