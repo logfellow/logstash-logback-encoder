@@ -1289,6 +1289,12 @@ Both `StructuredArguments` and `Markers` require constructing additional objects
 Therefore, it is best practice to surround the log lines with `logger.isXXXEnabled()`,
 to avoid the object construction if the log level is disabled.
 
+Non-structured arguments are omitted by default. To include their string representations with
+`LogstashEncoder` or `LogstashLayout`, set both `includeNonStructuredArguments` and
+`writeNonStructuredArgumentsAsString` to `true`. With composite encoders/layouts, set the same
+properties on the `arguments` provider. Leaving `writeNonStructuredArgumentsAsString` at its
+`false` default retains Jackson object serialization for included non-structured arguments.
+
 Examples using `StructuredArguments`:
 
 ```java
@@ -2771,6 +2777,10 @@ The provider name is the xml element name to use when configuring. Each provider
           Object field name will be <tt>nonStructuredArgumentsFieldPrefix</tt> prepend to the argument index.
           (default=false)
           </li>
+          <li><tt>writeNonStructuredArgumentsAsString</tt> - Write included non-structured arguments
+          as JSON strings using their <tt>toString()</tt> representation instead of Jackson object serialization.
+          Structured arguments are unaffected, and null arguments remain JSON null. Requires
+          <tt>includeNonStructuredArguments=true</tt>. (default=false)</li>
           <li><tt>nonStructuredArgumentsFieldPrefix</tt> - Object field name prefix (default=arg)</li>
         </ul>
       </td>

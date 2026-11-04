@@ -187,6 +187,14 @@ public class LogstashEncoder extends LoggingEventCompositeJsonEncoder {
         getFormatter().setIncludeNonStructuredArguments(includeNonStructuredArguments);
     }
     
+    public boolean isWriteNonStructuredArgumentsAsString() {
+        return getFormatter().isWriteNonStructuredArgumentsAsString();
+    }
+
+    public void setWriteNonStructuredArgumentsAsString(boolean writeNonStructuredArgumentsAsString) {
+        getFormatter().setWriteNonStructuredArgumentsAsString(writeNonStructuredArgumentsAsString);
+    }
+
     public String getNonStructuredArgumentsFieldPrefix() {
         return getFormatter().getNonStructuredArgumentsFieldPrefix();
     }

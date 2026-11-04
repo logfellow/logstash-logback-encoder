@@ -279,6 +279,14 @@ public class LogstashFormatter extends LoggingEventCompositeJsonFormatter {
         this.argumentsProvider.setIncludeNonStructuredArguments(includeNonStructuredArguments);
     }
 
+    public boolean isWriteNonStructuredArgumentsAsString() {
+        return this.argumentsProvider.isWriteNonStructuredArgumentsAsString();
+    }
+
+    public void setWriteNonStructuredArgumentsAsString(boolean writeNonStructuredArgumentsAsString) {
+        this.argumentsProvider.setWriteNonStructuredArgumentsAsString(writeNonStructuredArgumentsAsString);
+    }
+
     public String getNonStructuredArgumentsFieldPrefix() {
         return this.argumentsProvider.getNonStructuredArgumentsFieldPrefix();
     }
