@@ -177,6 +177,14 @@ public class LogstashLayout extends LoggingEventCompositeJsonLayout {
         getFormatter().setIncludeNonStructuredArguments(includeNonStructuredArguments);
     }
     
+    public boolean isWriteNonStructuredArgumentsAsString() {
+        return getFormatter().isWriteNonStructuredArgumentsAsString();
+    }
+
+    public void setWriteNonStructuredArgumentsAsString(boolean writeNonStructuredArgumentsAsString) {
+        getFormatter().setWriteNonStructuredArgumentsAsString(writeNonStructuredArgumentsAsString);
+    }
+
     public String getNonStructuredArgumentsFieldPrefix() {
         return getFormatter().getNonStructuredArgumentsFieldPrefix();
     }

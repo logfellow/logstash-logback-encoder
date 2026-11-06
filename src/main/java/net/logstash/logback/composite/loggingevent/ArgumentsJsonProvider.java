@@ -44,6 +44,7 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
 
     private boolean includeStructuredArguments = true;
     private boolean includeNonStructuredArguments;
+    private boolean writeNonStructuredArgumentsAsString;
     private String nonStructuredArgumentsFieldPrefix = "arg";
 
     @Override
@@ -80,7 +81,11 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
                     hasWrittenFieldName = true;
                 }
                 String fieldName = nonStructuredArgumentsFieldPrefix + argIndex;
-                generator.writePOJOProperty(fieldName, arg);
+                if (writeNonStructuredArgumentsAsString) {
+                    generator.writeStringProperty(fieldName, arg == null ? null : arg.toString());
+                } else {
+                    generator.writePOJOProperty(fieldName, arg);
+                }
             }
         }
 
@@ -103,6 +108,26 @@ public class ArgumentsJsonProvider extends AbstractFieldJsonProvider<ILoggingEve
 
     public void setIncludeNonStructuredArguments(boolean includeNonStructuredArguments) {
         this.includeNonStructuredArguments = includeNonStructuredArguments;
+    }
+
+    /**
+     * Whether included non-structured arguments are written as strings using
+     * {@link Object#toString()} instead of being serialized as objects.
+     * Structured arguments are unaffected, and null arguments remain JSON null.
+     *
+     * @return true to write non-structured arguments as strings (default false)
+     */
+    public boolean isWriteNonStructuredArgumentsAsString() {
+        return writeNonStructuredArgumentsAsString;
+    }
+
+    /**
+     * Sets whether included non-structured arguments are written as strings.
+     *
+     * @param writeNonStructuredArgumentsAsString whether to use {@link Object#toString()}
+     */
+    public void setWriteNonStructuredArgumentsAsString(boolean writeNonStructuredArgumentsAsString) {
+        this.writeNonStructuredArgumentsAsString = writeNonStructuredArgumentsAsString;
     }
 
     public String getNonStructuredArgumentsFieldPrefix() {
