@@ -38,7 +38,7 @@
         <mockito.version>5.24.0</mockito.version>
 
         <!-- maven plugins -->
-        <build-helper-maven-plugin.version>3.6.2</build-helper-maven-plugin.version>
+        <build-helper-maven-plugin.version>3.7.0</build-helper-maven-plugin.version>
         <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
         <extra-enforcer-rules.version>1.11.0</extra-enforcer-rules.version>
         <flatten-maven-plugin.version>1.8.0</flatten-maven-plugin.version>
