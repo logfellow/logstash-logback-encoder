@@ -156,6 +156,11 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     private int maxLength = DEFAULT_MAX_LENGTH;
 
     /**
+     * Maximum number of characters in each throwable message, including any ellipsis.
+     */
+    private int maxErrorMessageLength = FULL_MAX_LENGTH;
+
+    /**
      * Abbreviator used to shorten the classnames.
      * Initialized during {@link #start()}.
      */
@@ -695,9 +700,20 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
             builder.append("<#" + hash + "> ");
         }
         builder.append(abbreviator.abbreviate(throwableProxy.getClassName()))
-                .append(": ")
-                .append(getMessage(throwableProxy, event))
-                .append(getLineSeparator());
+                .append(": ");
+        String message = String.valueOf(getMessage(throwableProxy, event));
+        if (message.length() > maxErrorMessageLength) {
+            int suffixLength = Math.min(ELLIPSIS.length(), maxErrorMessageLength);
+            int end = maxErrorMessageLength - suffixLength;
+            if (end > 0 && Character.isHighSurrogate(message.charAt(end - 1))
+                    && Character.isLowSurrogate(message.charAt(end))) {
+                end--;
+            }
+            builder.append(message, 0, end).append(ELLIPSIS, 0, suffixLength);
+        } else {
+            builder.append(message);
+        }
+        builder.append(getLineSeparator());
     }
 
     private void indent(StringBuilder builder, int indent) {
@@ -796,6 +812,24 @@ public class ShortenedThrowableConverter extends ThrowableHandlingConverter {
     }
     public int getMaxLength() {
         return maxLength;
+    }
+
+    /**
+     * Set a character limit for each throwable message, including the truncation ellipsis.
+     * Applies to causes and suppressed exceptions as well. The overall {@link #setMaxLength(int)}
+     * limit still applies to the complete trace. By default messages are unlimited.
+     *
+     * @param maxErrorMessageLength a positive limit, or {@code -1} for no limit
+     */
+    public void setMaxErrorMessageLength(int maxErrorMessageLength) {
+        if (maxErrorMessageLength <= 0 && maxErrorMessageLength != -1) {
+            throw new IllegalArgumentException("maxErrorMessageLength must be > 0, or -1 to disable the feature");
+        }
+        this.maxErrorMessageLength = maxErrorMessageLength == -1 ? FULL_MAX_LENGTH : maxErrorMessageLength;
+    }
+
+    public int getMaxErrorMessageLength() {
+        return maxErrorMessageLength;
     }
 
 

@@ -69,6 +69,7 @@ The structure of the output, and the data it contains, is fully configurable.
     * [Truncate after Regex](#truncate-after-regex)
     * [Exclude Frames per Regex](#exclude-frames-per-regex)
     * [Omit Throwable Messages](#omit-throwable-messages)
+    * [Maximum Message Length per Throwable](#maximum-message-length-per-throwable)
     * [Maximum Depth per Throwable](#maximum-depth-per-throwable)
     * [Maximum Trace Size (bytes)](#maximum-trace-size-bytes)
     * [Classname Shortening](#classname-shortening)
@@ -2238,6 +2239,26 @@ Caused by: java.lang.ArithmeticException:
 ```
 
 This enables devs to still see the type of exception thrown and where it occurred, **without** exposing sensitive data.
+
+### Maximum Message Length per Throwable
+
+A large exception message can consume the entire `maxLength` budget and hide the stack frames.
+Use `maxErrorMessageLength` to limit each throwable's message independently:
+
+```xml
+<throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+    <maxErrorMessageLength>100</maxErrorMessageLength>
+    <maxLength>1000</maxLength>
+</throwableConverter>
+```
+
+The limit is a positive number of Java string characters (UTF-16 code units), including the `...`
+suffix used for truncated messages. Limits smaller than three use a shortened suffix.
+Surrogate pairs are kept intact, so a truncated message can be shorter than the limit.
+The limit applies separately to the outer exception, causes, and suppressed exceptions.
+Class names, prefixes, and line separators are outside this message limit; `maxLength` still
+bounds the complete trace and may truncate it. Messages are unlimited by default; set `-1`
+to restore that behavior. The `OMIT_THROWABLE_MESSAGE` marker continues to omit messages.
 
 ### Maximum Depth per Throwable
 
