@@ -143,6 +143,72 @@ public class ShortenedThrowableConverterTest {
                 .endsWith("..." + converter.getLineSeparator());
         }
     }
+
+    @Test
+    public void testMessageLimitPreservesFramesForAllThrowables() {
+        for (boolean rootFirst : Arrays.asList(false, true)) {
+            RuntimeException cause = new RuntimeException("cause-" + "x".repeat(1000));
+            RuntimeException outer = new RuntimeException("outer-" + "x".repeat(1000), cause);
+            RuntimeException suppressed = new RuntimeException("suppressed-" + "x".repeat(1000));
+            outer.addSuppressed(suppressed);
+            StackTraceElement[] frames = {new StackTraceElement("example.Service", "call", "Service.java", 12)};
+            cause.setStackTrace(frames);
+            outer.setStackTrace(frames);
+            suppressed.setStackTrace(frames);
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setMaxErrorMessageLength(14);
+            converter.setRootCauseFirst(rootFirst);
+            converter.setOmitCommonFrames(false);
+            converter.setMaxLength(2000);
+            converter.start();
+
+            assertThat(convert(converter, outer))
+                    .contains("outer-xxxxx...", "cause-xxxxx...", "suppressed-...", "\tat ")
+                    .doesNotContain("x".repeat(12));
+        }
+    }
+
+    @Test
+    public void testMessageLengthBoundaries() {
+        for (int limit : Arrays.asList(1, 2, 3, 4, 5, 6)) {
+            ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+            converter.setMaxErrorMessageLength(limit);
+            converter.start();
+            String expected = limit >= 6 ? "abcdef" : "abcdef".substring(0, Math.max(0, limit - 3))
+                    + "...".substring(0, Math.min(3, limit));
+            assertThat(getLines(convert(converter, new RuntimeException("abcdef"))).get(0))
+                    .isEqualTo("java.lang.RuntimeException: " + expected);
+        }
+    }
+
+    @Test
+    public void testUnlimitedNullEmptyAndOmittedMessages() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+        converter.start();
+        String message = "x".repeat(2000);
+        assertThat(convert(converter, new RuntimeException(message))).contains(message);
+        converter.setMaxErrorMessageLength(5);
+        assertThat(convert(converter, new RuntimeException((String) null))).contains("RuntimeException: null");
+        assertThat(getLines(convert(converter, new RuntimeException(""))).get(0))
+                .isEqualTo("java.lang.RuntimeException: ");
+        ILoggingEvent event = createEvent(new RuntimeException(message));
+        when(event.getMarkerList()).thenReturn(List.of(ShortenedThrowableConverter.OMIT_THROWABLE_MESSAGE));
+        assertThat(getLines(convert(converter, event)).get(0)).isEqualTo("java.lang.RuntimeException: ");
+        converter.setMaxErrorMessageLength(-1);
+        assertThat(convert(converter, new RuntimeException(message))).contains(message);
+        assertThat(converter.getMaxErrorMessageLength()).isEqualTo(Integer.MAX_VALUE);
+        assertThatThrownBy(() -> converter.setMaxErrorMessageLength(0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> converter.setMaxErrorMessageLength(-2)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    public void testMessageLimitDoesNotSplitSurrogatePair() {
+        ShortenedThrowableConverter converter = new ShortenedThrowableConverter();
+        converter.setMaxErrorMessageLength(5);
+        converter.start();
+        assertThat(getLines(convert(converter, new RuntimeException("a\uD83D\uDE00bcdef"))).get(0))
+                .isEqualTo("java.lang.RuntimeException: a...");
+    }
     
     @Test
     public void testMaxLengthShorterThanTruncationSuffix() {
