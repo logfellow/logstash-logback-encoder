@@ -54,24 +54,31 @@ class PatternLayoutCompatibilityUtil {
             Method method = PatternLayoutBase.class.getDeclaredMethod("getInstanceConverterMap");
             ParameterizedType type = (ParameterizedType) method.getGenericReturnType();
             Type valueType = type.getActualTypeArguments()[1];
+            String valueTypeName = valueType.getTypeName();
 
-            if (valueType.getTypeName().equals("java.lang.String")) {
+            if (isClassNameConverterMapValue(valueTypeName)) {
                 /*
                  * In logback <= 1.5.12, getInstanceConverterMap() is a Map<String, String>.
                  *     key = converter name
                  *     value = name of converter class
                  */
                 putUnchecked(layout.getInstanceConverterMap(), converterName, converterClass.getName());
-            } else if (valueType.getTypeName().equals("java.util.function.Supplier<ch.qos.logback.core.pattern.DynamicConverter>")) {
+            } else if (isSupplierOfDynamicConverter(valueTypeName)) {
                 /*
-                 * In logback >= 1.5.13, getInstanceConverterMap() is a Map<String, Supplier<DynamicConverter>.
+                 * In logback >= 1.5.13, getInstanceConverterMap() is a
+                 * Map<String, Supplier<DynamicConverter>>.
                  *     key = converter name
                  *     value = supplier of converter instances
+                 *
+                 * Shaded Logback relocates ch.qos.logback, so the type argument's
+                 * package can differ. Match a Supplier whose single raw type
+                 * argument's simple name is DynamicConverter.
                  *
                  * Related issues:
                  *     https://github.com/qos-ch/logback/issues/803
                  *     https://github.com/qos-ch/logback/issues/931
                  *     https://github.com/qos-ch/logback/issues/932
+                 *     https://github.com/logfellow/logstash-logback-encoder/issues/1113
                  */
                 putUnchecked(layout.getInstanceConverterMap(), converterName, converterSupplier);
             } else {
@@ -83,6 +90,75 @@ class PatternLayoutCompatibilityUtil {
             throw new IncompatibleClassChangeError(
                     "Method PatternLayoutBase.getInstanceConverterMap() not found, logback-core dependency version is not compatible");
         }
+    }
+
+    /**
+     * Logback &lt;= 1.5.12 declares the instance converter map value as a class name.
+     *
+     * @param valueTypeName {@link Type#getTypeName()} of the map value
+     * @return {@code true} when the value is {@code java.lang.String}
+     */
+    static boolean isClassNameConverterMapValue(String valueTypeName) {
+        return "java.lang.String".equals(valueTypeName);
+    }
+
+    /**
+     * Returns whether {@code valueTypeName} is a {@link Supplier} of one raw {@link DynamicConverter}.
+     *
+     * <p>The unshaded Logback 1.5.13+ name is
+     * {@code java.util.function.Supplier<ch.qos.logback.core.pattern.DynamicConverter>}.
+     * A relocated name, such as
+     * {@code java.util.function.Supplier<org.apache.juli.logging.ch.qos.logback.core.pattern.DynamicConverter>},
+     * is the same branch. Another {@link Supplier}, including {@code Supplier<String>}, is not.</p>
+     *
+     * @param valueTypeName {@link Type#getTypeName()} of the map value
+     * @return {@code true} when the value should be registered as a converter supplier
+     */
+    static boolean isSupplierOfDynamicConverter(String valueTypeName) {
+        final String prefix = "java.util.function.Supplier<";
+        if (valueTypeName == null
+                || !valueTypeName.startsWith(prefix)
+                || !valueTypeName.endsWith(">")) {
+            return false;
+        }
+
+        String typeArgument = valueTypeName.substring(prefix.length(), valueTypeName.length() - 1);
+        int simpleNameStart = typeArgument.lastIndexOf('.') + 1;
+        if (!"DynamicConverter".equals(typeArgument.substring(simpleNameStart))) {
+            return false;
+        }
+        return isRawClassPackage(typeArgument.substring(0, simpleNameStart));
+    }
+
+    /**
+     * @param packagePrefix empty when the type has no package, otherwise package segments ending in {@code .}
+     */
+    private static boolean isRawClassPackage(String packagePrefix) {
+        if (packagePrefix.isEmpty()) {
+            return true;
+        }
+        if (packagePrefix.charAt(packagePrefix.length() - 1) != '.') {
+            return false;
+        }
+        String[] segments = packagePrefix.substring(0, packagePrefix.length() - 1).split("\\.", -1);
+        for (String segment : segments) {
+            if (!isJavaIdentifier(segment)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isJavaIdentifier(String segment) {
+        if (segment.isEmpty() || !Character.isJavaIdentifierStart(segment.charAt(0))) {
+            return false;
+        }
+        for (int i = 1; i < segment.length(); i++) {
+            if (!Character.isJavaIdentifierPart(segment.charAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
