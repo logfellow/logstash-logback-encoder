@@ -43,6 +43,9 @@ public abstract class AbstractNestedJsonProvider<Event extends DeferredProcessin
     
     @Override
     public void start() {
+        if (getFieldName() == null) {
+            throw new IllegalStateException("fieldName must not be null");
+        }
         getProviders().start();
         super.start();
     }

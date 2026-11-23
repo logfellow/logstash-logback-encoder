@@ -15,13 +15,18 @@
  */
 package net.logstash.logback.composite.loggingevent;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -49,21 +54,36 @@ public class LoggingEventNestedJsonProviderTest {
         provider.setProviders(providers);
     }
     
-    @Test
-    public void testWrite() {
+    @ParameterizedTest
+    @ValueSource(strings = {"nested", "newFieldName", "", "   "})
+    public void testWrite(String fieldName) {
         
-        provider.setFieldName("newFieldName");
+        provider.setFieldName(fieldName);
+        provider.start();
+        assertThat(provider.isStarted()).isTrue();
         
         provider.writeTo(generator, event);
         
         InOrder inOrder = inOrder(generator, providers);
         
-        inOrder.verify(generator).writeObjectPropertyStart("newFieldName");
+        inOrder.verify(generator).writeObjectPropertyStart(fieldName);
         inOrder.verify(providers).writeTo(generator, event);
         inOrder.verify(generator).writeEndObject();
     }
 
     
+    @Test
+    public void shouldRejectNullFieldNameBeforeStartingProviders() {
+        provider.setFieldName(null);
+
+        assertThatIllegalStateException()
+                .isThrownBy(provider::start)
+                .withMessage("fieldName must not be null");
+
+        assertThat(provider.isStarted()).isFalse();
+        verify(providers, never()).start();
+    }
+
     /*
      * start/stop cascaded to the enclosed JsonProviders
      */

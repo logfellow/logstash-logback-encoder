@@ -15,7 +15,11 @@
  */
 package net.logstash.logback.composite.accessevent;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import ch.qos.logback.access.common.spi.IAccessEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,6 +63,18 @@ public class AccessEventNestedJsonProviderTest {
         inOrder.verify(generator).writeObjectPropertyStart("newFieldName");
         inOrder.verify(providers).writeTo(generator, event);
         inOrder.verify(generator).writeEndObject();
+    }
+
+    @Test
+    public void shouldRejectNullFieldNameBeforeStartingProviders() {
+        provider.setFieldName(null);
+
+        assertThatIllegalStateException()
+                .isThrownBy(provider::start)
+                .withMessage("fieldName must not be null");
+
+        assertThat(provider.isStarted()).isFalse();
+        verify(providers, never()).start();
     }
 
 }
