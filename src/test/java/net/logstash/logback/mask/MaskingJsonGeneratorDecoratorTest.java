@@ -16,7 +16,6 @@
 package net.logstash.logback.mask;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,7 +34,8 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
 import ch.qos.logback.core.spi.LifeCycle;
 import org.junit.jupiter.api.Test;
-import org.opentest4j.AssertionFailedError;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.core.JsonParser;
 import tools.jackson.core.TokenStreamContext;
@@ -279,7 +279,7 @@ public class MaskingJsonGeneratorDecoratorTest {
     }
 
     @Test
-    public void masedArrayByIndex() {
+    public void maskedArrayByIndex() {
         testMaskByPath(
                 "{ 'array':[{'foo':'bar' },{'a':'b'}] }",
                 "{ 'array':[{'foo':'****'},{'a':'b'}] }",
@@ -293,23 +293,41 @@ public class MaskingJsonGeneratorDecoratorTest {
                 );
         
         
-        // Failed tests - see issue #735
-        
-        assertThatThrownBy(() ->
-            testMaskByPath(
-                    "{ 'array':['a','b',   'c'] }",
-                    "{ 'array':['a','****','c'] }",
-                    "/array/1"
-                    )).isInstanceOf(AssertionFailedError.class);
-        
-        assertThatThrownBy(() ->
-            testMaskByPath(
-                    "{ 'array':[{'foo':'bar'},{'a':'b'}] }",
-                    "{ 'array':['****'       ,{'a':'b'}] }",
-                    "/array/0"
-                    )).isInstanceOf(AssertionFailedError.class);
+        testMaskByPath(
+                "{'array':['a','b','c']}",
+                "{'array':['a','****','c']}",
+                "/array/1");
+        testMaskByPath(
+                "{'array':[{'foo':'bar'},{'a':'b'}]}",
+                "{'array':['****',{'a':'b'}]}",
+                "/array/0");
     }
-    
+
+    @ParameterizedTest
+    @ValueSource(strings = {"'secret'", "1", "1.5", "true", "null", "{}", "[]", "[{'key':[1,2]},3]", "{'key':[{},[]]}"})
+    public void maskedArrayElement(String value) {
+        testMaskByPath(
+                "{'array':['before'," + value + ",'after'],'tail':true}",
+                "{'array':['before','****','after'],'tail':true}",
+                "/array/1");
+    }
+
+    @Test
+    public void maskedNestedArrayElements() {
+        testMaskByPath(
+                "{'array':[[1,2,3],[4,5,6]],'tail':true}",
+                "{'array':[[1,'****',3],[4,'****',6]],'tail':true}",
+                "/array/*/1");
+        testMaskByPath(
+                "{'array':[1,{},[2]],'tail':true}",
+                "{'array':['****','****','****'],'tail':true}",
+                "/array/*");
+        testMaskByPath(
+                "{'array':[[1],{'secret':2},3]}",
+                "{'array':['****',{'secret':'****'},'****']}",
+                "/array/0", "/array/1/secret", "/array/2");
+    }
+
     @Test
     public void maskedArrayOfObjects() {
         testMaskByPath(

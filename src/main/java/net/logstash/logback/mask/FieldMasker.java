@@ -19,18 +19,18 @@ import tools.jackson.core.TokenStreamContext;
 import tools.jackson.databind.node.NullNode;
 
 /**
- * Masks JSON fields within a JSON stream.
+ * Masks JSON field values and array elements within a JSON stream.
  *
  * Invoked by {@link MaskingJsonGenerator} after a field name is written
- * (but before the field's value is known)
- * to determine if the field's value should be masked.
+ * or before an array element is written (before its value is known)
+ * to determine if the value should be masked.
  *
  * <h2>Comparison with {@link ValueMasker}</h2>
  *
  * <ul>
  *     <li>{@link FieldMasker}s are more efficient than {@link ValueMasker}s, since {@link FieldMasker}s do not inspect values.</li>
  *     <li>{@link FieldMasker}s can mask any type of JSON field (string, number, boolean, array, object), whereas a {@link ValueMasker} can only mask string and number values.</li>
- *     <li>{@link ValueMasker}s can mask element values within an array.  {@link FieldMasker}s can only mask field values.
+ *     <li>Both {@link ValueMasker}s and {@link FieldMasker}s can mask element values within an array.</li>
  * </ul>
  */
 @FunctionalInterface
@@ -41,6 +41,10 @@ public interface FieldMasker {
      * then returns the masked value to write as the field's value.
      * The {@link MaskingJsonGenerator} will write the returned masked value
      * as the field's value (instead of the original field's value).
+     *
+     * <p>For array elements, the context is an array context whose current index
+     * identifies the element about to be written. Maskers that only support object
+     * fields should check {@link TokenStreamContext#hasCurrentName()}.</p>
      *
      * <p>If the JSON stream context's current path should NOT be masked, returns null.</p>
      *
