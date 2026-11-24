@@ -41,7 +41,7 @@ import tools.jackson.core.util.JsonGeneratorDelegate;
  * to identify fields to mask by <em>JSON path</em>.
  *
  * <p>These field maskers are invoked after a new field name is written
- * to determine if the field's value should be masked.
+ * or before an array element is written, to determine if the value should be masked.
  * If any masker returns a non-null value, then the returned value will
  * be written as the field's value (instead of the original field value).
  * Note that the masked value's type might differ from the fields original type.
@@ -84,10 +84,14 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     private final Collection<ValueMasker> valueMaskers;
 
     /**
-     * Keeps track of the current masking state.
-     * A positive value indicates the generator is within a masked field.
+     * Number of open containers within a masked value.
      */
     private int maskDepth = 0;
+
+    /**
+     * The replacement for the next field value has already been written.
+     */
+    private boolean maskNextValue;
 
     /**
      * @param delegate the generator to which to write potentially masked JSON
@@ -161,6 +165,20 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     }
 
     @Override
+    public JsonGenerator writeArray(String[] array, int offset, int length) {
+        if (array == null) {
+            throw new IllegalArgumentException("null array");
+        }
+        _verifyOffsets(array.length, offset, length);
+        writeStartArray(array, length);
+        for (int i = offset, end = offset + length; i < end; ++i) {
+            writeString(array[i]);
+        }
+        writeEndArray();
+        return this;
+    }
+
+    @Override
     public JsonGenerator writeName(SerializableString name) {
         return writeName(() -> super.writeName(name));
     }
@@ -176,38 +194,12 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     }
 
     private JsonGenerator writeName(Runnable doWriteFieldName) {
-
-        if (maskingInProgress()) {
-            /*
-             * This allows writing unmasked fields after masked fields in the same object.
-             */
-            decrementMaskDepth();
-        }
-        if (maskingInProgress()) {
-            /*
-             * If we're in a subobject of a masked field, then increment the mask stack.
-             * This ensures that no fields are written in the subobject.
-             */
-            incrementMaskDepth();
-        } else {
-            /*
-             * We're not currently masking, so go ahead and write the field name.
-             *
-             * This must be called before shouldMaskCurrentPath(),
-             * so that the current path is updated.
-             */
+        if (!maskingInProgress()) {
             doWriteFieldName.run();
-
-            Object maskedValue = getMaskedValueForCurrentPath();
+            Object maskedValue = getMaskedValueForCurrentPath(streamWriteContext());
             if (maskedValue != null) {
-                /*
-                 * Write the masked value.
-                 * No other values will be written when masking is in progress.
-                 */
                 delegate.writePOJO(maskedValue);
-
-                incrementMaskDepth();
-
+                maskNextValue = true;
             }
         }
         return this;
@@ -215,7 +207,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeBinary(Base64Variant b64variant, byte[] data, int offset, int len) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeBinary(b64variant, data, offset, len);
         }
         return this;
@@ -223,7 +215,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeBinary(byte[] data) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeBinary(data);
         }
         return this;
@@ -231,7 +223,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeBinary(byte[] data, int offset, int len) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeBinary(data, offset, len);
         }
         return this;
@@ -239,7 +231,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public int writeBinary(Base64Variant b64variant, InputStream data, int dataLength) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             return super.writeBinary(b64variant, data, dataLength);
         } else {
             return readAndDiscard(data);
@@ -248,7 +240,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public int writeBinary(InputStream data, int dataLength) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             return super.writeBinary(data, dataLength);
         } else {
             return readAndDiscard(data);
@@ -269,7 +261,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeBoolean(boolean state) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeBoolean(state);
         }
         return this;
@@ -277,7 +269,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeEmbeddedObject(Object object) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeEmbeddedObject(object);
         }
         return this;
@@ -285,7 +277,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeNull() {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeNull();
         }
         return this;
@@ -329,6 +321,12 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     @Override
     public JsonGenerator writeNumber(String encodedValue) {
         return writePotentiallyMaskedValue(encodedValue, () -> super.writeNumber(encodedValue));
+    }
+
+    @Override
+    public JsonGenerator writeNumber(char[] encodedValueBuffer, int offset, int length) {
+        return writePotentiallyMaskedValue(new String(encodedValueBuffer, offset, length),
+                () -> super.writeNumber(encodedValueBuffer, offset, length));
     }
 
     @Override
@@ -397,7 +395,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeRawValue(String text) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue(false)) {
             super.writeRawValue(text);
         }
         return this;
@@ -405,7 +403,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeRawValue(String text, int offset, int len) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue(false)) {
             super.writeRawValue(text, offset, len);
         }
         return this;
@@ -413,7 +411,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeRawValue(char[] text, int offset, int len) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue(false)) {
             super.writeRawValue(text, offset, len);
         }
         return this;
@@ -421,7 +419,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeRawUTF8String(byte[] text, int offset, int length) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue(false)) {
             super.writeRawUTF8String(text, offset, length);
         }
         return this;
@@ -429,31 +427,37 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeStartArray() {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeStartArray();
+        } else {
+            incrementMaskDepth();
         }
         return this;
     }
 
     @Override
     public JsonGenerator writeStartArray(Object forValue) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeStartArray(forValue);
+        } else {
+            incrementMaskDepth();
         }
         return this;
     }
 
     @Override
     public JsonGenerator writeStartArray(Object forValue, int size) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeStartArray(forValue, size);
+        } else {
+            incrementMaskDepth();
         }
         return this;
     }
 
     @Override
     public JsonGenerator writeStartObject() {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeStartObject();
         } else {
             incrementMaskDepth();
@@ -463,7 +467,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeStartObject(Object forValue) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeStartObject(forValue);
         } else {
             incrementMaskDepth();
@@ -473,7 +477,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeStartObject(Object forValue, int size) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeStartObject(forValue, size);
         } else {
             incrementMaskDepth();
@@ -498,7 +502,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeString(Reader reader, int len) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             super.writeString(reader, len);
         }
         return this;
@@ -519,7 +523,9 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeEndArray() {
-        if (!maskingInProgress()) {
+        if (maskDepth != 0) {
+            decrementMaskDepth();
+        } else {
             super.writeEndArray();
         }
         return this;
@@ -527,10 +533,9 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
 
     @Override
     public JsonGenerator writeEndObject() {
-        if (maskingInProgress()) {
+        if (maskDepth != 0) {
             decrementMaskDepth();
-        }
-        if (!maskingInProgress()) {
+        } else {
             super.writeEndObject();
         }
         return this;
@@ -540,8 +545,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
      * @return the masked value for the current path if the current path should be masked.
      *         otherwise returns null.
      */
-    private Object getMaskedValueForCurrentPath() {
-        TokenStreamContext context = streamWriteContext();
+    private Object getMaskedValueForCurrentPath(TokenStreamContext context) {
         for (FieldMasker fieldMasker : fieldMaskers) {
             Object maskedValue = fieldMasker.mask(context);
             if (maskedValue != null) {
@@ -571,7 +575,7 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     }
 
     private JsonGenerator writePotentiallyMaskedValue(Object value, Runnable doWriteUnmaskedValue) {
-        if (!maskingInProgress()) {
+        if (shouldWriteValue()) {
             Object maskedValue = getMaskedValueForCurrentPathAndValue(value);
             if (maskedValue != null) {
                 delegate.writePOJO(maskedValue);
@@ -580,6 +584,64 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
             }
         }
         return this;
+    }
+
+    private boolean shouldWriteValue() {
+        return shouldWriteValue(true);
+    }
+
+    private boolean shouldWriteValue(boolean maskArrayElement) {
+        if (maskDepth != 0) {
+            return false;
+        }
+        if (maskNextValue) {
+            maskNextValue = false;
+            return false;
+        }
+        TokenStreamContext context = streamWriteContext();
+        if (maskArrayElement && !fieldMaskers.isEmpty() && context.inArray()) {
+            Object maskedValue = getMaskedValueForCurrentPath(new ArrayElementContext(context));
+            if (maskedValue != null) {
+                delegate.writePOJO(maskedValue);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The delegate advances its array index only when it writes a value.
+     * Present the upcoming index to maskers without changing the delegate's state.
+     */
+    private static class ArrayElementContext extends TokenStreamContext {
+
+        private final TokenStreamContext context;
+
+        ArrayElementContext(TokenStreamContext context) {
+            super(TYPE_ARRAY, context.getEntryCount());
+            this.context = context;
+            _nestingDepth = context.getNestingDepth();
+        }
+
+        @Override
+        public TokenStreamContext getParent() {
+            return context.getParent();
+        }
+
+        @Override
+        public String currentName() {
+            return null;
+        }
+
+        @Override
+        public Object currentValue() {
+            return context.currentValue();
+        }
+
+        @Override
+        public void assignCurrentValue(Object value) {
+            context.assignCurrentValue(value);
+        }
     }
 
     private void incrementMaskDepth() {
@@ -591,10 +653,10 @@ public class MaskingJsonGenerator extends JsonGeneratorDelegate {
     }
 
     /**
-     * Returns true if the event iterator is within an field that should be masked.
+     * Returns true if the next value or the current container is masked.
      */
     boolean maskingInProgress() {
-        return maskDepth != 0;
+        return maskNextValue || maskDepth != 0;
     }
 
 }

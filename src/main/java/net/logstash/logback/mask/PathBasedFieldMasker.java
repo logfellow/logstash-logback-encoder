@@ -35,7 +35,7 @@ import tools.jackson.core.TokenStreamContext;
  *         If a path string starts with {@value #TOKEN_SEPARATOR} it is interpreted as an absolute path.
  *         Otherwise, it is a partial path.</li>
  *     <li>A wildcard token ({@value WILDCARD_TOKEN}) is supported.</li>
- *     <li>The path string must end with a field name (not an array index)</li>
+ *     <li>The path string can end with a field name or an array index</li>
  * </ul>
  *
  * <h2>Absolute Paths</h2>

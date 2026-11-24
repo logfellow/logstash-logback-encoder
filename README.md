@@ -1769,6 +1769,7 @@ for the path string format and more examples.  But in general:
 * Absolute paths start with `/` and are absolute to the root of the JSON output event (e.g. `/@timestamp` would mask the default timestamp field)
 * Partial paths do not start with `/` and match anywhere that path sequence is seen in the output.
 * A path with a single token (i.e. no `/` characters) will match all occurrences of a field with the given name
+* Array elements can be masked by their zero-based index (e.g. `/array/1` masks the entire second element).
 * A wildcard token (`*`) will match anything at that location within the path
 * Use `~1` to escape `/` within a token
 * Use `~0` to escape `~` within a token
