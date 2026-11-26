@@ -15,6 +15,7 @@
  */
 package net.logstash.logback.abbreviator;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -24,29 +25,79 @@ import ch.qos.logback.classic.pattern.Abbreviator;
  * An {@link Abbreviator} that caches results from a {@link #delegate} abbreviator.
  * 
  * Logger names are typically reused constantly, so caching abbreviations
- * of class names helps performance.
+ * of class names helps performance. Results are divided among independent segments.
+ * Each segment evicts names in insertion order, so hits do not update the eviction order.
  */
 public class CachingAbbreviator implements Abbreviator {
     
     private final Abbreviator delegate;
-    
-    private final ConcurrentMap<String, String> cache = new ConcurrentHashMap<>();
-    
+    private final Segment[] segments;
+
     public CachingAbbreviator(Abbreviator delegate) {
-        super();
+        this(delegate, 16, 64);
+    }
+
+    CachingAbbreviator(Abbreviator delegate, int segmentCount, int segmentCapacity) {
+        if (segmentCount < 1 || segmentCapacity < 1) {
+            throw new IllegalArgumentException("segment count and capacity must be positive");
+        }
         this.delegate = delegate;
+        this.segments = new Segment[segmentCount];
+        for (int i = 0; i < segments.length; i++) {
+            segments[i] = new Segment(segmentCapacity);
+        }
     }
 
     @Override
     public String abbreviate(String in) {
-        return cache.computeIfAbsent(in, delegate::abbreviate);
+        int hash = in.hashCode();
+        Segment segment = segments[Math.floorMod(hash ^ (hash >>> 16), segments.length)];
+        String value = segment.cache.get(in);
+        return value != null ? value : segment.cacheMiss(in, delegate);
     }
-    
+
     /**
      * Clears the cache.
      */
     public void clear() {
-        cache.clear();
+        for (Segment segment : segments) {
+            segment.clear();
+        }
+    }
+
+    private static final class Segment {
+        private final ConcurrentMap<String, String> cache = new ConcurrentHashMap<>();
+        private final String[] insertionOrder;
+        private int next;
+
+        private Segment(int capacity) {
+            this.insertionOrder = new String[capacity];
+        }
+
+        private synchronized String cacheMiss(String in, Abbreviator delegate) {
+            String value = cache.get(in);
+            if (value != null) {
+                return value;
+            }
+
+            value = cache.computeIfAbsent(in, delegate::abbreviate);
+            if (value != null) {
+                // The map may briefly hold one extra entry between insertion and eviction.
+                String oldest = insertionOrder[next];
+                if (oldest != null) {
+                    cache.remove(oldest);
+                }
+                insertionOrder[next] = in;
+                next = (next + 1) % insertionOrder.length;
+            }
+            return value;
+        }
+
+        private synchronized void clear() {
+            cache.clear();
+            Arrays.fill(insertionOrder, null);
+            next = 0;
+        }
     }
 
 }
